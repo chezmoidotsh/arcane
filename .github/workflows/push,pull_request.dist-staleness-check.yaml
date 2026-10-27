@@ -42,6 +42,16 @@ jobs:
       - name: ⬇️ Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
+      # Render with the helm and kustomize pinned in .mise.toml (helm 3), not the ones shipped by the
+      # runner image: a newer helm renders some Cilium values differently and made every PR fail.
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: false
+
+      - name: ⬇️ Install helm and kustomize
+        run: mise install helm kustomize
+
       - name: 🏗️ Re-render all dist/ directories
         run: scripts/dist:render --all
 
