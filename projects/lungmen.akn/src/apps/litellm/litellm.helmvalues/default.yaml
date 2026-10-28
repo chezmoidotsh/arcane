@@ -1,0 +1,80 @@
+---
+# Single replica: the state (keys, budgets, spend) lives in the mutualized PostgreSQL
+# cluster, so scaling out later needs no migration.
+replicaCount: 1
+strategy:
+  type: Recreate
+
+image:
+  pullPolicy: IfNotPresent
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 1536Mi
+
+# The chart would otherwise deploy its own PostgreSQL.
+db:
+  deployStandalone: false
+  useExisting: true
+  endpoint: apps-20260329-rw.databases.svc.cluster.local
+  database: litellm
+  secret:
+    name: litellm-database-litellm
+    usernameKey: username
+    passwordKey: password
+
+# `masterkey` (PROXY_MASTER_KEY), LITELLM_SALT_KEY and the OIDC client come from the
+# `litellm-conf` Secret (see litellm.configuration.externalsecret.yaml).
+masterkeySecretName: litellm-conf
+masterkeySecretKey: masterkey
+environmentSecrets:
+  - litellm-conf
+
+envVars:
+  # OIDC through Pocket-Id (free up to 5 users). Client id/secret come from `litellm-conf`.
+  PROXY_BASE_URL: https://llm.lab.chezmoi.sh
+  GENERIC_AUTHORIZATION_ENDPOINT: https://auth.chezmoi.sh/authorize
+  GENERIC_TOKEN_ENDPOINT: https://auth.chezmoi.sh/api/oidc/token
+  GENERIC_USERINFO_ENDPOINT: https://auth.chezmoi.sh/api/oidc/userinfo
+  GENERIC_SCOPE: openid profile email
+  # `preferred_username` can be edited by users: `sub` cannot.
+  GENERIC_USER_ID_ATTRIBUTE: sub
+  GENERIC_USER_EMAIL_ATTRIBUTE: email
+  GENERIC_USER_DISPLAY_NAME_ATTRIBUTE: name
+
+  # No phone-home towards BerriAI.
+  LITELLM_TELEMETRY: "False"
+  ANONYMIZED_TELEMETRY: "False"
+
+proxy_config:
+  model_list:
+    # Every model loaded in LM Studio on the Mac Studio is reachable as `lmstudio/<model>`.
+    - model_name: lmstudio/*
+      litellm_params:
+        model: openai/*
+        api_base: http://macstudio-kh37.lia.chezmoi.sh:1234/v1
+        api_key: lm-studio # rtunk-ignore(checkov/CKV_SECRET_6): placeholder, LM Studio does not check it
+    # Internal use of OpenRouter models, key in `litellm-conf` (OPENROUTER_API_KEY).
+    - model_name: openrouter/*
+      litellm_params:
+        model: openrouter/*
+        api_key: os.environ/OPENROUTER_API_KEY
+  general_settings:
+    master_key: os.environ/PROXY_MASTER_KEY
+  litellm_settings:
+    drop_params: true
+    telemetry: false
+
+ingress:
+  enabled: false
