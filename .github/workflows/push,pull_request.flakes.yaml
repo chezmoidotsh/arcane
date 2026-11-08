@@ -7,7 +7,8 @@
 # no change here) into an OCI image and, on main, pushes it to
 # ghcr.io/<owner>/flakes/<vendor>/<image name>:<tag>, with the name and tag the flake computes
 # (e.g. ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:<version>-<nixpkgs>-pkcs11.<plugin>-x86_64-linux).
-# Pull requests only build. When this workflow changes, every flake is built.
+# Pull requests only build, but they also check that the flake exposes the image contract (the default package
+# has an imageName and an imageTag), so a flake that cannot be published fails before reaching main. When this workflow changes, every flake is built.
 #
 # The n8n community nodes are the exception: they have their own workflow
 # (push,pull_request.n8n-nodes.yaml) and their own registry path.
@@ -108,6 +109,12 @@ jobs:
 
       - name: 🛠️ Install Nix
         uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: 🔎 Check the image contract
+        working-directory: ${{ matrix.flake }}
+        run: |
+          nix eval --raw '.#default.imageName' >/dev/null || { echo "::error::${{ matrix.flake }} must expose .#default.imageName"; exit 1; }
+          nix eval --raw '.#default.imageTag' >/dev/null || { echo "::error::${{ matrix.flake }} must expose .#default.imageTag"; exit 1; }
 
       - name: 🏗️ Build image
         working-directory: ${{ matrix.flake }}
