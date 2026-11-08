@@ -175,9 +175,18 @@ actions:
             - projects/*/src/apps/**
             - projects/*/src/infrastructure/kubernetes/**
             - catalog/helm/**
+    # Catch a stale dist/ before it reaches CI (commit made with --no-verify, or drift from a
+    # change outside the pre-commit triggers). Only the projects changed against the parent
+    # branch are checked, and nothing is written or staged.
+    - id: dist-render-pre-push
+      description: Fail the push when dist/ is stale for the projects changed on this branch
+      run: scripts/dist:render --branch --check
+      triggers:
+        - git_hooks: [pre-push]
   enabled:
     - commitlint
     - submodule-init-update
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
     - dist-render-pre-commit
+    - dist-render-pre-push
