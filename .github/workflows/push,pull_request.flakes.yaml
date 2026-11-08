@@ -1,0 +1,131 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Catalog Nix flakes — build and push the images to GHCR
+# =============================================================================
+# Builds the modified flakes of catalog/flakes/ (any directory holding a flake.nix, so a new flake needs
+# no change here) into an OCI image and, on main, pushes it to
+# ghcr.io/<owner>/flakes/<vendor>/<image name>:<tag>, with the name and tag the flake computes
+# (e.g. ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:<version>-<nixpkgs>-pkcs11.<plugin>-x86_64-linux).
+# Pull requests only build. When this workflow changes, every flake is built.
+#
+# The n8n community nodes are the exception: they have their own workflow
+# (push,pull_request.n8n-nodes.yaml) and their own registry path.
+#
+# Only x86_64-linux is built (what rhodes.akn pulls); the flakes also expose aarch64-linux, add an arm
+# runner to the matrix when something needs it.
+#
+# Events:      push (main), pull_request, on catalog/flakes/ except n8n/
+# Permissions: contents: read, packages: write (build job only)
+# =============================================================================
+
+name: 📦 Build catalog flakes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/push,pull_request.flakes.yaml
+      - catalog/flakes/**
+      - "!catalog/flakes/n8n/**"
+  pull_request:
+    paths:
+      - .github/workflows/push,pull_request.flakes.yaml
+      - catalog/flakes/**
+      - "!catalog/flakes/n8n/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  list_flakes:
+    name: 📄 List flakes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      flakes: ${{ steps.list.outputs.flakes }}
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect modified flakes
+        id: changed
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: catalog/flakes/**
+          files_ignore: catalog/flakes/n8n/**
+          dir_names: true
+          dir_names_max_depth: 4
+          json: true
+          escape_json: false # raw JSON, jq cannot parse the escaped quotes
+
+      - name: 🔍 Detect workflow change
+        id: workflow
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: .github/workflows/push,pull_request.flakes.yaml
+
+      - name: 📄 List flakes
+        id: list
+        env:
+          CHANGED: ${{ steps.changed.outputs.all_changed_files }}
+          WORKFLOW_CHANGED: ${{ steps.workflow.outputs.any_changed }}
+        run: |
+          # Every flake when the workflow itself changed, otherwise only the modified ones (still existing)
+          if [[ ${WORKFLOW_CHANGED} == true ]]; then
+            dirs="$(find catalog/flakes -name flake.nix -not -path 'catalog/flakes/n8n/*' -exec dirname {} \; | sort)"
+          else
+            dirs="$(jq --raw-output '.[]' <<<"${CHANGED}")"
+          fi
+          existing=()
+          while read -r d; do
+            if [[ -n ${d} && -f ${d}/flake.nix ]]; then existing+=("${d}"); fi
+          done <<<"${dirs}"
+          echo "flakes=$(jq --null-input --compact-output '$ARGS.positional' --args "${existing[@]}")" >> "${GITHUB_OUTPUT}"
+
+  build_flake:
+    name: 🏗️ Build flake (${{ matrix.flake }})
+    needs: list_flakes
+    if: needs.list_flakes.outputs.flakes != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        flake: ${{ fromJson(needs.list_flakes.outputs.flakes) }}
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: 🏗️ Build image
+        working-directory: ${{ matrix.flake }}
+        run: nix build --print-build-logs
+
+      - name: 🚀 Push image to GHCR
+        if: github.event_name == 'push'
+        working-directory: ${{ matrix.flake }}
+        env:
+          OWNER: ${{ github.repository_owner }}
+          FLAKE: ${{ matrix.flake }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          # catalog/flakes/<vendor>/<name> -> ghcr.io/<owner>/flakes/<vendor>/<image name>:<tag>
+          vendor="$(cut -d/ -f3 <<<"${FLAKE}")"
+          name="$(nix eval --raw '.#default.imageName')"
+          tag="$(nix eval --raw '.#default.imageTag')"
+          skopeo copy --dest-creds "${ACTOR}:${TOKEN}" \
+            "docker-archive:$(readlink -f result)" \
+            "docker://ghcr.io/${OWNER}/flakes/${vendor}/${name}:${tag}"
