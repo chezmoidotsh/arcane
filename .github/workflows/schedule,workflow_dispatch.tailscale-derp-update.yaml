@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Tailscale DERP allow-list update
+# =============================================================================
+# tailscaled dials the DERP relays by IP address, so lungmen.akn allows them with a CiliumNetworkPolicy
+# generated from Tailscale's DERP map (`mise run tailscale:derp:update`). Relays come and go: a missing one
+# is silently unreachable, so this regenerates the policy weekly and, when the map changed, opens (or
+# refreshes) a pull request with the regenerated `src/` policy and its rendered `dist/`. Nothing is
+# merged automatically.
+#
+# The task refuses a response with fewer than 20 relays, so a broken endpoint never rewrites the policy.
+#
+# Events:      schedule, workflow_dispatch
+# Permissions: contents: write, pull-requests: write
+# Requires:    "Allow GitHub Actions to create and approve pull requests" in the repository settings.
+#              A PR opened with GITHUB_TOKEN does not trigger the pull_request workflows; the merge
+#              queue (merge_group) still runs them before the merge.
+# =============================================================================
+
+name: 🌐 Tailscale DERP update
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # weekly, Monday 06:17 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  update:
+    name: 🌐 Regenerate the DERP allow-list
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: ⬇️ Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      # Same helm and kustomize as the dist/ staleness check, so the rendered policy matches.
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: false
+
+      - name: ⬇️ Install helm and kustomize
+        run: mise install helm kustomize
+
+      - name: 🌐 Regenerate the policy and its dist/
+        run: mise run tailscale:derp:update
+
+      # No-op when the tree is clean. Commits through the API so they are signed by GitHub.
+      - name: 📬 Open or refresh the pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: chore/tailscale-derp-update
+          sign-commits: true
+          add-paths: |
+            projects/lungmen.akn/src/infrastructure/kubernetes/tailscale/**
+            projects/lungmen.akn/dist/infrastructure/kubernetes/tailscale/**
+          commit-message: |
+            ~[project:lungmen.akn]: Refresh the Tailscale DERP relay allow-list
+
+            Regenerated from the DERP map by the weekly workflow.
+
+            Assisted-by: github-actions:tailscale-derp-update
+          title: Refresh the Tailscale DERP relay allow-list on lungmen
+          body: |
+            ## Summary
+
+            The Tailscale DERP map changed since the last run. This regenerates `allow-tailscale-to-derp` and its rendered `dist/` with `mise run tailscale:derp:update`. Nothing else is touched.
+
+            **Related Issue:** #1342
+
+            ---
+
+            Opened by the `Tailscale DERP update` workflow.
+          labels: |
+            project
+            deps
