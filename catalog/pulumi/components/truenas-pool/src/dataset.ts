@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // A single ZFS dataset node, materialized as a `truenas.Dataset`, plus its
 // tree-rendering (`toString()`). Nothing here talks to the network directly
-// -- `live` is only ever populated by `TrueNASPool.datasetsTree()` (see
+// -- `live` is only ever populated by `TrueNASPoolComponent.datasetsTree()` (see
 // ./pool), which is what actually fetches it over JSON-RPC.
 // -----------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ export type DatasetArgs = Omit<
 
 /**
  * One node of a ZFS dataset tree, materialized as a `truenas.Dataset` once
- * attached to a `TrueNASPool` (or nested under another `TrueNASDataset`).
+ * attached to a `TrueNASPoolComponent` (or nested under another `TrueNASDataset`).
  *
  * Ownership/mode (uid/gid/mode) is not modeled here — the TrueNAS provider
  * exposes that as a separate filesystem-ACL resource, not a field on
@@ -61,7 +61,7 @@ export class TrueNASDataset {
 
 	/**
 	 * Real, live state for this dataset (quota/encrypted/comments/...), attached by
-	 * `TrueNASPool.datasetsTree()` — `undefined` until that's been called at least
+	 * `TrueNASPoolComponent.datasetsTree()` — `undefined` until that's been called at least
 	 * once, or if the fetch failed. Never read from `resource`'s own outputs: the
 	 * managed `truenas.Dataset` resource has no encryption field at all, and keeping
 	 * `toString()` consistently sourced from one place (live, real NAS state) was
@@ -118,11 +118,11 @@ export class TrueNASDataset {
 	 * Tree-prefixed rendering of this node and its descendants (no title, no code
 	 * fence) — quota/encrypted/readonly/dedup in the info column, `comments` as a
 	 * free-form description, columns aligned across just this subtree. Reads from
-	 * `live`, so it renders blank info/description until `TrueNASPool.datasetsTree()`
+	 * `live`, so it renders blank info/description until `TrueNASPoolComponent.datasetsTree()`
 	 * has populated it at least once.
 	 *
 	 * `prefix`/`isLast` exist so a parent can position this node correctly among
-	 * its siblings (`TrueNASPool.datasetsTree()` does exactly that, across every
+	 * its siblings (`TrueNASPoolComponent.datasetsTree()` does exactly that, across every
 	 * top-level dataset at once so columns line up across the whole pool, not just
 	 * within one subtree). Called with no arguments — e.g. via string coercion,
 	 * `` `${dataset}` `` — it renders as if it were an isolated root.
@@ -140,7 +140,7 @@ interface DatasetRow {
 
 /**
  * Builds one row per dataset (tree-prefixed name, quota/encryption info,
- * comments), depth-first. Exported for `TrueNASPool.datasetsTree()` (see
+ * comments), depth-first. Exported for `TrueNASPoolComponent.datasetsTree()` (see
  * ./pool), which collects rows across every top-level dataset before handing
  * them all to `renderRows()` together, so columns align pool-wide instead of
  * per-subtree.

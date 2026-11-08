@@ -16,13 +16,13 @@ of what's actually there. Centralizing that here means any project with a TrueNA
 
 ```typescript
 import { ByteSize } from "@chezmoi.sh/pulumi-lib";
-import { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { TrueNASPoolComponent } from "@chezmoi.sh/pulumi-truenas-pool";
 
 // zp1cs01 already exists as a physical pool on the NAS — this only builds the
 // dataset tree under it. Keys are pool-relative paths (leading "/"); nesting
 // is inferred from the path itself, so every ancestor must be declared as
 // its own entry too (e.g. "/media" before "/media/inbox").
-const zp1cs01 = new TrueNASPool("zp1cs01", {
+const zp1cs01 = new TrueNASPoolComponent("zp1cs01", {
   "/media": {},
   "/media/animes": {},
   "/media/inbox": { quota: 50 * ByteSize.Gi },
@@ -172,9 +172,9 @@ deduplicated — renders (via `datasetsTree()`) as:
 
 ```typescript
 import { ByteSize } from "@chezmoi.sh/pulumi-lib";
-import { OnOffInherit, TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { OnOffInherit, TrueNASPoolComponent } from "@chezmoi.sh/pulumi-truenas-pool";
 
-const zp1hs01 = new TrueNASPool("zp1hs01", {
+const zp1hs01 = new TrueNASPoolComponent("zp1hs01", {
   "/applications": { comments: "app data" },
   "/applications/immich": { quota: 50 * ByteSize.Gi },
   "/applications/paperless": { quota: 10 * ByteSize.Gi },
@@ -268,7 +268,7 @@ and `@chezmoi.sh/pulumi-lib`):
 Then import it **by package name** (not by relative path):
 
 ```typescript
-import { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { TrueNASPoolComponent } from "@chezmoi.sh/pulumi-truenas-pool";
 ```
 
 Install from the repository root for editing/type-checking across the workspace:
@@ -304,7 +304,7 @@ comment/JSDoc is the reference for its exact exports, so nothing here duplicates
   a `truenas.Dataset`, and its tree-rendering (`toString()`).
 - [`topology.ts`](./src/topology.ts) — `TrueNASTopology` and the ASCII box-drawing engine behind its
   `toString()`/`diskModels()`.
-- [`pool.ts`](./src/pool.ts) — `TrueNASPool`, the `ComponentResource` itself: `DatasetTree` materialization, `get()`,
+- [`pool.ts`](./src/pool.ts) — `TrueNASPoolComponent`, the `ComponentResource` itself: `DatasetTree` materialization, `get()`,
   and the two JSON-RPC-backed methods `topology()`/`datasetsTree()`.
 - [`truenas-api.ts`](./src/truenas-api.ts) — the read-only JSON-RPC 2.0 client backing `topology()`/`datasetsTree()`
   (see [Why neither goes through the managed resources](#why-neither-goes-through-the-managed-resources)).
@@ -316,7 +316,7 @@ these files directly.
 
 The package ships unit tests as **Mocha + Chai**, split to mirror `src/`'s own module layout:
 
-- [`pool.test.ts`](./src/pool.test.ts) — `TrueNASPool` materialization (from a flat `DatasetTree`) exercises real Pulumi
+- [`pool.test.ts`](./src/pool.test.ts) — `TrueNASPoolComponent` materialization (from a flat `DatasetTree`) exercises real Pulumi
   resource creation, so it uses `@pulumi/pulumi/runtime` mocks (`setMocks`) that capture every `Dataset` resource the
   pool materializes.
 - [`topology.test.ts`](./src/topology.test.ts) — `TrueNASTopology.toString()`/ `diskModels()` against fixture objects
@@ -324,10 +324,10 @@ The package ships unit tests as **Mocha + Chai**, split to mirror `src/`'s own m
   both the vdev and category level, the degraded-placeholder path when pool information is unavailable, and the model-id
   dedup.
 - [`dataset.test.ts`](./src/dataset.test.ts) — `TrueNASDataset.toString()` with `live` set directly on fixture nodes
-  (rather than going through `TrueNASPool.datasetsTree()`'s fetch). Coverage includes the
+  (rather than going through `TrueNASPoolComponent.datasetsTree()`'s fetch). Coverage includes the
   quota/encrypted/readonly/dedup/comments info column and `prefix`/`isLast` positioning.
 
-None of these test `TrueNASPool.topology()`/`datasetsTree()` themselves — the thin orchestrators that fetch over
+None of these test `TrueNASPoolComponent.topology()`/`datasetsTree()` themselves — the thin orchestrators that fetch over
 JSON-RPC then delegate to the rendering above — since that would just be re-exercising already-tested logic over a live
 network dependency that isn't a Pulumi invoke and so can't be mocked via `setMocks`.
 

@@ -4,7 +4,7 @@
 //   ./enums          closed-value truenas.Dataset arguments as TS enums
 //   ./dataset        TrueNASDataset (one ZFS dataset node + its tree rendering)
 //   ./topology       TrueNASTopology (pool vdev/disk diagram) + box drawing
-//   ./pool           TrueNASPool (the ComponentResource itself)
+//   ./pool           TrueNASPoolComponent (the ComponentResource itself)
 //   ./truenas-api     read-only JSON-RPC client backing topology()/datasetsTree()
 // -----------------------------------------------------------------------------
 

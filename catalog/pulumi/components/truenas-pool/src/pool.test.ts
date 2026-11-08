@@ -2,14 +2,14 @@ import * as pulumi from "@pulumi/pulumi";
 import { expect } from "chai";
 import { before, beforeEach, describe, it } from "mocha";
 
-import { TrueNASPool } from "./pool";
+import { TrueNASPoolComponent } from "./pool";
 
 /**
- * `TrueNASPool` materialization exercises real Pulumi resource creation
+ * `TrueNASPoolComponent` materialization exercises real Pulumi resource creation
  * (`truenas.Dataset`), so these tests register Pulumi runtime mocks and
  * record every resource the pool materializes.
  *
- * `TrueNASPool.topology()`/`datasetsTree()` themselves (the thin orchestrators
+ * `TrueNASPoolComponent.topology()`/`datasetsTree()` themselves (the thin orchestrators
  * that fetch over JSON-RPC then delegate to ./topology and ./dataset) are
  * intentionally not unit tested here — that would just be re-exercising
  * already-tested rendering (see topology.test.ts / dataset.test.ts) over a
@@ -67,9 +67,9 @@ async function drain(): Promise<void> {
 	}
 }
 
-describe("TrueNASPool dataset materialization", () => {
+describe("TrueNASPoolComponent dataset materialization", () => {
 	it("creates one Dataset per path, named after its full pool-relative path", async () => {
-		new TrueNASPool("zp1cs01", {
+		new TrueNASPoolComponent("zp1cs01", {
 			"/media": {},
 			"/media/animes": {},
 			"/media/movies": {},
@@ -96,7 +96,7 @@ describe("TrueNASPool dataset materialization", () => {
 	});
 
 	it("passes dataset args (e.g. quota) through to the Dataset resource", async () => {
-		new TrueNASPool("zp1cs01", {
+		new TrueNASPoolComponent("zp1cs01", {
 			"/media": {},
 			"/media/inbox": { quota: 100 },
 		});
@@ -106,7 +106,7 @@ describe("TrueNASPool dataset materialization", () => {
 	});
 
 	it("links datasets by path regardless of declaration order", async () => {
-		new TrueNASPool("zp1cs01", {
+		new TrueNASPoolComponent("zp1cs01", {
 			"/media/animes": {},
 			"/media": {},
 		});
@@ -118,15 +118,15 @@ describe("TrueNASPool dataset materialization", () => {
 	});
 
 	it("throws when a dataset's parent path isn't declared", () => {
-		expect(() => new TrueNASPool("zp1cs01", { "/media/animes": {} })).to.throw(
+		expect(() => new TrueNASPoolComponent("zp1cs01", { "/media/animes": {} })).to.throw(
 			'Dataset "/media/animes" has no parent dataset declared at "/media"',
 		);
 	});
 });
 
-describe("TrueNASPool dataset lookup", () => {
+describe("TrueNASPoolComponent dataset lookup", () => {
 	it("get() resolves nested datasets by pool-relative path", async () => {
-		const pool = new TrueNASPool("zp1cs01", {
+		const pool = new TrueNASPoolComponent("zp1cs01", {
 			"/media": {},
 			"/media/animes": {},
 		});
@@ -137,7 +137,7 @@ describe("TrueNASPool dataset lookup", () => {
 	});
 
 	it("get() throws for an unknown dataset path", async () => {
-		const pool = new TrueNASPool("zp1cs01", { "/media": {} });
+		const pool = new TrueNASPoolComponent("zp1cs01", { "/media": {} });
 		await drain();
 
 		expect(() => pool.get("does/not/exist")).to.throw(

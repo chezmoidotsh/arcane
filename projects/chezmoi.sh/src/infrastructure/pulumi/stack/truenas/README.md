@@ -31,14 +31,14 @@ code. The generated human-facing documentation is published at [`docs/TRUENAS.md
 ## Adding or editing a dataset
 
 Datasets are declared as a flat, path-keyed record in the zpools files (`zpools/zp1cs01.ts`, `zpools/zp1hs01.ts`) using
-the `TrueNASPool` type from `@chezmoi.sh/pulumi-truenas-pool`. Each key is the dataset's full pool-relative path
+the `TrueNASPoolComponent` type from `@chezmoi.sh/pulumi-truenas-pool`. Each key is the dataset's full pool-relative path
 (leading `/`); nesting is inferred from the path itself, not from object nesting, so every ancestor must be declared as
 its own entry too.
 
 ### Example structure
 
 ```typescript
-export const zp1hs01 = new TrueNASPool("zp1hs01", {
+export const zp1hs01 = new TrueNASPoolComponent("zp1hs01", {
   "/applications": { compression: Compression.Lz4, atime: OnOffInherit.Off },
   "/applications/immich": { quota: 50 * ByteSize.Gi },
   "/applications/paperless": { quota: 10 * ByteSize.Gi },

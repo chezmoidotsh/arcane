@@ -1,4 +1,4 @@
-import { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { TrueNASPoolComponent } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as truenas from "@pulumi/truenas";
 
 import { SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET } from "./const";
@@ -25,7 +25,7 @@ import { SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET } from "./const";
 //   re-obtainable, or not critical enough to justify snapshot retention.
 // -----------------------------------------------------------------------------
 
-export const zp1cs01 = new TrueNASPool("zp1cs01", {
+export const zp1cs01 = new TrueNASPoolComponent("zp1cs01", {
 	"/media": { comments: "Bibliothèque multimédia du foyer" },
 	"/media/animes": { comments: "Séries animées" },
 	"/media/books": { comments: "Livres" },

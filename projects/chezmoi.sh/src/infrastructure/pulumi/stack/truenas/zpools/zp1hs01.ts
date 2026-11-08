@@ -3,7 +3,7 @@ import {
 	Compression,
 	OnOffInherit,
 	RecordSize,
-	TrueNASPool,
+	TrueNASPoolComponent,
 } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as truenas from "@pulumi/truenas";
 
@@ -42,7 +42,7 @@ import {
 //   most (e.g. K8s-managed app state).
 // -----------------------------------------------------------------------------
 
-export const zp1hs01 = new TrueNASPool("zp1hs01", {
+export const zp1hs01 = new TrueNASPoolComponent("zp1hs01", {
 	"/applications": {
 		atime: OnOffInherit.Off,
 		compression: Compression.Lz4,

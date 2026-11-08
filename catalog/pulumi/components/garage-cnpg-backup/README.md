@@ -26,9 +26,9 @@ cluster (rhodes.akn) can't use Vault for its own backup credentials (chicken-and
 ## Usage
 
 ```typescript
-import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
+import { GarageCloudNativePGObjectStoreComponent } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 
-const backup = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
+const backup = new GarageCloudNativePGObjectStoreComponent("garage-cnpg-backup", {
   projectName: "lungmen.akn",
 });
 ```
@@ -43,9 +43,9 @@ share one lifecycle:
 ```typescript
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
-import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
+import { GarageCloudNativePGObjectStoreComponent } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 
-const backup = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
+const backup = new GarageCloudNativePGObjectStoreComponent("garage-cnpg-backup", {
   projectName: "lungmen.akn",
 });
 
@@ -78,9 +78,9 @@ component.
 
 ```typescript
 import * as k8s from "@pulumi/kubernetes";
-import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
+import { GarageCloudNativePGObjectStoreComponent } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 
-const backup = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
+const backup = new GarageCloudNativePGObjectStoreComponent("garage-cnpg-backup", {
   projectName: "rhodes.akn",
 });
 
@@ -118,7 +118,7 @@ Add it to the consuming stack's `package.json` as a workspace dependency:
 Then import it **by package name** (not by relative path):
 
 ```typescript
-import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
+import { GarageCloudNativePGObjectStoreComponent } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 ```
 
 Install from the repository root for editing/type-checking across the workspace:
@@ -140,7 +140,7 @@ Three Garage resources, all parented to the `chezmoi:garage:CloudNativePGObjectS
 ## API Reference
 
 ```typescript
-export class GarageCloudNativePGObjectStore extends pulumi.ComponentResource {
+export class GarageCloudNativePGObjectStoreComponent extends pulumi.ComponentResource {
   constructor(name: string, args: GarageCloudNativePGObjectStoreArgs, opts?: pulumi.ComponentResourceOptions);
   readonly accessKeyId: pulumi.Output<string>;
   readonly secretAccessKey: pulumi.Output<string>;

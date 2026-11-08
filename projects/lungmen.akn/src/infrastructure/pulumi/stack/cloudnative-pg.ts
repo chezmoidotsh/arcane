@@ -1,4 +1,4 @@
-import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
+import { GarageCloudNativePGObjectStoreComponent } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
@@ -8,7 +8,7 @@ import * as vault from "@pulumi/vault";
 // ---------------------------------------------------------------------------
 // Creates a dedicated Garage bucket and access key for CloudNative-PG backups.
 // Credentials are pushed to Vault so CNPG picks them up via ExternalSecret.
-const component = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
+const component = new GarageCloudNativePGObjectStoreComponent("garage-cnpg-backup", {
 	projectName: "lungmen.akn",
 });
 

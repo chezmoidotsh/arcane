@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // Pool vdev/disk topology rendering: `TrueNASTopology` (the public class
-// returned by `TrueNASPool.topology()`, see ./pool) plus the ASCII box-drawing
+// returned by `TrueNASPoolComponent.topology()`, see ./pool) plus the ASCII box-drawing
 // engine behind its `toString()`. No Pulumi Output or network access here --
 // this only renders whatever `TrueNASPoolInfo`/`TrueNASDiskInfo[]` it's
 // constructed with, which is why it's unit-tested directly against fixture
@@ -20,7 +20,7 @@ import type {
  * read-only JSON-RPC call to the TrueNAS API itself (see ./truenas-api) —
  * neither topology nor per-disk model round-trips through the managed
  * `truenas.Dataset`/`truenas.Pool` resources or their data sources at all,
- * confirmed empirically. Returned by `TrueNASPool.topology()`.
+ * confirmed empirically. Returned by `TrueNASPoolComponent.topology()`.
  */
 export class TrueNASTopology {
 	private readonly diskByName: Map<string, TrueNASDiskInfo>;

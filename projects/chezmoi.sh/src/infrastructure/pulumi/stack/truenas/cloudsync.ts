@@ -1,4 +1,4 @@
-import type { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import type { TrueNASPoolComponent } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as b2 from "@pulumi/b2";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
@@ -199,8 +199,8 @@ export const legacyGlobalSync = new truenas.CloudSync("nas-backup-cloudsync", {
 
 const cloudSyncJobs: Array<{
 	description: string;
-	pool: TrueNASPool;
-	dataset: NonNullable<ReturnType<TrueNASPool["get"]>>;
+	pool: TrueNASPoolComponent;
+	dataset: NonNullable<ReturnType<TrueNASPoolComponent["get"]>>;
 	scheduler: typeof DAILY_SCHEDULE_PRESET | typeof WEEKLY_SCHEDULE_PRESET;
 	overrides?: { enabled?: boolean };
 }> = [
