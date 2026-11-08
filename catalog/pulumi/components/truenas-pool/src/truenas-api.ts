@@ -134,7 +134,7 @@ function wsQuery<T>(
 	});
 }
 
-/** What `TrueNASPool.topology()` resolves from. */
+/** What `TrueNASPoolComponent.topology()` resolves from. */
 export interface TrueNASTopologyState {
 	pool?: TrueNASPoolInfo;
 	disks: TrueNASDiskInfo[];
@@ -174,7 +174,7 @@ async function withRetry<T>(
 /**
  * Fetches pool topology + disk inventory for `poolName` over JSON-RPC,
  * retrying transient failures (see `withRetry`). Never throws: if every
- * attempt fails, returns `{ disks: [] }` so `TrueNASPool.topology()` can
+ * attempt fails, returns `{ disks: [] }` so `TrueNASPoolComponent.topology()` can
  * degrade to its placeholder instead of failing the whole `pulumi up`.
  */
 export async function fetchTopology(
@@ -205,7 +205,7 @@ export async function fetchTopology(
 /**
  * Fetches the dataset tree for `poolName` over JSON-RPC, retrying transient
  * failures (see `withRetry`). Never throws: if every attempt fails, returns
- * `[]` so `TrueNASPool.datasetsTree()` can degrade to blank info/description
+ * `[]` so `TrueNASPoolComponent.datasetsTree()` can degrade to blank info/description
  * columns instead of failing the whole `pulumi up`.
  */
 export async function fetchDatasets(

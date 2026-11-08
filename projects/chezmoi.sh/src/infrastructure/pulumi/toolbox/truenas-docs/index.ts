@@ -58,7 +58,7 @@ function flattenLiveDatasets(
 	return acc;
 }
 
-/** Attaches live dataset state onto a `TrueNASDataset` tree built by `buildDatasetTree`, matched by full pool-relative name -- the same matching `TrueNASPool.datasetsTree()` itself uses. */
+/** Attaches live dataset state onto a `TrueNASDataset` tree built by `buildDatasetTree`, matched by full pool-relative name -- the same matching `TrueNASPoolComponent.datasetsTree()` itself uses. */
 function attachLive(
 	node: TrueNASDataset,
 	fullPath: string,
@@ -82,7 +82,7 @@ interface PoolDoc {
  * own README for why). The dataset tree is filtered down to exactly the
  * datasets this stack manages (`truenas:index/dataset:Dataset` resources
  * whose own `pool` output matches `poolName`), matching what
- * `TrueNASPool.datasetsTree()` already shows today -- a dataset that exists
+ * `TrueNASPoolComponent.datasetsTree()` already shows today -- a dataset that exists
  * physically on the NAS but isn't Pulumi-managed stays invisible here too.
  */
 async function buildPoolDoc(

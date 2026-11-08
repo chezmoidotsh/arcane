@@ -7,7 +7,7 @@ import { TrueNASDataset } from "./dataset";
 /**
  * `TrueNASDataset.toString()` is plain rendering, no Pulumi Output or
  * network involved — `live` is set directly on fixture nodes here rather
- * than going through `TrueNASPool.datasetsTree()`'s fetch (see pool.test.ts
+ * than going through `TrueNASPoolComponent.datasetsTree()`'s fetch (see pool.test.ts
  * for the materialization side, which does need Pulumi mocks).
  */
 

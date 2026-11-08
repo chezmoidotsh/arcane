@@ -179,7 +179,7 @@ Limitations:
 ### Scrub/Snapshot Tasks as Plain Resources
 
 Scrub and snapshot tasks are declared as plain Pulumi `truenas.ScrubTask` and `truenas.SnapshotTask` resources alongside
-each pool, not as part of the TrueNASPool component abstraction. This is intentional:
+each pool, not as part of the TrueNASPoolComponent component abstraction. This is intentional:
 
 - A scrub task targets an entire pool (not a single dataset)
 - A snapshot task targets one dataset path + a recursion flag

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// `TrueNASPool`: groups a ZFS dataset hierarchy, declared as a flat
+// `TrueNASPoolComponent`: groups a ZFS dataset hierarchy, declared as a flat
 // `DatasetTree` (path -> args), under an existing physical pool. It's the
 // only place that actually reaches out to TrueNAS over JSON-RPC (see
 // ./truenas-api) -- `topology()`/`datasetsTree()` fetch once, then delegate
@@ -50,11 +50,11 @@ export type DatasetTree = Record<string, DatasetArgs>;
  * already exists by the time it's linked in, regardless of key order in the
  * source object.
  *
- * Exported (not just used by `TrueNASPool`'s own constructor) so
+ * Exported (not just used by `TrueNASPoolComponent`'s own constructor) so
  * `../../../../projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas-docs/generate.ts`
  * can build the same tree shape from a set of Pulumi-managed dataset paths
  * read back out of a `pulumi stack export`, to render `datasetsTree()`-style
- * output without a running `TrueNASPool` instance.
+ * output without a running `TrueNASPoolComponent` instance.
  */
 export function buildDatasetTree(tree: DatasetTree): TrueNASDataset[] {
 	const nodes = new Map<string, TrueNASDataset>();
@@ -92,7 +92,7 @@ export function buildDatasetTree(tree: DatasetTree): TrueNASDataset[] {
  * topology) already exists physically; this only builds and manages the
  * dataset hierarchy under it.
  */
-export class TrueNASPool extends pulumi.ComponentResource {
+export class TrueNASPoolComponent extends pulumi.ComponentResource {
 	private readonly datasets: TrueNASDataset[];
 	private readonly byPath = new Map<string, TrueNASDataset>();
 	private topologyOutput?: pulumi.Output<TrueNASTopology>;

@@ -31,7 +31,7 @@ what's actually deployed, not what's about to change.
    `nfs4AclAssignments` stack output directly.
 
 3. **Fetch live topology/dataset state**: `index.ts` calls `fetchTopology()`/`fetchDatasets()` from
-   `@chezmoi.sh/pulumi-truenas-pool` directly (the same live, read-only JSON-RPC fetch `TrueNASPool.topology()`/
+   `@chezmoi.sh/pulumi-truenas-pool` directly (the same live, read-only JSON-RPC fetch `TrueNASPoolComponent.topology()`/
    `datasetsTree()` always used — never round-tripped through managed resource state), filtered to just the datasets
    this stack manages (`truenas:index/dataset:Dataset` resources' own `mountPoint` output), matching what the doc
    already showed before this rewrite.
