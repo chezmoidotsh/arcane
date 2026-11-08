@@ -1,5 +1,5 @@
 import * as garage from "@axnic/pulumi-garage";
-import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
+import { GarageCloudNativePGObjectStoreComponent } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
@@ -14,7 +14,7 @@ import { rhodesAknProvider } from "./kubernetes";
 // written straight into the cluster below via the Kubernetes provider — no SOPS,
 // no recovery-mode gating, both vault and pocket-id read the same
 // cnpg-backup-credentials Secret from their own namespace.
-const component = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
+const component = new GarageCloudNativePGObjectStoreComponent("garage-cnpg-backup", {
 	projectName: "rhodes.akn",
 });
 

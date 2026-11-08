@@ -17,7 +17,7 @@ export interface GarageCloudNativePGObjectStoreArgs {
  * vault.kv.SecretV2 alongside this component, parented to the component
  * instance, so both share the key's lifecycle.
  */
-export class GarageCloudNativePGObjectStore extends pulumi.ComponentResource {
+export class GarageCloudNativePGObjectStoreComponent extends pulumi.ComponentResource {
 	public readonly accessKeyId: pulumi.Output<string>;
 	public readonly secretAccessKey: pulumi.Output<string>;
 	public readonly bucketName: pulumi.Output<string>;
