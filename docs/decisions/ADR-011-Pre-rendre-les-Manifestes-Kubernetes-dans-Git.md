@@ -219,7 +219,7 @@ de détecter la dérive de `dist/` au plus tôt, sans bloquer les flux de dével
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Script de rendu                      | `scripts/dist:render` (options `--all`, `--staged-only`, `--changed`, `--branch`, chemin)                                                                                                           |
 | Hook de pré-commit                   | `dist-render-pre-commit` dans `.rtunk/rtunk.yaml` : `scripts/dist:render --staged-only`, déclenché par `projects/*/src/apps/**`, `projects/*/src/infrastructure/kubernetes/**` et `catalog/helm/**` |
-| Contrôle de pré-push                 | Aucune action dédiée à `dist/` : seul `trunk-check-pre-push` est activé ; suivi par [#1379](https://github.com/chezmoidotsh/arcane/issues/1379)                                                     |
+| Contrôle de pré-push | `dist-render-pre-push` dans `.rtunk/rtunk.yaml` : `scripts/dist:render --branch --check` échoue si le `dist/` des projets modifiés par rapport à la branche parente est périmé, sans rien écrire ni indexer ; `trunk-check-pre-push` reste activé |
 | Barrière de fraîcheur en CI          | `.github/workflows/push,pull_request.dist-staleness-check.yaml` : `scripts/dist:render --all` puis échec si `git diff` sur `projects/*/dist/**` n'est pas vide                                      |
 | Conformité OPA                       | `merge_group.compliance-full.yaml` et `push,pull_request.compliance-partial.yaml` contrôlent chaque `dist/` modifié (ou tous, pour le workflow complet)                                             |
 | Migration de `rhodes.akn`            | `projects/rhodes.akn/dist/` : `apps/` (`pocket-id`, `vault`), `argocd/` et `infrastructure/kubernetes/` (8 composants)                                                                              |
@@ -277,6 +277,8 @@ projects/<cluster>/
 
 ## Historique des modifications
 
+- **2026-11-08** : **FEATURE** : Ajout de l'action de pré-push `dist-render-pre-push`, troisième couche du contrôle de
+  fraîcheur ; mise à jour de `Détails de mise en œuvre et état` ([#1379](https://github.com/chezmoidotsh/arcane/issues/1379)).
 - **2026-10-11** : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections
   renommées, sommaire manuel supprimé, titre reformulé (« Rendered Manifests Pattern ») et aligné sur le nom de fichier,
   section `Pour aller plus loin`, bloc de code de la convention de répertoires typé `text`, `template-version` ajouté.
