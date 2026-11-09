@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# [MISE] description="Upload the signoz LXC template to Proxmox"
+# [MISE] depends=["lxc:build"]
+# [MISE] dir="{{config_root}}"
+# [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+
+lxc_init "signoz" "${CONFIG_ROOT}" _signoz
+lxc_push "${usage_pve_host}"

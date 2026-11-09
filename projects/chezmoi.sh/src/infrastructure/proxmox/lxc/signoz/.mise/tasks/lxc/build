@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the signoz LXC template with Cloudflare token baked in"
+# [MISE] dir="{{config_root}}"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+
+lxc_init "signoz" "${CONFIG_ROOT}" _signoz
+lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN
+lxc_build

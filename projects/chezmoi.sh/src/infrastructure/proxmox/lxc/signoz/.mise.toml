@@ -1,0 +1,63 @@
+# =============================================================================
+# signoz LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs SigNoz (signoz.chezmoi.sh) with Caddy HTTPS termination.
+#
+# Usage:
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from Pulumi → secrets/caddy.sops.env
+#   mise run lxc:build                                     # Build the LXC tarball with Cloudflare token baked in
+#   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> --vmid <vmid>        # Upgrade a running LXC in place
+#
+# Typical workflow (first time):
+#   mise run lxc:secrets:sync              # Requires Pulumi (pulumi up first)
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#
+# Typical workflow (upgrade):
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#   mise run lxc:upgrade -- pve.lan --vmid <vmid>
+#
+# File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - Pulumi CLI logged into the chezmoi.sh stack (see src/infrastructure/pulumi/.mise.toml); run pulumi up first
+#   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
+#   - SSH key-based access to root@<pve-host> (for lxc:push)
+# =============================================================================
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secret Management
+# -----------------------------------------------------------------------------
+# Delegates to the pulumi:cloudflare-token:signoz task (defined in the
+# chezmoi.sh project .mise.toml), which fetches the Pulumi stack output and
+# writes it into secrets/caddy.sops.env so it can be baked into the LXC image
+# at build time.
+#
+# Requires `pulumi up` to have run in src/infrastructure/pulumi first.
+
+[tasks."lxc:secrets:sync"]
+description = "Fetch Cloudflare DNS-01 token from Pulumi and write secrets/caddy.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+  mise run pulumi:cloudflare-token:signoz
+  echo "[SUCCESS] caddy.sops.env synced from Pulumi." >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with token baked in)
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)
