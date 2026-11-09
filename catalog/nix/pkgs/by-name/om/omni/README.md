@@ -49,9 +49,8 @@ depend on the git index).
 
 ## Use
 
-- **NixOS module** (the supported path): `catalog/nix/siderolabs/omni/omni.nix` uses this package by default
-  (`services.omni.package`). The `omni` LXC appliance consumes it
-  (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni`).
+- **NixOS module** (the supported path): the `omni` LXC (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni`) sets
+  `services.omni.package` to this package in its flake and runs it through its own `modules/omni.nix`.
 - **Binary**: `nix run .#packages.x86_64-linux.omni -- --help`, or install `bin/omni` anywhere.
 - **Container**: the package ships no image. Use upstream's `ghcr.io/siderolabs/omni`, or wrap the binary with
   `pkgs.dockerTools.buildLayeredImage { name = "omni"; contents = [ omni ]; config.Entrypoint = [ "/bin/omni" ]; }`.

@@ -33,7 +33,7 @@
 
       # Appliance image version — CalVer (YYYY.MM.DD). Bump before each build;
       # append -N for multiple builds on the same day.
-      version = "2026.10.09";
+      version = "2026.11.09";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, read from the environment so the build stays pure
@@ -51,6 +51,7 @@
         modules = [
           # allowUnfree required: omni-infra-provider-proxmox is BSL-1.1.
           { nixpkgs.config.allowUnfree = true; }
+          { services.omniInfraProviderProxmox.package = arcane-catalog.packages.${system}.omni-infra-provider-proxmox; }
           arcane-catalog.nixosModules.lxcAgent
           arcane-catalog.nixosModules.staticNetwork
           ./modules

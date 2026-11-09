@@ -17,7 +17,7 @@
 # flags that accept port only (--event-sink-port, WireGuard) use types.int.
 #
 # OIDC: any provider works (Dex, Pocket-Id, …). The optional dex.nix module
-# in this directory configures a co-located Dex instance.
+# next to this one (dex.nix) configures a co-located Dex instance.
 #
 # After first boot, back up:
 #   /var/lib/omni/omni.asc      — GPG key (losing it = losing all etcd state)
@@ -36,11 +36,10 @@ in
     enable = mkEnableOption "Omni Talos Linux management platform";
 
     # ── Binary ──────────────────────────────────────────────────────────────
-    # Packaged in catalog/nix/pkgs/by-name/om/omni/ (version + hashes live there).
     package = mkOption {
       type = types.package;
-      defaultText = literalExpression "pkgs.callPackage <catalog>/pkgs/by-name/om/omni/package.nix { }";
-      description = "Omni binary package. Override to use a custom build.";
+      example = literalExpression "arcane-catalog.packages.x86_64-linux.omni";
+      description = "Omni package (catalog/nix/pkgs/by-name/om/omni), set by the LXC flake.";
     };
 
     # ── Identity ─────────────────────────────────────────────────────────────
@@ -209,9 +208,6 @@ in
   };
 
   config = mkMerge [
-
-    # ── Package default (always, even when enable = false) ────────────────────
-    { services.omni.package = mkDefault (pkgs.callPackage ../../pkgs/by-name/om/omni/package.nix { }); }
 
     # ── Service configuration (only when enabled) ─────────────────────────────
     (mkIf cfg.enable {

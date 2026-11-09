@@ -4,9 +4,9 @@
   # ---------------------------------------------------------------------------
   # All-in-one flake: NixOS modules + site config → Proxmox-importable .tar.xz.
   #
-  # The Omni binary is fetched from the upstream GitHub release (statically
-  # linked Go binary, no patchelf needed). Module library lives in:
-  #   catalog/nix/siderolabs/omni/   — Omni service + Dex OIDC + PKI init
+  # Omni is built from source by the catalog package (pkgs/by-name/om/omni).
+  # Module library lives in:
+  #   ./modules/omni.nix, ./modules/dex.nix — Omni service + Dex OIDC + PKI init
   #   catalog/nix/modules/lxc-o11y-agent — catalog.lxcAgent (journal → o11y)
   #   ./modules/                     — Caddy HTTPS termination + LXC hardening + o11y
   #
@@ -63,6 +63,7 @@
           # allowUnfree is required because Omni is BSL-1.1, which nixpkgs
           # classifies as unfree.
           { nixpkgs.config.allowUnfree = true; }
+          { services.omni.package = arcane-catalog.packages.${system}.omni; }
           arcane-catalog.nixosModules.lxcAgent
           arcane-catalog.nixosModules.staticNetwork
           ./modules

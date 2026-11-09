@@ -1,6 +1,7 @@
 { ... }: {
   imports = [
-    ../../../../../../../../catalog/nix/siderolabs/omni
+    ./omni.nix
+    ./dex.nix
     ./caddy.nix
     ./hardening.nix
     ./o11y.nix
