@@ -5,9 +5,8 @@
 
   outputs = { self, nixpkgs, ... }:
     let
-      # The packages only target Linux; build them from another host with
-      # `nix build .#packages.x86_64-linux.<name>` and a Linux builder.
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      # Every package builds on all of these systems (see each README).
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
 
       # Omni is BSL-1.1, which nixpkgs classifies as unfree.
       pkgsFor = system: import nixpkgs { inherit system; config.allowUnfree = true; };
