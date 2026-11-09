@@ -6,6 +6,7 @@ export { observabilityDns01Token, observabilityTailscaleOauthKey } from "./stack
 export { omniDns01Token } from "./stack/omni";
 export { adminGroupId, familleGroupId, maisonGroupId } from "./stack/pocket-id";
 export { pbsDns01Token, pveBackupTokenId, pveBackupTokenSecret } from "./stack/proxmox-backup-server";
+export { signozDns01Token } from "./stack/signoz";
 export {
   fireStickTvPasswordSecret,
   homeAssistantPasswordSecret,

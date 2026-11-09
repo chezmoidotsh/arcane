@@ -13,6 +13,7 @@
 #   mise run pulumi:cloudflare-token:observability  # Inject Pulumi's Cloudflare token into observability's SOPS secret
 #   mise run pulumi:cloudflare-token:omni           # Inject Pulumi's Cloudflare token into omni's SOPS secret
 #   mise run pulumi:cloudflare-token:oci-registry   # Inject Pulumi's Cloudflare token into oci-registry's SOPS secret
+#   mise run pulumi:cloudflare-token:signoz         # Inject Pulumi's Cloudflare token into signoz's SOPS secret
 #   mise run pulumi:tailscale-oauth:observability   # Inject Pulumi's Tailscale OAuth key into observability's SOPS secret
 #   mise run bao:smb:drift-check                    # Check Pulumi vs. Vault drift for TrueNAS SMB passwords (hash-only)
 #
@@ -63,7 +64,7 @@ run = "ansible-playbook -i inventory/production.yaml truenas-audit.yaml"
 # Cloudflare Token Retrieval — Pulumi to LXC SOPS secrets
 # -----------------------------------------------------------------------------
 # Cloudflare DNS-01 tokens for the LXC appliances (observability, omni,
-# oci-registry) are created by the Pulumi stack in src/infrastructure/pulumi/,
+# oci-registry, signoz) are created by the Pulumi stack in src/infrastructure/pulumi/,
 # not pushed to Vault: this stack runs upstream of any Kubernetes cluster, so
 # Vault (which itself lives inside rhodes.akn) can't be a dependency here. Each
 # token only exists as a Pulumi stack output.
@@ -131,6 +132,24 @@ run = '''
     "{{ config_root }}/src/infrastructure/proxmox/lxc/oci-registry/secrets/caddy.sops.env" \
     '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
   echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in oci-registry/secrets/caddy.sops.env" >&2
+'''
+
+[tasks."pulumi:cloudflare-token:signoz"]
+description = "Fetch the signoz LXC's Cloudflare token from Pulumi and inject it into its SOPS secret"
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(pulumi stack output signozDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  SECRET="{{ config_root }}/src/infrastructure/proxmox/lxc/signoz/secrets/caddy.sops.env"
+  if [[ -f "${SECRET}" ]]; then
+    sops set --input-type dotenv --output-type dotenv "${SECRET}" '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
+  else
+    # First run: the file does not exist yet, create it encrypted.
+    printf 'CLOUDFLARE_API_TOKEN=%s\n' "${TOKEN}" \
+      | sops encrypt --input-type dotenv --output-type dotenv --filename-override "${SECRET}" /dev/stdin > "${SECRET}"
+  fi
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in signoz/secrets/caddy.sops.env" >&2
 '''
 
 # -----------------------------------------------------------------------------
