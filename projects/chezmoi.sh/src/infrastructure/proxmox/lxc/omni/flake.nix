@@ -37,10 +37,10 @@
 
       # Appliance image version — CalVer (YYYY.MM.DD), used to name the
       # Proxmox template (omni.<date>-amd64.tar.xz). The Omni component
-      # version itself is tracked in catalog/nix/siderolabs/omni/omni.nix
+      # version itself is tracked in catalog/nix/pkgs/by-name/om/omni/package.nix
       # and bumped by Renovate. Bump this date before every `mise run
       # lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.10.09";
+      version = "2026.11.09";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.

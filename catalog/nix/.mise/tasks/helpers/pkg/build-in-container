@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# [MISE] description="Build a catalog package for another system, inside a container"
+# [MISE] dir="{{config_root}}"
+# [MISE] hide=true
+# [USAGE] arg "<package>" help="Attribute of the catalog flake (omni, signoz, signoz-otel-collector, ...)"
+# [USAGE] flag "-o --output <dir>" help="Where the build output is copied (default: <repo>/.mise/nix/<system>/<package>)"
+# [USAGE] flag "-s --system <system>" help="x86_64-linux or aarch64-linux" default="x86_64-linux" env="NIX_SYSTEM"
+#
+# helpers:pkg:build-in-container — build a catalog package for another system, inside a container.
+# Called by the `helpers:pkg:build:cross` helper (see catalog/nix/.mise.toml), not meant to be run by hand.
+#
+# This is not a real cross-compilation: the build runs natively inside a nixos/nix container of
+# the target platform, so a macOS host without a Linux builder can produce Linux outputs. It is
+# fast when the container platform matches the host (aarch64-linux on Apple Silicon) and slow
+# when it has to be emulated (x86_64-linux on Apple Silicon: expect tens of minutes for the Go
+# and UI builds). The Nix store and the fetcher/eval cache (~/.cache/nix: flake inputs, tarballs) live in per-system
+# Docker volumes, so later builds neither rebuild nor re-download anything.
+set -euo pipefail
+
+package="${usage_package:?}"
+system="${usage_system:?}"
+
+case "${system}" in
+x86_64-linux) platform="linux/amd64" ;;
+aarch64-linux) platform="linux/arm64" ;;
+*)
+	echo "[ERROR] unsupported system '${system}' (x86_64-linux or aarch64-linux)" >&2
+	exit 1
+	;;
+esac
+
+command -v docker >/dev/null || {
+	echo "[ERROR] docker is required for a cross build" >&2
+	exit 1
+}
+
+catalog="$(pwd)"
+out="${usage_output:-$(cd "${catalog}/../.." && pwd)/.mise/nix/${system}/${package}}"
+mkdir -p "${out}"
+volume="arcane-nix-${system}"
+cache_volume="arcane-nix-cache-${system}"
+
+echo "[cross] package : ${package}" >&2
+echo "[cross] target  : ${system} (container platform ${platform})" >&2
+echo "[cross] catalog : ${catalog} (mounted read-only)" >&2
+echo "[cross] cache   : docker volumes ${volume} (Nix store), ${cache_volume} (fetcher/eval cache)" >&2
+echo "[cross] output  : ${out}" >&2
+echo "[cross] building, this can take a long time the first time..." >&2
+
+# A terminal on stdout gets a pseudo-tty, so Nix shows its live progress.
+tty=()
+if [[ -t 1 ]]; then
+	tty=(-t)
+fi
+
+# sandbox and syscall filtering are disabled: the container is already the sandbox, and seccomp
+# filtering fails under emulation.
+# The result is copied (symlinks resolved, so it is self-contained) to ${out}, because the store
+# itself stays in the volume. A binary linked against the store (a dynamic ELF) still needs it.
+docker run --rm ${tty[@]+"${tty[@]}"} --platform "${platform}" \
+	-v "${catalog}":/src:ro \
+	-v "${out}":/out \
+	-v "${volume}":/nix \
+	-v "${cache_volume}":/root/.cache/nix \
+	-w /src \
+	-e NIX_CONFIG=$'experimental-features = nix-command flakes\nfilter-syscalls = false\nsandbox = false' \
+	nixos/nix \
+	sh -c '"$@" && rm -rf /out/* && cp -rL /tmp/result/. /out/ && chmod -R u+w /out' _ \
+	nix build --out-link /tmp/result --no-write-lock-file \
+	"path:/src#packages.${system}.${package}"
+
+echo "[cross] done: ${package} built for ${system} -> ${out}" >&2

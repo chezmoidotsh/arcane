@@ -106,11 +106,9 @@ imports = [
 
 #### Binary
 
-| Option    | Type          | Default    | Description                                     |
-| --------- | ------------- | ---------- | ----------------------------------------------- |
-| `version` | `str`         | `"v1.8.2"` | Omni release version (GitHub releases).         |
-| `hashes`  | `attrsOf str` | —          | SRI hashes keyed by system (`x86_64-linux`, …). |
-| `package` | `package`     | derived    | Override to use a custom build.                 |
+| Option    | Type      | Default | Description                     |
+| --------- | --------- | ------- | ------------------------------- |
+| `package` | `package` | derived | Override to use a custom build. |
 
 #### Storage
 
@@ -220,15 +218,16 @@ Omni service account key) are baked into the image at build time via `_module.ar
 
 ## Version management
 
-Both `omni.nix` and `infra-provider/proxmox.nix` carry an `# oripathy:` annotation right above the
-`default = "..."` line of their `version` option:
+Omni itself is packaged in `catalog/nix/pkgs/by-name/om/omni/package.nix` (nixpkgs layout, exposed as
+`packages.<system>.omni` by the catalog flake). Its `version` line carries the `# oripathy:` annotation:
 
 ```nix
 # oripathy: type=release name=omni upstream=github.com/siderolabs/omni tagPrefix=v
-default = "v1.12.2";
+version = "1.12.2";
 ```
 
-Bump `version` and `hashes` together, by hand. Oripathy reports when a release is worth bumping.
+Bump `version` and the per-system hashes of that file together, by hand. The Proxmox infra provider still carries its
+own `version` / `hashes` options in `infra-provider/proxmox.nix`. Oripathy reports when a release is worth bumping.
 
 ## Troubleshooting
 
