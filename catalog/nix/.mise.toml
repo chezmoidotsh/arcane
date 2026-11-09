@@ -1,0 +1,43 @@
+# =============================================================================
+# catalog/nix — shared maintenance helpers
+# =============================================================================
+# Hidden `helpers:pkg:*` tasks used by the per-package `.mise.toml` of pkgs/by-name
+# (mise merges this file into them), so each package only declares its name:
+#
+#   helpers:pkg:eval <package>               # Check the package evaluates on every system
+#   helpers:pkg:build:native <package>       # Build it for this machine's system
+#   helpers:pkg:build:cross <package>        # Build it for another system in a container
+#                                            # (--system / NIX_SYSTEM, default x86_64-linux)
+#
+# The container build and the version bump are the file tasks .mise/tasks/helpers/pkg/build-in-container
+# and .mise/tasks/helpers/pkg/update-hashes (the packages call the latter directly from `pkg:update`).
+# =============================================================================
+
+[tasks."helpers:pkg:eval"]
+description = "Evaluate a catalog package for every system exposed by the flake"
+hide = true
+dir = "{{ config_root }}"
+usage = 'arg "<package>" help="Package attribute, e.g. signoz"'
+run = '''
+  set -euo pipefail
+  for system in x86_64-linux aarch64-linux aarch64-darwin; do
+    nix eval --raw --no-write-lock-file "path:.#packages.${system}.${usage_package}.name" && echo " (${system})"
+  done
+'''
+
+[tasks."helpers:pkg:build:native"]
+description = "Build a catalog package for this machine's system"
+hide = true
+dir = "{{ config_root }}"
+usage = 'arg "<package>" help="Package attribute, e.g. signoz"'
+run = 'nix build --no-link --print-out-paths --no-write-lock-file "path:.#${usage_package}"'
+
+[tasks."helpers:pkg:build:cross"]
+description = "Build a catalog package for another system inside a container"
+hide = true
+dir = "{{ config_root }}"
+usage = '''
+  arg "<package>" help="Package attribute, e.g. signoz"
+  flag "-s --system <system>" help="x86_64-linux or aarch64-linux" default="x86_64-linux" env="NIX_SYSTEM"
+'''
+run = 'mise run helpers:pkg:build-in-container --system "${usage_system}" "${usage_package}"'

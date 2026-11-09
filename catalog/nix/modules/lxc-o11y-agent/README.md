@@ -54,9 +54,9 @@ VictoriaLogs loki-like layout and forwarded over the Vector native protocol. A 2
 without dropping events.
 
 **Metrics** — One `prometheus_scrape` source per job (required for per-job labels). A remap transform stamps every
-series with `job`, `node` and `host_name` (OTel `host.name`, same value as logs) labels before shipping via `prometheus_remote_write`. Vector's own internal metrics are always
-included. A 256 MiB disk buffer absorbs outages; newest samples are dropped when full (point-in-time data is
-replaceable).
+series with `job`, `node` and `host_name` (OTel `host.name`, same value as logs) labels before shipping via
+`prometheus_remote_write`. Vector's own internal metrics are always included. A 256 MiB disk buffer absorbs outages;
+newest samples are dropped when full (point-in-time data is replaceable).
 
 ---
 
@@ -80,7 +80,7 @@ Use `lxc-o11y-agent` on **every Proxmox LXC that runs NixOS with systemd**.
 # flake.nix
 inputs = {
   nixpkgs.url    = "github:NixOS/nixpkgs/nixos-unstable";
-  arcane-catalog = {
+  arcane = {
     url = "path:../../../../../../catalog/nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -91,14 +91,14 @@ inputs = {
 
 ```nix
 # flake.nix — outputs
-outputs = { self, nixpkgs, arcane-catalog, ... }:
+outputs = { self, nixpkgs, arcane, ... }:
   let
     system = "x86_64-linux";
   in {
     nixosConfigurations.default = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        arcane-catalog.nixosModules.lxcAgent
+        arcane.nixosModules.lxcAgent
         ./modules                          # your LXC-specific modules
       ];
     };

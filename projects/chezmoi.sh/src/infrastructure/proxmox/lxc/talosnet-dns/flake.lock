@@ -1,6 +1,6 @@
 {
   "nodes": {
-    "arcane-catalog": {
+    "arcane": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -32,7 +32,7 @@
     },
     "root": {
       "inputs": {
-        "arcane-catalog": "arcane-catalog",
+        "arcane": "arcane",
         "nixpkgs": "nixpkgs"
       }
     }

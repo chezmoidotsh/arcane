@@ -40,25 +40,10 @@ in
     enable = mkEnableOption "Omni Infrastructure Provider for Proxmox";
 
     # ── Binary ──────────────────────────────────────────────────────────────
-    version = mkOption {
-      type = types.str;
-      # oripathy: type=release name=omni-infra-provider-proxmox upstream=github.com/siderolabs/omni-infra-provider-proxmox tagPrefix=v
-      default = "v0.2.0";
-      description = "Release version to fetch from GitHub.";
-    };
-
-    hashes = mkOption {
-      type = types.attrsOf types.str;
-      description = "SRI hashes keyed by system. Bump alongside version.";
-      default = {
-        "x86_64-linux" = "sha256-8ZyKANwEOw+cEhAqCkSxcvtwdqtw2cA0eAnnXLwuM3I=";
-        "aarch64-linux" = "sha256-Spid0K7IgN0GrZ6AMUzqCOEx7dCsvjdGXSaJeBPkOyM=";
-      };
-    };
-
     package = mkOption {
       type = types.package;
-      defaultText = literalExpression "derived from version + hashes";
+      example = literalExpression "arcane.packages.x86_64-linux.omni-infra-provider-proxmox";
+      description = "Provider package (catalog/nix/pkgs/by-name/om/omni-infra-provider-proxmox), set by the LXC flake.";
     };
 
     # ── Provider identity ────────────────────────────────────────────────────
@@ -109,47 +94,6 @@ in
   };
 
   config = mkIf cfg.enable {
-
-    # ── Package default ────────────────────────────────────────────────────
-    services.omniInfraProviderProxmox.package = mkDefault (
-      let
-        system = pkgs.stdenv.hostPlatform.system;
-        archMap = { "x86_64-linux" = "amd64"; "aarch64-linux" = "arm64"; };
-        arch = archMap.${system}
-          or (throw "omni-infra-provider-proxmox: unsupported system ${system}");
-        hash = cfg.hashes.${system}
-          or (throw "omni-infra-provider-proxmox: no hash for ${system}");
-      in
-      pkgs.stdenvNoCC.mkDerivation {
-        pname = "omni-infra-provider-proxmox";
-        version = cfg.version;
-
-        src = pkgs.fetchurl {
-          url = "https://github.com/siderolabs/omni-infra-provider-proxmox/releases/download/${cfg.version}/omni-infra-provider-proxmox-linux-${arch}";
-          inherit hash;
-        };
-
-        dontUnpack = true;
-        dontConfigure = true;
-        dontBuild = true;
-
-        installPhase = ''
-          runHook preInstall
-          install -Dm755 "$src" "$out/bin/omni-infra-provider-proxmox"
-          runHook postInstall
-        '';
-
-        meta = with lib; {
-          description = "Omni infrastructure provider for Proxmox (upstream binary)";
-          homepage = "https://github.com/siderolabs/omni-infra-provider-proxmox";
-          changelog = "https://github.com/siderolabs/omni-infra-provider-proxmox/releases/tag/${cfg.version}";
-          license = licenses.bsl11;
-          platforms = [ "x86_64-linux" "aarch64-linux" ];
-          mainProgram = "omni-infra-provider-proxmox";
-          sourceProvenance = [ sourceTypes.binaryNativeCode ];
-        };
-      }
-    );
 
     # ── Service user ────────────────────────────────────────────────────────
     users.users.infra-provider = {

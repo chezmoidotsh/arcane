@@ -1,33 +1,15 @@
-# SideroLabs Omni — NixOS Modules
+# Omni — NixOS modules
 
-[![Omni](https://img.shields.io/badge/siderolabs-omni-blue?logo=talos&logoColor=white)](https://omni.siderolabs.com)
-![License](https://img.shields.io/badge/license-BSL--1.1-orange)
-
-NixOS modules for [SideroLabs Omni](https://omni.siderolabs.com) — the Talos Linux management platform — and its
-infrastructure provider for Proxmox.
+NixOS modules of the `omni` LXC for [Omni](https://omni.siderolabs.com), the Talos Linux management platform. They are
+specific to this appliance (nothing else consumes them) and use the `omni` package built from source in
+`catalog/nix/pkgs/by-name/om/omni`, which the LXC flake injects through `services.omni.package`.
 
 ## About
 
-This directory contains three composable NixOS modules:
-
-| Module                       | Purpose                                                            |
-| ---------------------------- | ------------------------------------------------------------------ |
-| `omni.nix`                   | Omni Talos management platform — PKI, GPG, WireGuard, OIDC, SQLite |
-| `dex.nix`                    | Optional co-located Dex OIDC provider                              |
-| `infra-provider/proxmox.nix` | Omni infrastructure provider for Proxmox VM provisioning           |
-
-Import all three via `default.nix`, or cherry-pick individual modules.
-
-```nix
-# Import everything
-imports = [ ./path/to/catalog/nix/siderolabs/omni ];
-
-# Or import individually
-imports = [
-  ./path/to/catalog/nix/siderolabs/omni/omni.nix
-  ./path/to/catalog/nix/siderolabs/omni/dex.nix
-];
-```
+| Module     | Purpose                                                            |
+| ---------- | ------------------------------------------------------------------ |
+| `omni.nix` | Omni Talos management platform — PKI, GPG, WireGuard, OIDC, SQLite |
+| `dex.nix`  | Optional co-located Dex OIDC provider (`services.omni.dex`)        |
 
 ## Quick start
 
@@ -76,22 +58,6 @@ imports = [
 }
 ```
 
-### Proxmox infrastructure provider
-
-```nix
-{
-  services.omniInfraProviderProxmox = {
-    enable = true;
-    omniApiEndpoint = "https://omni.example.com/";
-    proxmox = {
-      url = "https://pve.lan:8006/api2/json";
-      username = "omni";
-      realm = "pve";
-    };
-  };
-}
-```
-
 ## Configuration reference
 
 ### `services.omni` — Omni Talos management platform
@@ -106,11 +72,9 @@ imports = [
 
 #### Binary
 
-| Option    | Type          | Default    | Description                                     |
-| --------- | ------------- | ---------- | ----------------------------------------------- |
-| `version` | `str`         | `"v1.8.2"` | Omni release version (GitHub releases).         |
-| `hashes`  | `attrsOf str` | —          | SRI hashes keyed by system (`x86_64-linux`, …). |
-| `package` | `package`     | derived    | Override to use a custom build.                 |
+| Option    | Type      | Default | Description                                    |
+| --------- | --------- | ------- | ---------------------------------------------- |
+| `package` | `package` | —       | Omni package, set by the LXC flake (required). |
 
 #### Storage
 
@@ -200,36 +164,6 @@ Password hashes are read from `environmentFile` at Nix eval time and baked into 
 htpasswd -bnBC 12 "" '<password>' | tr -d ':\n'
 ```
 
-### `services.omniInfraProviderProxmox` — Proxmox infrastructure provider
-
-| Option                       | Type    | Default     | Description                                      |
-| ---------------------------- | ------- | ----------- | ------------------------------------------------ |
-| `enable`                     | `bool`  | `false`     | Enable the provider.                             |
-| `version`                    | `str`   | `"v0.1.0"`  | Release version (GitHub releases).               |
-| `hashes`                     | `attrs` | —           | SRI hashes keyed by system.                      |
-| `package`                    | `pkg`   | derived     | Override to use a custom build.                  |
-| `id`                         | `str`   | `"proxmox"` | Provider ID in Omni (`--id`).                    |
-| `omniApiEndpoint`            | `str`   | —           | Omni API endpoint URL (trailing slash required). |
-| `proxmox.url`                | `str`   | —           | Proxmox REST API URL.                            |
-| `proxmox.username`           | `str`   | `"root"`    | Proxmox API username (`user`).                   |
-| `proxmox.realm`              | `str`   | `"pam"`     | Proxmox authentication realm.                    |
-| `proxmox.insecureSkipVerify` | `bool`  | `false`     | Skip TLS verification (self-signed certs only).  |
-
-The provider is stateless with no inbound ports. It connects outbound to Omni and Proxmox. Secrets (Proxmox password,
-Omni service account key) are baked into the image at build time via `_module.args`.
-
-## Version management
-
-Both `omni.nix` and `infra-provider/proxmox.nix` carry an `# oripathy:` annotation right above the
-`default = "..."` line of their `version` option:
-
-```nix
-# oripathy: type=release name=omni upstream=github.com/siderolabs/omni tagPrefix=v
-default = "v1.12.2";
-```
-
-Bump `version` and `hashes` together, by hand. Oripathy reports when a release is worth bumping.
-
 ## Troubleshooting
 
 ### `omni-pki-init` fails with "Permission denied"
@@ -247,25 +181,18 @@ GPG key generation uses `/dev/random` and can block on entropy. On virtualized o
 Password hashes are read at Nix eval time. If the `environmentFile` was absent during `nix build`, hashes are empty and
 Dex rejects authentication. Rebuild with the secrets file present.
 
-### Provider not appearing in Omni UI
-
-Verify `omniApiEndpoint` matches the Omni URL exactly (including trailing slash). Check that `OMNI_SERVICE_ACCOUNT_KEY`
-is set in the environment file.
-
 ## Dependencies
 
-| Package                | Version | Purpose                               |
-| ---------------------- | ------- | ------------------------------------- |
-| Omni                   | v1.8.2  | Talos Linux management platform       |
-| Dex                    | nixpkgs | OIDC identity provider (optional)     |
-| OpenSSL                | nixpkgs | PKI initialization (CA + server cert) |
-| GnuPG                  | nixpkgs | Etcd encryption key generation        |
-| infra-provider-proxmox | v0.1.0  | Proxmox VM provisioning (optional)    |
+| Package | Source                                       | Purpose                               |
+| ------- | -------------------------------------------- | ------------------------------------- |
+| Omni    | `catalog/nix/pkgs/by-name/om/omni` (version) | Talos Linux management platform       |
+| Dex     | nixpkgs                                      | OIDC identity provider (optional)     |
+| OpenSSL | nixpkgs                                      | PKI initialization (CA + server cert) |
+| GnuPG   | nixpkgs                                      | Etcd encryption key generation        |
 
 ## References
 
 - [Omni documentation](https://omni.siderolabs.com)
 - [Omni GitHub](https://github.com/siderolabs/omni)
-- [omni-infra-provider-proxmox](https://github.com/siderolabs/omni-infra-provider-proxmox)
 - [Talos Linux](https://www.talos.dev)
 - [Dex OIDC provider](https://github.com/dexidp/dex)

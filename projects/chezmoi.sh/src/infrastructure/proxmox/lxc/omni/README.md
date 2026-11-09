@@ -120,7 +120,7 @@ rootfs).
 ├── .mise.toml             ← mise tasks (build / push / secrets)
 ├── .mise/tasks/lxc/       ← file-based build/push/upgrade scripts
 ├── modules/
-│   ├── default.nix        ← imports catalog/nix/siderolabs/omni + locals
+│   ├── default.nix        ← imports omni.nix, dex.nix + locals
 │   ├── caddy.nix          ← HTTPS + path routing (/dex/* → Dex, / → Omni)
 │   ├── hardening.nix      ← sysctl, firewall, login surface, journald
 │   └── secrets.nix        ← writes /etc/omni/secrets at build time
@@ -398,8 +398,8 @@ separate secure location.
 
 ### Upgrading to a new Omni version
 
-1. Bump `services.omni.version` (and its `hashes`) in `catalog/nix/siderolabs/omni/omni.nix`. Renovate proposes the
-   bump.
+1. Bump the `omni` package (`mise run pkg:update -- <version>` in `catalog/nix/pkgs/by-name/om/omni`). Renovate proposes
+   the bump.
 2. Rebuild and upload the LXC template:
    ```sh
    mise run lxc:build
@@ -502,7 +502,7 @@ pct start ${VMID}
 
 1. **`boot.kernelModules` in the catalog module.** The line is inherited from the VM build and is a no-op (failed
    silently) under LXC. If you want clean `systemctl status`, gate it with `lib.mkIf (!config.boot.isContainer)` in
-   `catalog/nix/siderolabs/omni/omni.nix` — that change benefits the OCI registry LXC too.
+   `modules/omni.nix`.
 2. **No automated NixOS test.** A `pkgs.testers.runNixOSTest` that boots the LXC and asserts the Dex discovery doc and
    Omni `/healthz` would catch regressions in the catalog modules before they reach Proxmox.
 3. **No alert on certificate expiry.** Caddy renews silently; if ACME breaks, the cert expires unnoticed. A
@@ -516,6 +516,6 @@ pct start ${VMID}
 - [Omni GitHub — siderolabs/omni](https://github.com/siderolabs/omni)
 - [Talos Linux](https://www.talos.dev)
 - [Dex OIDC provider](https://github.com/dexidp/dex)
-- [Catalog NixOS modules](../../../../../../../catalog/nix/siderolabs/omni/) — `omni.nix`, `dex.nix`,
-  `infra-provider/proxmox.nix`
+- [NixOS modules](modules/README.md) — `omni.nix`, `dex.nix`
+- [Omni package](../../../../../../../catalog/nix/pkgs/by-name/om/omni/README.md)
 - [Companion LXC — infra-provider-proxmox](../omni-infra-provider-proxmox/)

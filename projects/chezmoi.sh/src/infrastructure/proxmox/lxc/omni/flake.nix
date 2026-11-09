@@ -4,9 +4,9 @@
   # ---------------------------------------------------------------------------
   # All-in-one flake: NixOS modules + site config → Proxmox-importable .tar.xz.
   #
-  # The Omni binary is fetched from the upstream GitHub release (statically
-  # linked Go binary, no patchelf needed). Module library lives in:
-  #   catalog/nix/siderolabs/omni/   — Omni service + Dex OIDC + PKI init
+  # Omni is built from source by the catalog package (pkgs/by-name/om/omni).
+  # Module library lives in:
+  #   ./modules/omni.nix, ./modules/dex.nix — Omni service + Dex OIDC + PKI init
   #   catalog/nix/modules/lxc-o11y-agent — catalog.lxcAgent (journal → o11y)
   #   ./modules/                     — Caddy HTTPS termination + LXC hardening + o11y
   #
@@ -27,20 +27,20 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
-  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.arcane.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, arcane-catalog }:
+    { self, nixpkgs, arcane }:
     let
       system = "x86_64-linux";
 
       # Appliance image version — CalVer (YYYY.MM.DD), used to name the
       # Proxmox template (omni.<date>-amd64.tar.xz). The Omni component
-      # version itself is tracked in catalog/nix/siderolabs/omni/omni.nix
+      # version itself is tracked in catalog/nix/pkgs/by-name/om/omni/package.nix
       # and bumped by Renovate. Bump this date before every `mise run
       # lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.10.09";
+      version = "2026.11.09";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
@@ -63,8 +63,9 @@
           # allowUnfree is required because Omni is BSL-1.1, which nixpkgs
           # classifies as unfree.
           { nixpkgs.config.allowUnfree = true; }
-          arcane-catalog.nixosModules.lxcAgent
-          arcane-catalog.nixosModules.staticNetwork
+          { services.omni.package = arcane.packages.${system}.omni; }
+          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
           { _module.args = { inherit cloudflareToken dexAdminPasswordHash; }; }

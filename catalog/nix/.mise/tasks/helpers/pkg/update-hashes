@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+# [MISE] description="Bump a catalog package to a new version and refresh its hashes"
+# [MISE] dir="{{config_root}}"
+# [MISE] hide=true
+# [USAGE] arg "<package>" help="Package attribute, e.g. signoz"
+# [USAGE] arg "<version>" help="Upstream version, e.g. 1.2.3"
+"""Bump a package of catalog/nix/pkgs/by-name to a new version and refresh its hashes.
+
+usage: mise run helpers:pkg:update-hashes <package> <version>   (called by the packages' `pkg:update`)
+
+Rewrites `version = "..."` in pkgs/by-name/<xx>/<package>/package.nix, then resolves, in order, the hashes
+that depend on it by building the fixed-output derivation with a fake hash and reading the real
+one from Nix's mismatch error:
+
+  src        hash = "..."        (fetchFromGitHub, package.nix)
+  vendor     vendorHash = "..."  (Go modules, package.nix, when present)
+  lock       package-lock.json   (regenerated with npm, only when the package vendors one, see its README)
+  ui deps    hash = "..."        (npmDeps/pnpmDeps, ui.nix, when present)
+
+These derivations are independent of the build platform, so this runs on any host. Set NIX_SYSTEM
+(e.g. x86_64-linux) to resolve them for another system, which needs a matching builder.
+
+Progress goes to stderr; a failed step restores the file it was editing and prints Nix's output.
+"""
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+FAKE = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+
+def log(message: str = "") -> None:
+    print(message, file=sys.stderr, flush=True)
+
+
+def nix_expr(package_nix: Path, attr: str) -> str:
+    system = os.environ.get("NIX_SYSTEM") or "builtins.currentSystem"
+    system = system if system.startswith("builtins.") else f'"{system}"'
+    return (
+        'let p = import (builtins.getFlake "nixpkgs/nixos-26.05") '
+        f"{{ system = {system}; config.allowUnfree = true; }};"
+        f' pkg = p.callPackage {package_nix} {{ }}; in pkg.{attr}'
+    )
+
+
+def resolve(package_nix: Path, attr: str, path: Path, pattern: str, step: str) -> None:
+    """Replace the hash matched by `pattern` in `path` with the one Nix reports for `attr`."""
+    text = path.read_text()
+    current = re.search(pattern, text)
+    if current is None:
+        log(f"[{step}] skipped: no matching hash line in {path.name}")
+        return
+    old = re.search(r'"(sha256-[^"]*)"', current.group(0)).group(1)
+
+    log(f"[{step}] {path.name}: current hash {old}")
+    log(f"[{step}] building `{attr}` with a fake hash to learn the real one (this can take a few minutes)...")
+    path.write_text(re.sub(pattern, rf'\g<1>"{FAKE}"', text, count=1))
+
+    started = time.monotonic()
+    result = subprocess.run(
+        ["nix", "build", "--no-link", "--impure", "--expr", nix_expr(package_nix, attr)],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM": "1"},
+    )
+    elapsed = time.monotonic() - started
+    found = re.search(r"got:\s+(sha256-\S+)", result.stderr)
+    if not found:
+        path.write_text(text)
+        log(f"[{step}] FAILED after {elapsed:.0f}s, {path.name} restored. Nix said:")
+        log(result.stderr[-2000:])
+        sys.exit(1)
+
+    new = found.group(1)
+    path.write_text(re.sub(pattern, rf'\g<1>"{new}"', text, count=1))
+    state = "unchanged" if new == old else f"updated: {old} -> {new}"
+    log(f"[{step}] done in {elapsed:.0f}s, {state}")
+
+
+def relock(package_nix: Path, ui_nix: Path, lock: Path) -> None:
+    """Re-lock the UI's package.json with npm and replace the vendored package-lock.json."""
+    sub = re.search(r'sourceRoot = "\$\{finalAttrs\.src\.name\}/([^"]+)"', ui_nix.read_text())
+    if sub is None:
+        sys.exit("[lock] cannot find the sourceRoot of the UI in ui.nix")
+    log(f"[lock] {lock.name} is vendored: re-locking {sub.group(1)}/package.json with npm (needs network)...")
+    started = time.monotonic()
+    built = subprocess.run(
+        ["nix", "build", "--no-link", "--print-out-paths", "--impure", "--expr", nix_expr(package_nix, "src")],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM": "1"},
+    )
+    if built.returncode != 0:
+        sys.exit(f"[lock] cannot fetch the source:\n{built.stderr[-2000:]}")
+    frontend = Path(built.stdout.strip().splitlines()[-1]) / sub.group(1)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        for name in ("package.json", ".npmrc"):
+            if (frontend / name).exists():
+                shutil.copy(frontend / name, Path(tmp) / name)
+        result = subprocess.run(
+            ["nix", "shell", "nixpkgs/nixos-26.05#nodejs_24", "-c", "npm", "install",
+             "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund"],
+            cwd=tmp, capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            sys.exit(f"[lock] npm failed:\n{result.stderr[-2000:]}")
+        fresh = json.loads((Path(tmp) / "package-lock.json").read_text())["packages"]
+        old = json.loads(lock.read_text())["packages"]
+        changed = sum(1 for k in fresh if k in old and fresh[k].get("version") != old[k].get("version"))
+        shutil.copy(Path(tmp) / "package-lock.json", lock)
+    log(
+        f"[lock] done in {time.monotonic() - started:.0f}s: {len(fresh)} entries, "
+        f"{changed} versions changed, {len(set(fresh) - set(old))} added, {len(set(old) - set(fresh))} removed"
+    )
+    log("[lock] every dependency was re-resolved within its semver range: review the diff and test the UI")
+
+
+def main() -> None:
+    package, version = os.environ["usage_package"], os.environ["usage_version"].removeprefix("v")
+    directory = Path("pkgs/by-name", package[:2], package).resolve()
+    package_nix, ui_nix = directory / "package.nix", directory / "ui.nix"
+    system = os.environ.get("NIX_SYSTEM") or "the current system"
+
+    log(f"package   : {directory.name} ({directory})")
+    log(f"resolving for {system}")
+    log()
+
+    text = package_nix.read_text()
+    current = re.search(r'\n\s*version = "([^"]*)"', text)
+    if current is None:
+        sys.exit("no `version = \"...\"` line in package.nix")
+    log(f"[version] {package_nix.name}: {current.group(1)} -> {version}")
+    package_nix.write_text(
+        re.sub(r'(\n\s*version = )"[^"]*"', rf'\g<1>"{version}"', text, count=1)
+    )
+
+    resolve(package_nix, "src", package_nix, r'(\n\s*hash = )"sha256-[^"]*"', "src")
+    resolve(package_nix, "goModules", package_nix, r'(vendorHash = )"sha256-[^"]*"', "vendor")
+    lock = directory / "package-lock.json"
+    if ui_nix.exists() and lock.exists():
+        relock(package_nix, ui_nix, lock)
+    if ui_nix.exists():
+        deps = "pnpmDeps" if "fetchPnpmDeps" in ui_nix.read_text() else "npmDeps"
+        resolve(package_nix, f"ui.{deps}", ui_nix, r'(\n\s*hash = )"sha256-[^"]*"', "ui")
+    else:
+        log("[ui] skipped: no ui.nix")
+
+    log()
+    log(f"{directory.name} bumped to {version}.")
+    log("Next: review `git diff`, then build on Linux (`mise run pkg:build:native`) and check the Go/Node toolchain still fits.")
+
+
+if __name__ == "__main__":
+    main()

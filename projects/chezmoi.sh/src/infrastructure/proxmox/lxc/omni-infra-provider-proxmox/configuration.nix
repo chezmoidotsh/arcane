@@ -3,7 +3,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Supplies site-specific values: system identity, locale, and the provider
 # options. Module logic lives in:
-#   catalog/nix/siderolabs/omni/infra-provider-proxmox.nix  — service + binary
+#   modules/omni-infra-provider-proxmox.nix  — service (package from the catalog)
 #   modules/hardening.nix  — sysctl, firewall, login surface, journald
 #   modules/secrets.nix    — writes /etc/infra-provider/secrets at build time
 #

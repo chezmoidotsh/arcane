@@ -349,8 +349,8 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u omni-infra-provi
 
 ### Upgrade provider version
 
-1. Bump `services.omniInfraProviderProxmox.version` and `hashes` in
-   `catalog/nix/siderolabs/omni/infra-provider/proxmox.nix` (Renovate proposes this).
+1. Bump the `omni-infra-provider-proxmox` package (`mise run pkg:update -- <version>` in
+   `catalog/nix/pkgs/by-name/om/omni-infra-provider-proxmox`; Renovate proposes this).
 2. Bump `version` in `flake.nix`.
 3. Build, push, upgrade.
 
@@ -408,5 +408,6 @@ rebuild).
 - [Omni documentation](https://omni.siderolabs.com)
 - [Omni infrastructure providers docs](https://omni.siderolabs.com/docs/how-to-guides/infrastructure-providers/)
 - [Proxmox VE user management](https://pve.proxmox.com/pve-docs/pveum.1.html)
-- [Catalog NixOS module](../../../../../../../catalog/nix/siderolabs/omni/infra-provider/proxmox.nix)
+- [NixOS module](modules/README.md)
+- [Provider package](../../../../../../../catalog/nix/pkgs/by-name/om/omni-infra-provider-proxmox/README.md)
 - [Companion LXC — Omni](../omni/)

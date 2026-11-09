@@ -17,7 +17,7 @@
 # flags that accept port only (--event-sink-port, WireGuard) use types.int.
 #
 # OIDC: any provider works (Dex, Pocket-Id, …). The optional dex.nix module
-# in this directory configures a co-located Dex instance.
+# next to this one (dex.nix) configures a co-located Dex instance.
 #
 # After first boot, back up:
 #   /var/lib/omni/omni.asc      — GPG key (losing it = losing all etcd state)
@@ -36,26 +36,10 @@ in
     enable = mkEnableOption "Omni Talos Linux management platform";
 
     # ── Binary ──────────────────────────────────────────────────────────────
-    version = mkOption {
-      type = types.str;
-      # oripathy: type=release name=omni upstream=github.com/siderolabs/omni tagPrefix=v
-      default = "v1.12.2";
-      description = "Omni release version to fetch from GitHub.";
-    };
-
-    hashes = mkOption {
-      type = types.attrsOf types.str;
-      description = "SRI hashes for the Omni binary keyed by system. Bump alongside version.";
-      default = {
-        "x86_64-linux" = "sha256-OYUyoMCh2oHzUJaWpALAoEZ1oXKpD5TtrEExtekYMzQ=";
-        "aarch64-linux" = "sha256-Eb4yHvZ7LFIvXaqB4qcfRPRH4SfD1ItXy2mxT4gDSn0=";
-      };
-    };
-
     package = mkOption {
       type = types.package;
-      defaultText = literalExpression "derived from services.omni.version + services.omni.hashes";
-      description = "Omni binary package. Override to use a custom build.";
+      example = literalExpression "arcane.packages.x86_64-linux.omni";
+      description = "Omni package (catalog/nix/pkgs/by-name/om/omni), set by the LXC flake.";
     };
 
     # ── Identity ─────────────────────────────────────────────────────────────
@@ -224,51 +208,6 @@ in
   };
 
   config = mkMerge [
-
-    # ── Package default (always, even when enable = false) ────────────────────
-    # Derived from version + hashes so Renovate only needs to touch this file.
-    {
-      services.omni.package = mkDefault (
-        let
-          system = pkgs.stdenv.hostPlatform.system;
-          archMap = { "x86_64-linux" = "amd64"; "aarch64-linux" = "arm64"; };
-          arch = archMap.${system}
-            or (throw "siderolabs/omni: unsupported system ${system}");
-          hash = cfg.hashes.${system}
-            or (throw "siderolabs/omni: no hash configured for ${system}");
-        in
-        pkgs.stdenvNoCC.mkDerivation {
-          pname = "omni";
-          version = cfg.version;
-
-          # Statically linked Go binary — no autoPatchelfHook needed.
-          src = pkgs.fetchurl {
-            url = "https://github.com/siderolabs/omni/releases/download/${cfg.version}/omni-linux-${arch}";
-            inherit hash;
-          };
-
-          dontUnpack = true;
-          dontConfigure = true;
-          dontBuild = true;
-
-          installPhase = ''
-            runHook preInstall
-            install -Dm755 "$src" "$out/bin/omni"
-            runHook postInstall
-          '';
-
-          meta = with lib; {
-            description = "Omni Talos Linux management platform (upstream release binary)";
-            homepage = "https://omni.siderolabs.com";
-            changelog = "https://github.com/siderolabs/omni/releases/tag/${cfg.version}";
-            license = licenses.bsl11;
-            platforms = [ "x86_64-linux" "aarch64-linux" ];
-            mainProgram = "omni";
-            sourceProvenance = [ sourceTypes.binaryNativeCode ];
-          };
-        }
-      );
-    }
 
     # ── Service configuration (only when enabled) ─────────────────────────────
     (mkIf cfg.enable {

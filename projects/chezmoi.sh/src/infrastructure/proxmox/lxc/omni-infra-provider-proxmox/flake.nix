@@ -23,17 +23,17 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
-  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.arcane.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, arcane-catalog }:
+    { self, nixpkgs, arcane }:
     let
       system = "x86_64-linux";
 
       # Appliance image version — CalVer (YYYY.MM.DD). Bump before each build;
       # append -N for multiple builds on the same day.
-      version = "2026.10.09";
+      version = "2026.11.09";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, read from the environment so the build stays pure
@@ -51,8 +51,9 @@
         modules = [
           # allowUnfree required: omni-infra-provider-proxmox is BSL-1.1.
           { nixpkgs.config.allowUnfree = true; }
-          arcane-catalog.nixosModules.lxcAgent
-          arcane-catalog.nixosModules.staticNetwork
+          { services.omniInfraProviderProxmox.package = arcane.packages.${system}.omni-infra-provider-proxmox; }
+          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
           { _module.args = { inherit proxmoxPassword omniServiceAccountKey; }; }
