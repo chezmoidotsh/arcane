@@ -207,6 +207,7 @@ Depuis une VM dont `eth1` est sur le VNet, confirmer l'accès à l'API Proxmox �
 CSI) :
 
 ```sh
+# -k : le certificat de l'API Proxmox est autosigné (laboratoire uniquement)
 curl -k https://$PVE_IP:8006/api2/json/version
 # → JSON avec "version" et "release" : SNAT et accès à l'API confirmés
 ```
@@ -265,7 +266,7 @@ systemctl is-active dnsmasq@pvenet
 - **DHCP** : `systemctl is-active dnsmasq@$ZONE` — `active`.
 - **Bail** (après le premier démarrage d'un invité sur le VNet) : `cat /var/lib/misc/dnsmasq.$ZONE.leases` — une ligne
   `MAC IP nom` par invité connecté.
-- **SNAT depuis un invité** : `curl -k https://$PVE_IP:8006/api2/json/version` — JSON de version.
+- **SNAT depuis un invité** : `curl -k https://$PVE_IP:8006/api2/json/version` (`-k` : certificat autosigné) — JSON de version.
 
 ## Problèmes connus
 

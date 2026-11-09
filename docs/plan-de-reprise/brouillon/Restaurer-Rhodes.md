@@ -283,7 +283,7 @@ celui de l'étape 5 :
 
 ```sh
 export VAULT_ADDR=http://localhost:8200   # ou https://vault.chezmoi.sh si la Gateway et le certificat sont déjà en place
-export VAULT_TOKEN="<token root issu du gestionnaire de secrets>"
+read -rs -p "Token root : " VAULT_TOKEN && export VAULT_TOKEN   # saisie masquée, hors historique du shell
 
 cd projects/rhodes.akn/src/infrastructure/pulumi
 pulumi config set recovery false

@@ -124,9 +124,9 @@ partie de la reprise est impossible.
 
 | Élément                                                                     | Où le dépôt dit qu'il vit                                                                                             | Nécessaire pour                                                                   |
 | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Clé privée age `age1fj0yj3…` (`SOPS_AGE_KEY_FILE`)                          | `.mise/age/key.txt` sur le poste de l'opérateur (ignoré par Git), et le Secret `argocd-sops-age-key` sur `rhodes.akn` | Tout fichier SOPS : passphrases Pulumi, secrets des LXC, unseal d'OpenBao, ArgoCD |
+| Clé privée age (`SOPS_AGE_KEY_FILE`)                                        | `.mise/age/key.txt` sur le poste de l'opérateur (ignoré par Git), et le Secret `argocd-sops-age-key` sur `rhodes.akn` | Tout fichier SOPS : passphrases Pulumi, secrets des LXC, unseal d'OpenBao, ArgoCD |
 | Clé d'application Garage sur `pulumi-states`                                | Variables `AWS_ACCESS_KEY_ID` et `AWS_SECRET_ACCESS_KEY` de l'opérateur                                               | Toute commande `pulumi`                                                           |
-| Mot de passe `root@pam` de `pve-01`                                         | Keychain macOS de l'opérateur                                                                                         | `pulumi up` de `chezmoi-sh-infra` (ressources ACME)                               |
+| Mot de passe `root@pam` de `pve-01`                                         | Coffre de l'opérateur                                                                                                 | `pulumi up` de `chezmoi-sh-infra` (ressources ACME)                               |
 | Root token et parts Shamir d'OpenBao                                        | Gestionnaire de secrets personnel de l'opérateur                                                                      | Reprise de l'accès administrateur à OpenBao                                       |
 | Clé de chiffrement PBS et sa paperkey                                       | OpenBao ; une copie hors ligne de la paperkey est demandée, sans emplacement                                          | Toute restauration depuis PBS                                                     |
 | Clé GPG d'Omni (`/persistent/omni/omni.asc`)                                | Volume `mp0` du LXC ; une copie « dans un endroit sûr séparé » est demandée                                           | Relire l'état d'Omni                                                              |
@@ -164,7 +164,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 ### 3. Remettre PBS en service
 
 - **Exige** : une VM PBS installée depuis l'ISO ; un disque de cache monté sur `/mnt/datastore/cache` ; le datastore
-  `Backblaze-B2` et son point d'accès S3, donc une clé d'application B2 sur le bucket `pbs-vm-backup-fcc7acb9` ; la clé
+  `Backblaze-B2` et son point d'accès S3, donc une clé d'application B2 sur le bucket `pbs-vm-backup-<suffixe>` ; la clé
   de chiffrement côté client.
 - **D'où cela vient** : la clé B2 et le datastore sont créés par `stack/proxmox-backup-server/datastore.ts` ; la clé B2
   n'existe que dans l'état Pulumi (elle n'est pas exportée en sortie de stack) et dans la configuration de la VM PBS
@@ -335,7 +335,7 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
   `s3://cnpg-rhodes-akn/openbao` sur `https://s3.chezmoi.sh`, comme celles de Pocket-Id et de Grafana. La copie hors
   site passe par la synchronisation B2 du dataset de Garage (circularités 2 et 3).
 - **Ce qui a changé** : l'emplacement de la clé age est établi. `softhsm-tokens.secret.yaml` est chiffré pour un seul
-  destinataire, `age1fj0yj3…`, le même que `projects/rhodes.akn/.sops.yaml` utilise partout. La clé privée vit dans
+  destinataire, la même clé publique age que `projects/rhodes.akn/.sops.yaml` utilise partout. La clé privée vit dans
   `.mise/age/key.txt` sur le poste de l'opérateur (`SOPS_AGE_KEY_FILE` du `.mise.toml` racine, chemin ignoré par Git) et
   dans le Secret `argocd-sops-age-key` de `rhodes.akn`, lui-même chiffré pour la même clé
   (`src/argocd/sops/age-key.secret.yaml`). Aucune copie indépendante du poste et du cluster n'est documentée.
