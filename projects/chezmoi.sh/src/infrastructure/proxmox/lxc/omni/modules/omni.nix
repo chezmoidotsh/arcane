@@ -38,7 +38,7 @@ in
     # ── Binary ──────────────────────────────────────────────────────────────
     package = mkOption {
       type = types.package;
-      example = literalExpression "arcane-catalog.packages.x86_64-linux.omni";
+      example = literalExpression "arcane.packages.x86_64-linux.omni";
       description = "Omni package (catalog/nix/pkgs/by-name/om/omni), set by the LXC flake.";
     };
 

@@ -42,7 +42,7 @@ in
     # ── Binary ──────────────────────────────────────────────────────────────
     package = mkOption {
       type = types.package;
-      example = literalExpression "arcane-catalog.packages.x86_64-linux.omni-infra-provider-proxmox";
+      example = literalExpression "arcane.packages.x86_64-linux.omni-infra-provider-proxmox";
       description = "Provider package (catalog/nix/pkgs/by-name/om/omni-infra-provider-proxmox), set by the LXC flake.";
     };
 

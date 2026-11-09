@@ -23,11 +23,11 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
-  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.arcane.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, arcane-catalog }:
+    { self, nixpkgs, arcane }:
     let
       system = "x86_64-linux";
 
@@ -51,9 +51,9 @@
         modules = [
           # allowUnfree required: omni-infra-provider-proxmox is BSL-1.1.
           { nixpkgs.config.allowUnfree = true; }
-          { services.omniInfraProviderProxmox.package = arcane-catalog.packages.${system}.omni-infra-provider-proxmox; }
-          arcane-catalog.nixosModules.lxcAgent
-          arcane-catalog.nixosModules.staticNetwork
+          { services.omniInfraProviderProxmox.package = arcane.packages.${system}.omni-infra-provider-proxmox; }
+          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
           { _module.args = { inherit proxmoxPassword omniServiceAccountKey; }; }

@@ -383,8 +383,8 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
 ## Known gaps / follow-ups
 
 1. **`flake.lock` is seeded from the observability sibling.** This LXC shares the exact input set
-   (`nixpkgs/nixos-26.05`, `arcane-catalog`) with `../observability`, so its lock was copied from there to give a valid
-   pin. Run `nix flake lock` here to refresh it independently when bumping inputs.
+   (`nixpkgs/nixos-26.05`, `arcane`) with `../observability`, so its lock was copied from there to give a valid pin. Run
+   `nix flake lock` here to refresh it independently when bumping inputs.
 
 2. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a rebuild and redeploy. There is no
    runtime secret injection. For a homelab this is acceptable; a production system would use OpenBao + a sidecar to

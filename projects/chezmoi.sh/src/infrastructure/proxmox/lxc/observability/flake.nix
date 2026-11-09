@@ -32,11 +32,11 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
-  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.arcane.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, arcane-catalog }:
+    { self, nixpkgs, arcane }:
     let
       system = "x86_64-linux";
 
@@ -69,8 +69,8 @@
       nixosConfigurations.observability = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          arcane-catalog.nixosModules.lxcAgent
-          arcane-catalog.nixosModules.staticNetwork
+          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
           { _module.args = { inherit secrets; }; }

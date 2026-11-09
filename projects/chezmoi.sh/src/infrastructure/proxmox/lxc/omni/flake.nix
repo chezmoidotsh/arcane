@@ -27,11 +27,11 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
-  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+  inputs.arcane.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, arcane-catalog }:
+    { self, nixpkgs, arcane }:
     let
       system = "x86_64-linux";
 
@@ -63,9 +63,9 @@
           # allowUnfree is required because Omni is BSL-1.1, which nixpkgs
           # classifies as unfree.
           { nixpkgs.config.allowUnfree = true; }
-          { services.omni.package = arcane-catalog.packages.${system}.omni; }
-          arcane-catalog.nixosModules.lxcAgent
-          arcane-catalog.nixosModules.staticNetwork
+          { services.omni.package = arcane.packages.${system}.omni; }
+          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
           { _module.args = { inherit cloudflareToken dexAdminPasswordHash; }; }
