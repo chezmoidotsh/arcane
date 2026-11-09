@@ -1,0 +1,25 @@
+# =============================================================================
+# signoz — package maintenance
+# =============================================================================
+#   mise run pkg:update -- <version>   # Bump version + resolve src/vendor/ui hashes
+#   mise run pkg:eval                  # Check the package evaluates on every system
+#   mise run pkg:build:native          # Build it for this machine's system
+#   mise run pkg:build:cross           # Build it for another system in a container (NIX_SYSTEM, default x86_64-linux)
+# =============================================================================
+
+[tasks."pkg:update"]
+description = "Bump signoz to <version> and refresh its hashes"
+usage = 'arg "<version>" help="Upstream version, e.g. 1.2.3"'
+depends = ["helpers:pkg:update-hashes signoz {{usage.version}}"]
+
+[tasks."pkg:eval"]
+description = "Evaluate signoz for every system exposed by the catalog flake"
+depends = ["helpers:pkg:eval signoz"]
+
+[tasks."pkg:build:native"]
+description = "Build signoz for this machine's system"
+depends = ["helpers:pkg:build:native signoz"]
+
+[tasks."pkg:build:cross"]
+description = "Build signoz for another system (NIX_SYSTEM, default x86_64-linux) inside a container"
+depends = ["helpers:pkg:build:cross signoz"]
