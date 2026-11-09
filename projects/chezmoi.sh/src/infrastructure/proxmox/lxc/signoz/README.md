@@ -60,9 +60,42 @@ mise run lxc:push -- <pve-host>
 ```
 
 First deployment is manual (same as the other appliances, see
-[oci-registry](../oci-registry/README.md#proxmox-lxc-creation)): create an unprivileged CT with `nesting=1`, `net0` =
-`ip=10.0.0.27/22,gw=10.0.0.1` (VLAN 5), a `mp0` data volume, **at least 4 cores / 8 GiB RAM**, tag `_signoz`, then add
-the `signoz.chezmoi.sh` DNS record. Later upgrades: `mise run lxc:upgrade -- <pve-host>`.
+[oci-registry](../oci-registry/README.md#proxmox-lxc-creation)). On the Proxmox node (`pve-01`), after `lxc:push`:
+
+```sh
+# VMs and CTs share one ID space: check `qm list` as well as `pct list` (the Omni-provisioned Talos VMs take 107+).
+VMID="<unused id>"
+TEMPLATE=signoz.<version>-amd64.tar.xz
+
+pct create ${VMID} local:vztmpl/${TEMPLATE} \
+  --hostname signoz --ostype nixos --arch amd64 --unprivileged 1 --features nesting=1 \
+  --cores 4 --memory 8192 --swap 0 \
+  --rootfs nvme-lvm:8 --mp0 nvme-lvm:100,mp=/persistent \
+  --net0 name=eth0,bridge=vmbr1,ip=10.0.0.27/22,gw=10.0.0.1,firewall=1,tag=5 \
+  --tags "_signoz;core;nixos" --onboot 1 --startup order=1
+
+# Unprivileged CT: the new volume belongs to host root (unmapped), so create the service directories
+# with the host uids listed in "Persistent storage" before the first start.
+pct mount ${VMID}
+cd /var/lib/lxc/${VMID}/rootfs/persistent
+mkdir clickhouse keeper signoz caddy
+chown 100990:100990 clickhouse keeper
+chown 100991:100991 signoz
+chown 100997:100997 caddy
+chmod 0750 clickhouse keeper signoz caddy
+cd / && pct unmount ${VMID}
+
+pct start ${VMID}
+```
+
+`--memory 8192` is the recommended size (ClickHouse is the main consumer); a 4096 MiB CT with a 20 GiB `mp0` was
+enough for a first test. Then add the `signoz.chezmoi.sh` DNS record and **create the first account** on
+`https://signoz.chezmoi.sh`: until it exists, the collector (which receives its pipelines from SigNoz over OpAMP) gets
+`failed to find or create agent` and keeps `:4317` closed; it opens it by itself within about 30 s of the account
+creation. Later upgrades: `mise run lxc:upgrade -- <pve-host>`.
+
+> `pct exec` runs without the NixOS `PATH`: call binaries by their full path
+> (`/run/current-system/sw/bin/systemctl`, `…/journalctl`).
 
 ## Sending data
 
