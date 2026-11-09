@@ -22,6 +22,7 @@
       packages = nixpkgs.lib.genAttrs systems (system:
         let pkgs = pkgsFor system; in {
           omni = pkgs.callPackage ./pkgs/by-name/om/omni/package.nix { };
+          omni-infra-provider-proxmox = pkgs.callPackage ./pkgs/by-name/om/omni-infra-provider-proxmox/package.nix { };
         });
     };
 }
