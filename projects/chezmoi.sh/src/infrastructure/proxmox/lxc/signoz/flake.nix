@@ -25,7 +25,7 @@
       # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
       # template (signoz.<date>-amd64.tar.xz). Bump before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      imageVersion = "2026.11.09";
+      imageVersion = "2026.11.10";
 
       # oripathy: type=nixpkg pkg=clickhouse upstream=github.com/ClickHouse/ClickHouse
       catalogPackages = arcane.packages.${system};
