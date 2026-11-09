@@ -398,7 +398,10 @@ in
         Restart = "on-failure";
         RestartSec = 5;
         KillMode = "mixed";
-        WorkingDirectory = "${signozPackage}";
+        # Writable on purpose: the embedded Prometheus engine creates its
+        # `queries.active` file in the working directory and panics when it
+        # is the (read-only) Nix store. Every other path is absolute.
+        WorkingDirectory = "/persistent/signoz";
         ExecStart = "${signozPackage}/bin/signoz server";
       };
     };
