@@ -12,7 +12,7 @@
       pkgsFor = system: import nixpkgs { inherit system; config.allowUnfree = true; };
     in
     {
-      nixosModules.lxcAgent = ./modules/lxc-o11y-agent;
+      nixosModules.o11yAgent = ./modules/o11y-agent;
       nixosModules.staticNetwork = ./modules/lxc-static-network;
 
       # Packages missing from nixpkgs, written in nixpkgs' `pkgs/by-name`

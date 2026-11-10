@@ -1,10 +1,20 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Root Vector configuration — global settings
+# Parser: RFC 5424 syslog → OTLP log (always applied to the syslog pipeline)
 # ─────────────────────────────────────────────────────────────────────────────
-# data_dir: directory used by disk buffers (sinks with buffer.type = "disk").
-# At runtime, systemd sets VECTOR_DATA_DIR to /var/lib/lxc-agent via
-# environment.VECTOR_DATA_DIR in the service unit.
-# At build time, vector validate sets VECTOR_DATA_DIR to a temp directory
-# so the data_dir exists during validation.
+# The syslog receiver already parses the header into attributes and sets the
+# severity; this moves appname/hostname to service.name/host.name and the
+# message to the body.
 # ─────────────────────────────────────────────────────────────────────────────
-data_dir: "${VECTOR_DATA_DIR}"
+{ lib }:
+
+{
+  log_statements = [{
+    context = "log";
+    statements = [
+      ''set(attributes["service.name"], attributes["appname"]) where attributes["appname"] != nil''
+      ''set(attributes["host.name"], attributes["hostname"]) where attributes["hostname"] != nil''
+      ''set(body, attributes["message"]) where attributes["message"] != nil''
+      ''delete_matching_keys(attributes, "^(appname|hostname|message)$")''
+    ];
+  }];
+}
