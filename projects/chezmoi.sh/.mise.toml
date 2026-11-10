@@ -54,9 +54,9 @@ run = '''
   TOKEN=$(pulumi stack output observabilityDns01Token --show-secrets)
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
   sops set --input-type dotenv --output-type dotenv \
-    "{{ config_root }}/src/infrastructure/proxmox/lxc/observability/secrets/caddy.sops.env" \
+    "{{ config_root }}/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/caddy.sops.env" \
     '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
-  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in observability/secrets/caddy.sops.env" >&2
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in o11y-datastore/secrets/caddy.sops.env" >&2
 '''
 
 [tasks."pulumi:tailscale-oauth:observability"]
@@ -67,9 +67,9 @@ run = '''
   KEY=$(pulumi stack output observabilityTailscaleOauthKey --show-secrets)
   [[ -n "${KEY}" ]] || { echo "[ERROR] Empty key — did 'pulumi up' run?" >&2; exit 1; }
   sops set --input-type dotenv --output-type dotenv \
-    "{{ config_root }}/src/infrastructure/proxmox/lxc/observability/secrets/caddy.sops.env" \
+    "{{ config_root }}/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/caddy.sops.env" \
     '["TAILSCALE_OAUTH_KEY"]' "\"${KEY}\""
-  echo "[SUCCESS] TAILSCALE_OAUTH_KEY updated in observability/secrets/caddy.sops.env" >&2
+  echo "[SUCCESS] TAILSCALE_OAUTH_KEY updated in o11y-datastore/secrets/caddy.sops.env" >&2
 '''
 
 [tasks."pulumi:cloudflare-token:omni"]

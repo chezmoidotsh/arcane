@@ -160,7 +160,7 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
    > provider before relying on them, they haven't been exercised for this stack yet).
 
 3. **Copy the shared Slack webhook URL** from observability's Alertmanager config
-   (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/secrets/observability.sops.env`) into this stack's
+   (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/observability.sops.env`) into this stack's
    own secret config:
 
    ```sh
