@@ -4,7 +4,7 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows paperless-ngx to connect to Authelia SSO for OIDC authentication.
+      Allows paperless-ngx to connect to Pocket-Id SSO for OIDC authentication.
   labels:
     app.kubernetes.io/instance: paperless-ngx
     app.kubernetes.io/name: paperless-ngx

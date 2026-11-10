@@ -192,7 +192,7 @@ client OIDC d'ArgoCD était stocké dans `/shared/sso/oidc-clients/argocd`)_
 **Justification de la migration** : l'approche SSO partagée créait un risque de sécurité : n'importe quel cluster
 pouvait accéder aux identifiants `client_secret` OIDC des autres clusters, ce qui permettait des attaques d'usurpation
 d'identité. Le passage aux montages par projet garantit une isolation correcte tout en conservant les accès nécessaires
-pour Authelia.
+pour Pocket-Id.
 
 > [!NOTE]\
 > Note du 2026-10-11 : les exemples ci-dessus citent `amiya.akn` et Authelia, qui ne sont plus en service. Le cluster
@@ -306,11 +306,11 @@ OpenBao n'ayant pas de capacité de proxy ACME, les certificats wildcard sont :
 
 ### Dépendances entre applications
 
-Pour les services qui exigent une configuration partagée (par exemple le client OIDC d'ArgoCD dans Authelia) :
+Pour les services qui exigent une configuration partagée (par exemple le client OIDC d'ArgoCD dans Pocket-Id) :
 
 - **Stockage du secret** : `/amiya.akn/argocd/auth/oidc-client`
 - **Suivi de la propriété** : `metadata.owner = "amiya.akn/authelia"`
-- **Modèle d'accès** : ArgoCD lit depuis son propre montage, Authelia lit entre montages via une politique dédiée
+- **Modèle d'accès** : ArgoCD lit depuis son propre montage, Pocket-Id lit entre montages via une politique dédiée
 
 ### Organisation AWS et fournisseurs cloud
 
@@ -384,6 +384,8 @@ Contrôle du 2026-10-11 contre le dépôt (aucun accès aux clusters ni à OpenB
 
 ## Historique des modifications
 
+- _2026-11-10_ : Mentions d'Authelia remplacées par Pocket-Id dans le texte de décision, Authelia n'étant plus
+  déployé ; les identifiants techniques de l'époque (`amiya.akn/authelia`) sont conservés.
 - _2026-10-11_ : **CHORE** : Migration vers le standard de documentation : traduction en français, gabarit d'ADR 2.0.0
   (`template-version: "2.0.0"`), suppression du sommaire manuel et de la section « References and Related Decisions »
   remplacée par « Pour aller plus loin », suppression des emojis. Décision, options, exemples de chemins, `status` et
