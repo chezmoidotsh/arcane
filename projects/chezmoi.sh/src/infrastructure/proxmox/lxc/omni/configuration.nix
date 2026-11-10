@@ -215,7 +215,9 @@
         if dexAdminPasswordHash != ""
         then
           toString
-            (pkgs.writeText "dex-env"
+            # toFile (no derivation): dex.nix reads it at eval time, and a
+            # writeText here would be IFD, which needs nixbld users.
+            (builtins.toFile "dex-env"
               "DEX_ADMIN_PASSWORD_HASH=${dexAdminPasswordHash}\n")
         else null;
     };

@@ -169,6 +169,17 @@ docker run --rm \
     set -euo pipefail
     rm -rf /homeless-shelter
 
+    # /etc/passwd and /etc/group are symlinks into the image'"'"'s /nix/store, which
+    # the cached /nix volume shadows: when the volume predates the image they
+    # dangle (no root, no nixbld) and builders fail with "cannot find name for
+    # user ID 0". Recreate them, and build as root without build users.
+    if [[ ! -e /etc/passwd ]]; then
+      rm -f /etc/passwd /etc/group
+      echo "root:x:0:0:root:/root:/bin/sh" > /etc/passwd
+      echo "root:x:0:" > /etc/group
+    fi
+    export NIX_CONFIG="build-users-group ="
+
     SANDBOX_FLAG=""
     [[ "${USE_SANDBOX:-true}" == "false" ]] && SANDBOX_FLAG="--option sandbox false"
 
@@ -195,11 +206,18 @@ docker run --rm \
     fi
 
     # shellcheck disable=SC2086
-    if [[ -x /tools/bin/nom ]]; then
-        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result
-    else
-        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result
-    fi
+    # Unsandboxed builders may create /homeless-shelter ($HOME), which Nix then
+    # rejects for the next derivation. Retry after removing it; finished
+    # derivations are cached so each attempt resumes where the last stopped.
+    NIX_BUILD=(nix)
+    [[ -x /tools/bin/nom ]] && NIX_BUILD=(/tools/bin/nom)
+    for attempt in 1 2 3 4 5 6 7 8; do
+        rm -rf /homeless-shelter
+        if "${NIX_BUILD[@]}" build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result; then
+            break
+        fi
+        [[ -d /homeless-shelter && ${attempt} -lt 8 ]] || exit 1
+    done
 
     # Copy all .tar.xz out of the read-only Nix store via the result symlink.
     # Structure: result/tarball/nixos-image-lxc-*.tar.xz
