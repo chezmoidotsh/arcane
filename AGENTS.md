@@ -123,10 +123,6 @@ Frequently used `mise` tasks:
 ```sh
 mise run bao:login                      # OIDC login to OpenBao (user role)
 mise run bao:login:admin                # OIDC login to OpenBao (admin role)
-mise run talos:select                   # Interactive Talos context picker
-mise run talos:use -- <cluster>
-mise run talos:nodes -- <cluster>
-mise run talos:dashboard -- <cluster>   # Live Talos dashboard for a cluster
 mise run omni:machineclass:list         # List Omni machine classes (catalog/omni/machineclasses/)
 mise run omni:machineclass:diff         # Diff local machine-class definitions against Omni
 mise run ansible:install                # Sync Python venv for Ansible roles

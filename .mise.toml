@@ -76,7 +76,7 @@ OCI_CLI_PROFILE = "DEFAULT"
 # -----------------------------------------------------------------------------
 # Talos Configuration
 # -----------------------------------------------------------------------------
-# Talos configuration file managed by the talos:ctx script
+# Talos configuration file used by the talosctl wrapper (scripts/talosctl)
 # Points to the shared configuration file used by all Talos operations
 TALOS_CONFIG_DIR = "{{ config_root }}/.mise/talos"
 TALOSCONFIG = "{{ env.TALOS_CONFIG_DIR }}/config"
@@ -228,33 +228,3 @@ run = "omnictl apply --file {{ config_root }}/catalog/omni/machineclasses"
 [tasks."omni:machineclass:list"]
 description = "List machine classes currently registered in Omni (READ-ONLY)"
 run = "omnictl get machineclasses"
-
-# -----------------------------------------------------------------------------
-# Talos Context Management Tasks
-# -----------------------------------------------------------------------------
-# Tasks for managing Talos cluster contexts using OpenBao secure storage.
-# Contexts are stored in personal namespace with proper isolation and metadata.
-
-[tasks."talos:list"]
-description = "List available Talos contexts from OpenBao"
-run = "scripts/talos:ctx list"
-
-[tasks."talos:use"]
-description = "Switch to Talos context: mise run talos:use -- <cluster>"
-run = "scripts/talos:ctx get $@"
-
-[tasks."talos:store"]
-description = "Store current Talos context in OpenBao: mise run talos:store -- <cluster>"
-run = "scripts/talos:ctx store $@"
-
-[tasks."talos:select"]
-description = "Interactive Talos context selection"
-run = "scripts/talos:ctx select"
-
-[tasks."talos:dashboard"]
-description = "Launch dashboard for context: mise run talos:dashboard -- <cluster>"
-run = "scripts/talos:ctx dashboard $@"
-
-[tasks."talos:nodes"]
-description = "List cluster nodes: mise run talos:nodes -- [cluster]"
-run = "scripts/talos:ctx nodes $@"
