@@ -64,17 +64,8 @@ For the code behind them:
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/infrastructure/pulumi/`      | The `chezmoi-sh-infra` Pulumi stack — Proxmox VE, PBS, TrueNAS, cloud tokens — and the doc generators                                       |
 | `src/infrastructure/proxmox/lxc/` | Platform LXC appliances (Nix-built): `omni`, `omni-infra-provider-proxmox`, `observability`, `oci-registry`, `pve-exporter`, `talosnet-dns` |
-| `src/infrastructure/ansible/`     | **Legacy** — superseded by the Pulumi stack (see below)                                                                                     |
 | `docs/`                           | The generated reference documents above                                                                                                     |
 | `dist/`                           | Rendered outputs (regenerate with `dist:render`, never edit)                                                                                |
-
-### Legacy: Ansible TrueNAS collection
-
-`src/infrastructure/ansible/` (the `chezmoidotsh.truenas.scale` collection and the `ansible:truenas*` mise tasks) was
-the previous management path for the NAS. It has been **superseded by the Pulumi stack**
-([`stack/truenas/`](src/infrastructure/pulumi/stack/truenas/README.md)) and is kept only as reference until it is
-removed — do not use it to configure the NAS, and do not add new roles to it. [`docs/TRUENAS.md`](docs/TRUENAS.md) is
-the single source of truth for how the NAS is managed today.
 
 ## 🛡️ License
 

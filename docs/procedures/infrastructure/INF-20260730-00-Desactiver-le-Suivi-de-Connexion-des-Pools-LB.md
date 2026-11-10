@@ -86,21 +86,16 @@ iptables -t raw -I PREROUTING 1 -s 10.0.0.64/26 -j NOTRACK
 Pour survivre aux redémarrages et à `ifreload -a` (exécuté à chaque `pvesh set /cluster/sdn`, donc à chaque changement
 SDN futur), les règles sont installées par un hook idempotent dans `/etc/network/if-up.d/`, le même type de mécanisme
 que `ifupdown2` utilise pour les règles générées par PVE. Il est limité pour s'exécuter une seule fois par rechargement
-plutôt qu'une fois par interface. Le hook est versionné dans
-[`99-talosnet-lb-notrack`](../../../projects/chezmoi.sh/src/infrastructure/ansible/files/99-talosnet-lb-notrack) et
-installé par le playbook `pve.yaml` (voir les étapes).
+plutôt qu'une fois par interface. Le script du hook est donné à l'étape 2.
 
 ## Prérequis
 
-Avant de commencer, vérifier que les outils suivants sont installés et configurés : `ansible-playbook` (via
-`mise install`, voir l'environnement de développement dans [`AGENTS.md`](../../../AGENTS.md)), `ssh`, `ssh-keygen`.
+Avant de commencer, vérifier que `ssh` et `ssh-keygen` sont disponibles.
 
 Les accès suivants sont également nécessaires :
 
-- accès SSH à `pve-01.pve.chezmoi.sh`, déclaré dans le groupe `pve` de
-  `projects/chezmoi.sh/src/infrastructure/ansible/inventory/production.yaml` ;
-- droits root sur l'hôte : l'inventaire se connecte directement en `root` (`ansible_user: root`), sans élévation côté
-  Ansible.
+- accès SSH à `pve-01.pve.chezmoi.sh` ;
+- droits root sur l'hôte : la connexion se fait directement en `root`.
 
 Le SDN doit être configuré au préalable ([Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md)).
 Cette procédure est aussi à rejouer après toute reconstruction ou réinstallation de `pve-01` (voir
@@ -120,30 +115,42 @@ export LB_IP=<IP LoadBalancer ou Gateway externe>    # ex. 10.0.0.64 (rhodes.akn
 ## Étape 1 — Supprimer l'ancienne clé SSH de l'hôte (après reconstruction)
 
 Cette étape ne concerne que le cas d'une reconstruction de `pve-01`. L'hôte présente alors une nouvelle clé SSH que
-l'option `accept-new` de l'inventaire n'accepte pas automatiquement (elle ne couvre que les hôtes inconnus). Supprimer
-l'entrée périmée avant de lancer le playbook :
+`ssh` refuse tant que l'ancienne entrée figure dans `known_hosts`. Supprimer l'entrée périmée avant de se connecter :
 
 ```sh
 ssh-keygen -R $PVE_HOST   # aussi l'IP de l'hôte, si la connexion s'est faite par IP
 ```
 
-## Étape 2 — Installer le hook avec Ansible
+## Étape 2 — Installer le hook
 
-Le playbook copie le hook dans `/etc/network/if-up.d/99-talosnet-lb-notrack` (root, mode `0755`) puis l'exécute
-immédiatement avec `IFACE=lo`, sans attendre un rechargement. Le hook teste chaque règle avec `iptables -C` avant de
-l'insérer : relancer le playbook ne duplique jamais les règles.
-
-```sh
-cd projects/chezmoi.sh/src/infrastructure/ansible
-ansible-playbook -i inventory/production.yaml pve.yaml
-# → "Install the NOTRACK hook for the Cilium LB pool" : changed (première installation) ou ok
-# → "Apply the hook now" : changed uniquement si le hook vient d'être installé ou modifié
-```
-
-Pour un aperçu sans modification :
+Installer le hook dans `/etc/network/if-up.d/99-talosnet-lb-notrack` (root, mode `0755`) puis l'exécuter immédiatement
+avec `IFACE=lo`, sans attendre un rechargement. Le hook teste chaque règle avec `iptables -C` avant de l'insérer : le
+rejouer ne duplique jamais les règles.
 
 ```sh
-ansible-playbook -i inventory/production.yaml pve.yaml --check --diff
+ssh root@$PVE_HOST 'cat > /etc/network/if-up.d/99-talosnet-lb-notrack && chmod 0755 /etc/network/if-up.d/99-talosnet-lb-notrack' <<'EOF'
+#!/bin/sh
+# Exempt each cluster's Cilium external LB pool from conntrack, so replies to
+# L2-announced VIPs (dual-NIC Talos setup, ADR-014) aren't misclassified as
+# ctstate INVALID by PVEFW-FORWARD. The reply leaves via talosnet/vmbr0,
+# never through a fwbr+ interface, so it never gets the CT zone 1 tag PVE
+# assigns to firewalled VM/CT bridge traffic -- from that mismatched zone's
+# view it looks like an orphan SYN-ACK, which PVEFW-FORWARD's first rule
+# drops as INVALID. NOTRACK sidesteps conntrack entirely for this traffic so
+# no ctstate check can apply. Runs on every ifreload (incl. SDN applies);
+# guarded on ${IFACE}=lo so it fires once per reload, not once per interface.
+[ "${IFACE}" = "lo" ] || exit 0
+
+# 10.0.0.64/26 is the whole Cilium LB pool block (docs/reference/IPAM-Reference.md),
+# reserved for all 8 cluster slots (/29 each) -- covers every current and
+# future cluster's external Gateway without per-cluster edits here.
+POOL=10.0.0.64/26
+iptables -t raw -C PREROUTING -d "${POOL}" -j NOTRACK 2>/dev/null ||
+	iptables -t raw -I PREROUTING 1 -d "${POOL}" -j NOTRACK
+iptables -t raw -C PREROUTING -s "${POOL}" -j NOTRACK 2>/dev/null ||
+	iptables -t raw -I PREROUTING 1 -s "${POOL}" -j NOTRACK
+EOF
+ssh root@$PVE_HOST 'IFACE=lo /etc/network/if-up.d/99-talosnet-lb-notrack'
 ```
 
 ## Étape 3 — Vérifier l'accès externe et la persistance
@@ -197,7 +204,7 @@ Les étapes 1 à 3 se jouent ensuite telles quelles.
 ### Correctif propre à l'hôte, hors Pulumi
 
 Le correctif s'applique à l'hôte `pve-01` et ne s'exprime pas dans Pulumi : le fournisseur `@pulumi/proxmox` n'offre
-aucune primitive d'exception NAT ou conntrack par source. D'où le petit playbook Ansible `pve.yaml`.
+aucune primitive d'exception NAT ou conntrack par source. D'où le script installé à la main à l'étape 2.
 
 ### Aucun mécanisme natif de pve-firewall
 
@@ -238,6 +245,8 @@ n'avait pas encore fait l'objet d'une issue. Cet état n'a pas été revérifié
 
 ## Historique
 
+- _2026-11-10_ : Suppression d'Ansible : le script du hook est intégré à l'étape 2 et installé directement par `ssh`
+  (plus de playbook `pve.yaml`, d'inventaire ni de `accept-new`).
 - _2026-10-17_ : Alignement sur le gabarit de procédure v2 : avertissement sur l'état de vérification en callout,
   entrées en un bloc `export` (`HOSTNAME` renommée `APP_HOSTNAME` pour ne pas écraser la variable du shell, `PVE_HOST`
   ajoutée), commandes de l'étape 3 découpées et exécutées par `ssh`, ajout de l'exemple complet.

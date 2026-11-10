@@ -92,10 +92,6 @@ const types = [
  */
 const scopes = [
 	{
-		name: "catalog:ansible       - Anything related to the Ansible role catalog",
-		value: "catalog:ansible",
-	},
-	{
 		name: "catalog:omni          - Anything related to the Omni cluster-template catalog",
 		value: "catalog:omni",
 	},

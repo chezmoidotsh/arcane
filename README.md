@@ -65,7 +65,6 @@ mise install
 ├── .github
 │   └── assets                      # Repository assets (images, video, etc.) used in the documentation.
 ├── catalog                         # Catalog of reusable components
-│   ├── ansible                     # Ansible roles and collections
 │   ├── pulumi                      # Pulumi components and stacks
 │   ├── flakes                      # Nix flakes for OCI images
 │   ├── kustomize                   # Kustomize bases
