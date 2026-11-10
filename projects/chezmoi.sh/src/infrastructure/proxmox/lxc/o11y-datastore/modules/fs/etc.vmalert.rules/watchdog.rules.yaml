@@ -15,7 +15,7 @@ groups:
         labels:
           severity: none
         annotations:
-          summary: "Observability appliance heartbeat"
+          summary: Observability appliance heartbeat
           description: >-
             This alert is always firing. If it stops, the external heartbeat
             monitor will alert — meaning vmalert/Alertmanager/the appliance is down.

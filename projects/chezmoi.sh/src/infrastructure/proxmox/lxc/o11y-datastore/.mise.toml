@@ -75,12 +75,17 @@ run = '''
     }
   }
   handle {
-    root * modules/caddy.statics
+    root * modules/fs/etc.caddy/www
     file_server
   }
 }
 EOF
 '''
+
+[tasks."diagram:generate"]
+description = "Render o11y-datastore.d2 to o11y-datastore.svg"
+dir = "{{ config_root }}"
+run = "d2 o11y-datastore.d2 o11y-datastore.svg"
 
 [tasks."lxc:secrets:sync"]
 description = "Sync Pulumi tokens (Cloudflare + Tailscale) into secrets/caddy.sops.env"

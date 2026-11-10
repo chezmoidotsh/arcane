@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# OTLP gateway — OpenTelemetry Collector configuration
+# ─────────────────────────────────────────────────────────────────────────────
+# Caddy :4318 /v1/* → this collector → the Victoria stores.
+#
+# Why it exists: the stores ingest OTLP natively but only as protobuf, while
+# some senders emit OTLP/JSON (Proxmox VE's metric server). The receiver accepts
+# both encodings; the exporters always send protobuf. No other processing.
+# ─────────────────────────────────────────────────────────────────────────────
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:14318 # Caddy is the only client
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+  batch: {}
+
+exporters:
+  otlphttp/victoriametrics:
+    metrics_endpoint: http://127.0.0.1:8428/opentelemetry/v1/metrics
+    sending_queue:
+      storage: file_storage
+
+  otlphttp/victorialogs:
+    logs_endpoint: http://127.0.0.1:9428/insert/opentelemetry/v1/logs
+    headers:
+      # Every resource attribute would otherwise become a stream field.
+      VL-Stream-Fields: service.name,host.name
+      # OTLP scope metadata is "unknown" for every log source: noise.
+      VL-Ignore-Fields: scope.name,scope.version
+    sending_queue:
+      storage: file_storage
+
+  otlphttp/victoriatraces:
+    traces_endpoint: http://127.0.0.1:10428/insert/opentelemetry/v1/traces
+    sending_queue:
+      storage: file_storage
+
+extensions:
+  # Persists the exporter queues: a store restart does not drop data.
+  file_storage:
+    directory: /persistent/o11y/otlp-gateway
+
+service:
+  extensions: [file_storage]
+
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/victoriametrics]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/victorialogs]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/victoriatraces]
+
+  # The gateway's own metrics, pushed back through itself.
+  telemetry:
+    resource:
+      host.name: o11y
+    metrics:
+      readers:
+        - periodic:
+            interval: 30000
+            exporter:
+              otlp:
+                protocol: http/protobuf
+                endpoint: http://127.0.0.1:14318/v1/metrics
