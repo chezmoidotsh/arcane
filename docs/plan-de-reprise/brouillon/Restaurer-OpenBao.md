@@ -175,7 +175,7 @@ disponibles (ArgoCD n'est pas amorcé, cert-manager n'a peut-être rien émis) :
 kubectl --context ${CLUSTER_CONTEXT} port-forward -n vault svc/openbao 8200:8200 &
 
 export VAULT_ADDR=http://localhost:8200
-export VAULT_TOKEN="<root token du gestionnaire de secrets>"
+read -rs -p "Token root : " VAULT_TOKEN && export VAULT_TOKEN   # saisie masquée, hors historique du shell
 bao token lookup   # → confirme le root token (policies: ["root"])
 ```
 

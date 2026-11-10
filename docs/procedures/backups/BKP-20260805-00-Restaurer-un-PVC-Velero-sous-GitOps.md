@@ -267,8 +267,8 @@ velero restore create jellyfin-corruption-test3-20260805190312 \
 
 # Étape 6
 kubectl logs -n jellyfin jellyfin-0 --tail=30
-# → vrais comptes utilisateurs restaurés présents : "Alexandre NICOLAIE", "François NICOLAIE",
-#   "Estelle SCHWEICHLER", "FireStick 4K - Salon" : la vraie configuration SQLite d'avant la perte est revenue, pas une
+# → vrais comptes utilisateurs restaurés présents : "<utilisateur 1>", "<utilisateur 2>",
+#   "<utilisateur 3>", "<appareil>" : la vraie configuration SQLite d'avant la perte est revenue, pas une
 #   base neuve ou vide
 
 # Étape 7

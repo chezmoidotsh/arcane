@@ -1,7 +1,7 @@
 configs:
   clusterCredentials:
     k3d-apps:
-      server: https://k3d-apps.tail831c5d.ts.net
+      server: https://k3d-apps.<tailnet>.ts.net
       labels:
         argocd.argoproj.io/cluster-leaf: "true"
       config:
