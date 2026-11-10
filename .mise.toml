@@ -190,11 +190,6 @@ alias = "lf"
 run = "rtunk check --fix ."
 dir = "{{ config_root }}"
 
-[tasks."ansible:install"]
-description = "Install Ansible and dependencies"
-run = "uv sync --active"
-dir = "{{ config_root }}"
-
 # -----------------------------------------------------------------------------
 # Vault (OpenBao) Authentication Tasks
 # -----------------------------------------------------------------------------

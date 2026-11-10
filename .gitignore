@@ -688,8 +688,6 @@ catalog/**/result
 **/.decrypted~*.yaml
 **/*.UNSAFE.yaml
 
-# Ansible role outputs (logs, artefacts, transient state)
-projects/chezmoi.sh/src/infrastructure/ansible/output/
 
 # Per-user AI/editor configs that should never be shared
 opencode.json

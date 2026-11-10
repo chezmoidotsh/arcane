@@ -101,7 +101,7 @@ export PULUMI_DIR=<répertoire de la stack Pulumi> # ex. projects/chezmoi.sh/src
 
 ## Étape 1 — Préparer l'hôte Proxmox (manuel)
 
-Pulumi ne gère ni les paquets ni les fichiers système de l'hôte : le dépôt ne contient aucun rôle Ansible ni code qui
+Pulumi ne gère ni les paquets ni les fichiers système de l'hôte : le dépôt ne contient aucun code qui
 installe `dnsmasq` ou configure `source-directory` sur le nœud. Ces deux prérequis se vérifient à la main avant le
 premier `pulumi up`.
 

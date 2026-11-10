@@ -64,7 +64,6 @@ For the code behind them:
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/infrastructure/pulumi/`      | The `chezmoi-sh-infra` Pulumi stack — Proxmox VE, PBS, TrueNAS, cloud tokens — and the doc generators                                       |
 | `src/infrastructure/proxmox/lxc/` | Platform LXC appliances (Nix-built): `omni`, `omni-infra-provider-proxmox`, `observability`, `oci-registry`, `pve-exporter`, `talosnet-dns` |
-| `src/infrastructure/ansible/`     | Proxmox host configuration (`pve.yaml`, the conntrack NOTRACK hook)                                                                         |
 | `docs/`                           | The generated reference documents above                                                                                                     |
 | `dist/`                           | Rendered outputs (regenerate with `dist:render`, never edit)                                                                                |
 
