@@ -2,18 +2,15 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaMetrics — single-node metrics TSDB
 # ─────────────────────────────────────────────────────────────────────────────
-# The central metrics store. Receives remote_write from every cluster's agent
-# and from every LXC's catalog.lxcAgent (Vector prometheus_remote_write).
-# Every series carries a `cluster` external label injected by the sender;
-# one flat store keeps cross-cluster correlation trivial. See ADR-013.
-#
-# Self-scrape is handled by catalog.lxcAgent (modules/o11y.nix) — it scrapes
-# all local services and remote_writes here with cluster=o11y-appliance.
+# The central metrics store. Ingests OTLP only, via Caddy :4318/v1/metrics →
+# /opentelemetry/v1/metrics (OTel resource attributes become labels). Senders
+# are every LXC's catalog.o11yAgent (OpenTelemetry Collector), including this
+# appliance's own (modules/o11y-agent.nix).
 #
 # Binds 127.0.0.1:8428 only — Caddy (path routing, no auth) is the sole public
 # surface; access control is the Proxmox host firewall by source CIDR.
 # ─────────────────────────────────────────────────────────────────────────────
-{ lib, pkgs, ... }:
+{ lib, pkgs, retention, ... }:
 
 let
   listenAddr = "127.0.0.1:8428";
@@ -32,8 +29,15 @@ in
         "${pkgs.victoriametrics}/bin/victoria-metrics"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-retentionPeriod=18" # months — homelab baseline; raise per disk budget
+        "-retentionPeriod=${retention.metrics}" # set in configuration.nix
         "-memory.allowedPercent=60"
+        # OTLP is the only ingest path. Metric names become Prometheus-style
+        # (system_cpu_time_seconds_total) but labels keep their OTel dots
+        # (service.name, host.name), like the log fields; MetricsQL accepts
+        # them unquoted: {service.name="zot"}.
+        "-opentelemetry.convertMetricNamesToPrometheus"
+        # Scope labels only name the producing receiver: noise.
+        "-opentelemetry.promoteScopeMetadata=false"
         "-loggerFormat=json"
       ];
 

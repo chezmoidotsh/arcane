@@ -2,10 +2,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaTraces — central distributed-tracing store
 # ─────────────────────────────────────────────────────────────────────────────
-# Receives traces (OTLP / Jaeger) from cluster pipelines (Vector or an OTEL
-# collector) routed through Caddy under /traces/*. Same correlation model as
-# metrics/logs: traces carry a `cluster` resource attribute set by the sender.
-# Grafana queries it via the Jaeger/VictoriaTraces datasource.
+# Ingests OTLP only, via Caddy :4318/v1/traces → /insert/opentelemetry/v1/traces.
+# Grafana queries it via the Jaeger API under Caddy :443 /traces/select/*.
 #
 # Binds 127.0.0.1:10428 only — Caddy (path routing, no auth) is the sole public
 # surface; access control is the Proxmox host firewall by source CIDR + tailnet.
@@ -14,7 +12,7 @@
 # pinned nixpkgs (see README "Known gaps"). If absent, package the upstream
 # release binary with autoPatchelfHook (same pattern as the zot LXC).
 # ─────────────────────────────────────────────────────────────────────────────
-{ lib, pkgs, ... }:
+{ lib, pkgs, retention, ... }:
 
 let
   listenAddr = "127.0.0.1:10428";
