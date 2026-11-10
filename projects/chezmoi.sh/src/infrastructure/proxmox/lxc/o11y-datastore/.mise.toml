@@ -47,11 +47,6 @@
 # NOTE: requires `pulumi up` to have run in src/infrastructure/pulumi so the
 # stack outputs exist.
 
-[tasks."diagram:generate"]
-description = "Generate the architecture diagram for the observability appliance"
-run = "d2 architecture.d2 docs/assets/architecture.svg"
-dir = "{{ config_root }}"
-
 # Local preview of the landing page: static files read from disk on every request
 # (just refresh the browser), the four UIs proxied to the live backend so the
 # iframes show real data. Needs `caddy` on PATH. Override with UI_PORT / UI_BACKEND.

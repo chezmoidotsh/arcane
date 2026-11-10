@@ -1,0 +1,117 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../../../../../docs/assets/d2/styles.architecture.d2"
+
+direction: right
+
+explanation: |md
+  # data.o11y.chezmoi.sh
+
+  Central observability datastore (LXC, Proxmox). \
+  **One write path: OTLP/HTTP on :4318** (JSON or protobuf). \
+  Everything else is read-only (:443).
+| {
+  near: top-left
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Senders
+
+senders: {
+  class: namespace
+  label: Senders (OTLP/HTTP)
+
+  o11y-agents: {
+    class: [application-system]
+    label: o11y-agent on every LXC\n(OpenTelemetry Collector)
+    tooltip: journald + hostmetrics + Prometheus scrape (when nothing else) → OTLP
+  }
+  pve: {
+    class: [hardware]
+    label: Proxmox VE\n(metric server, OTLP/JSON)
+  }
+  clusters: {
+    class: [application-system; undeployed]
+    label: Cluster agents\n(not deployed)
+  }
+}
+
+grafana: {
+  class: [application]
+  label: Grafana\n(rhodes.akn)
+}
+
+notify: {
+  class: [application]
+  label: "Slack + healthchecks.io\n(dead-man's switch)"
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# The appliance
+
+appliance: {
+  class: namespace
+  label: o11y-datastore (CT 103)
+
+  caddy: {
+    class: [application-system]
+    label: Caddy\n:4318 OTLP write\n:443 UI + read-only
+    icon: ../../../../../../../docs/assets/icons/apps/caddy.svg
+  }
+
+  gateway: {
+    class: [application-system]
+    label: otlp-gateway\n(OTel Collector)\nJSON/protobuf → protobuf
+  }
+
+  stores: {
+    class: namespace
+    label: Victoria stack
+
+    vm: {
+      class: [application-datastore]
+      label: VictoriaMetrics
+    }
+    vl: {
+      class: [application-datastore]
+      label: VictoriaLogs
+    }
+    vt: {
+      class: [application-datastore]
+      label: VictoriaTraces
+    }
+  }
+
+  vmalert: {
+    class: [application-system]
+    label: vmalert\n(Watchdog)
+  }
+  alertmanager: {
+    class: [application-system]
+    label: Alertmanager
+  }
+  self-agent: {
+    class: [application-system]
+    label: o11y-agent\n(self-monitoring)
+  }
+
+  caddy -> gateway: ":4318 /v1/*"
+  gateway -> stores.vm: metrics
+  gateway -> stores.vl: logs
+  gateway -> stores.vt: traces
+  caddy -> stores: ":443 query (read-only)" {style.stroke-dash: 3}
+  vmalert -> stores.vm: query + state
+  vmalert -> alertmanager
+  self-agent -> caddy: OTLP
+}
+
+senders.o11y-agents -> appliance.caddy: OTLP :4318
+senders.pve -> appliance.caddy: OTLP :4318
+senders.clusters -> appliance.caddy: OTLP :4318 {class: [connect-vpn]}
+grafana -> appliance.caddy: query :443
+appliance.alertmanager -> notify
