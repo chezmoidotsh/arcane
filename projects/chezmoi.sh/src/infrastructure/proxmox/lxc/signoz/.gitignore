@@ -1,4 +1,0 @@
-# Nix build output
-result
-nixos-image-lxc-*.tar.xz
-signoz.*.tar.xz
