@@ -10,7 +10,7 @@ compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 
 ## Overview
 
-The `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` directory contains five NixOS-based LXC appliances, each built
+The `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` directory contains six NixOS-based LXC appliances, each built
 as an immutable tarball and upgraded in place: the running container keeps its VMID (and therefore its static IP and PBS
 backup identity) while its rootfs volume is swapped for a freshly built one, with a Proxmox snapshot as the rollback
 path.
@@ -19,11 +19,12 @@ path.
 lxc/
 ├── .mise/
 │   └── lib/lxc.sh              ← shared build/push/upgrade library (single source of truth)
-├── o11y-datastore/             ← VictoriaMetrics + Vector + Grafana + Alertmanager
+├── o11y-datastore/             ← VictoriaMetrics + VictoriaLogs + VictoriaTraces + OTLP gateway + Alertmanager
 ├── oci-registry/               ← Zot OCI registry
 ├── omni/                       ← Omni cluster manager
 ├── omni-infra-provider-proxmox/
-└── pve-exporter/               ← prometheus-pve-exporter
+├── pve-exporter/               ← prometheus-pve-exporter
+└── talosnet-dns/               ← BIND for the talosnet subnet
 ```
 
 Each appliance has the same layout:
@@ -44,9 +45,8 @@ Each appliance has the same layout:
 ### Bump the version first (always)
 
 Before **every** rebuild, set the version in `flake.nix` to today's date (`YYYY.MM.DD`, append `-N` for a second build
-the same day). The version names the template (`<name>.<ver>-amd64.tar.xz`) and is what `lxc:push` / `lxc:upgrade`
-use, so rebuilding under an unchanged version ships an artifact that looks identical to the one already on the PVE
-host.
+the same day). The version names the template (`<name>.<ver>-amd64.tar.xz`) and is what `lxc:push` / `lxc:upgrade` use,
+so rebuilding under an unchanged version ships an artifact that looks identical to the one already on the PVE host.
 
 ```sh
 # from the lxc/ directory, bump every date-versioned appliance at once
@@ -56,8 +56,7 @@ perl -pi -e 's/^(\s*(?:version|imageVersion) = ")20\d\d\.\d\d\.\d\d(?:-\d+)?";/$
 
 `oci-registry` is the exception: its `version` is the upstream Zot release (`vX.Y.Z`, managed by Renovate) and is left
 alone — only its `imageVersion` is a date. Note that the shared library takes the **first** match of `version` or
-`imageVersion`, so for `oci-registry` the template keeps being named after the Zot version regardless of
-`imageVersion`.
+`imageVersion`, so for `oci-registry` the template keeps being named after the Zot version regardless of `imageVersion`.
 
 ### Build a template
 
@@ -174,7 +173,7 @@ Uploads the built template with SHA-256 dedup. Requires the artifact to exist (r
 Register systemd services to health-check in step 6 of the upgrade.
 
 ```bash
-lxc_services "caddy" "vector" "victoriametrics" "lxc-agent"
+lxc_services "caddy" "otlp-gateway" "victoriametrics" "o11y-agent"
 ```
 
 ### `lxc_mp <mp-id> <subdir> <uid>`
@@ -276,7 +275,7 @@ Run the full upgrade flow. Flags:
    source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
    lxc_init "<name>" "${CONFIG_ROOT}" _<tag>
-   lxc_services "service1" "service2" "lxc-agent"
+   lxc_services "service1" "service2" "o11y-agent"
    lxc_mp "mp0" "subdir" <uid>
    lxc_e2e_hint "curl -sSf https://<name>.chezmoi.sh/"
 

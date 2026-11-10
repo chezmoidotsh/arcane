@@ -1,8 +1,8 @@
 # `talosnet-dns` — talosnet split-horizon DNS LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + BIND + Vector. It is the DNS server of the `talosnet` Proxmox SDN subnet
-(`10.128.0.0/24`): talosnet DHCP advertises it (`10.128.0.3`, `dns.talosnet.chezmoi.sh`) as the resolver for every Talos
-node. See
+Standalone Proxmox LXC running NixOS + BIND + OpenTelemetry Collector. It is the DNS server of the `talosnet` Proxmox
+SDN subnet (`10.128.0.0/24`): talosnet DHCP advertises it (`10.128.0.3`, `dns.talosnet.chezmoi.sh`) as the resolver for
+every Talos node. See
 [`docs/reference/Passerelles-et-DNS-Reference.md`](../../../../../../../docs/reference/Passerelles-et-DNS-Reference.md)
 for how it fits in the internal/external Gateway split.
 
@@ -22,8 +22,9 @@ for how it fits in the internal/external Gateway split.
      `*.chezmoi.sh` hostname as the external one, pointed at the internal Gateway's talosnet IP. The key may update `A`
      and `TXT` records anywhere in the zone and may AXFR it, nothing else.
 - **Forwarding** — everything else goes to `10.10.10.10`, then `1.1.1.1` / `1.0.0.1`.
-- **Observability** — Vector (`catalog.lxcAgent`) ships journald logs and node metrics to `data.o11y.chezmoi.sh`, pinned
-  to `10.128.0.5` in `/etc/hosts` so shipping does not depend on this very resolver being up.
+- **Observability** — OpenTelemetry Collector (`catalog.o11yAgent`) ships journald logs and host metrics as OTLP to
+  `data.o11y.chezmoi.sh:4318`, pinned to `10.128.0.5` in `/etc/hosts` so shipping does not depend on this very resolver
+  being up.
 
 ## What's in this directory
 
@@ -38,7 +39,7 @@ for how it fits in the internal/external Gateway split.
 ├── modules/
 │   ├── default.nix        ← module aggregator
 │   ├── bind.nix           ← BIND, seed zone, TSIG / update policy
-│   ├── o11y.nix           ← catalog.lxcAgent (logs + metrics → o11y)
+│   ├── o11y-agent.nix     ← catalog.o11yAgent (logs + metrics → o11y)
 │   └── hardening.nix      ← sysctl, firewall (:53 only), login surface
 └── secrets/
     └── bind.sops.env      ← SOPS: BIND_TSIG_SECRET
@@ -67,7 +68,7 @@ mise run lxc:upgrade -- <pve-host> [--vmid <vmid>]    # in-place upgrade of the 
 
 The upgrade keeps the `mp0` volume mounted on `/var/lib/bind` (owner uid `100993`, i.e. the `named` user, uid 993, with
 Proxmox's default unprivileged mapping), so dynamically added records survive. The script restarts `bind` and
-`lxc-agent` and suggests `dig @10.128.0.3 oci.chezmoi.sh` as the end-to-end check.
+`o11y-agent` and suggests `dig @10.128.0.3 oci.chezmoi.sh` as the end-to-end check.
 
 The container needs two NICs: `eth0` on VLAN 5 (`10.0.0.26/22`) and `eth1` on the `talosnet` bridge (`10.128.0.3/24`,
 `firewall=0`), plus the `mp0` volume. No Pulumi code in this repository creates the LXC.

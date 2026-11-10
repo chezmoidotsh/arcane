@@ -4,7 +4,7 @@
 { ... }: {
   imports = [
     ./bind.nix
-    ./o11y.nix
+    ./o11y-agent.nix
     ./hardening.nix
   ];
 }

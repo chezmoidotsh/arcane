@@ -7,7 +7,7 @@
   # A single unprivileged LXC running:
   #
   #   prometheus-pve-exporter  — scrape PVE API → Prometheus metrics  :9221 (loopback)
-  #   vector                   — ship metrics + logs to o11y appliance (catalog.lxcAgent)
+  #   o11y-agent (otelcol)      — ship metrics + logs to o11y as OTLP (catalog.o11yAgent)
   #
   # No public services: the LXC only pushes outbound (metrics + logs). No Caddy,
   # no TLS termination, no ingress.
@@ -35,7 +35,7 @@
       # Proxmox template (pve-exporter.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.10.09";
+      version = "2026.11.10";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
@@ -54,7 +54,7 @@
       nixosConfigurations.pve-exporter = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.o11yAgent
           arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix

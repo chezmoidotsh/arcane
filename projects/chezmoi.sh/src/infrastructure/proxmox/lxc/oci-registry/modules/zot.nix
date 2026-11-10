@@ -67,7 +67,7 @@ let
       compat = [ "docker2s2" ]; # keep fat-manifest clients happy
       # No accessControl: Zot binds loopback-only; Caddy is the sole external
       # surface. Omitting accessControl keeps /metrics unauthenticated so
-      # Vector can scrape without credentials.
+      # the o11y-agent can scrape without credentials.
     };
 
     log.level = "info";

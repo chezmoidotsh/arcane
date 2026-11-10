@@ -12,7 +12,7 @@
   # resolves affected hostnames to their talosnet-side IPs instead, keeping
   # traffic local.
   #
-  # vector ships logs + metrics to o11y.
+  # o11y-agent (OpenTelemetry Collector) ships logs + metrics to o11y as OTLP.
   #
   # Build (produces a Proxmox-importable .tar.xz):
   #
@@ -38,7 +38,7 @@
       # Proxmox template (talosnet-dns.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.10.09";
+      version = "2026.11.10";
 
       # bindTsigSecret — HMAC-SHA256 TSIG key securing RFC2136 dynamic
       # updates to talosnet.chezmoi.sh (bind.sops.env). Read from the
@@ -49,7 +49,7 @@
       nixosConfigurations.talosnet-dns = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.o11yAgent
           arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix

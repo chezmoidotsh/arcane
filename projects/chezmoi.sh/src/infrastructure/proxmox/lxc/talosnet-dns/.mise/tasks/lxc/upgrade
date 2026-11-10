@@ -13,12 +13,12 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "talosnet-dns" "${CONFIG_ROOT}" _talosnet_dns
-lxc_services "bind" "lxc-agent"
+lxc_services "bind" "o11y-agent"
 lxc_mp "mp0" "bind" 100993
 lxc_e2e_hint "dig @10.128.0.3 oci.chezmoi.sh"
 
 lxc_upgrade \
-  --pve-host "${usage_pve_host}" \
-  --vmid "${usage_vmid-}" \
-  --version "${usage_version-}" \
-  ${usage_yes:+--yes}
+	--pve-host "${usage_pve_host}" \
+	--vmid "${usage_vmid-}" \
+	--version "${usage_version-}" \
+	${usage_yes:+--yes}

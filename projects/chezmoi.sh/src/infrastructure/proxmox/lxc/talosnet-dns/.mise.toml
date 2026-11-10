@@ -2,7 +2,7 @@
 # talosnet-dns LXC — Task Automation
 # =============================================================================
 # Tasks for building, uploading, and maintaining the Proxmox LXC template that
-# runs the talosnet split-horizon BIND resolver + Vector agent.
+# runs the talosnet split-horizon BIND resolver + the o11y-agent.
 #
 # Usage:
 #   mise run lxc:build                                # Build the LXC tarball

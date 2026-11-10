@@ -3,8 +3,8 @@
 # prometheus-pve-exporter — scrape PVE API and expose Prometheus metrics
 # ─────────────────────────────────────────────────────────────────────────────
 # Queries the Proxmox VE API using an API token (no agent on the PVE host).
-# Exposes metrics at 127.0.0.1:9221. Vector scrapes the /pve endpoint with
-# ?target=<host>&cluster=1&node=1 and pushes via remote_write to the o11y
+# Exposes metrics at 127.0.0.1:9221. The o11y-agent scrapes the /pve endpoint
+# with ?target=<host>&cluster=1&node=1 and pushes it over OTLP to the o11y
 # appliance.
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, pkgs, pveHost, pveTokenValue, ... }:

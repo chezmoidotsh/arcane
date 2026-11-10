@@ -440,7 +440,7 @@ in
             ExecStart = "${startScript}";
             # Pin a clean journald SYSLOG_IDENTIFIER. Without it, stdout-captured
             # logs inherit the basename of argv[0] — the wrapper script's store
-            # path, /nix/store/<hash>-omni-start — which catalog.lxcAgent then
+            # path, /nix/store/<hash>-omni-start — which catalog.o11yAgent then
             # maps to resources.service.name. Pinning makes logs show a stable
             # service.name = "omni" (and the hash no longer churns per rebuild).
             SyslogIdentifier = "omni";

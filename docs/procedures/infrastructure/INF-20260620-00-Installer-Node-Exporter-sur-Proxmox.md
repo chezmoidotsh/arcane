@@ -1,10 +1,10 @@
 # INF-20260620-00 Installer node-exporter sur Proxmox
 
 Cette procédure installe et configure `prometheus-node-exporter` directement sur l'hôte Proxmox VE `pve-01`, puis
-déclare cet exporter comme cible de scrape dans le LXC `pve-exporter`. Le LXC expose déjà ses propres métriques via
-`catalog.lxcAgent.nodeExporter` (CPU, mémoire, réseau et systèmes de fichiers du conteneur), mais cela ne couvre pas
-l'hyperviseur : les E/S disque de l'hôte, les capteurs matériels, la santé des NVMe et l'occupation des systèmes de
-fichiers de l'hôte exigent un node-exporter sur l'hôte lui-même.
+déclare cet exporter comme cible de scrape dans le LXC `pve-exporter`. Le LXC expose déjà ses propres métriques via le
+récepteur `hostmetrics` de `catalog.o11yAgent` (CPU, mémoire, réseau et systèmes de fichiers du conteneur), mais cela ne
+couvre pas l'hyperviseur : les E/S disque de l'hôte, les capteurs matériels, la santé des NVMe et l'occupation des
+systèmes de fichiers de l'hôte exigent un node-exporter sur l'hôte lui-même.
 
 > [!WARNING]\
 > Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur l'hôte Proxmox. La cible de scrape
@@ -22,7 +22,7 @@ Les accès suivants sont également nécessaires :
 - accès SSH `root` à l'hôte Proxmox (`pve-01.pve.chezmoi.sh`) ;
 - LXC `pve-exporter` joignable depuis l'hôte, sur le VLAN 5 (`10.0.0.0/22`) : l'hôte porte son adresse sur `vmbr0`
   (accès VLAN 5) et le LXC est sur `vmbr1` avec le tag 5 (`10.0.0.24`) ;
-- accès en écriture au dépôt pour modifier `o11y.nix`, et accès SSH `root` à l'hôte pour pousser l'image du LXC.
+- accès en écriture au dépôt pour modifier `o11y-agent.nix`, et accès SSH `root` à l'hôte pour pousser l'image du LXC.
 
 ## Entrées requises
 
@@ -106,9 +106,10 @@ La même règle se crée depuis l'interface web : Datacenter → `<PVE_NODE>` �
 
 ## Étape 5 — Déclarer la cible de scrape dans pve-exporter
 
-Dans `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/pve-exporter/modules/o11y.nix`, ajouter le node-exporter de
-l'hôte aux cibles de scrape, à côté du job `pve_exporter` existant. Les labels `node` et `host_name` sont forcés pour
-que les séries soient attribuées à l'hôte PVE et non au LXC qui scrape (`get_hostname!()` renverrait `pve-exporter`).
+Dans `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/pve-exporter/modules/o11y-agent.nix`, ajouter le node-exporter
+de l'hôte aux cibles de scrape (`catalog.o11yAgent.metrics.scrapeTargets`), à côté du job `pve_exporter` existant. Le
+label `host_name` est promu en attribut de ressource `host.name` : les séries sont attribuées à l'hôte PVE et non au LXC
+qui scrape (sans lui, `host.name` serait `pve-exporter`).
 
 ```nix
 metrics = {
@@ -121,7 +122,7 @@ metrics = {
     {
       jobName = "node_exporter_pve";
       targets = [ "<PVE_IP>:<PORT>" ];
-      extraLabels = { node = "<PVE_NODE>"; host_name = "<PVE_NODE>"; };
+      extraLabels = { host_name = "<PVE_NODE>"; };
     }
   ];
 };
@@ -174,17 +175,17 @@ IN ACCEPT -source 10.0.0.0/22 -dport 9100 -p tcp -log nolog
 ## Vérifications rapides
 
 Une fois le LXC `pve-exporter` mis à jour, vérifier dans VictoriaMetrics que le job `node_exporter_pve` remonte des
-séries.
+séries. Les étiquettes gardent les points d'OpenTelemetry : le job s'écrit `service.name`.
 
 - **Service actif** : `systemctl is-active prometheus-node-exporter` sur l'hôte — `active`.
 - **Exporter joignable** : `curl -s http://${PVE_IP}:${PORT}/metrics | grep node_uname_info` — une ligne
   `node_uname_info`.
-- **Occupation des systèmes de fichiers** : `node_filesystem_avail_bytes{job="node_exporter_pve", fstype!="tmpfs"}` —
-  des séries présentes pour l'hôte.
-- **E/S disque** : `rate(node_disk_read_bytes_total{job="node_exporter_pve"}[5m])` — des séries présentes.
-- **CPU** : `rate(node_cpu_seconds_total{job="node_exporter_pve", mode="idle"}[1m])` — des séries présentes.
-- **Santé NVMe** : `node_nvme_info{job="node_exporter_pve"}` — des séries si le collecteur NVMe de l'exporter est
-  disponible sur l'hôte.
+- **Occupation des systèmes de fichiers** :
+  `node_filesystem_avail_bytes{service.name="node_exporter_pve", fstype!="tmpfs"}` — des séries présentes pour l'hôte.
+- **E/S disque** : `rate(node_disk_read_bytes_total{service.name="node_exporter_pve"}[5m])` — des séries présentes.
+- **CPU** : `rate(node_cpu_seconds_total{service.name="node_exporter_pve", mode="idle"}[1m])` — des séries présentes.
+- **Santé NVMe** : `node_nvme_info{service.name="node_exporter_pve"}` — des séries si le collecteur NVMe de l'exporter
+  est disponible sur l'hôte.
 
 ## Retour arrière
 
@@ -196,10 +197,14 @@ apt-get remove -y prometheus-node-exporter
 ```
 
 Supprimer ensuite la règle `IN ACCEPT` ajoutée à l'étape 4 de `/etc/pve/nodes/${PVE_NODE}/host.fw`, retirer le job
-`node_exporter_pve` de `o11y.nix`, puis reconstruire et mettre à jour le LXC `pve-exporter` comme à l'étape 5.
+`node_exporter_pve` de `o11y-agent.nix`, puis reconstruire et mettre à jour le LXC `pve-exporter` comme à l'étape 5.
 
 ## Historique
 
+- _2026-11-10_ : Refonte de l'observabilité : `catalog.lxcAgent` devient `catalog.o11yAgent` (module `o11y-agent.nix`,
+  ex `o11y.nix`), qui n'a plus d'option `nodeExporter` (remplacée par le récepteur `hostmetrics`). L'hôte reste scruté
+  via `scrapeTargets`, sans label `node` ; les requêtes filtrent sur `service.name` au lieu de `job`. Requêtes non
+  rejouées sur l'appliance.
 - _2026-10-17_ : Alignement sur le gabarit de procédure v2 : état de vérification en callout `WARNING`, entrées en un
   bloc `export` utilisé par toutes les étapes, étapes 2 et 4 écrites avec les variables, blocs de commandes espacés,
   vérifications de l'étape 5 et de l'exemple complet complétées.

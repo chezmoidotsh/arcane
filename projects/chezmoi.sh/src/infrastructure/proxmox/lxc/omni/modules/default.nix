@@ -4,7 +4,7 @@
     ./dex.nix
     ./caddy.nix
     ./hardening.nix
-    ./o11y.nix
+    ./o11y-agent.nix
     ./secrets.nix
   ];
 }

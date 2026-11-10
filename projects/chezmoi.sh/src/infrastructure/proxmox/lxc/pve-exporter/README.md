@@ -1,17 +1,16 @@
 # `pve-exporter` — Proxmox VE Metrics Exporter LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + prometheus-pve-exporter + Vector. A lightweight monitoring sidecar that scrapes
-the Proxmox VE API and ships host-level metrics and logs to the central observability appliance
+Standalone Proxmox LXC running NixOS + prometheus-pve-exporter + OpenTelemetry Collector. A lightweight monitoring
+sidecar that scrapes the Proxmox VE API and ships host-level metrics and logs to the central observability appliance
 (`data.o11y.chezmoi.sh`).
 
-It also owns **PVE syslog ingest**: the Proxmox host forwards its syslog here (not to o11y directly), and this LXC
-parses RFC 5424 into the OTLP-style internal format before forwarding to o11y. The o11y appliance no longer listens on
-syslog — it only ingests already-structured events and runs validation. Concentrating the syslog parser next to the host
-that produces the logs keeps the appliance's Vector pipeline focused on validation + storage.
+It also owns **PVE syslog ingest**: the Proxmox host forwards its syslog here (not to o11y directly), and this LXC's
+agent (`catalog.o11yAgent`, syslog receiver) turns RFC 5424 into OTLP logs. The o11y appliance only accepts OTLP/HTTP on
+`:4318` (ADR-018): it has no syslog listener and no parser.
 
-This container holds **no persistent data** — it pushes outbound (metrics via remote_write, logs via the Vector
-protocol) and can be rebuilt and replaced at any time without data loss. Its only inbound port is the syslog listener
-(`:5140`).
+This container holds **no persistent data** — it pushes outbound (everything as OTLP/HTTP to `:4318`) and can be rebuilt
+and replaced at any time without data loss; the agent's on-disk queue only buffers during an appliance outage. Its only
+inbound port is the syslog listener (`:5140`).
 
 ## Table of contents
 
@@ -38,33 +37,31 @@ flowchart TB
 
     subgraph lxc["LXC: pve-exporter — unprivileged NixOS"]
         exp["prometheus-pve-exporter<br/>127.0.0.1:9221"]
-        subgraph vector["Vector (catalog.lxcAgent)"]
-            scrape["scrape /pve?target=&hellip;<br/>tail journald"]
-            syslog["in_syslog :5140<br/>syslog_to_o11y (parse RFC 5424)"]
+        subgraph otel["OpenTelemetry Collector (catalog.o11yAgent)"]
+            scrape["prometheus receiver<br/>/pve?target=&hellip; + node_exporter_pve<br/>journald receiver"]
+            syslog["syslog receiver :5140<br/>(RFC 5424 → OTLP logs)"]
         end
     end
 
     api -->|"HTTPS scrape<br/>prometheus@pve!exporter"| exp
     exp --> scrape
     host -->|"TCP syslog :5140"| syslog
-    scrape -->|"metrics remote_write"| o11y
-    scrape -->|"journald logs (Vector :6000)"| o11y
-    syslog -->|"parsed syslog (Vector :6000)"| o11y
+    scrape -->|"metrics + journald logs<br/>OTLP/HTTP :4318"| o11y
+    syslog -->|"syslog logs<br/>OTLP/HTTP :4318"| o11y
 ```
 
 - **prometheus-pve-exporter** binds to `127.0.0.1:9221`. It authenticates against the PVE API with the
   `prometheus@pve!exporter` token (read-only) and exposes metrics on demand via the multi-target `/pve` endpoint.
-- **Vector** (via `catalog.lxcAgent`) does three things: scrapes the exporter with
-  `?target=<pve-host>&cluster=1&node=1`, tails systemd-journal entries, and runs a syslog TCP listener on `:5140`.
-  Metrics go to o11y via remote_write; journald and parsed syslog go to o11y over the Vector native protocol (`:6000`).
-- **Syslog ingest + parsing** lives here, not on o11y. The `in_syslog` source + `syslog_to_o11y` transform
-  (`modules/o11y.extraTransforms/sources.syslog.yaml`) map RFC 5424 fields into the OTLP-style internal format with
-  `log.source=syslog`, so the appliance receives already-structured events. The journald passthrough
-  (`transforms.journald.yaml`) is re-added explicitly because a non-empty `logs.extraTransforms` disables
-  `catalog.lxcAgent`'s automatic one.
+- **OpenTelemetry Collector** (via `catalog.o11yAgent`) does three things: scrapes the exporter with
+  `?target=<pve-host>&cluster=1&node=1` (plus the PVE host's node-exporter, attributed to `pve-01` through
+  `extraLabels.host_name`), reads the systemd journal, and runs a syslog TCP listener on `:5140` (`logs.syslog.enable`).
+  Everything leaves as OTLP/HTTP to `https://data.o11y.chezmoi.sh:4318`.
+- **Syslog ingest** lives here, not on o11y. The agent's syslog receiver maps `appname` to `service.name` and `hostname`
+  to `host.name`; messages are forwarded raw, with no per-service parser (see the
+  [`catalog.o11yAgent` README](../../../../../../../catalog/nix/modules/o11y-agent/README.md)).
 - **Only inbound port is `:5140`** (syslog). The exporter binds loopback; metrics and logs are push-only. There is no
   Caddy, no TLS termination, no public surface.
-- **`hostsOverride`** in `modules/o11y.nix` resolves `data.o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.22`)
+- **`hostsOverride`** in `modules/o11y-agent.nix` resolves `data.o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.22`)
   inside the LXC, bypassing public DNS for the push paths.
 - **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host.
 
@@ -81,10 +78,7 @@ flowchart TB
 ├── modules/
 │   ├── default.nix        ← module aggregator
 │   ├── pve-exporter.nix   ← prometheus-pve-exporter service (nixpkgs)
-│   ├── o11y.nix           ← catalog.lxcAgent (metrics scrape + journald + syslog → o11y)
-│   ├── o11y.extraTransforms/  ← Vector fragments injected into catalog.lxcAgent
-│   │   ├── sources.syslog.yaml      ← syslog :5140 source + syslog_to_o11y (parse + tests)
-│   │   └── transforms.journald.yaml ← journald_to_o11y passthrough (re-added)
+│   ├── o11y-agent.nix     ← catalog.o11yAgent (metrics scrape + journald + syslog → o11y over OTLP)
 │   └── hardening.nix      ← sysctl, firewall (only :5140), login surface, journald
 └── secrets/
     └── pve-exporter.sops.env  ← SOPS: PVE_HOST, PVE_TOKEN_VALUE (operator-provided)
@@ -267,13 +261,12 @@ pve-firewall restart
 ```
 
 > Tighten `10.0.0.0/8` to the actual PVE host / bridge subnet if you can. The in-LXC NixOS firewall also opens `:5140`
-> (`hardening.nix`) — both layers must allow it for syslog to reach Vector.
+> (`hardening.nix`) — both layers must allow it for syslog to reach the agent.
 
 `policy_out: ACCEPT` is required for:
 
 - The PVE API scrape (HTTPS to `<pve-host>:8006`)
-- The remote_write push to `data.o11y.chezmoi.sh`
-- The Vector protocol push to `data.o11y.chezmoi.sh:6000`
+- The OTLP/HTTP push to `data.o11y.chezmoi.sh:4318`
 - DNS, NTP
 
 ## Proxmox host — syslog forwarding
@@ -302,9 +295,9 @@ Then validate and restart:
 rsyslogd -N1 && systemctl restart rsyslog
 ```
 
-Vector parses each RFC 5424 record into the OTLP-style format (`log.source=syslog`, `host.name`, `service.name`,
-severity/facility, …) and forwards it to o11y. Query in VictoriaLogs at `https://data.o11y.chezmoi.sh/logs` (LogsQL:
-`attr.log.source:syslog`).
+The agent turns each RFC 5424 record into an OTLP log (`service.name` from `appname`, `host.name` from `hostname`) and
+forwards it to o11y. Query it in VictoriaLogs at `https://data.o11y.chezmoi.sh/logs` (LogsQL, e.g.
+`{host.name="pve-01"}`).
 
 ## Hardening reference
 
@@ -330,20 +323,20 @@ loopback-only exporter binding compensate.
 
 ```sh
 ssh root@pve.lan pct exec <vmid> -- journalctl -u pve-exporter -f
-ssh root@pve.lan pct exec <vmid> -- journalctl -u lxc-agent -f   # Vector (catalog.lxcAgent)
+ssh root@pve.lan pct exec <vmid> -- journalctl -u o11y-agent -f   # OpenTelemetry Collector (catalog.o11yAgent)
 ```
 
-> The Vector unit is named `lxc-agent` (it is owned by `catalog.lxcAgent`), not `vector`.
+> The collector unit is named `o11y-agent` (it is owned by `catalog.o11yAgent`).
 
 ### Verifying syslog ingest
 
 ```sh
-# Confirm Vector is listening on :5140 inside the LXC:
+# Confirm the agent is listening on :5140 inside the LXC:
 ssh root@pve.lan pct exec <vmid> -- ss -tlnp | grep 5140
 
 # After the PVE host rsyslog is configured, query forwarded logs in VictoriaLogs:
 curl -sSf 'https://data.o11y.chezmoi.sh/logs/select/logsql/query' \
-  --data-urlencode 'query=attr.log.source:syslog' | head
+  --data-urlencode 'query={host.name="pve-01"}' | head
 ```
 
 ### Checking the exporter manually
@@ -383,22 +376,19 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
 ## Known gaps / follow-ups
 
 1. **`flake.lock` is seeded from the observability sibling.** This LXC shares the exact input set
-   (`nixpkgs/nixos-26.05`, `arcane`) with `../o11y-datastore`, so its lock was copied from there to give a valid pin. Run
-   `nix flake lock` here to refresh it independently when bumping inputs.
+   (`nixpkgs/nixos-26.05`, `arcane`) with `../o11y-datastore`, so its lock was copied from there to give a valid pin.
+   Run `nix flake lock` here to refresh it independently when bumping inputs.
 
 2. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a rebuild and redeploy. There is no
    runtime secret injection. For a homelab this is acceptable; a production system would use OpenBao + a sidecar to
    inject the token at runtime without rebuilding.
 
 3. **No alert if the exporter goes silent.** If the LXC dies or the token is revoked, the o11y appliance stops receiving
-   PVE metrics without notification. Adding `up{job="pve_exporter"} == 0` to
-   [`../o11y-datastore/alerts/pve.rules.yaml`](../o11y-datastore/alerts/pve.rules.yaml) would close this gap.
+   PVE metrics without notification. The appliance's vmalert only evaluates the watchdog today; an
+   `up{service_name="pve_exporter"} == 0` rule (label names to verify, see the o11y README) would close this gap.
 
-4. **Syslog parsing tests are not auto-run.** The `syslog_to_o11y` unit tests live in
-   `modules/o11y.extraTransforms/sources.syslog.yaml`, but `catalog.lxcAgent` only runs `vector validate` (not
-   `vector test`) at build time, and the fragment isn't testable standalone (the journald passthrough references the
-   catalog's `journald_to_semconv` source). The VRL is identical to the previously-tested o11y transform. A future
-   `vector test` harness over the assembled config would restore coverage.
+4. **Syslog mapping is not unit-tested.** The `transform/syslog` statements of `catalog.o11yAgent` are only checked by
+   `otelcol-contrib validate` at build time (syntax, not behavior). Verify with the LogsQL query above after a change.
 
 5. **No NixOS smoke test.** A `pkgs.testers.runNixOSTest` that boots the LXC, asserts `pve-exporter.service` is active,
    and curls `127.0.0.1:9221/metrics` would catch module regressions before they reach Proxmox.
