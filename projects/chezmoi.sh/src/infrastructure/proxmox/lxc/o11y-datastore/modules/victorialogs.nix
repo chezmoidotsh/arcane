@@ -29,7 +29,7 @@ in
         "${pkgs.victorialogs}/bin/victoria-logs"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-retentionPeriod=30d" # homelab baseline; raise per disk budget
+        "-retentionPeriod=${retention.logs}" # set in configuration.nix
         "-loggerFormat=json"
       ];
 

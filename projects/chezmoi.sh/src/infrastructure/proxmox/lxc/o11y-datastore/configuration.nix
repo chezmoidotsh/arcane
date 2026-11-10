@@ -37,6 +37,15 @@
   system.stateVersion = "26.05";
   networking.hostName = "o11y";
 
+  # ── Retention — the single place to tune it (raise per disk budget) ───────
+  # Passed to modules/victoria*.nix as -retentionPeriod. Units: h, d, w, y;
+  # a bare number means months (VictoriaMetrics convention).
+  _module.args.retention = {
+    metrics = "18"; # months
+    logs = "30d";
+    traces = "2d"; # traces are voluminous
+  };
+
   # ── Static IPv4 (mirrors PVE net0: ip=10.0.0.22/22,gw=10.0.0.1) ──────────
   # See catalog.nix's lxc-static-network module — without this, eth0 falls
   # back to a link-local address on every reboot (VLAN 5 has DHCP disabled).

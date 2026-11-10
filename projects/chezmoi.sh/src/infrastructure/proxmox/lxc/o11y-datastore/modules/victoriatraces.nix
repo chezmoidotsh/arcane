@@ -31,7 +31,7 @@ in
         "${pkgs.victoriatraces}/bin/victoria-traces"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-retentionPeriod=2d" # traces are voluminous; shorter than metrics/logs
+        "-retentionPeriod=${retention.traces}" # set in configuration.nix
         "-loggerFormat=json"
       ];
 
