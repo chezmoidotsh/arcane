@@ -52,6 +52,36 @@ description = "Generate the architecture diagram for the observability appliance
 run = "d2 architecture.d2 docs/assets/architecture.svg"
 dir = "{{ config_root }}"
 
+# Local preview of the landing page: static files read from disk on every request
+# (just refresh the browser), the four UIs proxied to the live backend so the
+# iframes show real data. Needs `caddy` on PATH. Override with UI_PORT / UI_BACKEND.
+[tasks."ui:dev"]
+description = "Serve the landing page locally on :8080 (UIs proxied to the live backend)"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+  port="${UI_PORT:-8080}"
+  backend="${UI_BACKEND:-https://data.o11y.chezmoi.sh}"
+  echo "[INFO] http://localhost:${port}  (backend: ${backend})" >&2
+  caddy run --adapter caddyfile --config - <<EOF
+{
+  admin off
+}
+:${port} {
+  @backend path /metrics/* /logs/* /traces/* /alerts/*
+  handle @backend {
+    reverse_proxy ${backend} {
+      header_up Host {upstream_hostport}
+    }
+  }
+  handle {
+    root * modules/caddy.statics
+    file_server
+  }
+}
+EOF
+'''
+
 [tasks."lxc:secrets:sync"]
 description = "Sync Pulumi tokens (Cloudflare + Tailscale) into secrets/caddy.sops.env"
 dir = "{{ config_root }}"

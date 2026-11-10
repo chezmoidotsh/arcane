@@ -1,0 +1,184 @@
+<!doctype html>
+<!-- Landing page for the o11y datastore — served by Caddy at / (and as a 404 fallback).
+     A dock floating over the left edge (vertically centered, no reserved column) with one gummy pastel tile per backend UI; the selected UI is embedded
+     full-bleed. Tiles are 30% opaque until the dock is hovered, then 75%. All four iframes stay alive once opened, so switching never loses a
+     query. The active tab lives in the URL hash (#logs). Everything is same-origin (Caddy path
+     routing), hence no framing/CORS issue. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>o11y // chezmoi.sh</title>
+    <style>
+      :root {
+        --bg: #e2e8f0;
+        --shadow: #000;
+        --label-bg: rgba(30, 30, 30, 0.85);
+        --label-fg: #fff;
+        --metrics: #a5d8ff;
+        --logs: #b2f2bb;
+        --traces: #fcc2d7;
+        --alerts: #ffd8a8;
+        --size: 3.5rem;
+        --depth: 6px;
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1115;
+          --shadow: #fff;
+          --metrics: #3b82f6;
+          --logs: #10b981;
+          --traces: #ec4899;
+          --alerts: #f97316;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+      }
+
+      /* Dock — floats above the iframes, vertically centered. Nothing moves: only opacity changes. */
+      nav {
+        position: fixed;
+        z-index: 1;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      nav a {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: var(--size);
+        height: var(--size);
+        color: #000; /* glyphs stay dark on the pastel fills in both themes */
+        background: var(--c);
+        border-radius: 14px;
+        box-shadow: var(--depth) var(--depth) 0 var(--shadow);
+        opacity: 0.3;
+        transition:
+          opacity 0.2s,
+          transform 0.1s,
+          box-shadow 0.1s;
+      }
+      nav:hover a {
+        opacity: 0.75;
+      }
+      /* Selected page: pressed into its shadow. No hover movement on any tile. */
+      nav a[aria-current="true"] {
+        transform: translate(var(--depth), var(--depth));
+        box-shadow: 0 0 0 var(--shadow);
+      }
+
+      nav svg {
+        width: 1.7rem;
+        height: 1.7rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Name tooltip, to the right of the tile */
+      nav a::after {
+        content: attr(data-label);
+        position: absolute;
+        left: calc(100% + var(--depth) + 0.6rem);
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
+        background: var(--label-bg);
+        color: var(--label-fg);
+        font-size: 0.7rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+      }
+      nav a:hover::after {
+        opacity: 1;
+      }
+
+      /* Embedded UIs, full-bleed, no frame */
+      main {
+        height: 100%;
+      }
+      iframe {
+        display: none;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #fff;
+      }
+      iframe.on {
+        display: block;
+      }
+
+      @media (max-width: 640px) {
+        nav {
+          flex-direction: row;
+          left: 50%;
+          top: auto;
+          bottom: 1.25rem;
+          transform: translateX(-50%);
+        }
+        nav a::after {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav aria-label="Backends">
+      <a href="#metrics" data-id="metrics" data-label="Metrics — VictoriaMetrics" style="--c: var(--metrics)">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-5 3 3 5-7" /></svg>
+      </a>
+      <a href="#logs" data-id="logs" data-label="Logs — VictoriaLogs" style="--c: var(--logs)">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
+      </a>
+      <a href="#traces" data-id="traces" data-label="Traces — VictoriaTraces" style="--c: var(--traces)">
+        <svg viewBox="0 0 24 24"><path d="M4 5h9M8 12h12M6 19h8" /></svg>
+      </a>
+      <a href="#alerts" data-id="alerts" data-label="Alerts — Alertmanager" style="--c: var(--alerts)">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4" />
+        </svg>
+      </a>
+    </nav>
+
+    <main>
+      <iframe id="metrics" data-src="/metrics/vmui/" title="VictoriaMetrics"></iframe>
+      <iframe id="logs" data-src="/logs/select/vmui/" title="VictoriaLogs"></iframe>
+      <iframe id="traces" data-src="/traces/select/vmui/" title="VictoriaTraces"></iframe>
+      <iframe id="alerts" data-src="/alerts/#/alerts" title="Alertmanager"></iframe>
+    </main>
+
+    <script>
+      // Show the iframe matching the hash (default: metrics); load it on first visit only.
+      const show = () => {
+        const id = document.getElementById(location.hash.slice(1)) ? location.hash.slice(1) : "metrics";
+        document.querySelectorAll("iframe").forEach((f) => {
+          f.classList.toggle("on", f.id === id);
+          if (f.id === id && !f.src) f.src = f.dataset.src;
+        });
+        document.querySelectorAll("nav a").forEach((a) => a.setAttribute("aria-current", a.dataset.id === id));
+      };
+      addEventListener("hashchange", show);
+      show();
+    </script>
+  </body>
+</html>
