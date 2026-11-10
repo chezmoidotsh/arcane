@@ -71,7 +71,7 @@ Ces limites affectent directement :
 **Comment mettre en œuvre une solution moderne et centralisée de gestion des secrets, qui élimine les points de
 défaillance uniques, fournit des contrôles de sécurité de niveau entreprise et offre de meilleures capacités
 opérationnelles, tout en respectant les principes d'auto-hébergement et en s'intégrant à l'infrastructure existante (SSO
-Authelia, Kubernetes, ArgoCD) ?**
+Pocket-Id, Kubernetes, ArgoCD) ?**
 
 > [!NOTE]\
 > Note du 2026-10-11 : Authelia n'est plus le SSO du dépôt. Pocket-Id est le fournisseur d'identité unique : le backend
@@ -87,7 +87,7 @@ Authelia, Kubernetes, ArgoCD) ?**
 - **Expérience utilisateur** : fournir une interface web moderne pour les opérations sur les secrets.
 - **Intégration** : s'intégrer sans friction à l'infrastructure Kubernetes/ArgoCD existante.
 - **Auto-hébergement** : garder la maîtrise de l'infrastructure de gestion des secrets.
-- **SSO/OIDC** : s'intégrer à Authelia, déjà en place, pour une authentification centralisée.
+- **SSO/OIDC** : s'intégrer à Pocket-Id, déjà en place, pour une authentification centralisée.
 
 ## Options envisagées
 
@@ -177,7 +177,7 @@ du projet.
 ### Positives
 
 - Mise en œuvre réussie et terminée (2025-06-28).
-- Intégration OIDC avec Authelia pour une authentification centralisée (configuration en attente).
+- Intégration OIDC avec Pocket-Id pour une authentification centralisée (configuration en attente).
 - Solution de référence de l'industrie, avec une documentation et une communauté étendues.
 - Scalabilité éprouvée et fonctionnalités de niveau entreprise en open source.
 - Backend PostgreSQL avec CloudNativePG pour une persistance robuste des données et leur sauvegarde.
@@ -213,7 +213,7 @@ du projet.
 
 **Configuration en attente** (liste telle qu'écrite à l'origine ; l'écart avec le dépôt est détaillé ci-dessous) :
 
-- Intégration de l'**authentification OIDC** avec Authelia (infrastructure prête).
+- Intégration de l'**authentification OIDC** avec Pocket-Id (infrastructure prête).
 - **Audit de sécurité** des configurations NetworkPolicy et RBAC.
 - **Migration des secrets** de SOPS vers OpenBao.
 - Tests d'**intégration d'une application pilote**.
@@ -301,7 +301,7 @@ informations apparaissent.
   - Scripts de test de sauvegarde et de restauration.
 - **2025-01-23** : Décision révisée — « HashiCorp Vault ». **Remplacée** : pendant la mise en œuvre, il est apparu que
   le **SSO OIDC est une fonctionnalité réservée à l'édition Enterprise** d'Infisical, ce qui casse fondamentalement
-  l'architecture d'intégration avec Authelia. Nouvelle option retenue : « HashiCorp Vault », parce que :
+  l'architecture d'intégration avec Pocket-Id. Nouvelle option retenue : « HashiCorp Vault », parce que :
   - l'OIDC/SSO est disponible dans la version open source ;
   - c'est la référence de l'industrie, avec un support d'écosystème étendu ;
   - sa viabilité à long terme et le soutien de sa communauté sont meilleurs ;
@@ -323,6 +323,8 @@ informations apparaissent.
 
 ## Historique des modifications
 
+- _2026-11-10_ : Mentions d'Authelia remplacées par Pocket-Id dans le texte de décision, Authelia n'étant plus
+  déployé.
 - _2026-10-11_ : **CHORE** : migration vers le standard de documentation en français (gabarit 2.0.0, sommaire manuel
   supprimé, sections renommées, sections « Pour aller plus loin » et « Évolution de la décision » reconstituées à partir
   de l'ancien contenu). Aucun changement de `status` ni de `date` : `implemented` reste cohérent avec le dépôt

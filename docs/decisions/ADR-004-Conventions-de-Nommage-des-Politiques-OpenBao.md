@@ -137,7 +137,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
    - Les jetons d'administration suivent le motif `{project-name}-admin-ephemeral`
    - Les noms indiquent clairement l'objet et le périmètre
 5. **Politiques d'exception**
-   - `amiya.akn-authelia-policy` est une politique inter-montages spéciale qui permet à Authelia de lire les
+   - `amiya.akn-authelia-policy` est une politique inter-montages spéciale qui permet à Pocket-Id de lire les
      identifiants SSO de tous les montages de projets.
 
 > [!NOTE]\
@@ -182,7 +182,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
 - (-) **Courbe d'apprentissage** : l'opérateur doit comprendre l'objet et le périmètre des politiques
 - (-) **Gestion des jetons** : les jetons d'administration éphémères demandent plus de charge opérationnelle
 - (-) **Nombre de politiques** : plus de politiques à gérer qu'avec une politique unique
-- (-) **Complexité inter-montages** : la politique Authelia rompt les principes d'isolation normale des montages
+- (-) **Complexité inter-montages** : la politique Pocket-Id rompt les principes d'isolation normale des montages
 
 ---
 
@@ -192,7 +192,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
 
 1. **Politiques propres à chaque cluster** : créer des politiques pour chaque cluster en suivant la matrice
 2. **Migration du SSO** : migrer les secrets `/shared/sso/*` existants vers des montages par projet
-3. **Politique inter-montages Authelia** : créer une politique inter-montages dédiée à l'accès SSO d'Authelia
+3. **Politique inter-montages Pocket-Id** : créer une politique inter-montages dédiée à l'accès SSO de Pocket-Id
 4. **Processus des jetons d'administration** : établir le processus de génération des jetons d'administration éphémères
 5. **Validation des politiques** : contrôles automatisés de conformité des politiques et de validation des périmètres
 
@@ -210,7 +210,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
 - **Cohérence** : des services similaires sur des clusters différents doivent avoir des structures de politiques
   similaires
 - **Isolation** : garantir que les politiques propres à un cluster n'accordent pas par accident d'accès inter-clusters
-- **Compromis de sécurité** : accepter un accès inter-montages contrôlé pour Authelia afin de maintenir un SSO
+- **Compromis de sécurité** : accepter un accès inter-montages contrôlé pour Pocket-Id afin de maintenir un SSO
   centralisé
 
 ### Surveillance et conformité
@@ -239,7 +239,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
     persistant
   - **Conformité Zero Trust** : s'aligne sur le principe « ne jamais faire confiance, toujours vérifier »
 - **Pourquoi cette matrice de politiques**
-  - **Couverture** : traite tous les cas d'usage actuels (ESO partagé et cluster, SSO/Authelia, Crossplane,
+  - **Couverture** : traite tous les cas d'usage actuels (ESO partagé et cluster, SSO/Pocket-Id, Crossplane,
     renouvellement des certificats, administration)
   - **Cohérence** : motifs similaires sur tous les clusters
   - **Simplicité** : seulement 6 types de politiques à gérer (3 par cluster)
@@ -255,6 +255,8 @@ Le défi consiste à définir des conventions de politiques qui soient :
 
 ## Historique des modifications
 
+- _2026-11-10_ : Mentions d'Authelia remplacées par Pocket-Id dans le texte de décision, Authelia n'étant plus
+  déployé ; les identifiants techniques de l'époque (`amiya.akn-authelia-policy`) sont conservés.
 - _2026-10-11_ : migration vers le standard de documentation (issue #1257) : traduction en français, gabarit v2.0.0
   (`template-version` passe à "2.0.0"), suppression du sommaire manuel, titres `####` remplacés par des listes, statuts
   d'options sans emoji. Décision, options, verdicts et front matter (dont `status` et `date`) inchangés. Écarts relevés

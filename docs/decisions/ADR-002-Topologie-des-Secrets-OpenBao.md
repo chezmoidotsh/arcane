@@ -47,7 +47,7 @@ OpenBao est opérationnel, avec la configuration de niveau entreprise suivante :
 - **Stockage** : backend PostgreSQL avec CloudNativePG pour la haute disponibilité
 - **Sécurité** : déverrouillage automatique via PKCS#11/SoftHSM, avec stockage chiffré des jetons
 - **Intégration** : External Secrets Operator pour la distribution des secrets native à Kubernetes
-- **Authentification** : intégration OIDC avec Authelia pour le contrôle d'accès centralisé
+- **Authentification** : intégration OIDC avec Pocket-Id pour le contrôle d'accès centralisé
 - **Réseau** : double accès via Tailscale (interne) et HTTPRoute (externe)
 
 ### Le défi stratégique
@@ -291,7 +291,7 @@ seule pour les projets, conformément à la
 **Stratégie d'authentification :**
 
 1. **Authentification Kubernetes** : méthode principale pour l'intégration d'External Secrets Operator
-2. **Authentification OIDC** : accès humain via Authelia, avec mappage des rôles par groupes
+2. **Authentification OIDC** : accès humain via Pocket-Id, avec mappage des rôles par groupes
 3. **Authentification par jeton** : comptes de service et automatisation, avec des jetons à durée limitée
 
 > [!NOTE]\
@@ -381,6 +381,8 @@ platform/ (espace de noms racine)
 
 ## Historique des modifications
 
+- _2026-11-10_ : Mentions d'Authelia remplacées par Pocket-Id dans le texte de décision, Authelia n'étant plus
+  déployé.
 - _2026-10-11_ : Migration vers le standard de documentation en français (gabarit 2.0.0) : traduction, suppression du
   sommaire manuel, remplacement des émojis par des marqueurs textuels, regroupement des sections « Pros and Cons of the
   Options » et « Alternatives Considered and Rejected » dans « Options envisagées », déplacement des « Future
