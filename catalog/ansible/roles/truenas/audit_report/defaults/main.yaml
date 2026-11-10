@@ -1,5 +1,0 @@
----
-# Default variables for truenas_audit role
-
-# Output directory for state reports (relative to playbook)
-output_dir: "{{ playbook_dir }}/output"

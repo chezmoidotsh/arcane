@@ -1,8 +1,0 @@
----
-# Setup tasks for truenas_audit role
-
-- name: Create output directory
-  file:
-    path: "{{ output_dir }}"
-    state: directory
-  delegate_to: localhost
