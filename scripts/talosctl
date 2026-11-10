@@ -48,7 +48,7 @@ detect_real_talosctl() {
 get_user_email() {
   bao token lookup -format json | jq -r '.data.meta.email' 2>/dev/null || {
     echo "Error: Unable to retrieve user email from OpenBao token" >&2
-    echo "Please login first with: bao login -method=oidc -path=authelia" >&2
+    echo "Please login first with: bao login -method=oidc -path=pocket-id" >&2
     exit 1
   }
 }
@@ -81,7 +81,7 @@ check_bao() {
   # Test authentication by trying to lookup token
   if ! bao token lookup >/dev/null 2>&1; then
     echo "Error: Not authenticated with OpenBao" >&2
-    echo "Please login first with: bao login -method=oidc -path=authelia" >&2
+    echo "Please login first with: bao login -method=oidc -path=pocket-id" >&2
     return 1
   fi
 }

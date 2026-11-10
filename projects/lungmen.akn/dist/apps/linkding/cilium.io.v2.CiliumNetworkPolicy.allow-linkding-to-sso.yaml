@@ -4,7 +4,7 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows linkding to connect to Authelia SSO for OIDC authentication.
+      Allows linkding to connect to Pocket-Id SSO for OIDC authentication.
   labels:
     app.kubernetes.io/instance: linkding
     app.kubernetes.io/name: linkding
