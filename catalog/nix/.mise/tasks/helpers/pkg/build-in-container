@@ -2,7 +2,7 @@
 # [MISE] description="Build a catalog package for another system, inside a container"
 # [MISE] dir="{{config_root}}"
 # [MISE] hide=true
-# [USAGE] arg "<package>" help="Attribute of the catalog flake (omni, signoz, signoz-otel-collector, ...)"
+# [USAGE] arg "<package>" help="Attribute of the catalog flake (omni, ...)"
 # [USAGE] flag "-o --output <dir>" help="Where the build output is copied (default: <repo>/.mise/nix/<system>/<package>)"
 # [USAGE] flag "-s --system <system>" help="x86_64-linux or aarch64-linux" default="x86_64-linux" env="NIX_SYSTEM"
 #

@@ -22,8 +22,6 @@
         let pkgs = pkgsFor system; in {
           omni = pkgs.callPackage ./pkgs/by-name/om/omni/package.nix { };
           omni-infra-provider-proxmox = pkgs.callPackage ./pkgs/by-name/om/omni-infra-provider-proxmox/package.nix { };
-          signoz = pkgs.callPackage ./pkgs/by-name/si/signoz/package.nix { };
-          signoz-otel-collector = pkgs.callPackage ./pkgs/by-name/si/signoz-otel-collector/package.nix { };
         });
     };
 }

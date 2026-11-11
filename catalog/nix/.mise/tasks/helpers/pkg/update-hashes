@@ -2,7 +2,7 @@
 # [MISE] description="Bump a catalog package to a new version and refresh its hashes"
 # [MISE] dir="{{config_root}}"
 # [MISE] hide=true
-# [USAGE] arg "<package>" help="Package attribute, e.g. signoz"
+# [USAGE] arg "<package>" help="Package attribute, e.g. omni"
 # [USAGE] arg "<version>" help="Upstream version, e.g. 1.2.3"
 """Bump a package of catalog/nix/pkgs/by-name to a new version and refresh its hashes.
 

@@ -17,7 +17,7 @@
 description = "Evaluate a catalog package for every system exposed by the flake"
 hide = true
 dir = "{{ config_root }}"
-usage = 'arg "<package>" help="Package attribute, e.g. signoz"'
+usage = 'arg "<package>" help="Package attribute, e.g. omni"'
 run = '''
   set -euo pipefail
   for system in x86_64-linux aarch64-linux aarch64-darwin; do
@@ -29,7 +29,7 @@ run = '''
 description = "Build a catalog package for this machine's system"
 hide = true
 dir = "{{ config_root }}"
-usage = 'arg "<package>" help="Package attribute, e.g. signoz"'
+usage = 'arg "<package>" help="Package attribute, e.g. omni"'
 run = 'nix build --no-link --print-out-paths --no-write-lock-file "path:.#${usage_package}"'
 
 [tasks."helpers:pkg:build:cross"]
@@ -37,7 +37,7 @@ description = "Build a catalog package for another system inside a container"
 hide = true
 dir = "{{ config_root }}"
 usage = '''
-  arg "<package>" help="Package attribute, e.g. signoz"
+  arg "<package>" help="Package attribute, e.g. omni"
   flag "-s --system <system>" help="x86_64-linux or aarch64-linux" default="x86_64-linux" env="NIX_SYSTEM"
 '''
 run = 'mise run helpers:pkg:build-in-container --system "${usage_system}" "${usage_package}"'

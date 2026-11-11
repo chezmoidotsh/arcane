@@ -30,7 +30,7 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 ├── helm/           Helm chart sources (e.g. mutualized-cnpg-databases)
 ├── kubernetes/     Shared kustomize bases + reference Helm values for infra components
 ├── kustomize/      Kustomize bases
-├── nix/            Nix modules and packages (pkgs/by-name: Omni, SigNoz, … built from source)
+├── nix/            Nix modules and packages (pkgs/by-name: Omni, … built from source)
 ├── omni/           Shared Omni cluster-template base + Talos-on-Proxmox machine-class catalog
 ├── opa/            OPA/Rego policies for CI-time manifest validation (policies/, rules/)
 ├── pulumi/         Pulumi components and stacks
