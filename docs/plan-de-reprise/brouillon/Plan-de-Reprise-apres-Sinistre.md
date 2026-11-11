@@ -52,7 +52,6 @@ flowchart TD
     OMNI["omni"]
     PROV["omni-infra-provider-proxmox"]
     O11Y["observability"]
-    EXP["pve-exporter"]
   end
   OMNI --> TALOS["VM Talos"]
   PROV -->|"crée les VM"| TALOS
@@ -159,6 +158,11 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   chiffrement PBS). L'installation de Proxmox VE elle-même est non documentée au-delà de cette liste.
 - Réinstaller le hook conntrack de l'hôte avec le playbook `pve.yaml`
   ([Procédure INF-20260730-00](../../procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)).
+- Réinstaller le collecteur OpenTelemetry de l'hôte (journal et métriques) avec les tâches `mise` `host:otelcol:install`
+  puis `host:otelcol:deploy`
+  ([Procédure INF-20261111-00](../../procedures/infrastructure/INF-20261111-00-Installer-le-Collecteur-OpenTelemetry-sur-Proxmox.md)).
+  Le serveur de métriques OpenTelemetry de PVE se recrée à la main (voir
+  [Infrastructure manuelle](../../reference/Infrastructure-Manuelle-Reference.md)).
 - La configuration gérée par Pulumi (SDN, identités, pools, ACME, pare-feu) attend l'étape 5 : son état est sur Garage.
 
 ### 3. Remettre PBS en service
@@ -206,8 +210,8 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   (`vault.kv.SecretV2` de `stack/truenas/users/`, groupes de `stack/pocket-id.ts`, Secrets Kubernetes de
   `stack/proxmox/access/*-bootstrap.ts`) ne peuvent pas s'appliquer à ce moment. Le comportement exact de `pulumi up`
   dans ce cas (échec partiel ou total, besoin de `--target`) n'est pas vérifié ; une seconde passe a lieu à l'étape 8.
-- Les identités Proxmox (`omni@pve`, `pve-exporter`, bootstrap des clusters) de `stack/proxmox/access/` font partie de
-  cette passe ; les Secrets `*-bootstrap-pve` ne peuvent être écrits qu'une fois les clusters créés (étapes 7 et 9).
+- Les identités Proxmox (`omni@pve`, bootstrap des clusters) de `stack/proxmox/access/` font partie de cette passe ; les
+  Secrets `*-bootstrap-pve` ne peuvent être écrits qu'une fois les clusters créés (étapes 7 et 9).
 
 ### 6. Restaurer les LXC de plateforme
 
@@ -215,7 +219,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/*/secrets/` (deux destinataires age) ; pour Omni, son volume
   `/persistent` ou la clé `omni.asc`.
 - **Ordre** : `talosnet-dns` (DNS de talosnet), `oci-registry` (Zot, source de toutes les images des clusters), `omni`
-  puis `omni-infra-provider-proxmox`, et enfin `observability` et `pve-exporter`, qui ne bloquent rien.
+  puis `omni-infra-provider-proxmox`, et enfin `observability`, qui ne bloque rien.
 - **Référence** : restauration depuis PBS (« Restore a guest from backup » dans
   [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md)), ou reconstruction de l'image et remplacement du
   rootfs
@@ -395,6 +399,8 @@ Aucune issue n'est ouverte à ce jour pour ces points :
 
 ## Historique
 
+- _2026-11-11_ : LXC `pve-exporter` et identité `pve-exporter` retirés de l'inventaire et de l'ordre de restauration des
+  LXC (détruits) ; réinstallation du collecteur OpenTelemetry de l'hôte ajoutée à l'étape 2.
 - Création initiale de `DISASTER_RECOVERY_PLAN.md` à la racine du dépôt (date non reprise ici), limité à l'instance
   `nex·rpi` et à `projects/nx`, disparus depuis.
 - _2026-10-11_ : Réécriture complète à partir du dépôt (issue #1109) et déplacement dans `docs/guides/` (issue #1257) :

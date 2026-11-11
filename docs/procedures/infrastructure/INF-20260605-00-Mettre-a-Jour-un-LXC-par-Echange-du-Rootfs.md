@@ -15,9 +15,9 @@ L'indisponibilité cible est de 2 minutes au plus (arrêt du CT, échange du roo
 
 ## Cadre technique et conventions
 
-- **Une procédure pour six conteneurs** : `observability`, `oci-registry`, `omni`, `omni-infra-provider-proxmox`,
-  `pve-exporter` et `talosnet-dns`. Chaque dossier porte ses tâches `mise` (`lxc:build`, `lxc:push`, `lxc:upgrade`) qui
-  s'appuient sur la bibliothèque commune `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`.
+- **Une procédure pour cinq conteneurs** : `observability`, `oci-registry`, `omni`, `omni-infra-provider-proxmox` et
+  `talosnet-dns`. Chaque dossier porte ses tâches `mise` (`lxc:build`, `lxc:push`, `lxc:upgrade`) qui s'appuient sur la
+  bibliothèque commune `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`.
 - **Stockage** : LVM-thin. Les volumes ont la forme `<STORAGE>:vm-<VMID>-disk-N`. Dans les exemples, `STORAGE` vaut
   `nvme-lvm` (pool déclaré dans `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/pools.ts`). Le renommage du
   volume rootfs par le script ne vaut que pour LVM-thin ; sur un autre type de stockage, le volume garde le nom du CT
@@ -40,7 +40,7 @@ Les accès suivants sont également nécessaires :
 - accès SSH par clé à `root@<PVE_HOST>` ;
 - secrets du conteneur présents dans `secrets/*.sops.env` (déchiffrés au moment du build puis effacés de
   l'environnement) ; s'ils manquent, `mise run lxc:secrets:sync` les régénère pour les conteneurs qui le proposent
-  (`observability`, `oci-registry`, `omni` et `pve-exporter`).
+  (`observability`, `oci-registry` et `omni`).
 
 ## Entrées requises
 
@@ -154,7 +154,6 @@ ces services, les propriétaires de données et la vérification de bout en bout
 | `oci-registry`                | `caddy zot o11y-agent`                                                                           | `zot` : 100994, `caddy` : 100997   | `curl -sSf https://oci.chezmoi.sh/v2/`                                 |
 | `omni`                        | `caddy dex omni omni-pki-init omni-gpg-init o11y-agent`                                          | `omni` : 100980, `caddy` : 100997  | `curl -sSfk https://omni.chezmoi.sh/`                                  |
 | `omni-infra-provider-proxmox` | `omni-infra-provider-proxmox o11y-agent`                                                         | aucun (sans état)                  | aucune                                                                 |
-| `pve-exporter`                | `pve-exporter o11y-agent`                                                                        | aucun (sans état)                  | aucune                                                                 |
 | `talosnet-dns`                | `bind o11y-agent`                                                                                | `bind` : 100993                    | `dig @10.128.0.3 oci.chezmoi.sh`                                       |
 
 Pour `observability`, des contrôles complémentaires depuis le nœud :
@@ -248,6 +247,9 @@ volumes non référencés.
 
 ## Historique
 
+- _2026-11-11_ : LXC `pve-exporter` retiré des conteneurs couverts (détruit, dossier supprimé) : la procédure couvre
+  cinq conteneurs. Lien vers la procédure node-exporter remplacé par celle du collecteur OpenTelemetry. Les entrées plus
+  anciennes gardent les faits de leur époque.
 - _2026-11-10_ : Services contrôlés alignés sur `lxc_services` après la refonte de l'observabilité : `vector` remplacé
   par `otlp-gateway` pour `observability`, `lxc-agent` renommé `o11y-agent` (module `catalog/nix/modules/o11y-agent`).
 - _2026-10-17_ : Alignement sur le gabarit de procédure v2 : intro en deux paragraphes et état de vérification en
@@ -287,5 +289,5 @@ volumes non référencés.
   : création initiale du conteneur et configuration du conteneur.
 - [ADR-013 Observabilité centralisée](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) :
   décision à l'origine du conteneur `observability`.
-- [Installer node-exporter sur Proxmox](INF-20260620-00-Installer-Node-Exporter-sur-Proxmox.md) : autre procédure
-  d'infrastructure sur le nœud Proxmox.
+- [Installer le collecteur OpenTelemetry sur Proxmox](INF-20261111-00-Installer-le-Collecteur-OpenTelemetry-sur-Proxmox.md)
+  : autre procédure d'infrastructure sur le nœud Proxmox.
