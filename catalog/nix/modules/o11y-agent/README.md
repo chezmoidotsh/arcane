@@ -13,10 +13,10 @@ OTLP on `:4318` (see
 
 ```text
 journald ─▶ transform/journald ─▶ groupbyattrs ─┐
-syslog   ─▶ transform/syslog   ─▶ groupbyattrs ─┤  (logs.syslog.enable)     ─▶ processors.logs ─┐
-hostmetrics ────────────────────────────────────┤  (metrics.hostMetrics)                        │
-prometheus scrape (one config per job) ─────────┘  (metrics.scrapeTargets)  ─▶ processors.metrics┤
-                                                                                                 ▼
+syslog   ─▶ transform/syslog   ─▶ groupbyattrs ─┤  (logs.syslog.enable)  ─▶ logs.parsers ─▶ processors.logs ─▶ transform/severity ─┐
+hostmetrics ────────────────────────────────────┤  (metrics.hostMetrics)                                                         │
+prometheus scrape (one config per job) ─────────┘  (metrics.scrapeTargets) ─▶ processors.metrics ────────────────────────────────┤
+                                                                                                                                 ▼
                          resourcedetection (host.name) ─▶ resource ─▶ batch ─▶ otlphttp ─▶ <o11y.endpoint>/v1/*
 ```
 
@@ -29,7 +29,11 @@ prometheus scrape (one config per job) ─────────┘  (metrics.
 - **Logs.** The journald body (a map of journal fields) is reduced to `MESSAGE`. `SYSLOG_IDENTIFIER` (fallback `_COMM`)
   becomes the `service.name` resource attribute, `PRIORITY` the OTel severity (0-2 `FATAL`, 3 `ERROR`, 4 `WARN`, 5-6
   `INFO`, 7 `DEBUG`), `_SYSTEMD_UNIT` and `_PID` the `systemd.unit` and `process.pid` attributes. Messages are forwarded
-  raw: there is no per-service parsing. Parse at query time in VictoriaLogs (`| unpack_json`).
+  raw unless an application parser is enabled with `logs.parsers` (below); otherwise parse at query time in VictoriaLogs
+  (`| unpack_json`).
+- **Severity.** A `transform/severity` processor runs after the parsers and sets `severity_text` on every log to the
+  upper-case `TRACE`/`DEBUG`/`INFO`/`WARN`/`ERROR`/`FATAL`, derived from `severity_number` (so syslog `err`/`notice` or
+  a parser's own spelling end up identical).
 - **Host metrics.** The `hostmetrics` receiver (cpu, load, memory, network, paging, processes, system, filesystem; no
   disk scraper, `/proc/diskstats` is host-wide in an LXC) replaces node-exporter. Metric names look like
   `system_cpu_load_average_1m` once stored.
@@ -38,7 +42,8 @@ prometheus scrape (one config per job) ─────────┘  (metrics.
 - **Own telemetry.** The collector pushes its own metrics as OTLP (`service.telemetry` periodic reader, same interval),
   no self-scrape.
 - **Resource attributes.** `host.name` comes from `resourcedetection` (OS hostname, never overrides an existing value;
-  `os.type` disabled). `server.port` and `url.scheme`, added by the Prometheus receiver, are dropped.
+  `os.type` disabled). `server.port` and `url.scheme`, added by the Prometheus receiver, are dropped. The
+  `resourceAttributes` option is upserted on top, on every signal.
 - **Buffering.** The exporter queue is persisted with `file_storage` in `/var/lib/o11y-agent`: telemetry survives an
   appliance outage or an agent restart. A `memory_limiter` caps the collector at 128 MiB.
 
@@ -128,21 +133,63 @@ resource detection; its id is `<type>/user-<name>`.
 
 `processors.logs` applies to every log pipeline (journald and syslog), `processors.metrics` to the metrics pipeline.
 
+**Application log parsers.** Opt-in, one per application; each runs before the user processors and `transform/severity`.
+
+```nix
+{ ... }: {
+  catalog.o11yAgent.logs.parsers = [ "caddy" "zot" ];
+  catalog.o11yAgent.resourceAttributes = { "deployment.environment.name" = "homelab"; };
+}
+```
+
+## Log parsers
+
+`journald` and `syslog` are the receivers' own mapping and always apply; they are not selectable. Every other file in
+[`parsers/`](./parsers) is an opt-in value of `logs.parsers`. A parser only touches records whose `service.name`
+matches, and the body is always kept as the original line or JSON.
+
+| Parser     | Matches `service.name`                        | Main attributes                                                                                                                                                                                                                                                                                     |
+| ---------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caddy`    | `caddy` (JSON)                                | Severity, `exception.message`; access logs: `http.*`, `url.*`, `user_agent.original`, `client.address`, `network.*`, `tls.*`                                                                                                                                                                        |
+| `dex`      | `dex` (logfmt)                                | Severity, `exception.message`, `user.name`, `user.email`, `dex.connector_id`, `dex.request_id`                                                                                                                                                                                                      |
+| `named`    | `named` (BIND text)                           | `client.*`, `dns.tsig.key`, `dns.zone`, `dns.zone.serial`, `dns.xfr.{type,state,records,bytes,duration}`; resolver timeouts: `dns.question.*`, `server.*` (WARN)                                                                                                                                    |
+| `omni`     | `omni` and `omni-infra-provider-*` (zap JSON) | Severity, `exception.message`, `code.*`, `omni.{component,controller,cluster}`, `omni.resource.{namespace,type,id}`, gRPC `rpc.*`; plain `Error:` lines (provider exit) become `FATAL`                                                                                                              |
+| `victoria` | `victoria-*`, `vmalert` (JSON)                | Severity, `code.*`; failed-request warnings: `client.address` (from `X-Forwarded-For`), `network.peer.*`, `url.path`, `url.query`, `exception.message`                                                                                                                                              |
+| `zot`      | `zot` (zerolog JSON)                          | Severity, `exception.message`, `zot.{component,module}`; `oci.repository`/`oci.reference`/`oci.manifest.digest` on every event (incl. on-demand sync); `zot.sync.{remote,remote_image}`, `zot.retention.*`, `zot.gc.count`; HTTP API: `http.*`, `url.path`, `user_agent.original`, `network.peer.*` |
+
+**Add a parser.** Drop `parsers/<name>.nix` returning a transform processor config; the `logs.parsers` enum is built
+from the directory, so nothing else to register.
+
+```nix
+# parsers/myapp.nix
+{ lib }: {
+  log_statements = [{
+    context = "log";
+    statements = [
+      ''merge_maps(cache, ParseJSON(body), "upsert") where resource.attributes["service.name"] == "myapp" and IsString(body)''
+      ''set(attributes["exception.message"], cache["error"]) where cache["error"] != nil''
+    ];
+  }];
+}
+```
+
 ## Options
 
-| Option                      | Type                   | Default        | Description                                                                |
-| --------------------------- | ---------------------- | -------------- | -------------------------------------------------------------------------- |
-| `enable`                    | bool                   | `false`        | Enable the agent                                                           |
-| `o11y.endpoint`             | string                 | _(required)_   | OTLP/HTTP base URL of the appliance; the signal paths `/v1/*` are appended |
-| `logs.syslog.enable`        | bool                   | `false`        | RFC 5424 syslog TCP listener, forwarded as OTLP logs                       |
-| `logs.syslog.listenAddress` | string                 | `0.0.0.0:5140` | Syslog listen address                                                      |
-| `metrics.enable`            | bool                   | `false`        | Enable metrics shipping                                                    |
-| `metrics.hostMetrics`       | bool                   | `true`         | Collect host metrics with the OTel `hostmetrics` receiver                  |
-| `metrics.scrapeInterval`    | positive int           | `30`           | Collection and scrape interval in seconds                                  |
-| `metrics.scrapeTargets`     | list of submodules     | `[]`           | One entry per Prometheus job (below)                                       |
-| `processors.logs`           | list of submodules     | `[]`           | Extra processors for the log pipelines (below)                             |
-| `processors.metrics`        | list of submodules     | `[]`           | Extra processors for the metrics pipeline (below)                          |
-| `hostsOverride`             | `attrsOf (listOf str)` | `{}`           | Static `/etc/hosts` entries (`networking.hosts`)                           |
+| Option                      | Type                   | Default        | Description                                                                  |
+| --------------------------- | ---------------------- | -------------- | ---------------------------------------------------------------------------- |
+| `enable`                    | bool                   | `false`        | Enable the agent                                                             |
+| `o11y.endpoint`             | string                 | _(required)_   | OTLP/HTTP base URL of the appliance; the signal paths `/v1/*` are appended   |
+| `logs.syslog.enable`        | bool                   | `false`        | RFC 5424 syslog TCP listener, forwarded as OTLP logs                         |
+| `logs.syslog.listenAddress` | string                 | `0.0.0.0:5140` | Syslog listen address                                                        |
+| `metrics.enable`            | bool                   | `false`        | Enable metrics shipping                                                      |
+| `metrics.hostMetrics`       | bool                   | `true`         | Collect host metrics with the OTel `hostmetrics` receiver                    |
+| `metrics.scrapeInterval`    | positive int           | `30`           | Collection and scrape interval in seconds                                    |
+| `metrics.scrapeTargets`     | list of submodules     | `[]`           | One entry per Prometheus job (below)                                         |
+| `logs.parsers`              | list of enum           | `[]`           | Opt-in application log parsers (see Log parsers)                             |
+| `resourceAttributes`        | `attrsOf str`          | `{}`           | Static resource attributes on every signal (like Prometheus external_labels) |
+| `processors.logs`           | list of submodules     | `[]`           | Extra processors for the log pipelines (below)                               |
+| `processors.metrics`        | list of submodules     | `[]`           | Extra processors for the metrics pipeline (below)                            |
+| `hostsOverride`             | `attrsOf (listOf str)` | `{}`           | Static `/etc/hosts` entries (`networking.hosts`)                             |
 
 Each `metrics.scrapeTargets` entry:
 
@@ -168,8 +215,8 @@ the image build, not the service.
 - **OpenTelemetry Collector, not Vector or vmagent.** The appliance ingests OTLP, and the Collector speaks it for all
   three signals and reads journald natively. Reasoning in
   [ADR-018](../../../../docs/decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md).
-- **No per-service log parsing.** Parsers had to follow every upstream log format. Raw messages are stored and parsed at
-  query time.
+- **Per-service log parsing is opt-in.** Parsers follow upstream log formats, so only the ones enabled in `logs.parsers`
+  run. Everything else is stored raw and parsed at query time.
 - **Buffer on the agent.** The persistent sending queue absorbs an appliance outage.
 - **One scrape config per job.** Path, query string and scheme are per job; split a job whose targets need different
   paths.
