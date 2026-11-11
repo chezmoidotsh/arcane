@@ -9,7 +9,7 @@
 #
 #   journald ─▶ parsers/journald ─▶ groupbyattrs ───┐
 #   syslog   ─▶ parsers/syslog   ─▶ groupbyattrs ───┤ (optional, logs.syslog)
-#   hostmetrics (OTel-native host metrics) ─────────┤ (metrics.hostMetrics)
+#   hostmetrics ─▶ service.name=hostmetrics ────────┤ (metrics.hostMetrics)
 #   prometheus scrape (per job) ─▶ groupbyattrs ────┤ (metrics.scrapeTargets)
 #                                                   ▼
 #               resourcedetection (host.name, no override) ─▶ resource
@@ -169,6 +169,10 @@ let
       # Static attributes on every signal (like Prometheus external_labels).
       ++ lib.mapAttrsToList (key: value: { inherit key value; action = "upsert"; }) cfg.resourceAttributes;
 
+      "resource/hostmetrics".attributes = [
+        { key = "service.name"; value = "hostmetrics"; action = "insert"; }
+      ];
+
 
       batch = { };
     } // parserConfigs // userProcessorConfigs;
@@ -207,10 +211,18 @@ let
           processors = [ "memory_limiter" "transform/parser-syslog" "groupbyattrs/logs" ] ++ userProcessorIds "logs" ++ commonProcessors;
           exporters = [ "otlphttp" ];
         };
-      } // lib.optionalAttrs (scrape || hostMetrics) {
+      } // lib.optionalAttrs scrape {
         metrics = {
-          receivers = lib.optional scrape "prometheus" ++ lib.optional hostMetrics "hostmetrics";
+          receivers = [ "prometheus" ];
           processors = [ "memory_limiter" "groupbyattrs/metrics" "transform/metrics" ] ++ userProcessorIds "metrics" ++ commonProcessors;
+          exporters = [ "otlphttp" ];
+        };
+      } // lib.optionalAttrs hostMetrics {
+        # Own pipeline: the hostmetrics receiver sets no service.name, so it is
+        # named here, at the source (the prometheus receiver uses the job name).
+        "metrics/host" = {
+          receivers = [ "hostmetrics" ];
+          processors = [ "memory_limiter" "resource/hostmetrics" ] ++ userProcessorIds "metrics" ++ commonProcessors;
           exporters = [ "otlphttp" ];
         };
       };

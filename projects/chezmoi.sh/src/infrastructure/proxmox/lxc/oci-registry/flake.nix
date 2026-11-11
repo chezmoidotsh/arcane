@@ -34,7 +34,7 @@
       # `mise run lxc:build`; append -N for multiple builds on the same day.
       # Keep it above `version`: lxc.sh names the template after the first
       # `version =`/`imageVersion =` match in this file.
-      imageVersion = "2026.11.11-1";
+      imageVersion = "2026.11.11-2";
 
       # -----------------------------------------------------------------------
       # Zot binary packaging — official upstream release, patched for NixOS.

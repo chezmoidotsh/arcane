@@ -40,7 +40,7 @@
       # version itself is tracked in catalog/nix/pkgs/by-name/om/omni/package.nix
       # and bumped by Renovate. Bump this date before every `mise run
       # lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.11.11";
+      version = "2026.11.11-1";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
