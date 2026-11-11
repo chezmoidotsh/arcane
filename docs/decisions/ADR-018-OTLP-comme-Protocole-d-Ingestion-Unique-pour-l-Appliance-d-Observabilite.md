@@ -88,15 +88,15 @@ stockages.
 Caddy écoute sur `:4318` et envoie `/v1/*` à une passerelle OTLP, un OpenTelemetry Collector local : elle accepte l'OTLP
 en JSON et en protobuf et réexporte en protobuf vers les points d'entrée natifs de chaque stockage. Elle n'existe que
 parce que les stockages refusent l'OTLP/JSON, que Proxmox VE émet ; ses files d'envoi sont persistées sur disque. Sa
-seule logique, identique pour tous les émetteurs, normalise la sévérité des journaux et complète les attributs et les
-étiquettes des métriques (voir « Décision retenue »). Sur chaque LXC, l'agent est un OpenTelemetry Collector
+seule logique, générique et identique pour tous les émetteurs, normalise la sévérité des journaux et pose les étiquettes
+`job` et `instance` des métriques (voir « Décision retenue »). Sur chaque LXC, l'agent est un OpenTelemetry Collector
 (distribution contrib) qui lit le journal systemd, collecte les métriques de l'hôte (`hostmetrics`), reçoit du syslog
 (facultatif), pousse sa propre télémétrie et exporte le tout en OTLP/HTTP. Les scrutations Prometheus ne restent que
 pour les applications qui ne savent pas pousser de l'OTLP.
 
 - `+` Un seul protocole standard pour les trois signaux, du producteur jusqu'au stockage, JSON ou protobuf.
-- `+` Logique centrale bornée : la passerelle ne porte que la normalisation de la sévérité et les attributs de ressource
-  et étiquettes des métriques, sans configuration par source.
+- `+` Logique centrale bornée : la passerelle ne porte que la normalisation de la sévérité et les étiquettes `job` et
+  `instance` des métriques, sans configuration par source : chaque source pose ses propres attributs de ressource.
 - `+` L'agent lit nativement le journal systemd et gère OTLP pour les trois signaux ; il est le même pour un futur
   cluster.
 - `-` Perte de la validation SemConv.
@@ -118,21 +118,30 @@ pour les applications qui ne savent pas pousser de l'OTLP.
 qu'elle supprime la logique du Vector central sans la remplacer : les trois stockages ingèrent déjà l'OTLP protobuf,
 donc Caddy route les chemins standard (`/v1/metrics`, `/v1/logs`, `/v1/traces`) vers une passerelle qui convertit
 l'OTLP/JSON en protobuf, seul format que les stockages acceptent. Sans elle, l'hôte Proxmox VE ne pourrait pas pousser
-ses métriques. Elle porte aussi trois transformations :
+ses métriques. Elle porte aussi deux transformations, toutes deux génériques : chaque source pose elle-même ses
+attributs de ressource, la passerelle n'applique que des règles valables pour n'importe quel émetteur.
 
 - **Sévérité des journaux** (`transform/severity`) : `severity_number` est déduit du texte quand l'émetteur n'a envoyé
   que le texte (`warning`, `Information`, `err`, `crit`, etc.), puis `severity_text` est réécrit en majuscules (`TRACE`,
   `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) à partir du nombre. C'est un écart volontaire au modèle de données des
   journaux OpenTelemetry, qui garde le texte source dans `SeverityText` : il donne un seul champ filtrable, le niveau
   d'origine restant dans le corps du message.
-- **Attributs de ressource manquants** (`transform/resource`, métriques) : `service.name="hostmetrics"` pour le
-  récepteur `hostmetrics` de l'agent (détecté par la portée), et `host.name` copié depuis `proxmox.node` pour le serveur
-  de métriques de Proxmox VE, ce qui l'aligne sur le `host.name` du syslog de Proxmox VE.
 - **Étiquettes `job` et `instance`** (`transform/job`, métriques) : `job` vaut `[service.namespace/]service.name` et
   `instance` vaut `host.name`, avec `service.instance.id` en repli, selon le mappage de compatibilité OpenTelemetry vers
   Prometheus. VictoriaMetrics n'a pas d'option pour le faire, et les tableaux de bord Grafana prêts à l'emploi comme
   l'outil « Explore Prometheus metrics » de vmui en ont besoin. `service.name` est conservé, car c'est la clé commune
   avec les journaux et les traces. Ce sont des copies 1:1 : aucune série supplémentaire.
+
+Les attributs de ressource se posent donc à la source :
+
+- **Agent** : le récepteur `hostmetrics` ne pose pas de `service.name`. L'agent l'exécute dans son propre pipeline
+  `metrics/host`, avec un processeur `resource/hostmetrics` qui insère `service.name="hostmetrics"`.
+- **Proxmox VE** : le serveur de métriques OpenTelemetry pose `host.name` lui-même, par son option
+  `otel-resource-attributes` (JSON encodé en base64, ici `{"host.name":"pve-01"}`), ce qui l'aligne sur le `host.name`
+  du syslog de Proxmox VE. Cette valeur est statique et vaut pour tout le cluster (`/etc/pve/status.cfg` est partagé par
+  tous les nœuds) : elle convient à un nœud unique, et sera à revoir avec un second nœud (`proxmox.node` est alors le
+  seul attribut propre à chaque nœud). La configuration est décrite dans la
+  [référence de l'infrastructure manuelle](../reference/Infrastructure-Manuelle-Reference.md).
 
 L'appliance n'expose plus qu'un seul chemin d'écriture, sur un port dédié (`:4318`), et le port `:443` devient une
 surface de lecture et d'interface seulement. Côté LXC, l'OpenTelemetry Collector est le seul des candidats qui lit le
@@ -155,7 +164,7 @@ ingestion.
   tous les producteurs.
 - (+) **Moins de logique sur l'appliance** : plus de Vector central, de validation SemConv ni de second `vmalert` ; le
   `vmalert` restant n'évalue que la règle Watchdog, et la passerelle se limite à la sévérité des journaux et aux
-  étiquettes des métriques.
+  étiquettes `job` et `instance` des métriques.
 - (+) **Une seule sévérité filtrable** : `severity_text` est en majuscules (`TRACE` à `FATAL`) pour tous les émetteurs,
   agent comme Proxmox VE.
 - (+) **Tableaux de bord prêts à l'emploi** : les étiquettes `job` et `instance` rendent utilisables les tableaux de
@@ -173,6 +182,8 @@ ingestion.
   champs structurés ; les autres restent bruts et s'analysent à la requête.
 - (-) **Écart au modèle de données OpenTelemetry** : `severity_text` ne garde plus le texte source (`warning`,
   `Information`, etc.). Le niveau d'origine reste dans le corps du message.
+- (-) **`host.name` de Proxmox VE statique** : il est fixé dans la configuration du serveur de métriques, partagée par
+  tous les nœuds du cluster ; avec un second nœud, les deux émettraient le même `host.name`.
 - (-) **Plus de validation SemConv** : un événement mal formé n'est plus signalé par une alerte dédiée.
 - (-) **Plus de chemin d'écriture sur `:443`** : l'écriture `remote_write` et l'import VictoriaMetrics sont refusés
   (403), donc les règles d'enregistrement par cluster qui réécrivent via `vmalert` n'ont plus de chemin de retour tant
@@ -205,10 +216,10 @@ ingestion.
   l'OpenTelemetry Collector ; les six LXC consommateurs (appliance comprise) utilisent `o11y.endpoint` et l'hôte Proxmox
   VE pousse ses métriques en OTLP. Le Vector central, le port `:6000`, l'ingestion `remote_write`, la validation
   SemConv, le `vmalert` des journaux et les analyseurs VRL par service sont supprimés. La passerelle normalise la
-  sévérité et pose les attributs et étiquettes des métriques (`transform/severity`, `transform/resource`,
-  `transform/job`), et l'agent propose six analyseurs de journaux facultatifs. Vérifié dans le code de l'arbre de
-  travail ; l'appliance est déployée (image `2026.11.10-5`) ; les cinq autres LXC tournent encore sur l'ancien agent
-  Vector en production.
+  sévérité et pose les étiquettes des métriques (`transform/severity`, `transform/job`), l'agent pose
+  `service.name="hostmetrics"` dans son pipeline `metrics/host` (`resource/hostmetrics`), et l'agent propose six
+  analyseurs de journaux facultatifs. Vérifié dans le code de l'arbre de travail ; l'appliance est déployée (image
+  `2026.11.10-5`) ; les cinq autres LXC tournent encore sur l'ancien agent Vector en production.
 - **Composants restants** : les agents par cluster et ceux de `kazimierz` (non déployés, voir ADR-013) devront émettre
   OTLP ; le chemin de retour des règles d'enregistrement par cluster reste à décider.
 - **Architecture** :
@@ -224,20 +235,25 @@ flowchart LR
 ```
 
 - **Spécification des standards** : tout producteur pousse en OTLP/HTTP vers `/v1/{metrics,logs,traces}` sur `:4318` et
-  pose `host.name` et `service.name` comme attributs de ressource (la passerelle comble `service.name` pour
-  `hostmetrics` et `host.name` pour Proxmox VE). Les journaux gardent leur corps d'origine ; sans analyseur activé dans
-  `logs.parsers`, l'analyse se fait à la requête dans VictoriaLogs (`| unpack_json`). La sévérité est toujours `TRACE`,
-  `DEBUG`, `INFO`, `WARN`, `ERROR` ou `FATAL` dans `severity_text`.
+  pose `host.name` et `service.name` comme attributs de ressource (chaque source pose les siens : l'agent insère
+  `service.name="hostmetrics"`, Proxmox VE pose `host.name` par `otel-resource-attributes`). Les journaux gardent leur
+  corps d'origine ; sans analyseur activé dans `logs.parsers`, l'analyse se fait à la requête dans VictoriaLogs
+  (`| unpack_json`). La sévérité est toujours `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR` ou `FATAL` dans `severity_text`.
 
 ---
 
 ## Évolution de la décision
 
+- **2026-11-11 (révision)** : Le processeur `transform/resource` de la passerelle est supprimé : chaque source pose ses
+  propres attributs de ressource et la passerelle ne garde que des règles génériques (`transform/severity`,
+  `transform/job`). L'agent insère `service.name="hostmetrics"` dans son pipeline `metrics/host`
+  (`resource/hostmetrics`) ; Proxmox VE pose `host.name` par `otel-resource-attributes`, statique et valable pour tout
+  le cluster (à revoir avec un second nœud).
 - **2026-11-11** : La passerelle n'est plus un simple convertisseur JSON vers protobuf : elle normalise la sévérité des
-  journaux, comble `service.name` (`hostmetrics`) et `host.name` (Proxmox VE) et ajoute les étiquettes `job` et
-  `instance` aux métriques. L'agent reprend une analyse des journaux par service, facultative (`caddy`, `dex`, `named`,
-  `omni`, `victoria`, `zot`), en attributs des conventions sémantiques OpenTelemetry, et normalise lui aussi la
-  sévérité.
+  journaux, ajoute les étiquettes `job` et `instance` aux métriques (la première version comblait aussi `service.name`
+  et `host.name` ; voir la révision ci-dessus). L'agent reprend une analyse des journaux par service, facultative
+  (`caddy`, `dex`, `named`, `omni`, `victoria`, `zot`), en attributs des conventions sémantiques OpenTelemetry, et
+  normalise lui aussi la sévérité.
 - **2026-11-10** : Décision initiale : OTLP comme protocole unique, agent OpenTelemetry Collector, bascule en une fois.
   Remplace la partie ingestion de l'ADR-013 (Vector pour les journaux, `remote_write` pour les métriques). Une
   passerelle OTLP (Collector sans traitement) convertit l'OTLP/JSON en protobuf. L'essai de SigNoz a orienté ce choix
@@ -247,6 +263,9 @@ flowchart LR
 
 ## Historique des modifications
 
+- **2026-11-11** : **MISE À JOUR** : Suppression de `transform/resource` : les attributs de ressource (`service.name` de
+  `hostmetrics`, `host.name` de Proxmox VE) sont posés par leur source, la passerelle ne garde que des règles génériques
+  ; statut inchangé.
 - **2026-11-11** : **MISE À JOUR** : Transformations de la passerelle (sévérité, attributs de ressource, étiquettes
   `job` et `instance`) et analyseurs de journaux facultatifs de l'agent ajoutés à la décision ; statut inchangé.
 - **2026-11-10** : **FEATURE** : Création de l'ADR avec le statut `accepted`.

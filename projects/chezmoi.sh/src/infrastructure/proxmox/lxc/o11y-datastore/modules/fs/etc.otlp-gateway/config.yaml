@@ -44,21 +44,6 @@ processors:
           - set(log.severity_text, "ERROR") where log.severity_number >= 17 and log.severity_number <= 20
           - set(log.severity_text, "FATAL") where log.severity_number >= 21
 
-  # Fills the resource attributes some senders leave out, before transform/job
-  # derives job/instance from them:
-  #   - the hostmetrics receiver of the o11y-agent sets no service.name;
-  #   - the Proxmox VE metric server sends proxmox.node but no host.name (same
-  #     value as the host.name of the PVE syslog, so both signals correlate).
-  transform/resource:
-    error_mode: ignore
-    metric_statements:
-      - context: scope
-        statements:
-          - set(resource.attributes["service.name"], "hostmetrics") where resource.attributes["service.name"] == nil and IsMatch(scope.name, "hostmetricsreceiver")
-      - context: resource
-        statements:
-          - set(resource.attributes["host.name"], resource.attributes["proxmox.node"]) where resource.attributes["host.name"] == nil and resource.attributes["proxmox.node"] != nil
-
   # Prometheus-style `job` and `instance` labels, so off-the-shelf dashboards
   # (VictoriaMetrics, Node Exporter Full, …) and vmui's "Explore Prometheus
   # metrics" work. Follows the OTel → Prometheus compatibility mapping: job =
@@ -108,7 +93,7 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [memory_limiter, transform/resource, transform/job, batch]
+      processors: [memory_limiter, transform/job, batch]
       exporters: [otlphttp/victoriametrics]
     logs:
       receivers: [otlp]
