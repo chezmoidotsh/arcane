@@ -7,10 +7,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana
-  # Official VictoriaMetrics single-node dashboard: https://grafana.com/grafana/dashboards/10229
-  grafanaCom:
-    id: 10229
-    revision: 56
-  datasources:
-    - inputName: ds
-      datasourceName: VictoriaMetrics
+  # Official VictoriaMetrics single-node dashboard, variant for the
+  # VictoriaMetrics datasource plugin (the grafana.com one, 10229, only lists
+  # `prometheus` datasources). Pinned to the deployed VictoriaMetrics version.
+  url: https://raw.githubusercontent.com/VictoriaMetrics/VictoriaMetrics/v1.155.0/dashboards/vm/victoriametrics.json

@@ -4,7 +4,8 @@ metadata:
   annotations:
     policy.networking.k8s.io/description: |
       Allows the Grafana Operator to fetch published dashboard JSON from grafana.com
-      (grafanaCom.id/revision references, e.g. victoriametrics-overview) -- distinct
+      (grafanaCom.id/revision references) or raw.githubusercontent.com (url
+      references, e.g. victoriametrics-overview) -- distinct
       from the operator's own API calls to the in-cluster Grafana instance, which stay
       on the pod network and need no egress policy. Also covers the Grafana instance
       pod itself: a GrafanaDatasource's spec.plugins (e.g. victoriametrics-logs-
@@ -25,6 +26,7 @@ spec:
     - toFQDNs:
         - matchName: grafana.com
         - matchName: storage.googleapis.com
+        - matchName: raw.githubusercontent.com
       toPorts:
         - ports:
             - port: "443"
