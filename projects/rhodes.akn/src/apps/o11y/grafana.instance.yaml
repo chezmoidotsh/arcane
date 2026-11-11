@@ -73,6 +73,11 @@ spec:
               volumeMounts:
                 - name: plugins
                   mountPath: /var/lib/grafana/plugins
+                # grafana-llm-app settings (OpenRouter), see grafana.llm-app.externalsecret.yaml.
+                # Read at startup only: restart Grafana after changing them.
+                - name: llm-app-provisioning
+                  mountPath: /etc/grafana/provisioning/plugins
+                  readOnly: true
               # GF_SECURITY_ADMIN_USER/_PASSWORD must be named `env:` entries, not
               # bulk-imported via envFrom: the operator's own API client (used to
               # provision GrafanaDatasource/GrafanaDashboard) reads admin
@@ -139,3 +144,6 @@ spec:
             - name: plugins
               persistentVolumeClaim:
                 claimName: grafana-plugins
+            - name: llm-app-provisioning
+              secret:
+                secretName: grafana-llm-app
