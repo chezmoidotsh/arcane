@@ -5,7 +5,8 @@
 #
 # Why it exists: the stores ingest OTLP natively but only as protobuf, while
 # some senders emit OTLP/JSON (Proxmox VE's metric server). The receiver accepts
-# both encodings; the exporters always send protobuf. No other processing.
+# both encodings; the exporters always send protobuf. The only processing is
+# the severity normalisation of the logs.
 # ─────────────────────────────────────────────────────────────────────────────
 
 receivers:
@@ -19,6 +20,28 @@ processors:
     check_interval: 1s
     limit_mib: 256
   batch: {}
+
+  # One severity scheme for every sender (o11y-agent, Proxmox VE, anything
+  # else speaking OTLP): severity_number is derived from the text when only the
+  # text was sent ("warning", "Information", "err", …), then severity_text is
+  # rewritten in upper case from the number.
+  transform/severity:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(log.severity_number, SEVERITY_NUMBER_TRACE) where log.severity_number == 0 and IsMatch(log.severity_text, "(?i)^trace")
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.severity_number == 0 and IsMatch(log.severity_text, "(?i)^(debug|dbg)")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_number == 0 and IsMatch(log.severity_text, "(?i)^(info|notice)")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.severity_number == 0 and IsMatch(log.severity_text, "(?i)^warn")
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_number == 0 and IsMatch(log.severity_text, "(?i)^err")
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where log.severity_number == 0 and IsMatch(log.severity_text, "(?i)^(crit|alert|emerg|fatal|panic)")
+          - set(log.severity_text, "TRACE") where log.severity_number >= 1 and log.severity_number <= 4
+          - set(log.severity_text, "DEBUG") where log.severity_number >= 5 and log.severity_number <= 8
+          - set(log.severity_text, "INFO") where log.severity_number >= 9 and log.severity_number <= 12
+          - set(log.severity_text, "WARN") where log.severity_number >= 13 and log.severity_number <= 16
+          - set(log.severity_text, "ERROR") where log.severity_number >= 17 and log.severity_number <= 20
+          - set(log.severity_text, "FATAL") where log.severity_number >= 21
 
 exporters:
   otlphttp/victoriametrics:
@@ -56,7 +79,7 @@ service:
       exporters: [otlphttp/victoriametrics]
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, transform/severity, batch]
       exporters: [otlphttp/victorialogs]
     traces:
       receivers: [otlp]
