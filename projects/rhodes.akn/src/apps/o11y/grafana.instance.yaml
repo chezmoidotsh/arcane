@@ -145,7 +145,6 @@ spec:
                     grafana-advisor-app 1.1.3,
                     grafana-llm-app 1.2.0,
                     victoriametrics-logs-datasource 0.34.0,
-                    victoriametrics-metrics-datasource 1.0.1,
                     consensys-asko11y-app 0.3.23
           volumes:
             - name: plugins

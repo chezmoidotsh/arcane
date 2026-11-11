@@ -11,16 +11,16 @@ spec:
     matchLabels:
       dashboards: grafana
   uid: victoriametrics
-  plugins:
-    - name: victoriametrics-metrics-datasource
-      version: 1.0.1
   datasource:
     name: VictoriaMetrics
-    # VictoriaMetrics' own plugin rather than the built-in Prometheus type: it
-    # speaks MetricsQL natively (autocomplete, WITH templates, query tracing)
-    # and stays PromQL-compatible for dashboards built on Prometheus.
-    type: victoriametrics-metrics-datasource
+    # Built-in Prometheus type rather than VictoriaMetrics' own plugin: Metrics
+    # Drilldown and the Tempo trace-to-metrics link only accept `prometheus`
+    # datasources. VictoriaMetrics serves the Prometheus query API and still
+    # evaluates MetricsQL; only the MetricsQL-aware editor is lost.
+    type: prometheus
     access: proxy
     url: https://data.o11y.chezmoi.sh/metrics
     isDefault: true
     editable: false
+    jsonData:
+      httpMethod: POST

@@ -9,13 +9,12 @@ spec:
     access: proxy
     editable: false
     isDefault: true
+    jsonData:
+      httpMethod: POST
     name: VictoriaMetrics
-    type: victoriametrics-metrics-datasource
+    type: prometheus
     url: https://data.o11y.chezmoi.sh/metrics
   instanceSelector:
     matchLabels:
       dashboards: grafana
-  plugins:
-  - name: victoriametrics-metrics-datasource
-    version: 1.0.1
   uid: victoriametrics
