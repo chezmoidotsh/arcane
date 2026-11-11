@@ -5,16 +5,17 @@
 # `mise run host:otelcol:deploy -- <pve-host>` (see ../../.mise.toml and the
 # INF procedure "Installer le collecteur OpenTelemetry sur Proxmox").
 #
-#   journald     ─▶ transform/journald ─▶ groupbyattrs ─▶ transform/severity ─┐
-#   hostmetrics  ─▶ resource/hostmetrics (service.name=hostmetrics) ─────────┤
-#                                                                            ▼
-#        resourcedetection (host.name = node hostname) ─▶ batch ─▶ OTLP/HTTP
-#                                                 data.o11y.chezmoi.sh:4318
+#   journald     ─▶ transform/journald ─▶ groupbyattrs ───────────────┐
+#   hostmetrics  ─▶ resource/hostmetrics (service.name=hostmetrics) ──┤
+#                                                                     ▼
+#  resourcedetection (host.name = node hostname) ─▶ batch ─▶ OTLP/HTTP
+#                                        data.o11y.chezmoi.sh:4318
 #
 # Same mapping as the LXC agents (catalog/nix/modules/o11y-agent): MESSAGE as
-# the body, SYSLOG_IDENTIFIER (fallback _COMM) as service.name, PRIORITY as the
-# severity. The PVE API metrics (nodes, guests, storage) are not collected
-# here: the PVE OpenTelemetry metric server pushes them (/etc/pve/status.cfg).
+# the body, SYSLOG_IDENTIFIER (fallback _COMM) as service.name, PRIORITY as
+# severity_number (the o11y OTLP gateway sets severity_text). The PVE API
+# metrics (nodes, guests, storage) are not collected here: the PVE
+# OpenTelemetry metric server pushes them (/etc/pve/status.cfg).
 #
 # Replaces prometheus-node-exporter (scraped by the former pve-exporter LXC)
 # and the rsyslog omfwd forwarding to that LXC.
@@ -116,18 +117,6 @@ processors:
   groupbyattrs/logs:
     keys: [service.name]
 
-  transform/severity:
-    error_mode: ignore
-    log_statements:
-      - context: log
-        statements:
-          - set(log.severity_text, "TRACE") where log.severity_number >= 1 and log.severity_number <= 4
-          - set(log.severity_text, "DEBUG") where log.severity_number >= 5 and log.severity_number <= 8
-          - set(log.severity_text, "INFO") where log.severity_number >= 9 and log.severity_number <= 12
-          - set(log.severity_text, "WARN") where log.severity_number >= 13 and log.severity_number <= 16
-          - set(log.severity_text, "ERROR") where log.severity_number >= 17 and log.severity_number <= 20
-          - set(log.severity_text, "FATAL") where log.severity_number >= 21
-
   # The hostmetrics receiver sets no service.name: named at the source.
   resource/hostmetrics:
     attributes:
@@ -168,7 +157,7 @@ service:
   pipelines:
     logs:
       receivers: [journald]
-      processors: [memory_limiter, transform/journald, groupbyattrs/logs, transform/severity, resourcedetection, batch]
+      processors: [memory_limiter, transform/journald, groupbyattrs/logs, resourcedetection, batch]
       exporters: [otlp_http]
     metrics:
       receivers: [hostmetrics]
