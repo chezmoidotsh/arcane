@@ -11,6 +11,7 @@
 
     o11y.endpoint = "https://data.o11y.chezmoi.sh:4318";
 
+    logs.parsers = [ "named" ];
     metrics.enable = true;
     hostsOverride = {
       "10.128.0.5" = [ "data.o11y.chezmoi.sh" ];
