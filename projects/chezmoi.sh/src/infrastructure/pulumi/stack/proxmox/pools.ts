@@ -2,7 +2,7 @@ import * as proxmox from "@pulumi/proxmox";
 
 // -----------------------------------------------------------------------------
 // core -- critical platform LXCs (omni, omni-infra-provider-proxmox, o11y,
-// oci-registry, pve-exporter); required for everything else to function
+// oci-registry, talosnet-dns); required for everything else to function
 // -----------------------------------------------------------------------------
 export const corePool = new proxmox.VirtualEnvironmentPool("pve-pool-core", {
 	poolId: "core",

@@ -15,7 +15,6 @@ resources:
   - security/
   - grafana.external-instance.yaml
   - grafana.api-token.externalsecret.yaml
-  - dashboards/
 
 images:
   - name: ghcr.io/grafana/grafana-operator

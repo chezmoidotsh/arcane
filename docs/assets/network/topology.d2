@@ -112,11 +112,6 @@ pve-01: {
       label: talosnet-dns\n10.0.0.26
       tooltip: BIND — static records for talosnet-only hostnames + split-horizon (RFC2136/TSIG from external-dns), forwards everything else upstream. Dual-NIC, but only serves DNS on eth1 (talosnet) — the VLAN 5 address isn't used for that.
     }
-    pve-exporter: {
-      class: [application-system]
-      label: pve-exporter\n10.0.0.24
-      tooltip: Prometheus PVE exporter — scrapes the Proxmox API for host/VM metrics. Single-NIC (VLAN 5 only).
-    }
     omni-provider: {
       class: [application-system]
       label: omni-infra-provider-proxmox\n10.0.0.25

@@ -94,8 +94,8 @@ for s in metrics logs traces; do
 done
 ```
 
-Apps that cannot push OTLP (Victoria components, Alertmanager, Caddy, zot, omni, pve-exporter) are scraped by the agent
-of their LXC (`metrics.scrapeTargets`).
+Apps that cannot push OTLP (Victoria components, Alertmanager, Caddy, zot, omni) are scraped by the agent of their LXC
+(`metrics.scrapeTargets`).
 
 ## Query data
 
@@ -172,8 +172,8 @@ is a second NIC for the Talos nodes.
 Source CIDR is the access control on the LAN path. In `/etc/pve/firewall/<vmid>.fw`: `policy_in: DROP`,
 `policy_out: ACCEPT` (needed for Slack, the heartbeat, ACME and Tailscale), then accept TCP `443` and `4318` from the
 homelab subnet, TCP `80` and UDP `41641` (direct Tailscale connections) from anywhere. The NixOS firewall opens the same
-ports (`modules/hardening.nix`). The PVE syslog listener (`:5140`) belongs to the
-[`pve-exporter`](../pve-exporter/README.md) LXC, not to this one.
+ports (`modules/hardening.nix`). There is no syslog listener: the Proxmox VE host runs its own OpenTelemetry Collector
+and pushes its journal over OTLP (`../../host/`).
 
 ## Troubleshooting
 

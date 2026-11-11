@@ -81,10 +81,10 @@ autres appareils.
 | 10.0.0.21 | LXC omni                        | omni.chezmoi.sh, api.omni.chezmoi.sh, kube.omni.chezmoi.sh | UI/API Omni, API Machine SideroLink, proxy de l'API Kubernetes. Double interface : `10.128.0.2` sur talosnet (`eth1`)                                         |
 | 10.0.0.22 | LXC o11y                        | data.o11y.chezmoi.sh                                       | Stack Victoria (métriques, logs, traces). `o11y.chezmoi.sh` pointe vers Grafana sur rhodes.akn (#1159). Double interface : `10.128.0.5` sur talosnet (`eth1`) |
 | 10.0.0.23 | LXC oci-registry                | oci.chezmoi.sh                                             | Zot : cache OCI pull-through et images internes. Double interface : `10.128.0.4` sur talosnet (`eth1`)                                                        |
-| 10.0.0.24 | LXC pve-exporter                |                                                            | Interface unique (VLAN 5)                                                                                                                                     |
+| 10.0.0.24 | **Libre**                       |                                                            | Ancien LXC pve-exporter, supprimé le 2026-11-11 : l'hôte envoie lui-même ses métriques et ses journaux                                                        |
 | 10.0.0.25 | LXC omni-infra-provider-proxmox |                                                            | Interface unique (VLAN 5)                                                                                                                                     |
 | 10.0.0.26 | LXC talosnet-dns                | ns.chezmoi.sh                                              | BIND. Double interface : `10.128.0.3` sur talosnet (`eth1`) sert le DNS ; l'adresse VLAN 5 n'est pas utilisée pour cela                                       |
-| 10.0.0.27 | Libre                           |                                                            | Ancien LXC signoz, supprimé : SigNoz est remplacé par la stack Victoria de `10.0.0.22`                                                                        |
+| 10.0.0.27 | **Libre**                       |                                                            | Ancien LXC signoz, supprimé : SigNoz est remplacé par la stack Victoria de `10.0.0.22`                                                                        |
 | 10.0.0.30 | NAS                             | nas.chezmoi.sh                                             | Interface principale. Aussi sur talosnet (`10.128.0.6`)                                                                                                       |
 | 10.0.0.31 | NAS (applications)              |                                                            | IP dédiée aux applications (Garage, etc.)                                                                                                                     |
 
@@ -315,12 +315,11 @@ règle par port sur l'UDM Pro).
 ### Proxmox : par LXC (au niveau de la carte)
 
 Politique : inbound refusé par défaut (default-drop). Les règles se définissent par protocole et port, sans liste
-blanche d'IP par hôte : les restrictions par VLAN ou sous-réseau s'appliquent quand la source est stable (par exemple
-pve-exporter limité au VLAN 5), ce qui évite la maintenance par IP quand les adresses changent à une reconstruction.
+blanche d'IP par hôte : les restrictions par VLAN ou sous-réseau s'appliquent quand la source est stable, ce qui évite
+la maintenance par IP quand les adresses changent à une reconstruction.
 
 | LXC                           | Inbound autorisé                                                                                |
 | ----------------------------- | ----------------------------------------------------------------------------------------------- |
-| `pve-exporter`                | TCP 9221 (scrape Prometheus) depuis le VLAN 5 uniquement                                        |
 | `omni-infra-provider-proxmox` | Port de callback de l'API Proxmox et tunnel WireGuard Omni (selon la documentation du provider) |
 | `omni`                        | HTTPS (443), WireGuard (tunnel Omni), UI d'administration                                       |
 | `o11y`                        | OTLP/HTTP (TCP 4318, écriture), HTTPS (TCP 443, lecture seule et interface)                     |
@@ -344,6 +343,8 @@ dans son `.fw` (étape manuelle).
 
 ## Historique
 
+- _2026-11-11_ : `10.0.0.24` libérée (LXC pve-exporter détruit : l'hôte `pve-01` envoie ses métriques et ses journaux
+  avec son propre collecteur OpenTelemetry) ; règle de pare-feu `pve-exporter` retirée du tableau des entrées par LXC.
 - _2026-11-10_ : `10.0.0.27` libérée (LXC signoz supprimé, SigNoz abandonné au profit de la stack Victoria) ; entrées
   autorisées du LXC `o11y` alignées sur l'appliance (OTLP/HTTP sur 4318, lecture sur 443).
 - _2026-10-12_ : traduction des titres de section qu'aucun fichier du dépôt ne cite (ceux que citent des commentaires de

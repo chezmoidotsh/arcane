@@ -81,7 +81,7 @@ export KEY_YEAR=<année de la clé Garage>              # ex. 2026
 export URN=<URN de la ressource>                      # ex. urn:pulumi:<stack>::<projet>::<type>::<nom>
 export TYPE_TOKEN=<jeton de type Pulumi>              # ex. proxmox:index/virtualEnvironmentRole:VirtualEnvironmentRole
 export NAME=<nom logique dans le code>                # ex. pve-role-exporter
-export ID=<identifiant de l'objet existant>           # ex. Exporter
+export ID=<identifiant de l'objet existant>           # ex. OmniProvider
 ```
 
 Toutes les commandes `pulumi` s'exécutent depuis `$PROJECT_DIR`, pour que `mise` injecte `PULUMI_STACK` et
@@ -190,16 +190,16 @@ mise run pulumi:diff
 mise run pulumi:apply
 ```
 
-## Exemple complet : importer le rôle `Exporter` de Proxmox VE
+## Exemple complet : importer le rôle `OmniProvider` de Proxmox VE
 
-Le rôle `Exporter` est déclaré dans `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/pve-exporter.ts`
-sous le nom logique `pve-role-exporter`. Exemple de forme, non rejoué.
+Le rôle `OmniProvider` est déclaré dans `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/omni.ts`
+sous le nom logique `pve-role-omni-provider`. Exemple de forme, non rejoué.
 
 ```sh
 export PROJECT_DIR=projects/chezmoi.sh/src/infrastructure/pulumi
 export TYPE_TOKEN=proxmox:index/virtualEnvironmentRole:VirtualEnvironmentRole
-export NAME=pve-role-exporter
-export ID=Exporter
+export NAME=pve-role-omni-provider
+export ID=OmniProvider
 
 cd $PROJECT_DIR
 pulumi import $TYPE_TOKEN $NAME $ID --yes
@@ -225,6 +225,8 @@ pulumi state delete $URN
 
 ## Historique
 
+- _2026-11-11_ : Exemple complet remplacé : le rôle `Exporter` (identité `prometheus@pve`, supprimée avec le LXC
+  `pve-exporter`) n'existe plus ; l'exemple importe le rôle `OmniProvider` de `access/omni.ts`.
 - _2026-10-17_ : Alignement sur le gabarit de procédure v2 : état de vérification en callout, entrées en bloc `export`
   utilisées dans les commandes, exemple complet, chemin exact de `.mise/env.yaml`, nom logique de l'exemple d'import
   corrigé (`pve-role-exporter`) et commandes `garage` signalées comme non vérifiées dans le dépôt.
