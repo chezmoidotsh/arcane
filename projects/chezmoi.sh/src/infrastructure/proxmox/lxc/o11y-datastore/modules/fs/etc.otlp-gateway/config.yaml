@@ -6,7 +6,8 @@
 # Why it exists: the stores ingest OTLP natively but only as protobuf, while
 # some senders emit OTLP/JSON (Proxmox VE's metric server). The receiver accepts
 # both encodings; the exporters always send protobuf. The only processing is
-# the severity normalisation of the logs.
+# the severity normalisation of the logs and the job/instance labels of the
+# metrics.
 # ─────────────────────────────────────────────────────────────────────────────
 
 receivers:
@@ -43,6 +44,23 @@ processors:
           - set(log.severity_text, "ERROR") where log.severity_number >= 17 and log.severity_number <= 20
           - set(log.severity_text, "FATAL") where log.severity_number >= 21
 
+  # Prometheus-style `job` and `instance` labels, so off-the-shelf dashboards
+  # (VictoriaMetrics, Node Exporter Full, …) and vmui's "Explore Prometheus
+  # metrics" work. Follows the OTel → Prometheus compatibility mapping: job =
+  # [service.namespace/]service.name. instance is host.name (unique per LXC;
+  # service.instance.id is often a loopback host:port), falling back to
+  # service.instance.id. service.name stays: it is the key shared with logs
+  # and traces. Copies only: no extra series.
+  transform/job:
+    error_mode: ignore
+    metric_statements:
+      - context: resource
+        statements:
+          - set(resource.attributes["job"], resource.attributes["service.name"]) where resource.attributes["service.name"] != nil
+          - set(resource.attributes["job"], Concat([resource.attributes["service.namespace"], resource.attributes["service.name"]], "/")) where resource.attributes["service.namespace"] != nil and resource.attributes["service.name"] != nil
+          - set(resource.attributes["instance"], resource.attributes["service.instance.id"]) where resource.attributes["service.instance.id"] != nil
+          - set(resource.attributes["instance"], resource.attributes["host.name"]) where resource.attributes["host.name"] != nil
+
 exporters:
   otlphttp/victoriametrics:
     metrics_endpoint: http://127.0.0.1:8428/opentelemetry/v1/metrics
@@ -75,7 +93,7 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, transform/job, batch]
       exporters: [otlphttp/victoriametrics]
     logs:
       receivers: [otlp]
