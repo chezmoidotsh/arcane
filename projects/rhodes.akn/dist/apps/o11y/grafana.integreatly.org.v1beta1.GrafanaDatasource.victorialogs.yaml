@@ -32,4 +32,4 @@ spec:
       dashboards: grafana
   plugins:
   - name: victoriametrics-logs-datasource
-    version: 0.31.0
+    version: 0.34.0
