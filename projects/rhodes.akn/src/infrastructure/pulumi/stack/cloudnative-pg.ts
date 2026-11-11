@@ -26,7 +26,7 @@ const component = new GarageCloudNativePGObjectStoreComponent("garage-cnpg-backu
 // Namespaces aren't created by this stack (kubectl/ArgoCD does — see
 // docs/plan-de-reprise/brouillon/Restaurer-OpenBao.md and docs/plan-de-reprise/brouillon/Restaurer-Pocket-Id.md, step 1) — this Secret can only
 // be applied once the target namespace already exists.
-for (const namespace of ["vault", "pocket-id", "o11y-system"]) {
+for (const namespace of ["vault", "pocket-id", "o11y"]) {
 	new k8s.core.v1.Secret(
 		`cnpg-backup-credentials-${namespace}`,
 		{

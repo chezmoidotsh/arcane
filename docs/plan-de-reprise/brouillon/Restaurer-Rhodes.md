@@ -179,7 +179,7 @@ entre projets (voir les commentaires de ce fichier). Si ce `Secret` n'existe pas
 dès qu'il tente de le lire.
 
 Le `pulumi up` de `rhodes.akn` écrit aussi `cnpg-backup-credentials` dans trois namespaces (`vault`, `pocket-id` et
-`o11y-system`) et ne crée pas ces namespaces : il faut les créer avant.
+`o11y`) et ne crée pas ces namespaces : il faut les créer avant.
 
 ```sh
 cd projects/chezmoi.sh/src/infrastructure/pulumi
@@ -187,14 +187,14 @@ pulumi up --refresh --parallel 15
 
 kubectl --context ${CLUSTER_CONTEXT} create namespace vault --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 kubectl --context ${CLUSTER_CONTEXT} create namespace pocket-id --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
-kubectl --context ${CLUSTER_CONTEXT} create namespace o11y-system --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
+kubectl --context ${CLUSTER_CONTEXT} create namespace o11y --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
 cd projects/rhodes.akn/src/infrastructure/pulumi
 pulumi config set recovery true
 pulumi up --refresh --parallel 15
 ```
 
-Ce `pulumi up` crée `cnpg-backup-credentials` dans les namespaces `vault`, `pocket-id` et `o11y-system`
+Ce `pulumi up` crée `cnpg-backup-credentials` dans les namespaces `vault`, `pocket-id` et `o11y`
 (`stack/cloudnative-pg.ts`, une écriture directe par le provider Kubernetes, non conditionnée par `recovery`) : les
 identifiants S3 dont les restaurations CNPG des étapes 5 et 6 ont besoin pour que l'opérateur CNPG déployé à l'étape 2
 ait de quoi restaurer. À faire une seule fois, ici ; les guides de composants ne le répètent plus. Le même `pulumi up`
@@ -335,7 +335,7 @@ devrait être nécessaire.
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
 | CNI, CSI, CCM                       | `cilium status --wait` et la liste de validation de la procédure OMNI-20260721-00 passent                                                                                            | 1 et 2, contrôlées à l'étape 4 |
 | ESO et opérateur CNPG démarrés      | `kubectl get pods -n external-secrets-system` et `-n cloudnative-pg-system` montrent `Running` (le `ClusterSecretStore vault.chezmoi.sh` reste en échec jusqu'à l'étape 5 : attendu) | 2, contrôlées à l'étape 4      |
-| Pulumi en mode recovery             | `pulumi config get recovery` renvoie `true` ; `cnpg-backup-credentials` existe dans les namespaces `vault`, `pocket-id` et `o11y-system`                                             | 3                              |
+| Pulumi en mode recovery             | `pulumi config get recovery` renvoie `true` ; `cnpg-backup-credentials` existe dans les namespaces `vault`, `pocket-id` et `o11y`                                                    | 3                              |
 | OpenBao                             | vérifications rapides de [Restaurer OpenBao](Restaurer-OpenBao.md)                                                                                                                   | 5                              |
 | Pocket-Id                           | vérifications rapides de [Restaurer Pocket-Id](Restaurer-Pocket-Id.md)                                                                                                               | 6                              |
 | ESO entièrement synchronisé         | `kubectl get externalsecret -A` montre `SecretSynced`, pas `SecretSyncedError`                                                                                                       | 7                              |
@@ -345,6 +345,8 @@ devrait être nécessaire.
 
 ## Historique
 
+- _2026-11-11_ : Grafana passe de `infrastructure/kubernetes/o11y/` à `apps/o11y/` et du namespace `o11y-system` à
+  `o11y` : l'étape 3 crée désormais `o11y`, où le `pulumi up` écrit `cnpg-backup-credentials`.
 - _2026-10-12_ : L'étape 9 applique `dist/argocd/` en `--server-side --force-conflicts` : la CRD
   `applicationsets.argoproj.io` (environ 1,4 Mo) dépasse la limite de 262 144 octets de l'annotation
   `last-applied-configuration` d'une application côté client. Les autres `kubectl apply` du guide passent aussi en

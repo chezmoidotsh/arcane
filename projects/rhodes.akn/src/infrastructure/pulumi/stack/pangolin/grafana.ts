@@ -10,7 +10,7 @@ import { rhodesSiteId } from "./index";
 // Full public bypass, per the org's security policy: no SSO in front of any
 // app behind this org (each app handles its own auth, Pangolin just
 // proxies). Grafana already gates its own login via generic_oauth against
-// Pocket-Id (see infrastructure/kubernetes/o11y/grafana.instance.yaml) --
+// Pocket-Id (see apps/o11y/grafana.instance.yaml) --
 // same shape as every other app here, not an exception. The only edge
 // protection is the country/ASN rules below (see edgeAccess.apply).
 export const grafanaResource = new pangolin.Resource("grafana-chezmoi-sh", {
@@ -39,7 +39,7 @@ new pangolin.Target(
 		{
 			resourceId: grafanaResource.resourceId,
 			siteId: rhodesSiteId,
-			ip: "grafana-service.o11y-system.svc.cluster.local",
+			ip: "grafana-service.o11y.svc.cluster.local",
 			port: 3000,
 		},
 		{ path: "/api/health" },

@@ -216,7 +216,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   (`catalog.o11yAgent`) of each LXC and by the Proxmox VE metric server. The per-cluster agents planned by ADR-013 are
   not deployed: no `VMAgent` or collector exists under `projects/lungmen.akn/` or `projects/rhodes.akn/`.
 - `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
-  database (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/`). It reads the LXC's Victoria stack as datasources
+  database (`projects/rhodes.akn/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources
   and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC serves — check the actual
   cluster before changing anything observability-related.
 - Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
@@ -450,6 +450,6 @@ kubectl get pvc -A -o wide
 ### Observability checks
 
 ```sh
-# Metrics/logs live on the central NixOS LXC; no in-cluster collector yet. o11y-system holds Grafana (rhodes.akn)
-kubectl get pods -n o11y-system
+# Metrics/logs live on the central NixOS LXC; no in-cluster collector yet. The o11y namespace holds Grafana (rhodes.akn)
+kubectl get pods -n o11y
 ```
