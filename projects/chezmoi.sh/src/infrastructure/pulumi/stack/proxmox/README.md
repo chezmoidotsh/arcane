@@ -15,14 +15,14 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 
 ## What's managed here
 
-| File/Folder   | Responsibility                                                                                                                                                                        |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `access.ts`   | Custom roles (`Exporter`, `OmniProvider`, `OmniProviderNode`), the `prometheus@pve`, `rhodes-akn-bootstrap@pve`, `omni@pve` service accounts, their API tokens, and every ACL binding |
-| `sdn.ts`      | The `pvenet` SDN zone, `talosnet` VNet + subnet (shared node-traffic network for all Talos/Omni clusters), and the SDN apply step                                                     |
-| `pools.ts`    | The `core` and `talos` resource pools, and `talos`'s storage-level pool membership (`local`, `nvme-lvm`)                                                                              |
-| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`../proxmox-backup-server/`](../proxmox-backup-server/) manages                                                |
-| `acme.ts`     | The node's ACME account (`default`) and Cloudflare DNS-01 plugin, plus the scoped Cloudflare token that plugin uses                                                                   |
-| `firewall.ts` | The `talos` cluster Security Group — a baseline firewall policy every Omni-managed Talos VM can opt into                                                                              |
+| File/Folder   | Responsibility                                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `access.ts`   | Custom roles (`OmniProvider`, `OmniProviderNode`), the `rhodes-akn-bootstrap@pve`, `omni@pve` service accounts, their API tokens, and every ACL binding |
+| `sdn.ts`      | The `pvenet` SDN zone, `talosnet` VNet + subnet (shared node-traffic network for all Talos/Omni clusters), and the SDN apply step                       |
+| `pools.ts`    | The `core` and `talos` resource pools, and `talos`'s storage-level pool membership (`local`, `nvme-lvm`)                                                |
+| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`../proxmox-backup-server/`](../proxmox-backup-server/) manages                  |
+| `acme.ts`     | The node's ACME account (`default`) and Cloudflare DNS-01 plugin, plus the scoped Cloudflare token that plugin uses                                     |
+| `firewall.ts` | The `talos` cluster Security Group — a baseline firewall policy every Omni-managed Talos VM can opt into                                                |
 
 ### Intentionally not managed via Pulumi
 
@@ -52,12 +52,11 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 
 ## Access model
 
-Three service identities, each scoped to the minimum the manual `pveum`/`pvesh` recipes they replace actually granted
-(see `docs/experiments/20260617-proxmox-csi-ccm/README.md` and
+Two service identities, each scoped to the minimum the manual `pveum`/`pvesh` recipes they replace actually granted (see
+`docs/experiments/20260617-proxmox-csi-ccm/README.md` and
 `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md`, "Proxmox user and role
 setup" — the recipes this stack codifies):
 
-- **`prometheus@pve`** — read-only cluster audit (`Exporter` role at `/`) for `pve-exporter` monitoring.
 - **`rhodes-akn-bootstrap@pve`** — `Administrator` scoped to `/access` only (users, roles, ACLs, tokens — nothing on
   VMs, storage or SDN). A delegation credential, not a service identity for a workload: `rhodes.akn`'s own Pulumi
   program (`projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts`) uses it to self-provision its own

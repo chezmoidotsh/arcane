@@ -13,7 +13,7 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "pve-exporter" "${CONFIG_ROOT}" _pve_exporter
-lxc_services "pve-exporter" "o11y-agent"
+lxc_services "o11y-agent"
 
 lxc_upgrade \
 	--pve-host "${usage_pve_host}" \

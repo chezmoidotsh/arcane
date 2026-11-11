@@ -5,17 +5,12 @@
 # system identity, locale, the console shell, and the console toolbox.
 #
 # The modules in ./modules/ own all service configuration:
-#   * pve-exporter.nix — prometheus-pve-exporter (nixpkgs)
-#   * o11y-agent.nix         — o11y-agent (catalog.o11yAgent) shipping metrics + logs
-#   * hardening.nix    — sysctl, firewall default-deny, login surface, journald
+#   * o11y-agent.nix — o11y-agent (catalog.o11yAgent): PVE-host syslog relay and
+#                      node_exporter scrape, shipped as OTLP
+#   * hardening.nix  — sysctl, firewall default-deny, login surface, journald
 #
 # No shared service account: unlike the o11y/oci LXCs, this container has no
-# persistent data volume (mp0) — the PVE token is baked into the image and the
-# exporter pushes outbound only.
-#
-# Build inputs forwarded via _module.args (see flake.nix):
-#   pveHost        — PVE API host address (e.g. 10.0.0.254)
-#   pveTokenValue  — API token secret (baked into image)
+# persistent data volume (mp0) and no secrets; it pushes outbound only.
 # ─────────────────────────────────────────────────────────────────────────────
 { pkgs, ... }:
 

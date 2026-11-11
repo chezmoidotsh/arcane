@@ -1,66 +1,67 @@
-# `pve-exporter` — Proxmox VE Metrics Exporter LXC (Proxmox)
+# `pve-exporter` — Proxmox VE Host Agent LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + prometheus-pve-exporter + OpenTelemetry Collector. A lightweight monitoring
-sidecar that scrapes the Proxmox VE API and ships host-level metrics and logs to the central observability appliance
-(`data.o11y.chezmoi.sh`).
+Standalone Proxmox LXC running NixOS + OpenTelemetry Collector (`catalog.o11yAgent`). It is the observability agent of
+the Proxmox VE host: it relays the host's syslog and scrapes the host's `node_exporter`, shipping everything as OTLP to
+the central observability appliance (`data.o11y.chezmoi.sh`).
 
-It also owns **PVE syslog ingest**: the Proxmox host forwards its syslog here (not to o11y directly), and this LXC's
-agent (`catalog.o11yAgent`, syslog receiver) turns RFC 5424 into OTLP logs. The o11y appliance only accepts OTLP/HTTP on
-`:4318` (ADR-018): it has no syslog listener and no parser.
+> **Historical name.** This LXC used to run `prometheus-pve-exporter`, which has been removed: it no longer produced any
+> `pve_*` metric (failing API calls, gunicorn tracebacks, ~11.5k log lines/hour). Proxmox VE's own OpenTelemetry metric
+> server now pushes node/VM/CT/storage metrics straight to o11y over OTLP (`job="proxmox-ve"`, `host.name=pve-01`; see
+> [`Infrastructure-Manuelle-Reference.md`](../../../../../../../docs/reference/Infrastructure-Manuelle-Reference.md)).
+> The hostname, CT and directory keep the `pve-exporter` name for now (see [Known gaps](#known-gaps--follow-ups)).
 
-This container holds **no persistent data** — it pushes outbound (everything as OTLP/HTTP to `:4318`) and can be rebuilt
-and replaced at any time without data loss; the agent's on-disk queue only buffers during an appliance outage. Its only
-inbound port is the syslog listener (`:5140`).
+It owns **PVE syslog ingest**: the Proxmox host forwards its syslog here (not to o11y directly), and the agent's syslog
+receiver turns RFC 5424 into OTLP logs. The o11y appliance only accepts OTLP/HTTP on `:4318` (ADR-018): it has no syslog
+listener and no parser.
+
+This container holds **no persistent data and no secrets** — it pushes outbound (everything as OTLP/HTTP to `:4318`) and
+can be rebuilt and replaced at any time without data loss; the agent's on-disk queue only buffers during an appliance
+outage. Its only inbound port is the syslog listener (`:5140`).
 
 ## Table of contents
 
 1. [Architecture](#architecture)
 2. [What's in this directory](#whats-in-this-directory)
 3. [Prerequisites](#prerequisites)
-4. [Proxmox user and API token setup](#proxmox-user-and-api-token-setup)
-5. [Secrets](#secrets)
-6. [Build & deploy](#build--deploy)
-7. [Proxmox LXC creation](#proxmox-lxc-creation)
-8. [Proxmox host firewall](#proxmox-host-firewall)
-9. [Proxmox host — syslog forwarding](#proxmox-host--syslog-forwarding)
-10. [Hardening reference](#hardening-reference)
-11. [Operations](#operations)
-12. [Known gaps / follow-ups](#known-gaps--follow-ups)
+4. [Build & deploy](#build--deploy)
+5. [Proxmox LXC creation](#proxmox-lxc-creation)
+6. [Proxmox host firewall](#proxmox-host-firewall)
+7. [Proxmox host — syslog forwarding](#proxmox-host--syslog-forwarding)
+8. [Hardening reference](#hardening-reference)
+9. [Operations](#operations)
+10. [Known gaps / follow-ups](#known-gaps--follow-ups)
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-    api(["Proxmox VE API<br/>:8006"])
-    host(["Proxmox host rsyslog<br/>(omfwd RFC 5424)"])
+    host(["Proxmox host<br/>rsyslog (omfwd RFC 5424)<br/>node_exporter :9100"])
     o11y(["data.o11y.chezmoi.sh<br/>10.0.0.22"])
 
     subgraph lxc["LXC: pve-exporter — unprivileged NixOS"]
-        exp["prometheus-pve-exporter<br/>127.0.0.1:9221"]
         subgraph otel["OpenTelemetry Collector (catalog.o11yAgent)"]
-            scrape["prometheus receiver<br/>/pve?target=&hellip; + node_exporter_pve<br/>journald receiver"]
+            scrape["prometheus receiver<br/>node_exporter_pve<br/>journald receiver"]
             syslog["syslog receiver :5140<br/>(RFC 5424 → OTLP logs)"]
         end
     end
 
-    api -->|"HTTPS scrape<br/>prometheus@pve!exporter"| exp
-    exp --> scrape
     host -->|"TCP syslog :5140"| syslog
+    scrape -->|"HTTP scrape 10.0.0.11:9100"| host
     scrape -->|"metrics + journald logs<br/>OTLP/HTTP :4318"| o11y
     syslog -->|"syslog logs<br/>OTLP/HTTP :4318"| o11y
 ```
 
-- **prometheus-pve-exporter** binds to `127.0.0.1:9221`. It authenticates against the PVE API with the
-  `prometheus@pve!exporter` token (read-only) and exposes metrics on demand via the multi-target `/pve` endpoint.
-- **OpenTelemetry Collector** (via `catalog.o11yAgent`) does three things: scrapes the exporter with
-  `?target=<pve-host>&cluster=1&node=1` (plus the PVE host's node-exporter, attributed to `pve-01` through
-  `extraLabels.host_name`), reads the systemd journal, and runs a syslog TCP listener on `:5140` (`logs.syslog.enable`).
-  Everything leaves as OTLP/HTTP to `https://data.o11y.chezmoi.sh:4318`.
+- **OpenTelemetry Collector** (via `catalog.o11yAgent`) does three things: scrapes the PVE host's `node_exporter`
+  (`10.0.0.11:9100`, job `node_exporter_pve`, attributed to `pve-01` through `extraLabels.host_name`), reads the systemd
+  journal of the LXC, and runs a syslog TCP listener on `:5140` (`logs.syslog.enable`). Everything leaves as OTLP/HTTP
+  to `https://data.o11y.chezmoi.sh:4318`.
+- **PVE API metrics are not collected here.** The Proxmox VE OpenTelemetry metric server pushes them directly to o11y
+  (`job="proxmox-ve"`); this LXC is not involved.
 - **Syslog ingest** lives here, not on o11y. The agent's syslog receiver maps `appname` to `service.name` and `hostname`
   to `host.name`; messages are forwarded raw, with no per-service parser (see the
   [`catalog.o11yAgent` README](../../../../../../../catalog/nix/modules/o11y-agent/README.md)).
-- **Only inbound port is `:5140`** (syslog). The exporter binds loopback; metrics and logs are push-only. There is no
-  Caddy, no TLS termination, no public surface.
+- **Only inbound port is `:5140`** (syslog). Metrics and logs are push-only. There is no Caddy, no TLS termination, no
+  public surface.
 - **`hostsOverride`** in `modules/o11y-agent.nix` resolves `data.o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.22`)
   inside the LXC, bypassing public DNS for the push paths.
 - **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host.
@@ -73,99 +74,19 @@ flowchart TB
 ├── flake.nix              ← LXC image build (nixos-rebuild build-image)
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, locale, console toolbox
-├── .mise.toml             ← mise tasks (secrets / build)
+├── .mise.toml             ← mise tasks header (tasks are file-based)
 ├── .mise/tasks/lxc/       ← build / push / upgrade scripts
 ├── modules/
 │   ├── default.nix        ← module aggregator
-│   ├── pve-exporter.nix   ← prometheus-pve-exporter service (nixpkgs)
-│   ├── o11y-agent.nix     ← catalog.o11yAgent (metrics scrape + journald + syslog → o11y over OTLP)
+│   ├── o11y-agent.nix     ← catalog.o11yAgent (node_exporter scrape + journald + syslog → o11y over OTLP)
 │   └── hardening.nix      ← sysctl, firewall (only :5140), login surface, journald
-└── secrets/
-    └── pve-exporter.sops.env  ← SOPS: PVE_HOST, PVE_TOKEN_VALUE (operator-provided)
 ```
 
 ## Prerequisites
 
 - `mise` with the repo's `.mise.toml` trusted (`mise trust`).
 - Docker (used by `nix:build:lxc` to wrap the Nix build).
-- `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
 - SSH key-based root access to the Proxmox node you push to.
-
-## Proxmox user and API token setup
-
-The exporter authenticates against the PVE API with a dedicated read-only token. Set this up once on the Proxmox host
-before the first build.
-
-```sh
-# On the Proxmox node (ssh root@pve.lan):
-
-# 1. Create the monitoring user in the PVE realm.
-pveum user add prometheus@pve --comment "prometheus-pve-exporter monitoring"
-
-# 2. Create a role with the minimum required permissions.
-pveum role add Exporter --privs "Datastore.Audit Sys.Audit VM.Audit Pool.Audit"
-
-# 3. Grant the role at the root level (read-only access to all nodes and VMs).
-pveum aclmod / -user prometheus@pve -role Exporter
-
-# 4. Create the API token (omit --privsep to inherit the user's role directly).
-pveum user token add prometheus@pve exporter --comment "pve-exporter scrape token" --privsep 0
-# → Prints: token ID  prometheus@pve!exporter
-#            value     xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-#   Copy the value — it is displayed only once.
-```
-
-> **`--privsep 0`** disables privilege separation so the token inherits the `Exporter` role from the user, without a
-> separate ACL grant on the token itself. With privilege separation on (the default), the token would need its own ACL.
-
-### Verifying the token
-
-```sh
-# From any host that can reach the PVE API:
-curl -sk -H "Authorization: PVEAPIToken=prometheus@pve!exporter=<token-value>" \
-  https://<pve-host>:8006/api2/json/nodes | jq '.data[].node'
-# → should list the Proxmox node name(s)
-```
-
-## Secrets
-
-One SOPS/age-encrypted dotenv file, baked into the image at build time. The plaintext values never touch disk.
-
-\| File | Keys | Source | \| `secrets/pve-exporter.sops.env` | `PVE_HOST` | Operator — PVE API host address (IP or FQDN)
-| \| | `PVE_TOKEN_VALUE` | Operator — token value from `pveum user token add` |
-
-Both values are operator-provided and not managed by Pulumi either.
-
-### First-time setup
-
-```sh
-# Interactively set the PVE host + token and write the encrypted secrets file.
-# (The plaintext token is read with `read -rs` and never touches disk.)
-mise run lxc:secrets:rotate
-# → prompts for PVE API host (e.g. 10.0.0.11) and the token value from pveum above,
-#   then writes secrets/pve-exporter.sops.env (SOPS/age-encrypted).
-```
-
-`mise run lxc:secrets:sync` is also available — it only creates an _empty_ encrypted placeholder (useful in CI to make
-the file exist); `lxc:secrets:rotate` is the task that actually sets the values.
-
-### Rotation
-
-On the Proxmox node, delete and recreate the token:
-
-```sh
-pveum user token remove prometheus@pve exporter
-pveum user token add prometheus@pve exporter --privsep 0
-```
-
-Then set the new value with the rotation task, rebuild, and redeploy:
-
-```sh
-mise run lxc:secrets:rotate          # prompts for the new token (keeps the existing host)
-mise run lxc:build
-mise run lxc:push -- pve.lan
-mise run lxc:upgrade -- pve.lan <source_id> <target_id>
-```
 
 ## Build & deploy
 
@@ -180,17 +101,24 @@ version = "2026.06.07";
 ```
 
 ```sh
-mise run lxc:build           # build with PVE_HOST + PVE_TOKEN_VALUE baked in
+mise run lxc:build           # build the LXC tarball (no secrets)
 mise run lxc:push -- pve.lan # upload to /var/lib/vz/template/cache/
 ```
 
 ### Task reference
 
-\| Task | What it does | \| `mise run lxc:secrets:rotate` | Interactively set/rotate `PVE_HOST` + `PVE_TOKEN_VALUE`
-(encrypted) | \| `mise run lxc:secrets:sync` | Create an empty `secrets/pve-exporter.sops.env` placeholder | \|
-`mise run lxc:build` | Build LXC tarball with `PVE_HOST` and `PVE_TOKEN_VALUE` baked in | \|
-`mise run lxc:push -- <pve-host>` | `scp` the tarball to Proxmox (`local` storage) | \|
-`mise run lxc:upgrade -- <pve-host> <source_id> <target_id>` | Rootfs-swap upgrade of a running LXC |
+| Task                                                       | What it does                                     |
+| ---------------------------------------------------------- | ------------------------------------------------ |
+| `mise run lxc:build`                                       | Build the LXC tarball                            |
+| `mise run lxc:push -- <pve-host>`                          | `scp` the tarball to Proxmox (`local` storage)   |
+| `mise run lxc:upgrade -- <pve-host> [--vmid <id>] [--yes]` | Rootfs-swap upgrade of a running LXC (same VMID) |
+
+### Retiring the Proxmox API identity
+
+The former exporter identity (`prometheus@pve` user, `Exporter` role, `exporter` token and the root ACL) was managed by
+Pulumi (`access/pve-exporter.ts`, now deleted). After this change is merged, run `pulumi up` on the `chezmoi.sh` stack:
+it deletes the user, token, role and ACL from the Proxmox host. The SOPS secret and its tasks are already gone from the
+repository.
 
 ## Proxmox LXC creation
 
@@ -205,8 +133,8 @@ NODE=pve.lan
 ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --hostname     pve-exporter \
     --description  "$(cat <<'EOF'
-# Proxmox VE metrics exporter
-Scrapes the PVE API and ships host-level metrics and logs to data.o11y.chezmoi.sh. Also ingests Proxmox host syslog (RFC 5424) and forwards parsed events to o11y. No inbound ports except :5140 (syslog TCP).
+# Proxmox VE host agent
+Ingests Proxmox host syslog (RFC 5424), scrapes the host node_exporter and ships everything to data.o11y.chezmoi.sh over OTLP. No inbound ports except :5140 (syslog TCP).
 EOF
 )" \
     --ostype       nixos \
@@ -233,7 +161,7 @@ There is no data volume (`mp0`) and no service-owned directory outside the rootf
 \| Workload | Recommended | \| CPU | 1 vCPU | \| Memory | 256 MiB | \| Root disk (OS only) | 2 GiB (stateless, rebuilt
 from flake) | \| Data volume | None | \| Swap | 0 (let OOM kill on overrun) |
 
-The root disk holds the NixOS closure for prometheus-pve-exporter. Keep 2 GiB; if a future rebuild exceeds it bump with
+The root disk holds the NixOS closure of the agent. Keep 2 GiB; if a future rebuild exceeds it bump with
 `pct resize <vmid> rootfs +2G` before rebuilding.
 
 ## Proxmox host firewall
@@ -265,7 +193,7 @@ pve-firewall restart
 
 `policy_out: ACCEPT` is required for:
 
-- The PVE API scrape (HTTPS to `<pve-host>:8006`)
+- The `node_exporter` scrape (HTTP to `10.0.0.11:9100`)
 - The OTLP/HTTP push to `data.o11y.chezmoi.sh:4318`
 - DNS, NTP
 
@@ -303,27 +231,28 @@ forwards it to o11y. Query it in VictoriaLogs at `https://data.o11y.chezmoi.sh/l
 
 `modules/hardening.nix` is always active — same model as the OCI registry LXC:
 
-\| Layer | What we change | \| **Login surface** | No `sshd`, no autologin getty. | \| **Kernel sysctls** | IP
-forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp_filter on, ptrace YAMA, SUID coredumps off. |
-\| **Services** | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`. | \| **Docs** | man-db / info / nixos-docs
-disabled. | \| **Journald** | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`. | \| **Firewall (NixOS)**
-| Default-deny; only TCP `:5140` (syslog) open. | \| **Firewall (PVE)** | Layered on top — `policy_in: DROP`, only TCP
-`:5140` from the bridge subnet. | \| **pve-exporter** | `NoNewPrivileges`, `RestrictSUIDSGID`, `RestrictRealtime`,
-`LockPersonality`, `SystemCallArchitectures=native`, `LimitNOFILE=65536`. |
+| Layer                | What we change                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Login surface**    | No `sshd`, no autologin getty.                                                                                            |
+| **Kernel sysctls**   | IP forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp_filter on, ptrace YAMA, SUID coredumps off. |
+| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`.                                                                     |
+| **Docs**             | man-db / info / nixos-docs disabled.                                                                                      |
+| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`.                                                          |
+| **Firewall (NixOS)** | Default-deny; only TCP `:5140` (syslog) open.                                                                             |
+| **Firewall (PVE)**   | Layered on top — `policy_in: DROP`, only TCP `:5140` from the bridge subnet.                                              |
 
 ### What we explicitly do **not** harden
 
 Same caveats as `oci-registry`: mount-namespace options (`PrivateTmp`, `ProtectSystem`, …) fail in unprivileged LXC with
-"step NAMESPACE … Permission denied" and are intentionally omitted. The layered NixOS + PVE firewalls and the
-loopback-only exporter binding compensate.
+"step NAMESPACE … Permission denied" and are intentionally omitted. The layered NixOS + PVE firewalls (only `:5140`
+inbound) compensate.
 
 ## Operations
 
 ### Inspecting live logs
 
 ```sh
-ssh root@pve.lan pct exec <vmid> -- journalctl -u pve-exporter -f
-ssh root@pve.lan pct exec <vmid> -- journalctl -u o11y-agent -f   # OpenTelemetry Collector (catalog.o11yAgent)
+ssh root@pve.lan pct exec <vmid> -- ssh root@pve.lan pct exec <vmid> -- journalctl -u o11y-agent -f   # OpenTelemetry Collector (catalog.o11yAgent)
 ```
 
 > The collector unit is named `o11y-agent` (it is owned by `catalog.o11yAgent`).
@@ -339,20 +268,19 @@ curl -sSf 'https://data.o11y.chezmoi.sh/logs/select/logsql/query' \
   --data-urlencode 'query={host.name="pve-01"}' | head
 ```
 
-### Checking the exporter manually
+### Checking the node_exporter target
 
 ```sh
-# From inside the LXC (via pct enter or pct exec):
-curl -s "http://127.0.0.1:9221/pve?target=<pve-host>&cluster=1&node=1" | head -30
-# → Prometheus text format; expect lines starting with pve_*
+# From inside the LXC (via pct exec): the PVE host's node_exporter must answer.
+ssh root@pve.lan pct exec <vmid> -- curl -s http://10.0.0.11:9100/metrics | head -5
 ```
 
 ### Verifying metrics reach the o11y appliance
 
 ```sh
 # From an allow-listed homelab client:
-curl -sSf 'https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=pve_up' | jq .
-# → should return a non-empty result set
+curl -sSf 'https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=node_load1{job="node_exporter_pve"}' | jq .
+# → should return a non-empty result set (host.name=pve-01)
 ```
 
 ### Upgrading
@@ -370,8 +298,7 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
 ### Backups
 
 - **Image** — stateless: delete and recreate from the same flake for an identical result.
-- **Secrets** — `secrets/pve-exporter.sops.env` is age-encrypted and committed to git. If the token value is lost,
-  rotate it on the Proxmox host with `pveum`.
+- **Secrets** — none.
 
 ## Known gaps / follow-ups
 
@@ -379,16 +306,16 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
    (`nixpkgs/nixos-26.05`, `arcane`) with `../o11y-datastore`, so its lock was copied from there to give a valid pin.
    Run `nix flake lock` here to refresh it independently when bumping inputs.
 
-2. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a rebuild and redeploy. There is no
-   runtime secret injection. For a homelab this is acceptable; a production system would use OpenBao + a sidecar to
-   inject the token at runtime without rebuilding.
+2. **Misleading name.** The LXC is no longer an exporter: it is the PVE host's agent. Rename it (hostname, CT,
+   directory, flake `pname`, rsyslog `target`) or replace it with a dedicated agent LXC or a collector on the host.
+   Deferred to a follow-up.
 
-3. **No alert if the exporter goes silent.** If the LXC dies or the token is revoked, the o11y appliance stops receiving
-   PVE metrics without notification. The appliance's vmalert only evaluates the watchdog today; an
-   `up{service_name="pve_exporter"} == 0` rule (label names to verify, see the o11y README) would close this gap.
+3. **No alert if the agent goes silent.** If the LXC dies, the o11y appliance stops receiving the PVE-host syslog and
+   `node_exporter_pve` metrics without notification. The appliance's vmalert only evaluates the watchdog today; an
+   `up{job="node_exporter_pve"} == 0` rule (label names to verify, see the o11y README) would close this gap.
 
 4. **Syslog mapping is not unit-tested.** The `transform/syslog` statements of `catalog.o11yAgent` are only checked by
    `otelcol-contrib validate` at build time (syntax, not behavior). Verify with the LogsQL query above after a change.
 
-5. **No NixOS smoke test.** A `pkgs.testers.runNixOSTest` that boots the LXC, asserts `pve-exporter.service` is active,
-   and curls `127.0.0.1:9221/metrics` would catch module regressions before they reach Proxmox.
+5. **No NixOS smoke test.** A `pkgs.testers.runNixOSTest` that boots the LXC, asserts `o11y-agent.service` is active and
+   listening on `:5140` would catch module regressions before they reach Proxmox.

@@ -1,23 +1,18 @@
 {
-  description = "pve-exporter — Proxmox VE monitoring LXC image (Proxmox)";
+  description = "pve-exporter — Proxmox VE host observability LXC image (Proxmox)";
 
   # ---------------------------------------------------------------------------
   # All-in-one flake: NixOS modules + site config.
   #
   # A single unprivileged LXC running:
   #
-  #   prometheus-pve-exporter  — scrape PVE API → Prometheus metrics  :9221 (loopback)
-  #   o11y-agent (otelcol)      — ship metrics + logs to o11y as OTLP (catalog.o11yAgent)
+  #   o11y-agent (otelcol) — PVE-host syslog relay (:5140) + PVE-host node_exporter
+  #                          scrape, shipped to o11y as OTLP (catalog.o11yAgent)
   #
-  # No public services: the LXC only pushes outbound (metrics + logs). No Caddy,
-  # no TLS termination, no ingress.
+  # The PVE API metrics come from the PVE OpenTelemetry metric server, pushed
+  # straight to o11y; the former prometheus-pve-exporter is gone. No secrets.
   #
   # Build (produces a Proxmox-importable .tar.xz):
-  #
-  #   Pure (no secrets — exporter fails to authenticate against PVE):
-  #       nix build
-  #
-  #   With secrets baked in (recommended):
   #       mise run lxc:build
   # ---------------------------------------------------------------------------
 
@@ -35,20 +30,7 @@
       # Proxmox template (pve-exporter.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.11.11-2";
-
-      # -----------------------------------------------------------------------
-      # Build-time secrets, forwarded to the modules via _module.args.
-      #
-      # All are read from the environment so the build stays pure when they are
-      # empty (CI smoke build) and reproducible when `mise run lxc:build` sources
-      # them from the SOPS-encrypted files under ./secrets/.
-      #
-      #   pveHost        — PVE API host address (e.g. 10.0.0.254)            (operator-provided)
-      #   pveTokenValue  — PVE API token secret (baked into image)            (operator-provided)
-      # -----------------------------------------------------------------------
-      pveHost = builtins.getEnv "PVE_HOST";
-      pveTokenValue = builtins.getEnv "PVE_TOKEN_VALUE";
+      version = "2026.11.11-3";
     in
     {
       nixosConfigurations.pve-exporter = nixpkgs.lib.nixosSystem {
@@ -58,7 +40,6 @@
           arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
-          { _module.args = { inherit pveHost pveTokenValue; }; }
         ];
       };
 

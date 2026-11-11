@@ -94,8 +94,8 @@ for s in metrics logs traces; do
 done
 ```
 
-Apps that cannot push OTLP (Victoria components, Alertmanager, Caddy, zot, omni, pve-exporter) are scraped by the agent
-of their LXC (`metrics.scrapeTargets`).
+Apps that cannot push OTLP (Victoria components, Alertmanager, Caddy, zot, omni, the PVE host's node_exporter) are
+scraped by the agent of their LXC (`metrics.scrapeTargets`).
 
 ## Query data
 
