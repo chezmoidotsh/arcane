@@ -7,9 +7,15 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana
+  plugins:
+    - name: victoriametrics-metrics-datasource
+      version: 1.0.1
   datasource:
     name: VictoriaMetrics
-    type: prometheus
+    # VictoriaMetrics' own plugin rather than the built-in Prometheus type: it
+    # speaks MetricsQL natively (autocomplete, WITH templates, query tracing)
+    # and stays PromQL-compatible for dashboards built on Prometheus.
+    type: victoriametrics-metrics-datasource
     access: proxy
     url: https://data.o11y.chezmoi.sh/metrics
     isDefault: true

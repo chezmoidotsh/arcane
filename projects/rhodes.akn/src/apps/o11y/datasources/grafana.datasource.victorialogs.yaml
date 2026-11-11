@@ -9,7 +9,7 @@ spec:
       dashboards: grafana
   plugins:
     - name: victoriametrics-logs-datasource
-      version: 0.31.0
+      version: 0.34.0
   datasource:
     name: VictoriaLogs
     # Query path confirmed live against the deployed VictoriaLogs version before

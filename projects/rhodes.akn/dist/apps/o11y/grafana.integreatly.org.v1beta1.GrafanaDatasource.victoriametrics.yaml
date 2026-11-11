@@ -10,8 +10,11 @@ spec:
     editable: false
     isDefault: true
     name: VictoriaMetrics
-    type: prometheus
+    type: victoriametrics-metrics-datasource
     url: https://data.o11y.chezmoi.sh/metrics
   instanceSelector:
     matchLabels:
       dashboards: grafana
+  plugins:
+  - name: victoriametrics-metrics-datasource
+    version: 1.0.1
