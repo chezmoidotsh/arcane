@@ -42,13 +42,13 @@ internet: {
 
   pangolin: {
     class: platform
-    label: Pangolin (kazimierz.akn)
-    icon: docs/assets/icons/system/pangolin.svg
+    label: "Pangolin\n(kazimierz.akn)"
+    icon: docs/assets/icons/system/pangolin.blueprint.svg
   }
 
   cloudflare: {
     class: platform
-    label: Cloudflare (ACME DNS-01 API)
+    label: Cloudflare
     icon: docs/assets/icons/platform/cloudflare.blueprint.svg
   }
 
@@ -62,6 +62,12 @@ internet: {
     class: platform
     label: Let's Encrypt
     icon: docs/assets/icons/platform/letsencrypt.blueprint.svg
+  }
+
+  grafana-com: {
+    class: platform
+    label: grafana.com
+    icon: docs/assets/icons/system/grafana.blueprint.svg
   }
 }
 
@@ -98,12 +104,14 @@ localnet: {
 
   talosnet-dns: {
     class: hardware
-    label: talosnet-dns (BIND)
+    label: "talosnet-dns\n(BIND)"
+    icon: docs/assets/icons/system/bind9.blueprint.svg
   }
 
   o11y-backend: {
     class: hardware
-    label: Observability LXC (VictoriaMetrics/Logs/Traces)
+    label: "O11y stack\n(VM/VL/VT)"
+    icon: docs/assets/icons/system/victoriametrics.blueprint.svg
   }
 
   omni: {
@@ -114,7 +122,7 @@ localnet: {
 
   proxmox: {
     class: hardware
-    label: Proxmox VE (pve-01)
+    label: "Proxmox VE\n(pve-01)"
     icon: docs/assets/icons/platform/proxmox.blueprint.svg
   }
 }
@@ -249,21 +257,23 @@ rhodes·akn: {
   infrastructure.newt: {
     class: [application-system]
     label: Newt
-    icon: docs/assets/icons/system/pangolin.svg # no blueprint variant of the Pangolin mark yet
+    icon: docs/assets/icons/system/pangolin.blueprint.svg
   }
 
-  infrastructure.o11y-stack: {
+  applications.o11y-stack: {
     class: [namespace]
     label: Grafana Stack
 
     grafana-operator: {
       class: [application-system]
       label: Grafana Operator
+      icon: docs/assets/icons/system/grafana.blueprint.svg
     }
 
     grafana: {
       class: [application]
       label: Grafana
+      icon: docs/assets/icons/system/grafana.blueprint.svg
     }
 
     postgresql: {
@@ -326,16 +336,16 @@ rhodes·akn <- localnet.omni: "Access Kubernetes API (SideroLink)" {source-arrow
 rhodes·akn.infrastructure.gateways <- localnet.other-clusters: "Authenticate/Fetch secret to OpenBao (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
 rhodes·akn.infrastructure.gateways <- localnet.other-clusters: "Authenticate via SSO (OIDC)" {target-arrowhead: 443; class: [connect-local]}
 
-rhodes·akn.infrastructure.o11y-stack.grafana -> rhodes·akn.infrastructure.o11y-stack.postgresql: "Store dashboards and users (PostgreSQL)" {target-arrowhead: 5432; class: [connect-app]}
-rhodes·akn.infrastructure.o11y-stack.grafana <- rhodes·akn.infrastructure.o11y-stack.grafana-operator: "Manage instance (Kubernetes CRDs)" {class: [connect-management]}
-rhodes·akn.infrastructure.o11y-stack.grafana <- rhodes·akn.infrastructure.gateways: "Serve UI (HTTP)" {source-arrowhead: 3000; class: [connect-local]}
-rhodes·akn.infrastructure.o11y-stack.grafana -> rhodes·akn.applications.pocket-id-stack.pocket-id: "Authenticate users (OIDC)" {target-arrowhead: 443; class: [connect-app]}
-rhodes·akn.infrastructure.o11y-stack.grafana -> localnet.o11y-backend: "Query metrics, logs and traces (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
-rhodes·akn.infrastructure.o11y-stack.postgresql -> localnet.garage: "Store backups (S3, HTTPS)" {target-arrowhead: 443; class: [connect-local]}
-rhodes·akn.infrastructure.o11y-stack.postgresql <- rhodes·akn.infrastructure.cloudnative-pg: "Provision database (Kubernetes CRDs)" {source-arrowhead: 6443; class: [connect-management]}
+rhodes·akn.applications.o11y-stack.grafana -> rhodes·akn.applications.o11y-stack.postgresql: "Store dashboards and users (PostgreSQL)" {target-arrowhead: 5432; class: [connect-app]}
+rhodes·akn.applications.o11y-stack.grafana <- rhodes·akn.applications.o11y-stack.grafana-operator: "Manage instance (Kubernetes CRDs)" {class: [connect-management]}
+rhodes·akn.applications.o11y-stack.grafana <- rhodes·akn.infrastructure.gateways: "Serve UI (HTTP)" {source-arrowhead: 3000; class: [connect-local]}
+rhodes·akn.applications.o11y-stack.grafana -> rhodes·akn.applications.pocket-id-stack.pocket-id: "Authenticate users (OIDC)" {target-arrowhead: 443; class: [connect-app]}
+rhodes·akn.applications.o11y-stack.grafana -> localnet.o11y-backend: "Query metrics, logs and traces (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
+rhodes·akn.applications.o11y-stack.postgresql -> localnet.garage: "Store backups (S3, HTTPS)" {target-arrowhead: 443; class: [connect-local]}
+rhodes·akn.applications.o11y-stack.postgresql <- rhodes·akn.infrastructure.cloudnative-pg: "Provision database (Kubernetes CRDs)" {source-arrowhead: 6443; class: [connect-management]}
 
 rhodes·akn.infrastructure.newt -> rhodes·akn.applications.pocket-id-stack.pocket-id: "Expose Pocket-ID (HTTP)" {target-arrowhead: 1411; class: [connect-local]}
-rhodes·akn.infrastructure.newt -> rhodes·akn.infrastructure.o11y-stack.grafana: "Expose Grafana (HTTP)" {target-arrowhead: 3000; class: [connect-local]}
+rhodes·akn.infrastructure.newt -> rhodes·akn.applications.o11y-stack.grafana: "Expose Grafana (HTTP)" {target-arrowhead: 3000; class: [connect-local]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # External Connections
@@ -348,6 +358,8 @@ rhodes·akn.applications.argocd -> internet.github: "Sync Git repositories (HTTP
   class: [connect-to-internet]
 }
 
+rhodes·akn.applications.o11y-stack.grafana-operator -> internet.grafana-com: "Fetch published dashboards (HTTPS)" {target-arrowhead: 443; class: [connect-management-to-internet]}
+rhodes·akn.applications.o11y-stack.grafana -> internet.grafana-com: "Install plugins (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
 rhodes·akn.applications.pocket-id-stack.pocket-id -> internet.mailjet: "Send transactional emails (SMTPS)" {target-arrowhead: 465; class: [connect-to-internet]}
 rhodes·akn.applications.pocket-id-stack.pocket-id -> internet: "Send anonymous analytics (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
 

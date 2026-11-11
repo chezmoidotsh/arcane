@@ -19,7 +19,7 @@ template-version: "2.0.0"
 > cluster dédié à OpenBao (`projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`) et un autre à Pocket-Id
 > (`projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`) sur `rhodes.akn`, pour isoler les composants les plus
 > critiques. Grafana garde aussi son cluster dédié
-> (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/grafana.cnpg.cluster.yaml`). Le cluster `amiya.akn` cité plus
+> (`projects/rhodes.akn/src/apps/o11y/grafana.cnpg.cluster.yaml`). Le cluster `amiya.akn` cité plus
 > bas n'existe plus dans `projects/`, et les applications `atuin` et `jellyseerr`, citées dans le texte, n'ont plus de
 > manifeste sous `projects/lungmen.akn/src/apps/`. Le texte ci-dessous est conservé tel que décidé.
 
