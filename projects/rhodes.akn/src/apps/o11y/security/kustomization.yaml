@@ -5,6 +5,7 @@ resources:
   - network-policy.allow-intra-namespace.yaml
   - network-policy.allow-o11y-to-kubernetes-api.yaml
   - network-policy.allow-grafana-to-o11y-backend.yaml
+  - network-policy.allow-loki-vl-proxy-to-o11y-backend.yaml
   - network-policy.allow-grafana-to-pocket-id.yaml
   - network-policy.allow-grafana-from-ingress-gateway.yaml
   - network-policy.allow-grafana-from-newt.yaml

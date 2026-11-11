@@ -1,0 +1,36 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: loki
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  uid: loki
+  datasource:
+    name: Loki (VictoriaLogs)
+    # The same logs as the VictoriaLogs datasource, through Loki-VL-proxy
+    # (loki-vl-proxy.helmvalues/): Grafana's Logs Drilldown only works with
+    # `loki` datasources. LogQL is translated to LogsQL by the proxy; use the
+    # VictoriaLogs datasource for native LogsQL.
+    type: loki
+    access: proxy
+    url: http://loki-vl-proxy.o11y.svc:3100
+    editable: false
+    jsonData:
+      # The proxy exposes OTel dotted names with underscores (service_name,
+      # host_name), like Loki's own OTLP ingest.
+      derivedFields:
+        - name: trace_id
+          matcherType: label
+          matcherRegex: trace_id
+          url: "${__value.raw}"
+          urlDisplayLabel: View trace
+          datasourceUid: victoriatraces-tempo
+        - name: host_name
+          matcherType: label
+          matcherRegex: host_name
+          url: 'system_cpu_load_average_1m{host.name="${__value.raw}"}'
+          urlDisplayLabel: Host metrics
+          datasourceUid: victoriametrics

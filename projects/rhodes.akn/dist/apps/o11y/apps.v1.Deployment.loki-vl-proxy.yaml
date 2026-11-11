@@ -1,0 +1,189 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: loki-vl-proxy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: loki-vl-proxy
+    app.kubernetes.io/version: 2.170.0
+    helm.sh/chart: loki-vl-proxy-2.170.0
+  name: loki-vl-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: loki-vl-proxy
+      app.kubernetes.io/name: loki-vl-proxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: loki-vl-proxy
+        app.kubernetes.io/name: loki-vl-proxy
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - -admin-listen=127.0.0.1:3101
+        - -backend=http://127.0.0.1:9428
+        - -backend-allow-unsupported-version=false
+        - -backend-compression=none
+        - -backend-heavy-query-queue-wait=20s
+        - -backend-max-concurrent-heavy-queries=2
+        - -backend-max-concurrent-metadata-scans=8
+        - -backend-metadata-scan-latency-tolerance=1.5
+        - -backend-metadata-scan-memory-headroom=0.4
+        - -backend-min-concurrent-metadata-scans=1
+        - -backend-min-version=v1.49.0
+        - -backend-timeout=120s
+        - -backend-version-check-timeout=5s
+        - -cache-max=50000
+        - -cache-ttl=60s
+        - -http-conn-max-age=10m
+        - -http-conn-max-age-jitter=2m
+        - -http-conn-max-requests=256
+        - -http-conn-overload-max-age=90s
+        - -http-idle-timeout=90s
+        - -http-max-body-bytes=10485760
+        - -http-max-header-bytes=1048576
+        - -http-read-timeout=30s
+        - -http-write-timeout=120s
+        - -label-values-hot-limit=200
+        - -label-values-index-max-entries=200000
+        - -label-values-indexed-cache=false
+        - -listen=:3100
+        - -log-level=info
+        - -max-concurrent=64
+        - -metadata-inventory-parallelism=4
+        - -metrics-listen=:9091
+        - -patterns-autodetect-from-queries=false
+        - -patterns-counts=true
+        - -patterns-enabled=true
+        - -peer-timeout=2s
+        - -peer-write-through=true
+        - -peer-write-through-min-ttl=30s
+        - -query-range-adaptive-cooldown=30s
+        - -query-range-adaptive-max-parallel=8
+        - -query-range-adaptive-min-parallel=2
+        - -query-range-adaptive-parallel=true
+        - -query-range-error-backoff-threshold=0.02
+        - -query-range-freshness=10m
+        - -query-range-history-cache-ttl=24h
+        - -query-range-latency-backoff=3s
+        - -query-range-latency-target=1.5s
+        - -query-range-max-parallel=4
+        - -query-range-recent-cache-ttl=0s
+        - -query-range-split-interval=1h
+        - -query-range-windowing=true
+        - -rate-limit-burst=100
+        - -rate-limit-per-second=50
+        - -recent-tail-refresh-enabled=true
+        - -recent-tail-refresh-max-staleness=2s
+        - -recent-tail-refresh-window=2m
+        - -response-compression=gzip
+        - -response-compression-min-bytes=1024
+        - -server.register-instrumentation=true
+        - -otlp-tls-skip-verify=false
+        - -metrics.max-tenants=256
+        - -metrics.max-clients=256
+        - -metrics.trust-proxy-headers=false
+        - -metrics.export-sensitive-labels=false
+        - -server.metrics-max-concurrency=1
+        env:
+        - name: GOMEMLIMIT
+          value: "456340275"
+        - name: OTEL_SERVICE_INSTANCE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OTEL_SERVICE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: oci.chezmoi.sh/ghcr.io/reliablyobserve/loki-vl-proxy:2.170.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /alive
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 15
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: loki-vl-proxy
+        ports:
+        - containerPort: 3100
+          name: http
+          protocol: TCP
+        - containerPort: 9091
+          name: metrics
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /alive
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 65534
+          runAsNonRoot: true
+          runAsUser: 65534
+          seccompProfile:
+            type: RuntimeDefault
+      - args:
+        - --config-path
+        - /etc/envoy/envoy.yaml
+        - --log-level
+        - warn
+        image: oci.chezmoi.sh/docker.io/envoyproxy/envoy:v1.40.2
+        name: envoy
+        resources:
+          limits:
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 65534
+          runAsNonRoot: true
+          runAsUser: 65534
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /etc/envoy
+          name: envoy-config
+          readOnly: true
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: loki-vl-proxy
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: loki-vl-proxy-envoy
+        name: envoy-config
