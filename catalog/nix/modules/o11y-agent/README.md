@@ -81,7 +81,7 @@ outputs = { self, nixpkgs, arcane, ... }: {
 }
 ```
 
-**Full: syslog, scrape targets, hosts override** (as in `pve-exporter`).
+**Full: syslog, scrape targets, hosts override** (an agent relaying and scraping a remote host).
 
 ```nix
 { ... }: {

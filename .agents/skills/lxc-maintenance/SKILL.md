@@ -23,7 +23,6 @@ lxc/
 ├── oci-registry/               ← Zot OCI registry
 ├── omni/                       ← Omni cluster manager
 ├── omni-infra-provider-proxmox/
-├── pve-exporter/               ← PVE host agent (syslog relay, node_exporter scrape)
 └── talosnet-dns/               ← BIND for the talosnet subnet
 ```
 

@@ -6,8 +6,8 @@
 #
 #   CONFIG_ROOT="$PWD"
 #   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
-#   lxc_init "pve-exporter" "${CONFIG_ROOT}"
-#   lxc_secret "secrets/pve-exporter.sops.env" PVE_HOST PVE_TOKEN_VALUE
+#   lxc_init "oci-registry" "${CONFIG_ROOT}" _oci_registry
+#   lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN
 #   lxc_build
 #
 # The upgrade flow auto-detects the running container via PVE tags and

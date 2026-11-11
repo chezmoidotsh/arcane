@@ -1,0 +1,176 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Proxmox VE host — OpenTelemetry Collector (otelcol-contrib, Debian package)
+# ─────────────────────────────────────────────────────────────────────────────
+# Installed as /etc/otelcol-contrib/config.yaml on every Proxmox VE node by
+# `mise run host:otelcol:deploy -- <pve-host>` (see ../../.mise.toml and the
+# INF procedure "Installer le collecteur OpenTelemetry sur Proxmox").
+#
+#   journald     ─▶ transform/journald ─▶ groupbyattrs ─▶ transform/severity ─┐
+#   hostmetrics  ─▶ resource/hostmetrics (service.name=hostmetrics) ─────────┤
+#                                                                            ▼
+#        resourcedetection (host.name = node hostname) ─▶ batch ─▶ OTLP/HTTP
+#                                                 data.o11y.chezmoi.sh:4318
+#
+# Same mapping as the LXC agents (catalog/nix/modules/o11y-agent): MESSAGE as
+# the body, SYSLOG_IDENTIFIER (fallback _COMM) as service.name, PRIORITY as the
+# severity. The PVE API metrics (nodes, guests, storage) are not collected
+# here: the PVE OpenTelemetry metric server pushes them (/etc/pve/status.cfg).
+#
+# Replaces prometheus-node-exporter (scraped by the former pve-exporter LXC)
+# and the rsyslog omfwd forwarding to that LXC.
+# ─────────────────────────────────────────────────────────────────────────────
+
+extensions:
+  # Exporter queue + journald cursor: survive a restart or an o11y outage.
+  # /var/lib/otelcol-contrib is the unit's StateDirectory (see the drop-in).
+  file_storage:
+    directory: /var/lib/otelcol-contrib
+
+receivers:
+  journald:
+    # No cursor yet (first start): only new entries. The host journal is
+    # persistent and large, so reading it from the beginning would replay it.
+    start_at: end
+    storage: file_storage
+
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu: {}
+      # Physical disks only: every guest volume (LVM-thin dm-*, zd*, nbd*) and
+      # loop device would otherwise be a series set of its own.
+      disk:
+        include:
+          devices: ["^(nvme[0-9]+n[0-9]+|sd[a-z]+|vd[a-z]+)$"]
+          match_type: regexp
+      load: {}
+      memory: {}
+      # Physical NICs, bonds and bridges (incl. the talosnet SDN VNet) only: guests add tap/veth/fwbr/fwln/
+      # fwpr interfaces that come and go with them.
+      network:
+        include:
+          interfaces: ["^(en|eth|bond|vmbr|vlan|talosnet).*"]
+          match_type: regexp
+      paging: {}
+      processes: {}
+      system: {}
+      filesystem:
+        exclude_fs_types:
+          fs_types:
+            [
+              tmpfs,
+              devtmpfs,
+              proc,
+              sysfs,
+              cgroup2,
+              devpts,
+              mqueue,
+              fuse.lxcfs,
+              fuse,
+              squashfs,
+              overlay,
+              nsfs,
+              tracefs,
+              debugfs,
+              securityfs,
+              pstore,
+              bpf,
+              configfs,
+              autofs,
+              hugetlbfs,
+              binfmt_misc,
+              efivarfs,
+              rpc_pipefs,
+            ]
+          match_type: strict
+        exclude_mount_points:
+          mount_points: [/run/.*, /var/lib/docker/.*, /var/lib/containers/.*]
+          match_type: regexp
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+
+  # journald entry (a map) → OTLP log, as parsers/journald.nix of the agents.
+  transform/journald:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(log.attributes["service.name"], log.body["_COMM"]) where log.body["_COMM"] != nil
+          - set(log.attributes["service.name"], log.body["SYSLOG_IDENTIFIER"]) where log.body["SYSLOG_IDENTIFIER"] !=
+            nil
+          - set(log.attributes["systemd.unit"], log.body["_SYSTEMD_UNIT"]) where log.body["_SYSTEMD_UNIT"] != nil
+          - set(log.attributes["process.pid"], Int(log.body["_PID"])) where log.body["_PID"] != nil
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where log.body["PRIORITY"] == "0" or log.body["PRIORITY"] ==
+            "1" or log.body["PRIORITY"] == "2"
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.body["PRIORITY"] == "3"
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.body["PRIORITY"] == "4"
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.body["PRIORITY"] == "5" or log.body["PRIORITY"] ==
+            "6"
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.body["PRIORITY"] == "7"
+          - set(log.body, log.body["MESSAGE"]) where IsMap(log.body)
+
+  # Per-record identity → resource, where OTLP expects it.
+  groupbyattrs/logs:
+    keys: [service.name]
+
+  transform/severity:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(log.severity_text, "TRACE") where log.severity_number >= 1 and log.severity_number <= 4
+          - set(log.severity_text, "DEBUG") where log.severity_number >= 5 and log.severity_number <= 8
+          - set(log.severity_text, "INFO") where log.severity_number >= 9 and log.severity_number <= 12
+          - set(log.severity_text, "WARN") where log.severity_number >= 13 and log.severity_number <= 16
+          - set(log.severity_text, "ERROR") where log.severity_number >= 17 and log.severity_number <= 20
+          - set(log.severity_text, "FATAL") where log.severity_number >= 21
+
+  # The hostmetrics receiver sets no service.name: named at the source.
+  resource/hostmetrics:
+    attributes:
+      - key: service.name
+        value: hostmetrics
+        action: insert
+
+  resourcedetection:
+    detectors: [system]
+    system:
+      hostname_sources: [os]
+      resource_attributes:
+        os.type:
+          enabled: false
+    override: false
+
+  batch: {}
+
+exporters:
+  otlp_http:
+    endpoint: https://data.o11y.chezmoi.sh:4318
+    compression: gzip
+    sending_queue:
+      storage: file_storage
+
+service:
+  extensions: [file_storage]
+  # The collector's own metrics, pushed as OTLP (no self-scrape).
+  telemetry:
+    metrics:
+      readers:
+        - periodic:
+            interval: 30000
+            exporter:
+              otlp:
+                protocol: http/protobuf
+                endpoint: https://data.o11y.chezmoi.sh:4318/v1/metrics
+  pipelines:
+    logs:
+      receivers: [journald]
+      processors: [memory_limiter, transform/journald, groupbyattrs/logs, transform/severity, resourcedetection, batch]
+      exporters: [otlp_http]
+    metrics:
+      receivers: [hostmetrics]
+      processors: [memory_limiter, resource/hostmetrics, resourcedetection, batch]
+      exporters: [otlp_http]

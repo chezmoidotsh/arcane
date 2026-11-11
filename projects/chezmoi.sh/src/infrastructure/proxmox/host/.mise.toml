@@ -1,0 +1,63 @@
+# =============================================================================
+# Proxmox VE host — Task Automation
+# =============================================================================
+# Files installed on the Proxmox VE nodes themselves (configured by hand, see
+# docs/reference/Infrastructure-Manuelle-Reference.md). They live under fs/
+# with a dot-encoded target directory, e.g. fs/etc.otelcol-contrib/config.yaml
+# → /etc/otelcol-contrib/config.yaml.
+#
+# Usage:
+#   mise run host:otelcol:install -- <pve-host>   # Install the otelcol-contrib package (first time / bump)
+#   mise run host:otelcol:deploy  -- <pve-host>   # Push the config + drop-in, validate, restart
+#
+# Procedure: docs/procedures/infrastructure/INF-20261111-00-Installer-le-Collecteur-OpenTelemetry-sur-Proxmox.md
+# =============================================================================
+
+[env]
+# oripathy: type=release name=otelcol-contrib upstream=github.com/open-telemetry/opentelemetry-collector-releases tagPrefix=v
+OTELCOL_VERSION = "0.151.0"
+OTELCOL_DEB_SHA256 = "0938b81ed2b17fbc858240f27356b2dec88c423634b60c1272174d4e63904370"
+
+[tasks."host:otelcol:install"]
+description = "Install (or upgrade) the otelcol-contrib Debian package on a Proxmox VE node"
+dir = "{{ config_root }}"
+usage = 'arg "<pve_host>" help="Proxmox VE node (e.g. pve-01.pve.chezmoi.sh)"'
+run = '''
+  set -euo pipefail
+  host="${usage_pve_host:?}"
+  deb="otelcol-contrib_${OTELCOL_VERSION}_linux_amd64.deb"
+  url="https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v${OTELCOL_VERSION}/${deb}"
+  ssh "root@${host}" bash -s <<SCRIPT
+    set -euo pipefail
+    cd /tmp
+    curl -fsSLo "${deb}" "${url}"
+    echo "${OTELCOL_DEB_SHA256}  ${deb}" | sha256sum -c -
+    apt-get install -y "./${deb}"
+    rm -f "${deb}"
+    otelcol-contrib --version
+SCRIPT
+  echo "[SUCCESS] otelcol-contrib ${OTELCOL_VERSION} installed on ${host}; now run host:otelcol:deploy." >&2
+'''
+
+[tasks."host:otelcol:deploy"]
+description = "Push the otelcol-contrib config and systemd drop-in to a Proxmox VE node, validate, restart"
+dir = "{{ config_root }}"
+usage = 'arg "<pve_host>" help="Proxmox VE node (e.g. pve-01.pve.chezmoi.sh)"'
+run = '''
+  set -euo pipefail
+  host="${usage_pve_host:?}"
+  ssh "root@${host}" 'mkdir -p /etc/otelcol-contrib /etc/systemd/system/otelcol-contrib.service.d'
+  scp fs/etc.otelcol-contrib/config.yaml "root@${host}:/etc/otelcol-contrib/config.yaml.new"
+  scp fs/etc.systemd.system.otelcol-contrib.service.d/override.conf "root@${host}:/etc/systemd/system/otelcol-contrib.service.d/override.conf"
+  ssh "root@${host}" bash -s <<'SCRIPT'
+    set -euo pipefail
+    otelcol-contrib validate --config=file:/etc/otelcol-contrib/config.yaml.new
+    mv /etc/otelcol-contrib/config.yaml.new /etc/otelcol-contrib/config.yaml
+    systemctl daemon-reload
+    systemctl enable otelcol-contrib
+    systemctl restart otelcol-contrib
+    sleep 5
+    systemctl is-active otelcol-contrib
+SCRIPT
+  echo "[SUCCESS] otelcol-contrib config deployed on ${host}." >&2
+'''
