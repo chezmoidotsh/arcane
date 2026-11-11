@@ -22,7 +22,7 @@ prometheus scrape (one config per job) ─────────┘  (metrics.
 
 | Pipeline        | Receiver                 | Enabled when                        | Result                                                         |
 | --------------- | ------------------------ | ----------------------------------- | -------------------------------------------------------------- |
-| `logs/journald` | `journald` (from now on) | always                              | One OTLP log record per journal entry                          |
+| `logs/journald` | `journald` (cursor kept) | always                              | One OTLP log record per journal entry                          |
 | `logs/syslog`   | `syslog` (RFC 5424, TCP) | `logs.syslog.enable`                | One OTLP log record per message, `service.name` from `appname` |
 | `metrics`       | `prometheus`             | `metrics.enable` and scrape targets | One scrape config per job, `service.name` = job name           |
 | `metrics/host`  | `hostmetrics`            | `metrics.enable` and `hostMetrics`  | OTel-native host metrics, `service.name` = `hostmetrics`       |
@@ -44,8 +44,11 @@ prometheus scrape (one config per job) ─────────┘  (metrics.
 - **Resource attributes.** `host.name` comes from `resourcedetection` (OS hostname, never overrides an existing value;
   `os.type` disabled). `server.port` and `url.scheme`, added by the Prometheus receiver, are dropped. The
   `resourceAttributes` option is upserted on top, on every signal.
-- **Buffering.** The exporter queue is persisted with `file_storage` in `/var/lib/o11y-agent`: telemetry survives an
-  appliance outage or an agent restart. A `memory_limiter` caps the collector at 128 MiB.
+- **Buffering.** The exporter queue and the journald cursor are persisted with `file_storage` in `/var/lib/o11y-agent`:
+  telemetry survives an appliance outage or an agent restart, and the journal is read from where the agent left off.
+  Without a cursor (first start, or a fresh rootfs after an upgrade) the journal is read from the beginning, so boot and
+  upgrade logs are shipped too. The directory is on the rootfs: a rootfs-swap upgrade drops whatever was still queued. A
+  `memory_limiter` caps the collector at 128 MiB.
 
 ## Use it
 
@@ -143,6 +146,9 @@ resource detection; its id is `<type>/user-<name>`.
 ```
 
 ## Log parsers
+
+Parsers run with `error_mode: ignore`: a record a statement fails on (a truncated JSON line, say) keeps its raw body and
+is shipped as is, instead of the whole batch being dropped.
 
 `journald` and `syslog` are the receivers' own mapping and always apply; they are not selectable. Every other file in
 [`parsers/`](./parsers) is an opt-in value of `logs.parsers`. A parser only touches records whose `service.name`
