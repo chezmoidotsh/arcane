@@ -29,10 +29,9 @@ in
       ''set(severity_number, SEVERITY_NUMBER_WARN) where cache["level"] == "warn"''
       ''set(severity_number, SEVERITY_NUMBER_ERROR) where cache["level"] == "error"''
       ''set(severity_number, SEVERITY_NUMBER_FATAL) where cache["level"] == "fatal" or cache["level"] == "panic"''
-      ''set(severity_text, ToUpperCase(cache["level"])) where cache["level"] != nil''
 
-      # ── 3. Source location ────────────────────────────────────────────────
-      ''merge_maps(cache, ExtractPatterns(cache["caller"], "^(?P<file>[^:]+):(?P<line>[0-9]+)$"), "upsert") where cache["caller"] != nil''
+      # ── 3. Source location (errors only) ──────────────────────────────────
+      ''merge_maps(cache, ExtractPatterns(cache["caller"], "^(?P<file>[^:]+):(?P<line>[0-9]+)$"), "upsert") where cache["caller"] != nil and severity_number >= SEVERITY_NUMBER_ERROR''
       ''set(attributes["code.file.path"], cache["file"]) where cache["file"] != nil''
       ''set(attributes["code.line.number"], Int(cache["line"])) where cache["line"] != nil''
 

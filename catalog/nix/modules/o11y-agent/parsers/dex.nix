@@ -22,7 +22,6 @@
       ''set(severity_number, SEVERITY_NUMBER_INFO) where cache["level"] == "INFO"''
       ''set(severity_number, SEVERITY_NUMBER_WARN) where cache["level"] == "WARN"''
       ''set(severity_number, SEVERITY_NUMBER_ERROR) where cache["level"] == "ERROR"''
-      ''set(severity_text, cache["level"]) where cache["level"] != nil''
 
       # ── 3. Error, user and request ────────────────────────────────────────
       ''set(attributes["exception.message"], cache["err"]) where cache["err"] != nil''

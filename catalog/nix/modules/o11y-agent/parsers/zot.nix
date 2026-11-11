@@ -38,7 +38,6 @@ in
       ''set(severity_number, SEVERITY_NUMBER_WARN) where cache["level"] == "warn"''
       ''set(severity_number, SEVERITY_NUMBER_ERROR) where cache["level"] == "error"''
       ''set(severity_number, SEVERITY_NUMBER_FATAL) where cache["level"] == "fatal" or cache["level"] == "panic"''
-      ''set(severity_text, ToUpperCase(cache["level"])) where cache["level"] != nil''
 
       # ── 3. Error and component ─────────────────────────────────────────────
       ''set(attributes["exception.message"], cache["error"]) where cache["error"] != nil''

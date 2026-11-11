@@ -32,11 +32,10 @@ in
       ''set(severity_number, SEVERITY_NUMBER_WARN) where cache["level"] == "warn"''
       ''set(severity_number, SEVERITY_NUMBER_ERROR) where cache["level"] == "error"''
       ''set(severity_number, SEVERITY_NUMBER_FATAL) where cache["level"] == "dpanic" or cache["level"] == "panic" or cache["level"] == "fatal"''
-      ''set(severity_text, ToUpperCase(cache["level"])) where cache["level"] != nil''
 
-      # ── 3. Error and source location ──────────────────────────────────────
+      # ── 3. Error, and source location of errors only ──────────────────────
       ''set(attributes["exception.message"], cache["error"]) where cache["error"] != nil''
-      ''merge_maps(cache, ExtractPatterns(cache["caller"], "^(?P<file>[^:]+):(?P<line>[0-9]+)$"), "upsert") where cache["caller"] != nil''
+      ''merge_maps(cache, ExtractPatterns(cache["caller"], "^(?P<file>[^:]+):(?P<line>[0-9]+)$"), "upsert") where cache["caller"] != nil and severity_number >= SEVERITY_NUMBER_ERROR''
       ''set(attributes["code.file.path"], cache["file"]) where cache["file"] != nil''
       ''set(attributes["code.line.number"], Int(cache["line"])) where cache["line"] != nil''
 
@@ -50,7 +49,6 @@ in
 
       # ── 4b. Fatal exit of an infra provider (plain text) ──────────────────
       ''set(severity_number, SEVERITY_NUMBER_FATAL) where ${isOmni} and IsMatch(body, "^Error: ")''
-      ''set(severity_text, "FATAL") where ${isOmni} and IsMatch(body, "^Error: ")''
       ''set(attributes["exception.message"], Substring(body, 7, Len(body) - 7)) where ${isOmni} and IsMatch(body, "^Error: ")''
 
       # ── 5. rpc.* (gRPC call logs) ─────────────────────────────────────────

@@ -13,10 +13,10 @@ OTLP on `:4318` (see
 
 ```text
 journald ─▶ transform/journald ─▶ groupbyattrs ─┐
-syslog   ─▶ transform/syslog   ─▶ groupbyattrs ─┤  (logs.syslog.enable)  ─▶ logs.parsers ─▶ processors.logs ─▶ transform/severity ─┐
-hostmetrics ────────────────────────────────────┤  (metrics.hostMetrics)                                                         │
-prometheus scrape (one config per job) ─────────┘  (metrics.scrapeTargets) ─▶ processors.metrics ────────────────────────────────┤
-                                                                                                                                 ▼
+syslog   ─▶ transform/syslog   ─▶ groupbyattrs ─┤  (logs.syslog.enable)  ─▶ logs.parsers ─▶ processors.logs ─┐
+hostmetrics ────────────────────────────────────┤  (metrics.hostMetrics)                                   │
+prometheus scrape (one config per job) ─────────┘  (metrics.scrapeTargets) ─▶ processors.metrics ──────────┤
+                                                                                                           ▼
                          resourcedetection (host.name) ─▶ resource ─▶ batch ─▶ otlphttp ─▶ <o11y.endpoint>/v1/*
 ```
 
@@ -31,9 +31,8 @@ prometheus scrape (one config per job) ─────────┘  (metrics.
   `INFO`, 7 `DEBUG`), `_SYSTEMD_UNIT` and `_PID` the `systemd.unit` and `process.pid` attributes. Messages are forwarded
   raw unless an application parser is enabled with `logs.parsers` (below); otherwise parse at query time in VictoriaLogs
   (`| unpack_json`).
-- **Severity.** A `transform/severity` processor runs after the parsers and sets `severity_text` on every log to the
-  upper-case `TRACE`/`DEBUG`/`INFO`/`WARN`/`ERROR`/`FATAL`, derived from `severity_number` (so syslog `err`/`notice` or
-  a parser's own spelling end up identical).
+- **Severity.** The agent and its parsers only set `severity_number`. The OTLP gateway of the appliance rewrites
+  `severity_text` from it for every sender (upper-case `TRACE` to `FATAL`), so it is not done here.
 - **Host metrics.** The `hostmetrics` receiver (cpu, load, memory, network, paging, processes, system, filesystem; no
   disk scraper, `/proc/diskstats` is host-wide in an LXC) replaces node-exporter. Metric names look like
   `system_cpu_load_average_1m` once stored.
@@ -133,7 +132,7 @@ resource detection; its id is `<type>/user-<name>`.
 
 `processors.logs` applies to every log pipeline (journald and syslog), `processors.metrics` to the metrics pipeline.
 
-**Application log parsers.** Opt-in, one per application; each runs before the user processors and `transform/severity`.
+**Application log parsers.** Opt-in, one per application; each runs before the user processors.
 
 ```nix
 { ... }: {

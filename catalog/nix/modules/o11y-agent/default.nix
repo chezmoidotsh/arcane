@@ -169,20 +169,6 @@ let
       # Static attributes on every signal (like Prometheus external_labels).
       ++ lib.mapAttrsToList (key: value: { inherit key value; action = "upsert"; }) cfg.resourceAttributes;
 
-      # One severity_text spelling everywhere: the canonical upper-case OTel
-      # short name, derived from severity_number (covers every parser and
-      # receiver, e.g. syslog "err"/"notice").
-      "transform/severity".log_statements = [{
-        context = "log";
-        statements = [
-          ''set(severity_text, "TRACE") where severity_number >= 1 and severity_number <= 4''
-          ''set(severity_text, "DEBUG") where severity_number >= 5 and severity_number <= 8''
-          ''set(severity_text, "INFO") where severity_number >= 9 and severity_number <= 12''
-          ''set(severity_text, "WARN") where severity_number >= 13 and severity_number <= 16''
-          ''set(severity_text, "ERROR") where severity_number >= 17 and severity_number <= 20''
-          ''set(severity_text, "FATAL") where severity_number >= 21''
-        ];
-      }];
 
       batch = { };
     } // parserConfigs // userProcessorConfigs;
@@ -212,13 +198,13 @@ let
       pipelines = {
         "logs/journald" = {
           receivers = [ "journald" ];
-          processors = [ "memory_limiter" "transform/parser-journald" "groupbyattrs/logs" ] ++ userProcessorIds "logs" ++ [ "transform/severity" ] ++ commonProcessors;
+          processors = [ "memory_limiter" "transform/parser-journald" "groupbyattrs/logs" ] ++ userProcessorIds "logs" ++ commonProcessors;
           exporters = [ "otlphttp" ];
         };
       } // lib.optionalAttrs cfg.logs.syslog.enable {
         "logs/syslog" = {
           receivers = [ "syslog" ];
-          processors = [ "memory_limiter" "transform/parser-syslog" "groupbyattrs/logs" ] ++ userProcessorIds "logs" ++ [ "transform/severity" ] ++ commonProcessors;
+          processors = [ "memory_limiter" "transform/parser-syslog" "groupbyattrs/logs" ] ++ userProcessorIds "logs" ++ commonProcessors;
           exporters = [ "otlphttp" ];
         };
       } // lib.optionalAttrs (scrape || hostMetrics) {
