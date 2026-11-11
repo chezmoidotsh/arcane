@@ -2,7 +2,7 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
-  name: victorialogs
+  name: victoriametrics-logs
   namespace: o11y
 spec:
   datasource:
@@ -16,6 +16,12 @@ spec:
         name: trace_id
         url: ${__value.raw}
         urlDisplayLabel: View trace
+      - datasourceUid: victoriametrics
+        matcherRegex: host.name
+        matcherType: label
+        name: host.name
+        url: system_cpu_load_average_1m{host.name="${__value.raw}"}
+        urlDisplayLabel: Host metrics
       otelPreset:
         detection:
           severity:
@@ -33,3 +39,4 @@ spec:
   plugins:
   - name: victoriametrics-logs-datasource
     version: 0.34.0
+  uid: victorialogs

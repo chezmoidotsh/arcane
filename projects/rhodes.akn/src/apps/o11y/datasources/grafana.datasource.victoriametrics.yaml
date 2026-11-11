@@ -2,11 +2,15 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
-  name: victoriametrics
+  # Renamed from `victoriametrics` to set spec.uid: the operator forbids adding
+  # a uid to an existing GrafanaDatasource, and correlation links need a fixed
+  # one (VictoriaLogs derived fields, VictoriaTraces tracesToMetrics).
+  name: victoriametrics-metrics
 spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana
+  uid: victoriametrics
   plugins:
     - name: victoriametrics-metrics-datasource
       version: 1.0.1

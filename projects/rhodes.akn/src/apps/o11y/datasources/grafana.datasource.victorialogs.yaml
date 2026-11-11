@@ -2,11 +2,14 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
-  name: victorialogs
+  # Renamed from `victorialogs` to set spec.uid (immutable once created), which
+  # VictoriaTraces' tracesToLogsV2 points at.
+  name: victoriametrics-logs
 spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana
+  uid: victorialogs
   plugins:
     - name: victoriametrics-logs-datasource
       version: 0.34.0
@@ -42,3 +45,12 @@ spec:
           url: "${__value.raw}"
           urlDisplayLabel: View trace
           datasourceUid: victoriatraces-tempo
+        # Logs -> metrics: host.name is the join key shared by every signal
+        # (service.name differs between logs and metrics, see the o11y LXC
+        # README "Labels and fields").
+        - name: host.name
+          matcherType: label
+          matcherRegex: host.name
+          url: 'system_cpu_load_average_1m{host.name="${__value.raw}"}'
+          urlDisplayLabel: Host metrics
+          datasourceUid: victoriametrics
