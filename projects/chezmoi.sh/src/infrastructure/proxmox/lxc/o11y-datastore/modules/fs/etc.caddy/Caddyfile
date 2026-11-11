@@ -71,8 +71,24 @@
     }
   }
 
+  # Alertmanager: read-only, except silences (create/expire from the UI).
+  # Pushing alerts (POST /api/v2/alerts) and /-/reload, /-/quit are refused.
   handle /alerts/* {
-    reverse_proxy localhost:9093
+    route {
+      @read method GET HEAD
+      @silence_create {
+        method POST
+        path /alerts/api/v2/silences
+      }
+      @silence_expire {
+        method DELETE
+        path /alerts/api/v2/silence/*
+      }
+      reverse_proxy @read localhost:9093
+      reverse_proxy @silence_create localhost:9093
+      reverse_proxy @silence_expire localhost:9093
+      respond 403
+    }
   }
 
   handle {
@@ -87,7 +103,9 @@
 # (otlp-gateway.nix), which accepts JSON and protobuf and forwards
 # protobuf to the stores.
 (otlp) {
-  log
+  # No access log: every push of every LXC would become a log line, including
+  # the appliance's own pushes (a feedback loop). Failures surface in the
+  # senders' and the gateway's own logs.
 
   request_body {
     max_size 64MiB
