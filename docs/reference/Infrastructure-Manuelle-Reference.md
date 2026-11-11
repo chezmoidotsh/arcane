@@ -44,6 +44,7 @@ La procédure concernée est
 | `chezmoi.sh`                    | Jobs de sauvegarde Proxmox (quel invité, quelle planification)                                                                         | Manuel (délibéré)                 | Même raisonnement : `PROXMOX-VE.md`, et `stack/proxmox-backup-server/README.md`, « Intentionally not managed via Pulumi »                                                                                                                                                                                                                                                                                                               |
 | `chezmoi.sh`                    | Stockage de l'hôte, bridges (`vmbr0`, `vmbr1`), mappings de passthrough PCI/USB                                                        | Manuel (délibéré)                 | `PROXMOX-VE.md`, « What this stack does not manage » (couche d'installation de l'OS ; adresses IOMMU propres à l'hôte)                                                                                                                                                                                                                                                                                                                  |
 | `chezmoi.sh`                    | Notifications PVE (`sendmail` par défaut vers `root@pam`)                                                                              | Manuel (omission, limite d'outil) | `PROXMOX-VE.md` : le provider n'expose aucune ressource de notification                                                                                                                                                                                                                                                                                                                                                                 |
+| `chezmoi.sh`                    | Serveur de métriques OpenTelemetry de Proxmox VE (`/etc/pve/status.cfg`)                                                               | Manuel (délibéré)                 | [ADR-018](../decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md) (`accepted`) ; détail dans la section « Serveur de métriques OpenTelemetry de Proxmox VE »                                                                                                                                                                                                                                  |
 | `chezmoi.sh`                    | Hook conntrack NOTRACK de `pve-01` (`/etc/network/if-up.d/99-talosnet-lb-notrack`)                                                     | Manuel (omission)                 | `INF-20260730-00` : « non exprimable dans le Pulumi/Ansible de ce dépôt aujourd'hui », aucun rôle Ansible pour `pve-01`. La procédure est l'unique source de vérité : une reconstruction de l'hôte perd le hook s'il n'est pas rejoué. Voir [la procédure](../procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)                                                                               |
 | `chezmoi.sh`                    | VM/OS PBS, disque de cache, clé de chiffrement côté client et paperkey                                                                 | Manuel (délibéré, limite d'outil) | `stack/proxmox-backup-server/README.md`, « Intentionally not managed via Pulumi » (le provider n'a pas de ressource de clé ; la VM/OS relève de la couche Proxmox)                                                                                                                                                                                                                                                                      |
 | `chezmoi.sh`                    | Datastore PBS, backend S3, compte de service, jeton d'API                                                                              | Déclaratif                        | `stack/proxmox-backup-server/` ; `docs/PROXMOX_BACKUP_SERVER.md`                                                                                                                                                                                                                                                                                                                                                                        |
@@ -82,6 +83,47 @@ La procédure concernée est
 | UniFi (UDM Pro)                 | VLAN, règles de pare-feu, relais mDNS, DHCP, passerelle                                                                                | Manuel (délibéré)                 | [ADR-014](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) (`accepted`) : « la configuration de l'UDM Pro est uniquement graphique ... chaque changement est une opération manuelle » ; ADR-015 : « UniFi reste entièrement manuel (#1094) ». Documenté dans [IPAM Reference](IPAM-Reference.md) seulement                                                                                                   |
 | Enregistrements DNS UniFi       | Enregistrements des Gateways                                                                                                           | Déclaratif                        | provider UniFi d'`external-dns` : `projects/lungmen.akn/src/infrastructure/kubernetes/external-dns/unifi.helmvalues/`                                                                                                                                                                                                                                                                                                                   |
 | DNS interne                     | Serveur BIND, LXC `talosnet-dns`                                                                                                       | Déclaratif                        | `lxc/talosnet-dns/modules/bind.nix`. Sans `README.md` à l'époque, contrairement aux autres LXC. La propriété de la zone du LAN n'est pas vérifiée                                                                                                                                                                                                                                                                                       |
+
+## Serveur de métriques OpenTelemetry de Proxmox VE
+
+L'hôte Proxmox VE pousse ses métriques en OTLP vers l'appliance d'observabilité
+([ADR-018](../decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md)). La
+configuration est faite à la main (Datacenter → Metric Server, ou `pvesh`) et n'existe nulle part dans le dépôt. Elle
+est stockée dans `/etc/pve/status.cfg` :
+
+```text
+opentelemetry: main
+	server data.o11y.chezmoi.sh
+	port 4318
+	otel-protocol https
+	otel-path /v1/metrics
+	otel-compression gzip
+	otel-max-body-size 10000000
+	otel-timeout 5
+	otel-verify-ssl 1
+	otel-resource-attributes eyJob3N0Lm5hbWUiOiJwdmUtMDEifQ==
+```
+
+`otel-resource-attributes` est un JSON encodé en base64 (ici `{"host.name":"pve-01"}`). Commande utilisée :
+
+```sh
+pvesh set /cluster/metrics/server/main \
+  --server data.o11y.chezmoi.sh \
+  --port 4318 \
+  --otel-resource-attributes "$(echo -n '{"host.name":"pve-01"}' | base64 -w0)"
+```
+
+> [!NOTE]\
+> `--server` et `--port` sont obligatoires à chaque `pvesh set`, même pour ne changer qu'une autre option.
+
+`host.name` est posé à la source parce que la passerelle OTLP ne complète aucun attribut de ressource. Il fournit
+l'étiquette `instance` des métriques (voir `transform/job` dans l'ADR-018) et permet de les corréler avec les journaux
+syslog de Proxmox VE, qui portent déjà `host.name`.
+
+> [!WARNING]\
+> Cette valeur est statique et vaut pour tout le cluster : `/etc/pve/status.cfg` est partagé par tous les nœuds. Elle
+> convient tant qu'il n'y a qu'un nœud. À l'ajout d'un second nœud, tous émettraient `host.name="pve-01"` : il faudra
+> revoir la solution (`proxmox.node` est alors le seul attribut propre à chaque nœud).
 
 ## Catalogue
 

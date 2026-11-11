@@ -14,17 +14,18 @@ OTLP on `:4318` (see
 ```text
 journald ─▶ transform/journald ─▶ groupbyattrs ─┐
 syslog   ─▶ transform/syslog   ─▶ groupbyattrs ─┤  (logs.syslog.enable)  ─▶ logs.parsers ─▶ processors.logs ─┐
-hostmetrics ────────────────────────────────────┤  (metrics.hostMetrics)                                   │
+hostmetrics ─▶ resource/hostmetrics ────────────┤  (metrics.hostMetrics)                                   │
 prometheus scrape (one config per job) ─────────┘  (metrics.scrapeTargets) ─▶ processors.metrics ──────────┤
                                                                                                            ▼
                          resourcedetection (host.name) ─▶ resource ─▶ batch ─▶ otlphttp ─▶ <o11y.endpoint>/v1/*
 ```
 
-| Pipeline        | Receiver                       | Enabled when                                           | Result                                                         |
-| --------------- | ------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------- |
-| `logs/journald` | `journald` (from now on)       | always                                                 | One OTLP log record per journal entry                          |
-| `logs/syslog`   | `syslog` (RFC 5424, TCP)       | `logs.syslog.enable`                                   | One OTLP log record per message, `service.name` from `appname` |
-| `metrics`       | `hostmetrics` and `prometheus` | `metrics.enable` and (`hostMetrics` or scrape targets) | OTel-native host metrics, plus one scrape config per job       |
+| Pipeline        | Receiver                 | Enabled when                        | Result                                                         |
+| --------------- | ------------------------ | ----------------------------------- | -------------------------------------------------------------- |
+| `logs/journald` | `journald` (from now on) | always                              | One OTLP log record per journal entry                          |
+| `logs/syslog`   | `syslog` (RFC 5424, TCP) | `logs.syslog.enable`                | One OTLP log record per message, `service.name` from `appname` |
+| `metrics`       | `prometheus`             | `metrics.enable` and scrape targets | One scrape config per job, `service.name` = job name           |
+| `metrics/host`  | `hostmetrics`            | `metrics.enable` and `hostMetrics`  | OTel-native host metrics, `service.name` = `hostmetrics`       |
 
 - **Logs.** The journald body (a map of journal fields) is reduced to `MESSAGE`. `SYSLOG_IDENTIFIER` (fallback `_COMM`)
   becomes the `service.name` resource attribute, `PRIORITY` the OTel severity (0-2 `FATAL`, 3 `ERROR`, 4 `WARN`, 5-6
@@ -34,8 +35,8 @@ prometheus scrape (one config per job) ─────────┘  (metrics.
 - **Severity.** The agent and its parsers only set `severity_number`. The OTLP gateway of the appliance rewrites
   `severity_text` from it for every sender (upper-case `TRACE` to `FATAL`), so it is not done here.
 - **Host metrics.** The `hostmetrics` receiver (cpu, load, memory, network, paging, processes, system, filesystem; no
-  disk scraper, `/proc/diskstats` is host-wide in an LXC) replaces node-exporter. Metric names look like
-  `system_cpu_load_average_1m` once stored.
+  disk scraper, `/proc/diskstats` is host-wide in an LXC) replaces node-exporter. The receiver sets no `service.name`,
+  so its pipeline sets `service.name=hostmetrics`. Metric names look like `system_cpu_load_average_1m` once stored.
 - **Prometheus scraping** is only for applications that expose nothing else. A `host_name` entry in `extraLabels` is
   promoted to the `host.name` resource attribute, so a job scraping a remote machine is attributed to it.
 - **Own telemetry.** The collector pushes its own metrics as OTLP (`service.telemetry` periodic reader, same interval),
