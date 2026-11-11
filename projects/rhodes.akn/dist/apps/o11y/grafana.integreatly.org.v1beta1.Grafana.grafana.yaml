@@ -73,10 +73,16 @@ spec:
             volumeMounts:
             - mountPath: /var/lib/grafana/plugins
               name: plugins
+            - mountPath: /etc/grafana/provisioning/plugins
+              name: llm-app-provisioning
+              readOnly: true
           securityContext:
             fsGroup: 10001
           volumes:
           - name: plugins
             persistentVolumeClaim:
               claimName: grafana-plugins
+          - name: llm-app-provisioning
+            secret:
+              secretName: grafana-llm-app
   disableDefaultAdminSecret: true
