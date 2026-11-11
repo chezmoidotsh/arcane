@@ -51,6 +51,12 @@ spec:
       enable: grafanaAdvisor, externalServiceAccounts
   deployment:
     spec:
+      # The plugins PVC is ReadWriteOnce (Proxmox CSI attaches it to a single
+      # VM): a rolling update leaves the new pod stuck waiting for the volume
+      # while the old one still holds it. Recreate frees it first, at the cost
+      # of a few seconds of downtime per rollout.
+      strategy:
+        type: Recreate
       template:
         metadata:
           labels:
