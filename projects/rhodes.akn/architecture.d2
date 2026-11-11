@@ -69,11 +69,6 @@ internet: {
     label: grafana.com
     icon: docs/assets/icons/system/grafana.blueprint.svg
   }
-
-  openrouter: {
-    class: platform
-    label: "OpenRouter\n(LLM API)"
-  }
 }
 
 localnet: {
@@ -365,7 +360,6 @@ rhodes·akn.applications.argocd -> internet.github: "Sync Git repositories (HTTP
 
 rhodes·akn.applications.o11y-stack.grafana-operator -> internet.grafana-com: "Fetch published dashboards (HTTPS)" {target-arrowhead: 443; class: [connect-management-to-internet]}
 rhodes·akn.applications.o11y-stack.grafana -> internet.grafana-com: "Install plugins (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
-rhodes·akn.applications.o11y-stack.grafana -> internet.openrouter: "Call LLM models (grafana-llm-app, HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
 rhodes·akn.applications.pocket-id-stack.pocket-id -> internet.mailjet: "Send transactional emails (SMTPS)" {target-arrowhead: 465; class: [connect-to-internet]}
 rhodes·akn.applications.pocket-id-stack.pocket-id -> internet: "Send anonymous analytics (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
 

@@ -24,7 +24,6 @@ resources:
   - grafana.instance.yaml
   - grafana.plugins.persistentvolumeclaim.yaml
   - grafana.oidc.externalsecret.yaml
-  - grafana.llm-app.externalsecret.yaml
   - grafana.admin-credentials.externalsecret.yaml
   - grafana.database.externalsecret.yaml
   - grafana.cnpg.objectstore.yaml
