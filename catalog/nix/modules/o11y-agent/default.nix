@@ -169,6 +169,7 @@ let
       # Static attributes on every signal (like Prometheus external_labels).
       ++ lib.mapAttrsToList (key: value: { inherit key value; action = "upsert"; }) cfg.resourceAttributes;
 
+
       batch = { };
     } // parserConfigs // userProcessorConfigs;
 

@@ -29,6 +29,13 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
 
+      # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
+      # template (oci-registry.<date>-amd64.tar.xz). Bump before every
+      # `mise run lxc:build`; append -N for multiple builds on the same day.
+      # Keep it above `version`: lxc.sh names the template after the first
+      # `version =`/`imageVersion =` match in this file.
+      imageVersion = "2026.11.11-1";
+
       # -----------------------------------------------------------------------
       # Zot binary packaging — official upstream release, patched for NixOS.
       #
@@ -45,11 +52,6 @@
       # -----------------------------------------------------------------------
       # oripathy: type=release name=zot upstream=github.com/project-zot/zot tagPrefix=v
       version = "v2.1.22";
-
-      # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
-      # template (oci-registry.<date>-amd64.tar.xz). Bump before every
-      # `mise run lxc:build`; append -N for multiple builds on the same day.
-      imageVersion = "2026.11.10";
 
       zotPackage = pkgs.stdenvNoCC.mkDerivation {
         pname = "zot";

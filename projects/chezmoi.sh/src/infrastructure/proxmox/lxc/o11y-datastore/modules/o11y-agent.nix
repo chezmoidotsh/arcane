@@ -11,7 +11,7 @@
     enable = true;
     o11y.endpoint = "https://data.o11y.chezmoi.sh:4318";
 
-    logs.parsers = [ "caddy" ];
+    logs.parsers = [ "caddy" "victoria" ];
 
     metrics = {
       enable = true;

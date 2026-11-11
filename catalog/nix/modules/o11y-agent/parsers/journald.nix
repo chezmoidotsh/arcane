@@ -9,12 +9,9 @@
 
 let
   # journald PRIORITY → OTel severity (RFC 5424 levels).
-  severity = lib.concatLists (lib.mapAttrsToList
-    (prio: sev: [
-      ''set(severity_number, SEVERITY_NUMBER_${sev}) where body["PRIORITY"] == "${prio}"''
-      ''set(severity_text, "${sev}") where body["PRIORITY"] == "${prio}"''
-    ])
-    { "0" = "FATAL"; "1" = "FATAL"; "2" = "FATAL"; "3" = "ERROR"; "4" = "WARN"; "5" = "INFO"; "6" = "INFO"; "7" = "DEBUG"; });
+  severity = lib.mapAttrsToList
+    (prio: sev: ''set(severity_number, SEVERITY_NUMBER_${sev}) where body["PRIORITY"] == "${prio}"'')
+    { "0" = "FATAL"; "1" = "FATAL"; "2" = "FATAL"; "3" = "ERROR"; "4" = "WARN"; "5" = "INFO"; "6" = "INFO"; "7" = "DEBUG"; };
 in
 {
   log_statements = [{
