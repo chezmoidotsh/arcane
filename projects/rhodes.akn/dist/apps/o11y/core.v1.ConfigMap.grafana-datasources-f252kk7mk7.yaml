@@ -1,0 +1,132 @@
+---
+apiVersion: v1
+data:
+  datasources.yaml: |
+    # Grafana datasources and their correlations, provisioned from this file
+    # (mounted in /etc/grafana/provisioning/datasources by grafana.instance.yaml)
+    # rather than GrafanaDatasource CRs: correlations can only be declared next to
+    # their source datasource in a provisioning file (the operator has no
+    # correlation resource, and Grafana 13.3's correlations.grafana.app API ignores
+    # client-set names, which GrafanaManifest needs).
+    #
+    # Grafana expands environment variables in provisioning files: every `$`
+    # meant for Grafana's own interpolation is written `$$`.
+    #
+    # host.name is the join key between signals: the only one identical in every
+    # store (service.name differs between logs and metrics, see the o11y LXC
+    # README "Labels and fields"). Dotted field names are not valid correlation
+    # variables, so a regex transformation copies host.name into $${host}.
+    apiVersion: 1
+
+    # Left behind in Grafana's database by the former GrafanaDatasource CR of
+    # Loki-VL-proxy (removed with Logs Drilldown). Can go once it is gone.
+    deleteDatasources:
+      - name: Loki (VictoriaLogs)
+        orgId: 1
+
+    datasources:
+      - name: VictoriaMetrics
+        uid: victoriametrics
+        # VictoriaMetrics' own plugin: MetricsQL-aware editor (autocomplete, WITH
+        # templates, query tracing), PromQL-compatible for Prometheus dashboards.
+        type: victoriametrics-metrics-datasource
+        access: proxy
+        url: https://data.o11y.chezmoi.sh/metrics
+        isDefault: true
+        editable: false
+        correlations:
+          - targetUID: victorialogs
+            label: Host logs
+            description: Logs of the host the series comes from.
+            type: query
+            config:
+              field: host.name
+              target:
+                expr: 'host.name:="$${host}"'
+              transformations:
+                - type: regex
+                  field: host.name
+                  expression: (.+)
+                  mapValue: host
+
+      - name: VictoriaLogs
+        uid: victorialogs
+        # Query path confirmed live against the deployed VictoriaLogs version before
+        # this datasource is considered done -- see the o11y LXC README's "Known
+        # gaps" (VictoriaLogs query path may drift between versions).
+        type: victoriametrics-logs-datasource
+        access: proxy
+        url: https://data.o11y.chezmoi.sh/logs
+        editable: false
+        jsonData:
+          otelPreset:
+            enabled: true
+            # otelPreset's own trace-link (tracesDatasourceUid) only supports
+            # Jaeger-type targets -- omitted here since the traces datasource is
+            # Tempo. Severity log-level rules still apply; the trace_id link is a
+            # correlation below.
+            detection:
+              # Field names of VictoriaLogs' native OTLP ingest (fed by the o11y
+              # LXC's OTLP gateway, ADR-018); severity_text is upper case.
+              traceIdField: trace_id
+              severity:
+                field: severity_text
+                valueCase: string
+                source: manual
+        correlations:
+          - targetUID: victoriatraces-tempo
+            label: View trace
+            description: The trace the log line belongs to.
+            type: query
+            config:
+              field: trace_id
+              target:
+                queryType: traceql
+                query: '$${trace_id}'
+          - targetUID: victoriametrics
+            label: Host metrics
+            description: CPU load of the host the log line comes from.
+            type: query
+            config:
+              field: host.name
+              target:
+                expr: 'system_cpu_load_average_1m{host.name="$${host}"}'
+              transformations:
+                - type: regex
+                  field: host.name
+                  expression: (.+)
+                  mapValue: host
+
+      - name: VictoriaTraces
+        uid: victoriatraces-tempo
+        # VictoriaTraces implements the Tempo HTTP API (min version v0.9.4,
+        # confirmed live) -- gives TraceQL, which the plain Jaeger API doesn't.
+        type: tempo
+        access: proxy
+        url: https://data.o11y.chezmoi.sh/traces/select/tempo
+        editable: false
+        # Links from spans stay in tracesToLogsV2 / tracesToMetrics: correlations
+        # are only shown in Explore's logs and table views, not in the trace view.
+        jsonData:
+          # Traces -> logs: the logs of the same trace, found through the trace_id
+          # field VictoriaLogs' native OTLP ingest stores.
+          tracesToLogsV2:
+            datasourceUid: victorialogs
+            filterByTraceID: true
+            filterBySpanID: false
+            spanStartTimeShift: -5m
+            spanEndTimeShift: 5m
+          # Traces -> metrics: the host the span ran on.
+          tracesToMetrics:
+            datasourceUid: victoriametrics
+            spanStartTimeShift: -5m
+            spanEndTimeShift: 5m
+            tags:
+              - key: host.name
+            queries:
+              - name: Host CPU load
+                query: system_cpu_load_average_1m{$$__tags}
+kind: ConfigMap
+metadata:
+  name: grafana-datasources-f252kk7mk7
+  namespace: o11y

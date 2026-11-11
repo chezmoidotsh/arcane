@@ -10,14 +10,6 @@ helmCharts:
     releaseName: grafana-operator
     namespace: o11y
     valuesFile: ../../../../../catalog/kubernetes/o11y/helm/grafana/default.helmvalues.yaml
-  - repo: oci://ghcr.io/reliablyobserve/charts
-    name: loki-vl-proxy
-    # oripathy: type=helm upstream=github.com/ReliablyObserve/Loki-VL-proxy tagPrefix=v
-    version: 2.170.0
-    releaseName: loki-vl-proxy
-    namespace: o11y
-    valuesFile: loki-vl-proxy.helmvalues/default.yaml
-    skipTests: true
 
 resources:
   - security/
@@ -30,7 +22,6 @@ resources:
   - grafana.cnpg.cluster.yaml
   - grafana.cnpg.scheduledbackup.yaml
   - grafana.main.httproute.yaml
-  - loki-vl-proxy.envoy.configmap.yaml
   - datasources/
   - dashboards/
 
@@ -41,11 +32,8 @@ images:
     newTag: v5.25.0
   - name: docker.io/grafana/grafana
     newName: oci.chezmoi.sh/docker.io/grafana/grafana
-  - name: ghcr.io/reliablyobserve/loki-vl-proxy
-    newName: oci.chezmoi.sh/ghcr.io/reliablyobserve/loki-vl-proxy
-    # oripathy: type=oci upstream=github.com/ReliablyObserve/Loki-VL-proxy tagPrefix=v digest=false
-    newTag: 2.170.0
-  - name: docker.io/envoyproxy/envoy
-    newName: oci.chezmoi.sh/docker.io/envoyproxy/envoy
-    # oripathy: type=oci upstream=github.com/envoyproxy/envoy tagPrefix=v digest=false
-    newTag: v1.40.2
+
+# Lets kustomize rewrite the hashed grafana-datasources ConfigMap name inside
+# the Grafana CR (datasources/kustomization.yaml).
+configurations:
+  - kustomizeconfig.yaml
