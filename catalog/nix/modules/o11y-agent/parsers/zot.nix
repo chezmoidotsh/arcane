@@ -46,7 +46,9 @@ in
       ''set(attributes["zot.module"], cache["module"]) where cache["module"] != nil''
 
       # ── 4. Image: repository, reference (tag or digest), digest ───────────
-      ''set(attributes["oci.repository"], cache["repository"]) where cache["repository"] != nil''
+      # Trivy (CVE scan) logs its own "repository" (the distro release, e.g.
+      # "3.16"): only zot's own callers name an image.
+      ''set(attributes["oci.repository"], cache["repository"]) where cache["repository"] != nil and not IsMatch(cache["caller"], "aquasecurity/trivy")''
       ''set(attributes["oci.repository"], cache["repo"]) where cache["repo"] != nil''
       ''set(attributes["oci.reference"], cache["reference"]) where cache["reference"] != nil''
       ''set(attributes["oci.reference"], cache["tag"]) where cache["tag"] != nil''
