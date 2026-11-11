@@ -431,7 +431,7 @@ Une liste de contrôle normative concise (le _pourquoi_ figure dans les décisio
   `template-version` ajouté, section `Évolution de la décision` extraite de l'historique existant. Décision, options,
   chronologie et dates d'origine inchangées.
 - **2026-10-11** : **CLARIFICATION** : `status` maintenu à `accepted`, sans `implementation-completed`, d'après le
-  dépôt. Le backend central existe (conteneur `lxc/observability/`, stack Pulumi `stack/observability.ts`, `vmagent` du
+  dépôt. Le backend central existe (conteneur `lxc/o11y-datastore/`, stack Pulumi `stack/observability.ts`, `vmagent` du
   LXC `oci-registry`, LXC `pve-exporter`, module `catalog/nix/modules/lxc-o11y-agent/`, Grafana sur `rhodes.akn`), mais
   les agents par cluster (`VMAgent`, `VMAlert`, `VMRule`, Vector) sont absents de `projects/lungmen.akn/`,
   `projects/rhodes.akn/` et `projects/kazimierz.akn/`. La section `État` renvoie aux issues de suivi
@@ -468,7 +468,7 @@ Une liste de contrôle normative concise (le _pourquoi_ figure dans les décisio
   précédent pour quitter Kubernetes quand il ne sert pas la charge ; le modèle d'agent de `kazimierz` en découle.
 - [ADR-015 Migrer Crossplane vers Pulumi](./ADR-015-Migrer-Crossplane-vers-Pulumi.md) : le remplacement de Crossplane
   cité dans la décision initiale.
-- [README du LXC d'observabilité](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md) et
+- [README du LXC d'observabilité](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) et
   [README du LXC `oci-registry`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/README.md), sur
   lequel il est modelé : l'implémentation.
 - [Mettre à jour un LXC par échange du rootfs](../procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md)

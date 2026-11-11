@@ -19,7 +19,7 @@ path.
 lxc/
 ├── .mise/
 │   └── lib/lxc.sh              ← shared build/push/upgrade library (single source of truth)
-├── observability/              ← VictoriaMetrics + Vector + Grafana + Alertmanager
+├── o11y-datastore/             ← VictoriaMetrics + Vector + Grafana + Alertmanager
 ├── oci-registry/               ← Zot OCI registry
 ├── omni/                       ← Omni cluster manager
 ├── omni-infra-provider-proxmox/
@@ -309,4 +309,4 @@ Run the full upgrade flow. Flags:
 - Shared library: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`
 - Existing appliances: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`
 - Observability README (full deploy procedure):
-  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md`
+  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md`

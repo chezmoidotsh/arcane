@@ -50,7 +50,7 @@ retour arrière et sont relevées au moment où il faut les utiliser.
 
 ```sh
 export PVE_HOST=<nom d'hôte du nœud Proxmox>   # ex. pve-01.pve.chezmoi.sh
-export LXC_NAME=<dossier du conteneur>         # ex. observability ; ls projects/chezmoi.sh/src/infrastructure/proxmox/lxc/
+export LXC_NAME=<dossier du conteneur>         # ex. o11y-datastore ; ls projects/chezmoi.sh/src/infrastructure/proxmox/lxc/
 export BUILD_PATH=projects/chezmoi.sh/src/infrastructure/proxmox/lxc/${LXC_NAME}
 export VMID=<VMID du CT>                       # ex. 101 ; visible dans « ssh root@${PVE_HOST} pct list » ou dans le récapitulatif du script
 ```
@@ -281,7 +281,7 @@ volumes non référencés.
 
 - [Skill : lxc-maintenance](../../../.agents/skills/lxc-maintenance/SKILL.md) : points d'entrée `mise` et bibliothèque
   `lxc.sh` utilisés par cette procédure.
-- [README du conteneur observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
+- [README du conteneur observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md)
   : création initiale du conteneur et configuration du conteneur.
 - [ADR-013 Observabilité centralisée](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) :
   décision à l'origine du conteneur `observability`.

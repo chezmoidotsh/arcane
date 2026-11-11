@@ -8,7 +8,7 @@ const config = new pulumi.Config();
 // -----------------------------------------------------------------------------
 // Reuses the same Slack "#notifications" incoming webhook already configured
 // for observability's Alertmanager
-// (projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/secrets/
+// (projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/
 // observability.sops.env) instead of standing up a second channel. That
 // webhook URL lives in a SOPS-encrypted file outside this stack's reach --
 // this stack runs upstream of any Kubernetes cluster (see ./acme.ts) -- so

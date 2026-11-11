@@ -383,7 +383,7 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
 ## Known gaps / follow-ups
 
 1. **`flake.lock` is seeded from the observability sibling.** This LXC shares the exact input set
-   (`nixpkgs/nixos-26.05`, `arcane`) with `../observability`, so its lock was copied from there to give a valid pin. Run
+   (`nixpkgs/nixos-26.05`, `arcane`) with `../o11y-datastore`, so its lock was copied from there to give a valid pin. Run
    `nix flake lock` here to refresh it independently when bumping inputs.
 
 2. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a rebuild and redeploy. There is no
@@ -392,7 +392,7 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
 
 3. **No alert if the exporter goes silent.** If the LXC dies or the token is revoked, the o11y appliance stops receiving
    PVE metrics without notification. Adding `up{job="pve_exporter"} == 0` to
-   [`../observability/alerts/pve.rules.yaml`](../observability/alerts/pve.rules.yaml) would close this gap.
+   [`../o11y-datastore/alerts/pve.rules.yaml`](../o11y-datastore/alerts/pve.rules.yaml) would close this gap.
 
 4. **Syslog parsing tests are not auto-run.** The `syslog_to_o11y` unit tests live in
    `modules/o11y.extraTransforms/sources.syslog.yaml`, but `catalog.lxcAgent` only runs `vector validate` (not
