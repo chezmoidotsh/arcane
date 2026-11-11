@@ -31,6 +31,8 @@ spec:
       auto_assign_org_role: Admin
   deployment:
     spec:
+      strategy:
+        type: Recreate
       template:
         metadata:
           labels:
