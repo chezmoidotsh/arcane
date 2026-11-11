@@ -2,29 +2,23 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Caddy reverse proxy — TLS termination + path routing for data.o11y.chezmoi.sh
 # ─────────────────────────────────────────────────────────────────────────────
-# The public surface of the appliance's raw backend (metrics/logs/traces/alerts).
-# o11y.chezmoi.sh itself is Grafana's alone (served from Kubernetes, not this
-# LXC) — this Caddy instance no longer answers on that name at all. Two
-# listeners, same route table:
+# The single surface of the appliance. o11y.chezmoi.sh itself is Grafana's
+# alone (served from Kubernetes, not this LXC). Two ports, each served on two
+# listeners (LAN TLS via Cloudflare DNS-01 for data.o11y.chezmoi.sh, and the
+# tailnet via caddy-tailscale at o11y-ep.<tailnet>.ts.net):
 #
-#   :80 / :443 (public)   — TLS via Cloudflare DNS-01 ACME for data.o11y.chezmoi.sh
-#   tailnet (tsnet)       — caddy-tailscale (embedded Tailscale, userspace)
-#                           TLS issued automatically by Tailscale's ACME
-#                           reachable at o11y-ep.<tailnet>.ts.net
+#   :4318  OTLP/HTTP — the ONLY write path (no remote_write): /v1/* goes to
+#          the OTLP gateway (otlp-gateway.nix, JSON + protobuf), which feeds
+#          VictoriaMetrics / VictoriaLogs / VictoriaTraces.
+#   :443   read only + UI:
+#            /metrics/*  → VictoriaMetrics query API + vmui (writes refused)
+#            /logs/*     → VictoriaLogs /select/* only
+#            /traces/*   → VictoriaTraces /select/* only (Jaeger API, vmui)
+#            /alerts/*   → Alertmanager UI/API (--web.route-prefix=/alerts)
+#            /           → landing page (/etc/caddy/www, from ./fs/etc.caddy/www)
 #
-# caddy-tailscale embeds a tsnet node directly in the Caddy process — there is
-# no kernel TUN device and no separate tailscaled daemon. The LXC gains tailnet
-# membership without the /dev/net/tun passthrough.
-#
-# Signal routing (identical on both listeners):
-#   client ─┬─ /metrics/*  → VictoriaMetrics :8428 (remote_write, query, OTLP)
-#            ├─ /logs/*     → VictoriaLogs :9428 (ingest + query)
-#            ├─ /traces/*   → VictoriaTraces :10428 (OTLP/Jaeger)
-#            ├─ /alerts/*   → Alertmanager :9093 (per-cluster vmalert notify)
-#            └─ /           → static landing page (caddy.statics/index.html)
-#
-# VM/VLogs/VTraces serve at root — Caddy strips the /<signal> prefix
-# (handle_path); Alertmanager keeps it (--web.route-prefix=/alerts).
+# caddy-tailscale embeds a tsnet node in the Caddy process — no kernel TUN
+# device, no tailscaled daemon.
 #
 # Build args:
 #   secrets.cloudflareToken   — Cloudflare API token for DNS-01 ACME. When empty
@@ -40,11 +34,11 @@
 let
   cloudflareToken = secrets.cloudflareToken or "";
   tailscaleOauthKey = secrets.tailscaleOauthKey or "";
-  # Static landing page directory. Copied to the Nix store at build time — Caddy
-  # serves it read-only at / with index.html as the fallback for unknown paths.
-  staticDir = ./caddy.statics;
 in
 {
+  # Landing page, served read-only at / (index.html is the fallback).
+  environment.etc."caddy/www".source = ./fs/etc.caddy/www;
+
   services.caddy = {
     enable = true;
 
@@ -60,113 +54,8 @@ in
       hash = "sha256-K8nMnSWuwISv4rS8dDBz4mH91tVt6hq+xUc1t5n01nA=";
     };
 
-    configFile = pkgs.writeText "Caddyfile" ''
-      {
-        # caddy-tailscale: embedded tsnet node (no /dev/net/tun, no tailscaled).
-        # TS_AUTHKEY is the Tailscale OAuth client secret for tag:o11y.
-        # tags is mandatory with OAuth keys (error: "oauth authkeys require
-        # --advertise-tags" without it). hostname must live inside a named node
-        # block; bind tailscale/<name> then references that node. Using
-        # bind tailscale/ (no suffix) falls back to the binary name ("caddy").
-        #
-        # state_dir is required: caddy-tailscale falls back to os.UserConfigDir()
-        # (i.e. $HOME/.config) — not XDG_DATA_HOME — when unset. HOME=/var/lib/caddy
-        # for the caddy service user, but that directory does not exist (StateDirectory
-        # is cleared), so os.MkdirAll errors with "permission denied" at /var/lib/caddy.
-        tailscale {
-          auth_key  {env.TS_AUTHKEY}
-          tags      tag:o11y
-          state_dir /persistent/caddy/tsnet
-          o11y-ep {
-            hostname o11y-ep
-          }
-        }
-      }
-
-      # ─── Shared routing snippet ────────────────────────────────────────────
-      # Applied identically on the public listener and the tailnet listener.
-      # VM/VLogs/VTraces serve at root (prefix stripped); Alertmanager keeps
-      # its prefix via --web.route-prefix=/alerts.
-      (routes) {
-        log
-
-        request_body {
-          max_size 256MiB
-        }
-
-        header {
-          Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-          X-Content-Type-Options "nosniff"
-          Referrer-Policy "no-referrer"
-          -Server
-        }
-
-        handle_path /metrics/* {
-          reverse_proxy localhost:8428 {
-            flush_interval -1
-          }
-        }
-
-        # OTLP HTTP log ingest → Vector :4318 (more specific — matched before /logs/*)
-        handle_path /logs/otlp/* {
-          reverse_proxy localhost:4318 {
-            flush_interval -1
-          }
-        }
-
-        # All other /logs/* (queries, ES-compatible ingest, health) → VictoriaLogs :9428
-        handle_path /logs/* {
-          reverse_proxy localhost:9428 {
-            flush_interval -1
-          }
-        }
-
-        handle_path /traces/* {
-          reverse_proxy localhost:10428 {
-            flush_interval -1
-          }
-        }
-
-        handle /alerts/* {
-          reverse_proxy localhost:9093
-        }
-
-        handle {
-          root * ${staticDir}
-          try_files {path} /index.html
-          file_server
-        }
-      }
-
-      # ─── HTTP → HTTPS redirect ─────────────────────────────────────────────
-      http://data.o11y.chezmoi.sh {
-        redir https://{host}{uri} permanent
-      }
-
-      # ─── HTTPS — public hostname, Cloudflare DNS-01 TLS ───────────────────
-      # o11y.chezmoi.sh is Grafana's alone now (Kubernetes, not this LXC) --
-      # every consumer that used to point here (pve-exporter, oci-registry,
-      # talosnet-dns, omni, omni-infra-provider-proxmox) is migrated to
-      # data.o11y.chezmoi.sh as part of the same change (issue 1159).
-      https://data.o11y.chezmoi.sh {
-        import routes
-        tls {
-          dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-        }
-      }
-
-      # ─── HTTPS — Tailscale virtual listener (tsnet) ────────────────────────
-      # Reachable at o11y-ep.<tailnet>.ts.net from tailnet members.
-      # TLS is issued automatically by Tailscale's ACME for *.ts.net — no
-      # Cloudflare token needed on this path.
-      https:// {
-        bind tailscale/o11y-ep
-        tls {
-          get_certificate tailscale
-        }
-        import routes
-      }
-    '';
+    # The whole configuration lives in ./fs/etc.caddy/Caddyfile.
+    configFile = ./fs/etc.caddy/Caddyfile;
   };
 
   # Dedicated uid — host uid 100000 + 997 = 100997 with default Proxmox mapping.

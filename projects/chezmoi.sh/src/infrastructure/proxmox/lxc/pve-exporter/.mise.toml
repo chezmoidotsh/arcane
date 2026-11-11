@@ -2,7 +2,7 @@
 # pve-exporter LXC — Task Automation
 # =============================================================================
 # Tasks for building, uploading, and maintaining the Proxmox LXC template that
-# runs prometheus-pve-exporter + Vector agent. No public services — the LXC
+# runs prometheus-pve-exporter + the o11y-agent. No public services — the LXC
 # only pushes outbound (metrics + logs) to the o11y appliance.
 #
 # Usage:

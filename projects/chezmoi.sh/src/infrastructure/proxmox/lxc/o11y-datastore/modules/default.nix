@@ -3,8 +3,8 @@
     ./victoriametrics.nix
     ./victorialogs.nix
     ./victoriatraces.nix
-    ./vector.nix
-    ./o11y.nix
+    ./otlp-gateway.nix
+    ./o11y-agent.nix
     ./vmalert.nix
     ./alertmanager.nix
     ./caddy.nix

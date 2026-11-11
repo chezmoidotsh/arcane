@@ -79,18 +79,15 @@
   };
 
   # ── Firewall ───────────────────────────────────────────────────────────────
-  # Default deny; :80/:443 are the public surface (Caddy). :6000 is the Vector
-  # native ingest port for LXC + cluster agents (catalog.lxcAgent) and for the
-  # pve-exporter LXC, which now owns syslog ingest and forwards parsed events
-  # here. Vector's OTLP (:4317/:4318) ports bind loopback only and need no
-  # firewall rule.
+  # Default deny; Caddy is the only surface: :80/:443 (UI + read-only query
+  # API) and :4318 (OTLP/HTTP ingest, the single write entrypoint).
   networking.firewall.enable = lib.mkDefault true;
 
   # UDP 41641 enables direct (non-DERP) Tailscale WireGuard connections. tsnet
   # (caddy-tailscale) falls back to DERP relays if closed; direct path is kept
   # open for lower latency. Set at normal priority so it wins over mkDefault [].
   networking.firewall.allowedUDPPorts = [ 41641 ];
-  networking.firewall.allowedTCPPorts = [ 80 443 6000 ];
+  networking.firewall.allowedTCPPorts = [ 80 443 4318 ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;
 
   # No trustedInterfaces: caddy-tailscale uses tsnet (userspace), so there is

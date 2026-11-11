@@ -1,0 +1,142 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Caddyfile — data.o11y.chezmoi.sh (services.caddy.configFile → /etc/caddy/caddy_config)
+# ─────────────────────────────────────────────────────────────────────────────
+# Secrets come from the environment (/etc/caddy/secrets, see caddy.nix):
+#   CLOUDFLARE_API_TOKEN — DNS-01 ACME for data.o11y.chezmoi.sh
+#   TS_AUTHKEY           — Tailscale OAuth key for the tsnet listener
+# ─────────────────────────────────────────────────────────────────────────────
+
+{
+  # Prometheus metrics on the admin endpoint (localhost:2019/metrics),
+  # scraped by the o11y agent (Caddy cannot push metrics as OTLP).
+  metrics
+
+  # caddy-tailscale: embedded tsnet node (no /dev/net/tun, no tailscaled).
+  # TS_AUTHKEY is the Tailscale OAuth client secret for tag:o11y.
+  # tags is mandatory with OAuth keys (error: "oauth authkeys require
+  # --advertise-tags" without it). hostname must live inside a named node
+  # block; bind tailscale/<name> then references that node. Using
+  # bind tailscale/ (no suffix) falls back to the binary name ("caddy").
+  #
+  # state_dir is required: caddy-tailscale falls back to os.UserConfigDir()
+  # (i.e. $HOME/.config) — not XDG_DATA_HOME — when unset. HOME=/var/lib/caddy
+  # for the caddy service user, but that directory does not exist (StateDirectory
+  # is cleared), so os.MkdirAll errors with "permission denied" at /var/lib/caddy.
+  tailscale {
+    auth_key  {env.TS_AUTHKEY}
+    tags      tag:o11y
+    state_dir /persistent/caddy/tsnet
+    o11y-ep {
+      hostname o11y-ep
+    }
+  }
+}
+
+# ─── Read snippet (:443) ──────────────────────────────────────────────
+# Query APIs and UIs only: every ingest/admin path answers 403, so the
+# only way to write is OTLP on :4318. `route` keeps the directive order.
+(read) {
+  log
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "no-referrer"
+    -Server
+  }
+
+  handle_path /metrics/* {
+    route {
+      # vmui queries through the /prometheus/ prefix as well.
+      @write path /api/v1/write /api/v1/import* /api/v1/admin/* /prometheus/api/v1/write /prometheus/api/v1/import* /prometheus/api/v1/admin/*
+      respond @write 403
+      # Every API path the vmui bundle calls (all read-only).
+      @read path /vmui /vmui/* /flags /api/v1/* /vmalert/api/v1/* /expand-with-exprs /prettify-query /metric-relabel-debug /downsampling-filters-debug /retention-filters-debug /prometheus/api/v1/* /prometheus/vmalert/api/v1/* /prometheus/expand-with-exprs /prometheus/prettify-query /prometheus/metric-relabel-debug /prometheus/downsampling-filters-debug /prometheus/retention-filters-debug
+      reverse_proxy @read localhost:8428
+      respond 403
+    }
+  }
+
+  handle_path /logs/* {
+    route {
+      reverse_proxy /select/* localhost:9428
+      respond 403
+    }
+  }
+
+  handle_path /traces/* {
+    route {
+      reverse_proxy /select/* localhost:10428
+      respond 403
+    }
+  }
+
+  handle /alerts/* {
+    reverse_proxy localhost:9093
+  }
+
+  handle {
+    root * /etc/caddy/www
+    try_files {path} /index.html
+    file_server
+  }
+}
+
+# ─── OTLP snippet (:4318) ──────────────────────────────────────────────
+# Every standard OTLP/HTTP signal path goes to the OTLP gateway
+# (otlp-gateway.nix), which accepts JSON and protobuf and forwards
+# protobuf to the stores.
+(otlp) {
+  log
+
+  request_body {
+    max_size 64MiB
+  }
+
+  handle /v1/* {
+    reverse_proxy localhost:14318
+  }
+
+  handle {
+    respond 404
+  }
+}
+
+# ─── HTTP → HTTPS redirect ─────────────────────────────────────────────
+http://data.o11y.chezmoi.sh {
+  redir https://{host}{uri} permanent
+}
+
+# ─── HTTPS — LAN hostname, Cloudflare DNS-01 TLS ──────────────────────
+https://data.o11y.chezmoi.sh {
+  import read
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+}
+
+https://data.o11y.chezmoi.sh:4318 {
+  import otlp
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+}
+
+# ─── HTTPS — Tailscale virtual listener (tsnet) ────────────────────────
+# Reachable at o11y-ep.<tailnet>.ts.net from tailnet members; TLS issued
+# by Tailscale's ACME for *.ts.net.
+https:// {
+  bind tailscale/o11y-ep
+  tls {
+    get_certificate tailscale
+  }
+  import read
+}
+
+https://:4318 {
+  bind tailscale/o11y-ep
+  tls {
+    get_certificate tailscale
+  }
+  import otlp
+}

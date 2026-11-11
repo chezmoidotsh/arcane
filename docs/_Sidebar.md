@@ -66,6 +66,7 @@
 - [ADR-015 Migrer Crossplane vers Pulumi](decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md)
 - [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)
 - [ADR-017 Conserver une phrase secrète Pulumi par projet](decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md)
+- [ADR-018 OTLP comme protocole d'ingestion unique](decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md)
 
 ### Expérimentations
 

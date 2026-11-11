@@ -323,7 +323,7 @@ pve-exporter limité au VLAN 5), ce qui évite la maintenance par IP quand les a
 | `pve-exporter`                | TCP 9221 (scrape Prometheus) depuis le VLAN 5 uniquement                                        |
 | `omni-infra-provider-proxmox` | Port de callback de l'API Proxmox et tunnel WireGuard Omni (selon la documentation du provider) |
 | `omni`                        | HTTPS (443), WireGuard (tunnel Omni), UI d'administration                                       |
-| `o11y`                        | Prometheus remote-write, HTTPS Grafana/Loki, ingestion Vector                                   |
+| `o11y`                        | OTLP/HTTP (TCP 4318, écriture), HTTPS (TCP 443, lecture seule et interface)                     |
 | `oci-registry`                | HTTPS (pull et push du registre)                                                                |
 | Tous les LXC                  | Outbound : sans restriction via la gateway du VLAN 5                                            |
 
@@ -344,6 +344,8 @@ dans son `.fw` (étape manuelle).
 
 ## Historique
 
+- _2026-11-10_ : `10.0.0.27` libérée (LXC signoz supprimé, SigNoz abandonné au profit de la stack Victoria) ; entrées
+  autorisées du LXC `o11y` alignées sur l'appliance (OTLP/HTTP sur 4318, lecture sur 443).
 - _2026-10-12_ : traduction des titres de section qu'aucun fichier du dépôt ne cite (ceux que citent des commentaires de
   manifestes ou de code, comme « Cilium LoadBalancer Pools », restent en anglais) ; ajout d'un avertissement sur le
   chevauchement entre la plage DHCP de `talosnet` et les pools `internal`.

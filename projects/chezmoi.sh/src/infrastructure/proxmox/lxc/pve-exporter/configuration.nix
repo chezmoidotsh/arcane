@@ -6,7 +6,7 @@
 #
 # The modules in ./modules/ own all service configuration:
 #   * pve-exporter.nix — prometheus-pve-exporter (nixpkgs)
-#   * o11y.nix         — Vector agent (catalog.lxcAgent) shipping metrics + logs
+#   * o11y-agent.nix         — o11y-agent (catalog.o11yAgent) shipping metrics + logs
 #   * hardening.nix    — sysctl, firewall default-deny, login surface, journald
 #
 # No shared service account: unlike the o11y/oci LXCs, this container has no

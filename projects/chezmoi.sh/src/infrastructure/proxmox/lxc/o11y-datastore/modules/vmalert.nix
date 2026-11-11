@@ -1,10 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # vmalert — EXISTENTIAL rule evaluation only
 # ─────────────────────────────────────────────────────────────────────────────
-# Scope (ADR-013): this evaluates ONLY the small, stable set of existential,
-# cluster-independent rules in ../alerts/ — cluster-absent, Grafana-down,
-# appliance self-monitoring, PVE host/guest/disk, OCI registry, and the Watchdog.
-# These must fire even when rhodes (or any observed cluster) is down.
+# Scope (ADR-013): this evaluates ONLY the small, stable set of rules in
+# ./fs/etc.vmalert.rules/ (today the Watchdog dead-man's-switch) against VictoriaMetrics.
 #
 # Per-cluster alerting AND recording rules (node/disk/PVC/crash-loop, recording
 # rules) live as VMRule/PrometheusRule CRDs evaluated by that cluster's OWN
@@ -31,9 +29,9 @@ let
   amUrl = "http://127.0.0.1:9093/alerts";
 in
 {
-  # Rule files live in ../alerts and are mounted read-only at /etc/vmalert/rules.
+  # Rule files live in ./fs/etc.vmalert.rules, installed at /etc/vmalert/rules.
   # Adding a rule = drop a *.yaml file there and rebuild the image.
-  environment.etc."vmalert/rules".source = ../alerts;
+  environment.etc."vmalert/rules".source = ./fs/etc.vmalert.rules;
 
   systemd.services.vmalert = {
     description = "vmalert — rule evaluation → Alertmanager";

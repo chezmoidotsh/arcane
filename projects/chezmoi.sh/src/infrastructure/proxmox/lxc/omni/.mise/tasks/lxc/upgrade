@@ -13,13 +13,13 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "omni" "${CONFIG_ROOT}" _omni
-lxc_services "caddy" "dex" "omni" "omni-pki-init" "omni-gpg-init" "prometheus-node-exporter" "lxc-agent"
+lxc_services "caddy" "dex" "omni" "omni-pki-init" "omni-gpg-init" "o11y-agent"
 lxc_mp "mp0" "omni" 100980
 lxc_mp "mp0" "caddy" 100997
 lxc_e2e_hint "curl -sSfk https://omni.chezmoi.sh/"
 
 lxc_upgrade \
-  --pve-host "${usage_pve_host}" \
-  --vmid "${usage_vmid-}" \
-  --version "${usage_version-}" \
-  ${usage_yes:+--yes}
+	--pve-host "${usage_pve_host}" \
+	--vmid "${usage_vmid-}" \
+	--version "${usage_version-}" \
+	${usage_yes:+--yes}

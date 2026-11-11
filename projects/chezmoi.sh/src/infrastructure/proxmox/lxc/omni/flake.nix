@@ -7,7 +7,7 @@
   # Omni is built from source by the catalog package (pkgs/by-name/om/omni).
   # Module library lives in:
   #   ./modules/omni.nix, ./modules/dex.nix — Omni service + Dex OIDC + PKI init
-  #   catalog/nix/modules/lxc-o11y-agent — catalog.lxcAgent (journal → o11y)
+  #   catalog/nix/modules/o11y-agent — catalog.o11yAgent (journal → o11y)
   #   ./modules/                     — Caddy HTTPS termination + LXC hardening + o11y
   #
   # Build (produces a Proxmox-importable .tar.xz):
@@ -40,7 +40,7 @@
       # version itself is tracked in catalog/nix/pkgs/by-name/om/omni/package.nix
       # and bumped by Renovate. Bump this date before every `mise run
       # lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.11.09";
+      version = "2026.11.10";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
@@ -64,7 +64,7 @@
           # classifies as unfree.
           { nixpkgs.config.allowUnfree = true; }
           { services.omni.package = arcane.packages.${system}.omni; }
-          arcane.nixosModules.lxcAgent
+          arcane.nixosModules.o11yAgent
           arcane.nixosModules.staticNetwork
           ./modules
           ./configuration.nix

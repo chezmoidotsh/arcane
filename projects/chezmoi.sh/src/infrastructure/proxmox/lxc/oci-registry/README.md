@@ -298,7 +298,7 @@ iptables -L -nv | grep -E "tap${VMID}|veth${VMID}"
 
 > The `dport 5000` line is commented because Zot binds to 127.0.0.1 only. Uncomment **and** rebuild the LXC with Zot
 > bound to `0.0.0.0` if you need to scrape Prometheus metrics from outside the LXC. The recommended pattern is to scrape
-> from inside the LXC over `localhost` (e.g. a sidecar `node_exporter` doesn't have this constraint).
+> from inside the LXC over `localhost`, which is what the o11y agent does.
 
 ### Quick verification
 
@@ -516,9 +516,8 @@ client side resolve it. Adding Caddy-side fallback routing is tracked in issue #
 
 The current setup is functional but the items below are worth tracking:
 
-1. **No Prometheus scraping.** The `metrics` extension is implicitly off (we only enable `search`/`ui`/`mgmt`). When we
-   want SLOs, enable `extensions.metrics` plus an htpasswd-protected `metrics` user. Note the firewall section already
-   includes the (commented) PVE rule to let the scraper in.
+1. **No SLOs.** Zot's `/metrics` is scraped on loopback by the o11y agent (`zot` job, `modules/o11y-agent.nix`) and
+   pushed as OTLP, but no dashboard or alert uses it yet. The endpoint is unauthenticated: it must stay on `127.0.0.1`.
 
 2. **No alert on certificate expiry.** Caddy renews silently; if ACME breaks we won't know until the cert expires. A
    blackbox-exporter probe from `amiya.akn` would close that gap.
@@ -530,8 +529,8 @@ The current setup is functional but the items below are worth tracking:
 4. **No HA.** Single LXC, single Proxmox node. If the node dies, pulls that aren't in the upstream-resolver cache will
    fail until the LXC is brought up elsewhere. Acceptable trade-off for a homelab.
 
-5. **No log aggregation.** Logs stay on the LXC. Adding Vector / Promtail would mean a sidecar service; today
-   `journalctl` over `pct exec` is enough.
+5. **Raw logs only.** The journal is shipped to the o11y appliance by `catalog.o11yAgent` (OTLP), but zot's JSON log
+   lines are stored as raw messages: there is no per-service parser.
 
 6. **No alert on disk-full.** A runaway sync could fill the 100 GiB `/var/lib/zot` volume. The retention window
    mitigates this, but a Proxmox storage alert on the `mp0` dataset is a cheap safety net. The root disk (1 GiB) is

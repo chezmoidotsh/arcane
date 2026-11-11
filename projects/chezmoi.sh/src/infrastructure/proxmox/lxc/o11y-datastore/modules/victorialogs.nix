@@ -2,20 +2,15 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaLogs — central log store
 # ─────────────────────────────────────────────────────────────────────────────
-# Receives processed logs from the local Vector pipeline (loopback :9428 only).
-# Vector owns all ingest: syslog TCP :5140, OTLP HTTP :4318, Vector native :6000.
-# VictoriaLogs serves HTTP for both ingest (Vector → ES-compatible API) and
-# query (Caddy → /logs/* → :9428).
-#
-# Access control: Caddy (path routing, no auth) is the sole public surface;
-# the Proxmox host firewall restricts by source CIDR. No syslog listener here —
-# Vector handles protocol conversion and SemConv validation before forwarding.
+# Ingests OTLP only, via Caddy :4318/v1/logs → /insert/opentelemetry/v1/logs
+# (Caddy pins VL-Stream-Fields to service.name,host.name). Queries come through
+# Caddy :443 /logs/select/*. Binds loopback :9428 only.
 #
 # NOTE: `pkgs.victorialogs` must exist on the pinned nixpkgs. If the channel
 # only ships the binary under a different attribute, adjust the ExecStart path
 # (see README "Known gaps / follow-ups").
 # ─────────────────────────────────────────────────────────────────────────────
-{ lib, pkgs, ... }:
+{ lib, pkgs, retention, ... }:
 
 let
   listenAddr = "127.0.0.1:9428";
@@ -34,7 +29,7 @@ in
         "${pkgs.victorialogs}/bin/victoria-logs"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-retentionPeriod=30d" # homelab baseline; raise per disk budget
+        "-retentionPeriod=${retention.logs}" # set in configuration.nix
         "-loggerFormat=json"
       ];
 

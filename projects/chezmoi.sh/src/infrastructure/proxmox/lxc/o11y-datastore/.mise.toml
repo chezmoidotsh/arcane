@@ -47,11 +47,6 @@
 # NOTE: requires `pulumi up` to have run in src/infrastructure/pulumi so the
 # stack outputs exist.
 
-[tasks."diagram:generate"]
-description = "Generate the architecture diagram for the observability appliance"
-run = "d2 architecture.d2 docs/assets/architecture.svg"
-dir = "{{ config_root }}"
-
 # Local preview of the landing page: static files read from disk on every request
 # (just refresh the browser), the four UIs proxied to the live backend so the
 # iframes show real data. Needs `caddy` on PATH. Override with UI_PORT / UI_BACKEND.
@@ -75,12 +70,17 @@ run = '''
     }
   }
   handle {
-    root * modules/caddy.statics
+    root * modules/fs/etc.caddy/www
     file_server
   }
 }
 EOF
 '''
+
+[tasks."diagram:generate"]
+description = "Render o11y-datastore.d2 to o11y-datastore.svg"
+dir = "{{ config_root }}"
+run = "d2 o11y-datastore.d2 o11y-datastore.svg"
 
 [tasks."lxc:secrets:sync"]
 description = "Sync Pulumi tokens (Cloudflare + Tailscale) into secrets/caddy.sops.env"
@@ -91,36 +91,6 @@ run = '''
   mise run pulumi:tailscale-oauth:observability
   echo "[SUCCESS] caddy.sops.env synced from Pulumi (Cloudflare + Tailscale)." >&2
   echo "[NOTE] observability.sops.env (Slack webhook + deadman URL) is operator-managed and untouched." >&2
-'''
-
-# -----------------------------------------------------------------------------
-# Vector configuration tests
-# -----------------------------------------------------------------------------
-# Validates and unit-tests the Vector pipeline configuration without starting
-# a live Vector instance. Requires `vector` on PATH (install from https://vector.dev).
-#
-#   mise run vector:validate   — syntax check all production YAML files
-#   mise run vector:test       — run all unit tests + e2e pipeline tests
-
-[tasks."vector:validate"]
-description = "Validate Vector config syntax and component graph (all files)"
-dir = "{{ config_root }}"
-run = '''
-  set -euo pipefail
-  vector validate --no-environment --config-dir config/vector
-  echo "[OK] Vector config validated."
-'''
-
-[tasks."vector:test"]
-description = "Run all inline Vector tests (unit per transform + e2e pipeline)"
-dir = "{{ config_root }}"
-run = '''
-  set -euo pipefail
-  # Tests are inline in each transform file (10-/15-/20-/30-) and in the
-  # dedicated pipeline test file (50-tests-pipeline.yaml). --config-dir loads
-  # all *.yaml files and runs every `tests:` section found.
-  vector test --config-dir config/vector
-  echo "[OK] All Vector tests passed."
 '''
 
 # -----------------------------------------------------------------------------

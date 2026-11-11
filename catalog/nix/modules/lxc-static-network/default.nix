@@ -58,7 +58,7 @@ in
     # Disabling DHCP on this interface is required, not cosmetic: NixOS's
     # default DHCP client still runs otherwise, spends ~30s retrying against
     # a VLAN with DHCP disabled, delays network-online.target (and anything
-    # ordered after it, e.g. lxc-agent), and risks landing on the same
+    # ordered after it, e.g. o11y-agent), and risks landing on the same
     # link-local fallback address this module exists to eliminate.
     networking.interfaces.${cfg.interface} = {
       useDHCP = false;

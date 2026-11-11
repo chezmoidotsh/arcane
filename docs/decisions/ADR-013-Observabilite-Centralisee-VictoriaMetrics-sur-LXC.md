@@ -1,6 +1,6 @@
 ---
 status: "accepted"
-date: 2026-10-11
+date: 2026-11-10
 decision-makers: ["Alexandre"]
 assisted-by: ["claude-opus-4.8"]
 informed: []
@@ -8,6 +8,14 @@ template-version: "2.0.0"
 ---
 
 # ADR-013 Observabilité centralisée VictoriaMetrics sur LXC
+
+> [!NOTE]\
+> La partie ingestion de cet ADR (Vector pour les journaux, `remote_write` pour les métriques, Vector central côté
+> conteneur) est remplacée par
+> [ADR-018](./ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md) : OTLP/HTTP est
+> désormais le seul protocole d'ingestion. Le reste de la décision (backend VictoriaMetrics, LXC centralisé, deux
+> niveaux d'alertes) reste valable. Un essai de SigNoz a orienté ce choix OTLP d'abord. Le corps ci-dessous garde les
+> faits de son époque.
 
 ## Contexte et problème
 
@@ -424,6 +432,10 @@ Une liste de contrôle normative concise (le _pourquoi_ figure dans les décisio
 
 ## Historique des modifications
 
+- **2026-11-10** : **CLARIFICATION** : Ajout d'une note renvoyant à
+  [ADR-018](./ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md), qui remplace la
+  partie ingestion (Vector, `remote_write`). `status` maintenu à `accepted` : le reste de la décision est inchangé.
+  Corps non réécrit.
 - **2026-10-11** : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections
   renommées, sommaire manuel supprimé, titre aligné sur le nom de fichier, sous-niveaux `####` aplatis en `###`, section
   `Pour aller plus loin`, émojis des conséquences remplacés par les marqueurs du gabarit (les deux points à marqueur
@@ -487,3 +499,5 @@ Une liste de contrôle normative concise (le _pourquoi_ figure dans les décisio
 - [Vector](https://vector.dev/docs/) : le pipeline de journaux.
 - [Alertmanager, motif Watchdog / Dead-Man's-Switch](https://prometheus.io/docs/alerting/latest/configuration/) : le
   heartbeat de le conteneur.
+- [ADR-018 OTLP comme protocole d'ingestion unique](./ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md)
+  : remplace la partie ingestion de cet ADR (Vector, `remote_write`).

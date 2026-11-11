@@ -148,14 +148,14 @@ is working correctly? » valide la mise à jour ; toute autre réponse déclench
 Le contrôle de la phase 6 du script affiche l'état de chaque service enregistré pour le conteneur. Le tableau reprend
 ces services, les propriétaires de données et la vérification de bout en bout que le script suggère.
 
-| Conteneur                     | Services contrôlés                                                                                                 | `lxc_mp` (sous-dossier : uid hôte) | Vérification de bout en bout                                           |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | ---------------------------------------------------------------------- |
-| `observability`               | `caddy vector victoriametrics victorialogs victoriatraces vmalert alertmanager prometheus-node-exporter lxc-agent` | `o11y` : 100980, `caddy` : 100997  | `curl -sSf https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=up` |
-| `oci-registry`                | `caddy zot prometheus-node-exporter lxc-agent`                                                                     | `zot` : 100994, `caddy` : 100997   | `curl -sSf https://oci.chezmoi.sh/v2/`                                 |
-| `omni`                        | `caddy dex omni omni-pki-init omni-gpg-init prometheus-node-exporter lxc-agent`                                    | `omni` : 100980, `caddy` : 100997  | `curl -sSfk https://omni.chezmoi.sh/`                                  |
-| `omni-infra-provider-proxmox` | `omni-infra-provider-proxmox prometheus-node-exporter lxc-agent`                                                   | aucun (sans état)                  | aucune                                                                 |
-| `pve-exporter`                | `pve-exporter prometheus-node-exporter lxc-agent`                                                                  | aucun (sans état)                  | aucune                                                                 |
-| `talosnet-dns`                | `bind lxc-agent`                                                                                                   | `bind` : 100993                    | `dig @10.128.0.3 oci.chezmoi.sh`                                       |
+| Conteneur                     | Services contrôlés                                                                               | `lxc_mp` (sous-dossier : uid hôte) | Vérification de bout en bout                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------- | ---------------------------------------------------------------------- |
+| `observability`               | `caddy victoriametrics victorialogs victoriatraces otlp-gateway vmalert alertmanager o11y-agent` | `o11y` : 100980, `caddy` : 100997  | `curl -sSf https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=up` |
+| `oci-registry`                | `caddy zot o11y-agent`                                                                           | `zot` : 100994, `caddy` : 100997   | `curl -sSf https://oci.chezmoi.sh/v2/`                                 |
+| `omni`                        | `caddy dex omni omni-pki-init omni-gpg-init o11y-agent`                                          | `omni` : 100980, `caddy` : 100997  | `curl -sSfk https://omni.chezmoi.sh/`                                  |
+| `omni-infra-provider-proxmox` | `omni-infra-provider-proxmox o11y-agent`                                                         | aucun (sans état)                  | aucune                                                                 |
+| `pve-exporter`                | `pve-exporter o11y-agent`                                                                        | aucun (sans état)                  | aucune                                                                 |
+| `talosnet-dns`                | `bind o11y-agent`                                                                                | `bind` : 100993                    | `dig @10.128.0.3 oci.chezmoi.sh`                                       |
 
 Pour `observability`, des contrôles complémentaires depuis le nœud :
 
@@ -248,6 +248,8 @@ volumes non référencés.
 
 ## Historique
 
+- _2026-11-10_ : Services contrôlés alignés sur `lxc_services` après la refonte de l'observabilité : `vector` remplacé
+  par `otlp-gateway` pour `observability`, `lxc-agent` renommé `o11y-agent` (module `catalog/nix/modules/o11y-agent`).
 - _2026-10-17_ : Alignement sur le gabarit de procédure v2 : intro en deux paragraphes et état de vérification en
   callout `WARNING`, entrées regroupées dans un seul bloc `export` (les valeurs déductibles sont relevées par une
   commande), phases du script distinguées des étapes, sorties attendues ajoutées, exemple complet ajouté. Variante

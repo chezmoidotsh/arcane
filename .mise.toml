@@ -119,7 +119,6 @@ oci = "latest"      # Oracle Cloud Infrastructure CLI for IAM and API key setup
 pulumi = "latest"   # Pulumi CLI for TypeScript-based infrastructure as code (ADR-015)
 talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
 velero = "latest"   # Velero CLI used by scripts/velero:backup for ad-hoc backups and restores
-vector = "0.55.0"   # Vector CLI for observability and log aggregation
 
 # -----------------------------------------------------------------------------
 # Security and Data Tools

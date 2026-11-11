@@ -8,8 +8,7 @@
 #   * victoriametrics.nix — metrics TSDB + self-scrape
 #   * victorialogs.nix    — log store
 #   * victoriatraces.nix  — tracing store (OTLP/Jaeger)
-#   * vector.nix          — log ingest pipeline (OTLP + Vector native → validate → VictoriaLogs)
-#   * o11y.nix            — self-observability (catalog.lxcAgent: scrape local services + journal)
+#   * o11y-agent.nix            — self-observability (catalog.o11yAgent: scrape local services + journal)
 #   * vmalert.nix         — existential rule evaluation
 #   * alertmanager.nix    — existential alerts + deadman switch
 #   * caddy.nix           — TLS termination + path routing + caddy-tailscale tsnet (off-LAN sources)
@@ -21,7 +20,7 @@
 # This is deliberate: the LXC is a single-purpose appliance, the whole container
 # is the trust boundary, and per-unit systemd hardening still applies. A single
 # fixed uid keeps the Proxmox unprivileged uid-map ownership model simple for all
-# Victoria* / Vector / Alertmanager data (host 100000 + 980 = 100980).
+# Victoria* / Alertmanager data (host 100000 + 980 = 100980).
 #
 # Caddy runs as its own dedicated `caddy` user (uid/gid 997, defined in
 # modules/caddy.nix) and stores its state in /persistent/caddy, separate from
@@ -37,6 +36,15 @@
 {
   system.stateVersion = "26.05";
   networking.hostName = "o11y";
+
+  # ── Retention — the single place to tune it (raise per disk budget) ───────
+  # Passed to modules/victoria*.nix as -retentionPeriod. Units: h, d, w, y;
+  # a bare number means months (VictoriaMetrics convention).
+  _module.args.retention = {
+    metrics = "18"; # months
+    logs = "30d";
+    traces = "2d"; # traces are voluminous
+  };
 
   # ── Static IPv4 (mirrors PVE net0: ip=10.0.0.22/22,gw=10.0.0.1) ──────────
   # See catalog.nix's lxc-static-network module — without this, eth0 falls
@@ -99,8 +107,8 @@
     "d /persistent/o11y/metrics 0750 o11y  o11y  - -"
     "d /persistent/o11y/logs    0750 o11y  o11y  - -"
     "d /persistent/o11y/traces  0750 o11y  o11y  - -"
-    "d /persistent/o11y/vector  0750 o11y  o11y  - -"
     "d /persistent/o11y/alertmanager 0750 o11y  o11y  - -"
+    "d /persistent/o11y/otlp-gateway 0750 o11y  o11y  - -"
   ];
 
   # ── Console toolbox ────────────────────────────────────────────────────────

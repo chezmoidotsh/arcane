@@ -170,7 +170,7 @@
     machineApiAdvertisedUrl = "https://api.omni.chezmoi.sh/";
     k8sProxyAdvertisedUrl = "https://kube.omni.chezmoi.sh/";
 
-    # Metrics on loopback only — scraped locally by Vector (lxcAgent).
+    # Metrics on loopback only — scraped locally by the o11y agent (catalog.o11yAgent).
     # Port 2122 is the upstream Omni default; no external exposure needed.
     metricsBindAddr = "127.0.0.1:2122";
 
