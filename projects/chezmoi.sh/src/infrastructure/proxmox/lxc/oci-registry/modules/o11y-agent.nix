@@ -5,6 +5,7 @@
   catalog.o11yAgent = {
     enable = true;
     o11y.endpoint = "https://data.o11y.chezmoi.sh:4318";
+    logs.parsers = [ "caddy" "zot" ];
 
     metrics = {
       enable = true;

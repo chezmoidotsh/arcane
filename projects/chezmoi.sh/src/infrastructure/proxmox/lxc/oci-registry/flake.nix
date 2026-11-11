@@ -49,7 +49,7 @@
       # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
       # template (oci-registry.<date>-amd64.tar.xz). Bump before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      imageVersion = "2026.11.10";
+      imageVersion = "2026.11.11";
 
       zotPackage = pkgs.stdenvNoCC.mkDerivation {
         pname = "zot";
