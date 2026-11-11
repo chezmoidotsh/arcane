@@ -218,8 +218,7 @@ ingestion.
   SemConv, le `vmalert` des journaux et les analyseurs VRL par service sont supprimés. La passerelle normalise la
   sévérité et pose les étiquettes des métriques (`transform/severity`, `transform/job`), l'agent pose
   `service.name="hostmetrics"` dans son pipeline `metrics/host` (`resource/hostmetrics`), et l'agent propose six
-  analyseurs de journaux facultatifs. Vérifié dans le code de l'arbre de travail ; l'appliance est déployée (image
-  `2026.11.10-5`) ; les cinq autres LXC tournent encore sur l'ancien agent Vector en production.
+  analyseurs de journaux facultatifs. Déployé en production le 2026-11-11 sur les six LXC.
 - **Composants restants** : les agents par cluster et ceux de `kazimierz` (non déployés, voir ADR-013) devront émettre
   OTLP ; le chemin de retour des règles d'enregistrement par cluster reste à décider.
 - **Architecture** :

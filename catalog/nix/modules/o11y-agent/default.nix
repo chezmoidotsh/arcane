@@ -27,8 +27,10 @@
 # otherwise host.name is the LXC hostname. Scrape-only resource attributes
 # (server.port, url.scheme) and os.type are dropped.
 #
-# The exporter queue is persisted with file_storage: telemetry survives an
-# appliance restart or outage (the role the Vector disk buffer used to play).
+# The exporter queue and the journald cursor are persisted with file_storage
+# (/var/lib/o11y-agent): telemetry survives an appliance restart or outage and
+# an agent restart. It lives on the rootfs, so a rootfs-swap upgrade drops
+# whatever was still queued (seconds of data at most).
 # ─────────────────────────────────────────────────────────────────────────────
 
 let
@@ -89,7 +91,9 @@ let
   availableParsers = lib.subtractLists receiverParsers
     (map (lib.removeSuffix ".nix") (builtins.attrNames (builtins.readDir ./parsers)));
   parserConfigs = lib.listToAttrs (map
-    (name: { name = "transform/parser-${name}"; value = import ./parsers/${name}.nix { inherit lib; }; })
+    # error_mode ignore: a record a statement fails on (e.g. a truncated JSON
+    # line) keeps its raw body instead of the whole batch being dropped.
+    (name: { name = "transform/parser-${name}"; value = import ./parsers/${name}.nix { inherit lib; } // { error_mode = "ignore"; }; })
     (receiverParsers ++ cfg.logs.parsers));
 
   userProcessorIds = signal:
@@ -106,7 +110,11 @@ let
     };
 
     receivers = {
-      journald = { start_at = "end"; };
+      # The cursor is saved in file_storage: a restart resumes where it left
+      # off. Without a cursor (first start, or a fresh rootfs after an
+      # upgrade, whose journal is new too) it reads from the beginning, so the
+      # boot and upgrade logs are shipped as well.
+      journald = { start_at = "beginning"; storage = "file_storage"; };
     } // lib.optionalAttrs cfg.logs.syslog.enable {
       syslog = {
         protocol = "rfc5424";
