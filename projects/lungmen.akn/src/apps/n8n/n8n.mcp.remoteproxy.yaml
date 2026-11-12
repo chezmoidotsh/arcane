@@ -19,15 +19,15 @@ spec:
       - name: n8n
         type: oauth2
         oauth2Config:
-          # Browser-facing endpoint: the public n8n hostname. The server-side endpoints use the
-          # in-cluster Service, as the Cilium Gateway answers 403 to pods outside the n8n namespace.
+          # All endpoints use the public n8n hostname: the CRD only accepts an https registration
+          # endpoint. The proxy runs in the n8n namespace, so the Cilium Gateway lets it through
+          # (it answers 403 to pods outside the namespace). n8n.chezmoi.sh resolves to a private IP.
           authorizationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/authorize
-          tokenEndpoint: http://n8n-main.n8n.svc.cluster.local:5678/mcp-oauth/token
+          tokenEndpoint: https://n8n.chezmoi.sh/mcp-oauth/token
           redirectUri: https://mcp-n8n.chezmoi.sh/oauth/callback
-          insecureAllowHTTP: true
           allowPrivateIPs: true
           dcrConfig:
-            registrationEndpoint: http://n8n-main.n8n.svc.cluster.local:5678/mcp-oauth/register
+            registrationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/register
 ---
 # Validates the tokens issued by the embedded authorization server (same issuer).
 apiVersion: toolhive.stacklok.dev/v1beta1
