@@ -13,6 +13,7 @@ spec:
     upstreamProviders:
     - name: pocket-id
       oidcConfig:
+        allowPrivateIPs: true
         clientId: 7a1c0e7e-5f0b-4f43-9c2b-3b6f3a8d1c10
         clientSecretRef:
           key: client_secret
