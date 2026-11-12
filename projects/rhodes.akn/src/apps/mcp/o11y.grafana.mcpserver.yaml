@@ -17,6 +17,9 @@ spec:
     - --address=0.0.0.0:8000
     - --disable-query
     - --disable-write
+    # The ToolHive proxy calls the server with the Service name as Host, which the server rejects by
+    # default (403 host not allowed). Only the proxy can reach it (namespace network policies).
+    - --allowed-hosts=*
   env:
     - name: GRAFANA_URL
       value: http://grafana-service.o11y.svc.cluster.local:3000
