@@ -1,0 +1,24 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPExternalAuthConfig
+metadata:
+  name: n8n-mcp-auth
+  namespace: n8n
+spec:
+  embeddedAuthServer:
+    hmacSecretRefs:
+    - key: hmac
+      name: n8n-mcp-auth
+    issuer: https://mcp-n8n.chezmoi.sh
+    upstreamProviders:
+    - name: n8n
+      oauth2Config:
+        allowPrivateIPs: true
+        authorizationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/authorize
+        dcrConfig:
+          registrationEndpoint: http://n8n-main.n8n.svc.cluster.local:5678/mcp-oauth/register
+        insecureAllowHTTP: true
+        redirectUri: https://mcp-n8n.chezmoi.sh/oauth/callback
+        tokenEndpoint: http://n8n-main.n8n.svc.cluster.local:5678/mcp-oauth/token
+      type: oauth2
+  type: embeddedAuthServer

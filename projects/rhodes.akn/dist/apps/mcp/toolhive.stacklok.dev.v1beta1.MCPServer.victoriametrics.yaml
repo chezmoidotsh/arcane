@@ -1,0 +1,23 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: victoriametrics
+  namespace: mcp
+spec:
+  env:
+  - name: VM_INSTANCE_ENTRYPOINT
+    value: https://data.o11y.chezmoi.sh/metrics
+  - name: VM_INSTANCE_TYPE
+    value: single
+  - name: MCP_SERVER_MODE
+    value: http
+  - name: MCP_LISTEN_ADDR
+    value: :8080
+  - name: MCP_DISABLE_LOCALHOST_PROTECTION
+    value: "true"
+  groupRef:
+    name: o11y
+  image: oci.chezmoi.sh/ghcr.io/victoriametrics/mcp-victoriametrics:v1.20.2
+  mcpPort: 8080
+  transport: streamable-http

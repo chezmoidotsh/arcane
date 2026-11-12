@@ -1,0 +1,10 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPOIDCConfig
+metadata:
+  name: mcp-o11y
+  namespace: mcp
+spec:
+  inline:
+    issuer: https://mcp-o11y.chezmoi.sh
+  type: inline

@@ -1,0 +1,30 @@
+---
+# LAN access to the n8n MCP proxy (internal Gateway only). Remote access goes through the private
+# Pangolin resource mcp-n8n.chezmoi.sh. The Service is created by the ToolHive operator
+# (mcp-<MCPRemoteProxy name>-remote-proxy, port 8080).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://mcp-n8n.chezmoi.sh
+  name: n8n-mcp
+spec:
+  hostnames:
+    - mcp-n8n.chezmoi.sh
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: internal
+      namespace: kube-system
+      sectionName: chezmoi.sh-websecure
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: mcp-n8n-mcp-remote-proxy
+          port: 8080
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

@@ -1,0 +1,17 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Lets the ToolHive operator reach the Kubernetes API (watches the MCP* resources, creates the
+      proxy, vMCP and MCP server workloads).
+  name: allow-operator-to-kubernetes-api
+  namespace: toolhive-system
+spec:
+  egress:
+  - toEntities:
+    - kube-apiserver
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: toolhive-operator

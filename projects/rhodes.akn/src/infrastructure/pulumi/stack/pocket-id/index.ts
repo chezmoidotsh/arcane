@@ -18,4 +18,5 @@ export const adminGroupId = chezmoiSh.getOutput(
 export * from "./argocd";
 export * from "./argocd-cli";
 export * from "./grafana";
+export * from "./mcp-o11y";
 export * from "./vault";

@@ -5,6 +5,8 @@ kind: Kustomization
 resources:
   - network-policy.allow-n8n-egress.yaml
   - network-policy.allow-n8n-from-cilium-gateway.yaml
+  - network-policy.allow-n8n-mcp-ingress.yaml
+  - network-policy.allow-n8n-mcp-to-kubernetes-api.yaml
   - network-policy.allow-n8n-proxy-from-newt.yaml
   - network-policy.allow-n8n-to-databases.yaml
   - network-policy.allow-n8n-to-n8n-api.yaml
