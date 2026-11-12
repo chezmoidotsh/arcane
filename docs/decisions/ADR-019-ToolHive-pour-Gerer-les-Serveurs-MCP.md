@@ -12,9 +12,7 @@ template-version: "2.0.0"
 ## Contexte et problème
 
 Les agents (Claude, n8n, LiteLLM) consomment de plus en plus d'outils via le Model Context Protocol (MCP). Aujourd'hui,
-le dépôt n'a aucune gestion des serveurs MCP : le seul serveur exposé est celui de n8n, servi par le webhook processor
-derrière `n8n-proxy` (`projects/lungmen.akn/src/apps/n8n/n8n.proxy.yaml`), atteignable uniquement par le client Pangolin
-(ressource privée `n8n.chezmoi.sh`). Chaque nouveau serveur MCP (Grafana, VictoriaMetrics, VictoriaLogs,
+le dépôt n'a aucune gestion des serveurs MCP. Chaque nouveau serveur MCP (Grafana, VictoriaMetrics, VictoriaLogs,
 VictoriaTraces…) demanderait aujourd'hui un `Deployment`, un `Service`, une route, une ressource Pangolin et une
 authentification écrits à la main, serveur par serveur.
 
@@ -38,8 +36,9 @@ regrouper et filtrer les serveurs MCP des clusters, et les exposer à l'extérie
 ## Hors périmètre
 
 - **La passerelle LLM** : LiteLLM reste la passerelle des modèles. Cet ADR ne traite que les outils MCP.
-- **Le choix exhaustif des serveurs MCP** : Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces et n8n servent
-  d'exemples de dimensionnement ; chaque ajout est une PR ordinaire.
+- **Le choix exhaustif des serveurs MCP** : Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces servent
+  d'exemples de dimensionnement ; chaque ajout est une PR ordinaire. Le MCP d'instance de n8n n'en fait pas partie (voir
+  « Détails de mise en œuvre et état »).
 - **Le runtime d'agents** (kagent, agents n8n) : les agents restent des clients du point d'entrée MCP.
 - **Le fournisseur d'identité** : Pocket-Id reste le seul IdP ; cet ADR n'en ajoute pas.
 - **Le cluster `shodan.akn`** : il n'a pas de manifestes. Le déploiement démarre sur `rhodes.akn` et `lungmen.akn` et
@@ -51,7 +50,7 @@ regrouper et filtrer les serveurs MCP des clusters, et les exposer à l'extérie
   - serveurs MCP déclarés par des CRD, rendus dans `dist/` et synchronisés par ArgoCD
     ([ADR-011](ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md)) ;
   - authentification OAuth côté client conforme à la spécification MCP, adossée à Pocket-Id ;
-  - authentification vers les serveurs amont (jeton statique depuis OpenBao, ou OAuth amont comme n8n) ;
+  - authentification vers les serveurs amont (jeton statique depuis OpenBao, ou OAuth amont) ;
   - regroupement de plusieurs serveurs derrière un seul point d'entrée (Grafana + VictoriaMetrics + VictoriaLogs +
     VictoriaTraces) ;
   - sélection des outils exposés, par serveur.
@@ -68,7 +67,7 @@ regrouper et filtrer les serveurs MCP des clusters, et les exposer à l'extérie
 
 L'opérateur ToolHive fournit des CRD (`toolhive.stacklok.dev/v1beta1`) qui couvrent chaque besoin par une ressource :
 `MCPServer` déploie un serveur MCP depuis une image (stdio ou HTTP, avec un proxy devant), `MCPRemoteProxy` place un
-proxy devant un serveur MCP HTTP existant (le cas de n8n), `MCPServerEntry` déclare un serveur distant sans pod,
+proxy devant un serveur MCP HTTP existant, `MCPServerEntry` déclare un serveur distant sans pod,
 `MCPGroup` regroupe ces ressources et `VirtualMCPServer` (vMCP) les agrège derrière un seul point d'entrée.
 `MCPToolConfig` filtre et renomme les outils (`toolsFilter`, `toolsOverride`), et des politiques Cedar peuvent interdire
 un outil selon les claims du jeton. Côté client, le vMCP embarque un serveur d'autorisation (`authServerConfig`) qui
@@ -143,7 +142,7 @@ si le vMCP passe à plusieurs réplicas, Redis entre dans le périmètre.
 ### Positives
 
 - (+) Ajouter un serveur MCP revient à ajouter une ressource `MCPServer` ou `MCPRemoteProxy` à un `MCPGroup`.
-- (+) Un point d'entrée par usage (par exemple `mcp-o11y`), un seul login pour le client (Pocket-Id pour `mcp-o11y`, le compte n8n pour `mcp-n8n`).
+- (+) Un point d'entrée par usage (par exemple `mcp-o11y`), un seul login pour le client (Pocket-Id pour `mcp-o11y`).
 - (+) Les outils d'écriture sont désactivés par défaut et activés au cas par cas, dans une PR.
 
 ### Négatives
@@ -157,13 +156,12 @@ si le vMCP passe à plusieurs réplicas, Redis entre dans le périmètre.
 
 - (\~) Les clés de signature et HMAC du serveur d'autorisation doivent être fournies par des secrets (OpenBao via
   External Secrets) ; sans elles, l'opérateur génère des clés éphémères réservées au développement.
-- (\~) Le login OAuth nominatif de n8n et la transmission du jeton amont au backend sont à valider au premier
-  déploiement. À défaut, n8n passerait par un jeton porteur stocké dans OpenBao.
 
 ## Détails de mise en œuvre et état
 
 Les manifestes sont écrits dans la PR #1508 ; rien n'est encore déployé ni validé sur un cluster. L'opérateur est
-installé sur `lungmen.akn` et `rhodes.akn` (`infrastructure/kubernetes/toolhive/`). Architecture visée :
+installé sur `lungmen.akn` et `rhodes.akn` (`infrastructure/kubernetes/toolhive/`) ; `lungmen.akn` n'héberge pour
+l'instant aucune charge MCP, le périmètre déployé se limite au vMCP `mcp-o11y` de `rhodes.akn`. Architecture visée :
 
 ```mermaid
 flowchart LR
@@ -171,9 +169,7 @@ flowchart LR
   client -->|"client Pangolin<br/>(ressource privée)"| pangolin["Pangolin<br/>(kazimierz.akn)"]
   client -->|"LAN<br/>HTTPRoute internal"| gateway["Gateway internal"]
   pangolin --> vmcpO11y
-  pangolin --> n8nproxy
   gateway --> vmcpO11y
-  gateway --> n8nproxy
   subgraph rhodes["rhodes.akn (namespace mcp)"]
     vmcpO11y["VirtualMCPServer<br/>mcp-o11y"]
     pocketid["Pocket-Id"]
@@ -188,48 +184,40 @@ flowchart LR
     vmcpO11y -. OIDC .-> pocketid
     grafana --> grafanaApp
   end
-  subgraph lungmen["lungmen.akn"]
-    n8nproxy["MCPRemoteProxy<br/>n8n-mcp"]
-    n8nApp["n8n<br/>/mcp-server/http"]
-    n8nproxy --> n8nApp
-    n8nproxy -. "OAuth n8n" .-> n8nApp
-  end
   vm & vl & vt --> lxc["LXC o11y-datastore<br/>data.o11y.chezmoi.sh (LAN)"]
 ```
 
 - **Placement** : le `VirtualMCPServer` `mcp-o11y` tourne sur `rhodes.akn` (`projects/rhodes.akn/src/apps/mcp/`), là où
-  se trouvent Grafana et Pocket-Id ; les serveurs Victoria sont joints en LAN sur `data.o11y.chezmoi.sh`. n8n reste sur
-  `lungmen.akn`. Il passe par ToolHive (exigence), sans vMCP puisqu'il n'a qu'un seul backend : un `MCPRemoteProxy`
-  `n8n-mcp` vers le serveur MCP d'instance de n8n (`/mcp-server/http`, et non le chemin `/mcp` du MCP Server Trigger).
-- **Exposition** : les deux points d'entrée (`o11y.mcp.chezmoi.sh`, `n8n.mcp.chezmoi.sh`) sont des ressources Pangolin
-  privées (`SiteResource`, accessibles uniquement depuis un appareil qui exécute le client Pangolin, comme
-  `n8n.chezmoi.sh`), doublées d'une `HTTPRoute` sur la Gateway `internal` pour le LAN. Elles ne sont pas publiques.
+  se trouvent Grafana et Pocket-Id ; les serveurs Victoria sont joints en LAN sur `data.o11y.chezmoi.sh`.
+- **Exposition** : le point d'entrée `o11y.mcp.chezmoi.sh` est une ressource Pangolin privée (`SiteResource`,
+  accessible uniquement depuis un appareil qui exécute le client Pangolin), doublée d'une `HTTPRoute` sur les Gateways
+  `external` et `internal`. Elle n'est pas publique.
 - **Authentification o11y** : le serveur d'autorisation embarqué du vMCP délègue le login à Pocket-Id (client limité au
   groupe admin, créé par Pulumi ; secret et clé HMAC dans OpenBao `rhodes.akn/mcp/o11y/`). Aucune clé de signature
   n'est configurée : l'opérateur en génère une éphémère, donc les sessions sont perdues à chaque redémarrage
   (compromis déjà accepté).
-- **Authentification n8n** : pas de jeton porteur partagé. Le serveur d'autorisation embarqué de ToolHive
-  (`MCPExternalAuthConfig` de type `embeddedAuthServer`, émetteur `https://n8n.mcp.chezmoi.sh`) délègue le login à
-  l'OAuth de n8n (`/mcp-oauth/authorize|token|register`, enregistrement dynamique de client) : chaque utilisateur se
-  connecte avec son propre compte n8n, et le jeton n8n amont est transmis au backend. La clé HMAC est dans OpenBao
-  `lungmen.akn/n8n/mcp/auth-server`. Si ce flux échoue, le repli est un jeton porteur stocké dans OpenBao.
 - **Authentification Grafana** : le serveur MCP Grafana tourne avec `--disable-query --disable-write` et un jeton de
   compte de service Viewer (OpenBao `rhodes.akn/mcp/o11y/grafana-token`) ; les requêtes brutes passent par les serveurs
   Victoria. L'authentification nominative vers Grafana est impossible en auto-hébergé : `mcp-grafana` ne gère que les
   jetons de compte de service (l'OAuth par utilisateur est réservé à Grafana Cloud). Le compte de service est la limite
   acceptée.
 - **Groupe `o11y`** : `MCPServer` `grafana`, `victoriametrics`, `victorialogs` et `victoriatraces`.
+- **n8n** : le MCP de n8n n'est pas géré par ToolHive. n8n est déjà exposé en privé par Pangolin (`n8n.chezmoi.sh`) et
+  son serveur MCP d'instance (`/mcp-server/http`) est joignable directement, avec l'OAuth de n8n (comptes nominatifs).
+  Un `MCPRemoteProxy` devant n8n a été écarté : il n'apporte rien de plus, le proxy devait résoudre `n8n.chezmoi.sh`
+  depuis le cluster (un nom qui n'existe que dans le DNS du LAN et dans Pangolin), et la CRD n'accepte que `https` pour
+  le point d'enregistrement dynamique de clients.
 - **À vérifier au premier déploiement** :
   - flux OAuth complet depuis Claude jusqu'à Pocket-Id, à travers le client Pangolin ;
   - passage du streaming HTTP de MCP à travers Pangolin ;
-  - noms des `Service` créés par l'opérateur (`vmcp-mcp-o11y:4483`, `mcp-n8n-mcp-remote-proxy:8080`, supposés) et labels
+  - noms des `Service` créés par l'opérateur (`vmcp-mcp-o11y:4483`, supposé) et labels
     des pods utilisés par les NetworkPolicies ;
-  - n8n : le proxy transmet bien le jeton amont dans `Authorization` ; n8n accepte l'hôte de rappel (réglage « dedicated
-    MCP host » de n8n, erreurs `invalid_target` signalées avec un nom d'hôte distinct) ; `/mcp-server/http` est servi
-    par `n8n-main`.
 
 ## Historique des modifications
 
+- **2026-11-12** : **DEPRECATION** : Retrait du MCP de n8n du périmètre ToolHive (`MCPRemoteProxy` `n8n-mcp`, ressource
+  Pangolin et `HTTPRoute` `n8n.mcp.chezmoi.sh`) : n8n est déjà exposé par Pangolin et son MCP d'instance reste joignable
+  directement avec l'OAuth de n8n. Le périmètre ToolHive se limite au vMCP `mcp-o11y`.
 - **2026-11-12** : **FEATURE** : Implémentation dans la PR #1508 (manifestes écrits, non déployés). Le vMCP `mcp-o11y`
   passe sur `rhodes.akn` ; n8n passe par un `MCPRemoteProxy` avec OAuth nominatif (au lieu d'un jeton porteur) ;
   exposition par des ressources Pangolin privées et une `HTTPRoute` interne, au lieu de ressources publiques
