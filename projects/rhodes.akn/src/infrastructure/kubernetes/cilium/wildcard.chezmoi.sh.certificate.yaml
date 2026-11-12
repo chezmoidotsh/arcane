@@ -8,6 +8,7 @@ spec:
   secretName: wildcard.chezmoi.sh-certificate
   dnsNames:
     - "*.chezmoi.sh"
+    - "*.mcp.chezmoi.sh"
     - "*.akn.chezmoi.sh"
     - "*.rhodes.akn.chezmoi.sh"
   duration: 2160h

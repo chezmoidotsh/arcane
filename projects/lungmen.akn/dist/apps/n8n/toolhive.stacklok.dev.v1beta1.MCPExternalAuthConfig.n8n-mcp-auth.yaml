@@ -9,7 +9,7 @@ spec:
     hmacSecretRefs:
     - key: hmac
       name: n8n-mcp-auth
-    issuer: https://mcp-n8n.chezmoi.sh
+    issuer: https://n8n.mcp.chezmoi.sh
     upstreamProviders:
     - name: n8n
       oauth2Config:
@@ -17,7 +17,7 @@ spec:
         authorizationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/authorize
         dcrConfig:
           registrationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/register
-        redirectUri: https://mcp-n8n.chezmoi.sh/oauth/callback
+        redirectUri: https://n8n.mcp.chezmoi.sh/oauth/callback
         tokenEndpoint: https://n8n.chezmoi.sh/mcp-oauth/token
       type: oauth2
   type: embeddedAuthServer

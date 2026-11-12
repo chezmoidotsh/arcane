@@ -40,6 +40,19 @@ spec:
           - group: ""
             kind: Secret
             name: wildcard.chezmoi.sh-certificate
+    - name: mcp.chezmoi.sh-websecure
+      port: 443
+      protocol: HTTPS
+      hostname: "*.mcp.chezmoi.sh"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: wildcard.chezmoi.sh-certificate
     - name: lab.chezmoi.sh-websecure
       port: 443
       protocol: HTTPS

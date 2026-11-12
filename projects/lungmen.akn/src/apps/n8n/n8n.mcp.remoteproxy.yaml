@@ -3,7 +3,7 @@
 # backend (ADR-019). Each user signs in with their own n8n account: the proxy embeds an OAuth
 # authorization server that delegates the login to n8n's own OAuth (/mcp-oauth/*) and forwards the
 # resulting n8n token to the backend, so there is no shared token.
-# Reachable on mcp-n8n.chezmoi.sh from the LAN (HTTPRoute) and through a private Pangolin resource.
+# Reachable on n8n.mcp.chezmoi.sh from the LAN (HTTPRoute) and through a private Pangolin resource.
 apiVersion: toolhive.stacklok.dev/v1beta1
 kind: MCPExternalAuthConfig
 metadata:
@@ -11,7 +11,7 @@ metadata:
 spec:
   type: embeddedAuthServer
   embeddedAuthServer:
-    issuer: https://mcp-n8n.chezmoi.sh
+    issuer: https://n8n.mcp.chezmoi.sh
     hmacSecretRefs:
       - name: n8n-mcp-auth
         key: hmac
@@ -24,7 +24,7 @@ spec:
           # (it answers 403 to pods outside the namespace). n8n.chezmoi.sh resolves to a private IP.
           authorizationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/authorize
           tokenEndpoint: https://n8n.chezmoi.sh/mcp-oauth/token
-          redirectUri: https://mcp-n8n.chezmoi.sh/oauth/callback
+          redirectUri: https://n8n.mcp.chezmoi.sh/oauth/callback
           allowPrivateIPs: true
           dcrConfig:
             registrationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/register
@@ -37,7 +37,7 @@ metadata:
 spec:
   type: inline
   inline:
-    issuer: https://mcp-n8n.chezmoi.sh
+    issuer: https://n8n.mcp.chezmoi.sh
 ---
 apiVersion: toolhive.stacklok.dev/v1beta1
 kind: MCPRemoteProxy
@@ -52,8 +52,8 @@ spec:
     name: n8n-mcp-auth
   oidcConfigRef:
     name: n8n-mcp
-    audience: https://mcp-n8n.chezmoi.sh
-    resourceUrl: https://mcp-n8n.chezmoi.sh
+    audience: https://n8n.mcp.chezmoi.sh
+    resourceUrl: https://n8n.mcp.chezmoi.sh
 ---
 # HMAC key signing the authorization codes, produced by Pulumi (infrastructure/pulumi/stack/n8n/mcp-auth.ts).
 apiVersion: external-secrets.io/v1

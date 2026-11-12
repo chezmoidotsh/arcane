@@ -4,8 +4,8 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the Cilium Gateway (internal HTTPRoute n8n-mcp) and Newt (private Pangolin resource
-      mcp-n8n.chezmoi.sh) to reach the n8n MCP proxy on TCP 8080. The selector is the instance label
+      Allows the Cilium Gateways (HTTPRoute n8n-mcp) and Newt (private Pangolin resource
+      n8n.mcp.chezmoi.sh) to reach the n8n MCP proxy on TCP 8080. The selector is the instance label
       set by the ToolHive operator on the proxy pods.
   name: allow-n8n-mcp-ingress
   namespace: n8n

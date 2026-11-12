@@ -3,18 +3,23 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   annotations:
-    link.argocd.argoproj.io/external-link: https://mcp-o11y.chezmoi.sh
+    link.argocd.argoproj.io/external-link: https://o11y.mcp.chezmoi.sh
   name: mcp-o11y
   namespace: mcp
 spec:
   hostnames:
-  - mcp-o11y.chezmoi.sh
+  - o11y.mcp.chezmoi.sh
   parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: external
+    namespace: kube-system
+    sectionName: mcp.chezmoi.sh-websecure
   - group: gateway.networking.k8s.io
     kind: Gateway
     name: internal
     namespace: kube-system
-    sectionName: chezmoi.sh-websecure
+    sectionName: mcp.chezmoi.sh-websecure
   rules:
   - backendRefs:
     - group: ""

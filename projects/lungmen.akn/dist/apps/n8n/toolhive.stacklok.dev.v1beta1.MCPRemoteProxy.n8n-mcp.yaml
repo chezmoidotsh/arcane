@@ -10,8 +10,8 @@ spec:
     kind: MCPExternalAuthConfig
     name: n8n-mcp-auth
   oidcConfigRef:
-    audience: https://mcp-n8n.chezmoi.sh
+    audience: https://n8n.mcp.chezmoi.sh
     name: n8n-mcp
-    resourceUrl: https://mcp-n8n.chezmoi.sh
+    resourceUrl: https://n8n.mcp.chezmoi.sh
   remoteUrl: http://n8n-main.n8n.svc.cluster.local:5678/mcp-server/http
   transport: streamable-http

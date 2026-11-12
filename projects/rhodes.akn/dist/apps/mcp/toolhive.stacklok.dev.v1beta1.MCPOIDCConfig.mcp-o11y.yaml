@@ -6,5 +6,5 @@ metadata:
   namespace: mcp
 spec:
   inline:
-    issuer: https://mcp-o11y.chezmoi.sh
+    issuer: https://o11y.mcp.chezmoi.sh
   type: inline

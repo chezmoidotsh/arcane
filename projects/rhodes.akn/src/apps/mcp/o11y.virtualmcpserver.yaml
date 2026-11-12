@@ -8,7 +8,7 @@ metadata:
 spec:
   type: inline
   inline:
-    issuer: https://mcp-o11y.chezmoi.sh
+    issuer: https://o11y.mcp.chezmoi.sh
 ---
 apiVersion: toolhive.stacklok.dev/v1beta1
 kind: VirtualMCPServer
@@ -18,7 +18,7 @@ spec:
   groupRef:
     name: o11y
   authServerConfig:
-    issuer: https://mcp-o11y.chezmoi.sh
+    issuer: https://o11y.mcp.chezmoi.sh
     hmacSecretRefs:
       - name: mcp-o11y-auth
         key: hmac
@@ -27,11 +27,13 @@ spec:
         type: oidc
         oidcConfig:
           issuerUrl: https://auth.chezmoi.sh
+          # auth.chezmoi.sh resolves to a private IP (the internal Gateway): ToolHive refuses it by default.
+          allowPrivateIPs: true
           clientId: 7a1c0e7e-5f0b-4f43-9c2b-3b6f3a8d1c10
           clientSecretRef:
             name: mcp-o11y-auth
             key: client_secret
-          redirectUri: https://mcp-o11y.chezmoi.sh/oauth/callback
+          redirectUri: https://o11y.mcp.chezmoi.sh/oauth/callback
           scopes:
             - openid
             - profile
@@ -40,7 +42,7 @@ spec:
     type: oidc
     oidcConfigRef:
       name: mcp-o11y
-      audience: https://mcp-o11y.chezmoi.sh
-      resourceUrl: https://mcp-o11y.chezmoi.sh
+      audience: https://o11y.mcp.chezmoi.sh
+      resourceUrl: https://o11y.mcp.chezmoi.sh
   outgoingAuth:
     source: discovered

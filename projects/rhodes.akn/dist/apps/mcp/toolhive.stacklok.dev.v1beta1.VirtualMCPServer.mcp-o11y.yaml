@@ -9,16 +9,17 @@ spec:
     hmacSecretRefs:
     - key: hmac
       name: mcp-o11y-auth
-    issuer: https://mcp-o11y.chezmoi.sh
+    issuer: https://o11y.mcp.chezmoi.sh
     upstreamProviders:
     - name: pocket-id
       oidcConfig:
+        allowPrivateIPs: true
         clientId: 7a1c0e7e-5f0b-4f43-9c2b-3b6f3a8d1c10
         clientSecretRef:
           key: client_secret
           name: mcp-o11y-auth
         issuerUrl: https://auth.chezmoi.sh
-        redirectUri: https://mcp-o11y.chezmoi.sh/oauth/callback
+        redirectUri: https://o11y.mcp.chezmoi.sh/oauth/callback
         scopes:
         - openid
         - profile
@@ -28,9 +29,9 @@ spec:
     name: o11y
   incomingAuth:
     oidcConfigRef:
-      audience: https://mcp-o11y.chezmoi.sh
+      audience: https://o11y.mcp.chezmoi.sh
       name: mcp-o11y
-      resourceUrl: https://mcp-o11y.chezmoi.sh
+      resourceUrl: https://o11y.mcp.chezmoi.sh
     type: oidc
   outgoingAuth:
     source: discovered
