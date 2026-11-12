@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: toolhive-system
+
+helmCharts:
+  - repo: oci://ghcr.io/stacklok/toolhive
+    name: toolhive-operator-crds
+    # oripathy: type=helm upstream=github.com/stacklok/toolhive tagPrefix=v
+    version: 0.64.0
+
+    releaseName: toolhive-operator-crds
+    namespace: toolhive-system
+
+  - repo: oci://ghcr.io/stacklok/toolhive
+    name: toolhive-operator
+    # oripathy: type=helm upstream=github.com/stacklok/toolhive tagPrefix=v
+    version: 0.64.0
+
+    releaseName: toolhive-operator
+    namespace: toolhive-system
+
+    valuesFile: toolhive-operator.helmvalues/default.yaml
+
+resources:
+  - security/

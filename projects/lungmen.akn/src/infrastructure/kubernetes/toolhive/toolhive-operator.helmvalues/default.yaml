@@ -1,0 +1,10 @@
+# Images go through the oci.chezmoi.sh pull-through cache. The runner and vMCP images appear in no
+# manifest (the operator injects them into the pods it creates), so kustomize `images` cannot
+# rewrite them: they are set here.
+operator:
+  # oripathy: type=oci upstream=github.com/stacklok/toolhive tagPrefix=v digest=false image=stacklok/toolhive/operator name=toolhive-operator
+  image: oci.chezmoi.sh/ghcr.io/stacklok/toolhive/operator:v0.64.0
+  # oripathy: type=oci upstream=github.com/stacklok/toolhive tagPrefix=v digest=false image=stacklok/toolhive/proxyrunner name=toolhive-proxyrunner
+  toolhiveRunnerImage: oci.chezmoi.sh/ghcr.io/stacklok/toolhive/proxyrunner:v0.64.0
+  # oripathy: type=oci upstream=github.com/stacklok/toolhive tagPrefix=v digest=false image=stacklok/toolhive/vmcp name=toolhive-vmcp
+  vmcpImage: oci.chezmoi.sh/ghcr.io/stacklok/toolhive/vmcp:v0.64.0
