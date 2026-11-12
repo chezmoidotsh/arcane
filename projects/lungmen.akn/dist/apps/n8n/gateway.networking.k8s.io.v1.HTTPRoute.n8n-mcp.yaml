@@ -1,0 +1,28 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://mcp-n8n.chezmoi.sh
+  name: n8n-mcp
+  namespace: n8n
+spec:
+  hostnames:
+  - mcp-n8n.chezmoi.sh
+  parentRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: internal
+    namespace: kube-system
+    sectionName: chezmoi.sh-websecure
+  rules:
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: mcp-n8n-mcp-remote-proxy
+      port: 8080
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /

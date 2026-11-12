@@ -1,0 +1,24 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: victoriametrics
+spec:
+  # oripathy: type=oci upstream=github.com/VictoriaMetrics-Community/mcp-victoriametrics tagPrefix=v digest=false image=victoriametrics/mcp-victoriametrics
+  image: oci.chezmoi.sh/ghcr.io/victoriametrics/mcp-victoriametrics:v1.20.2
+  transport: streamable-http
+  mcpPort: 8080
+  groupRef:
+    name: o11y
+  env:
+    - name: VM_INSTANCE_ENTRYPOINT
+      value: https://data.o11y.chezmoi.sh/metrics
+    - name: VM_INSTANCE_TYPE
+      value: single
+    - name: MCP_SERVER_MODE
+      value: http
+    - name: MCP_LISTEN_ADDR
+      value: ":8080"
+    # The server only listens behind the ToolHive proxy, so the Host header is never "localhost".
+    - name: MCP_DISABLE_LOCALHOST_PROTECTION
+      value: "true"

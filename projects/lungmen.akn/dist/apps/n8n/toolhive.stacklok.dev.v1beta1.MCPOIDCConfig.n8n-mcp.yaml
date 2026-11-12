@@ -1,0 +1,10 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPOIDCConfig
+metadata:
+  name: n8n-mcp
+  namespace: n8n
+spec:
+  inline:
+    issuer: https://mcp-n8n.chezmoi.sh
+  type: inline

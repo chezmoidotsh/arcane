@@ -1,0 +1,26 @@
+---
+# Grafana MCP server. Read-only and without the query tools: raw queries go through the Victoria
+# servers, Grafana is only used to browse dashboards, datasources, alerts, etc.
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: grafana
+spec:
+  # oripathy: type=oci upstream=github.com/grafana/mcp-grafana digest=false image=grafana/mcp-grafana
+  image: oci.chezmoi.sh/docker.io/grafana/mcp-grafana:2.3.0
+  transport: streamable-http
+  mcpPort: 8000
+  groupRef:
+    name: o11y
+  args:
+    - --transport=streamable-http
+    - --address=0.0.0.0:8000
+    - --disable-query
+    - --disable-write
+  env:
+    - name: GRAFANA_URL
+      value: http://grafana-service.o11y.svc.cluster.local:3000
+  secrets:
+    - name: mcp-grafana-token
+      key: token
+      targetEnvName: GRAFANA_SERVICE_ACCOUNT_TOKEN

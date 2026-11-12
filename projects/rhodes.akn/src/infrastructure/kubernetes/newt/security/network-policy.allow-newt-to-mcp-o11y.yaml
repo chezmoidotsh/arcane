@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to reach the mcp-o11y vMCP (TCP 4483), target of the private Pangolin resource
+      mcp-o11y.chezmoi.sh.
+  name: allow-newt-to-mcp-o11y
+  namespace: newt-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: newt
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: mcp
+      toPorts:
+        - ports:
+            - port: "4483"
+              protocol: TCP

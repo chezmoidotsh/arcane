@@ -1,0 +1,17 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Lets the ToolHive proxy pods of the n8n namespace (MCPRemoteProxy n8n-mcp) reach the
+      Kubernetes API to read their configuration and secrets.
+  name: allow-n8n-mcp-to-kubernetes-api
+  namespace: n8n
+spec:
+  egress:
+  - toEntities:
+    - kube-apiserver
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n-mcp

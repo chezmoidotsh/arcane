@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway (internal HTTPRoute mcp-o11y) to reach the vMCP on TCP 4483.
+      Traffic proxied by the Cilium Gateway API carries the reserved:ingress identity.
+  name: allow-vmcp-from-ingress-gateway
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "4483"
+              protocol: TCP

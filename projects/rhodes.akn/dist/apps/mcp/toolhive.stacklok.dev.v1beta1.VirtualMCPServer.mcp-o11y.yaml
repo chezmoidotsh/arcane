@@ -1,0 +1,36 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: VirtualMCPServer
+metadata:
+  name: mcp-o11y
+  namespace: mcp
+spec:
+  authServerConfig:
+    hmacSecretRefs:
+    - key: hmac
+      name: mcp-o11y-auth
+    issuer: https://mcp-o11y.chezmoi.sh
+    upstreamProviders:
+    - name: pocket-id
+      oidcConfig:
+        clientId: 7a1c0e7e-5f0b-4f43-9c2b-3b6f3a8d1c10
+        clientSecretRef:
+          key: client_secret
+          name: mcp-o11y-auth
+        issuerUrl: https://auth.chezmoi.sh
+        redirectUri: https://mcp-o11y.chezmoi.sh/oauth/callback
+        scopes:
+        - openid
+        - profile
+        - email
+      type: oidc
+  groupRef:
+    name: o11y
+  incomingAuth:
+    oidcConfigRef:
+      audience: https://mcp-o11y.chezmoi.sh
+      name: mcp-o11y
+      resourceUrl: https://mcp-o11y.chezmoi.sh
+    type: oidc
+  outgoingAuth:
+    source: discovered

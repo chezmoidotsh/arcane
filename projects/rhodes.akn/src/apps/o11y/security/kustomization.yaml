@@ -8,6 +8,7 @@ resources:
   - network-policy.allow-grafana-to-pocket-id.yaml
   - network-policy.allow-grafana-from-ingress-gateway.yaml
   - network-policy.allow-grafana-from-newt.yaml
+  - network-policy.allow-grafana-from-mcp.yaml
   - network-policy.allow-operator-to-grafana-com.yaml
   - network-policy.allow-grafana-database-to-s3-backup.yaml
   - network-policy.allow-grafana-to-grafana-cloud-assistant.yaml

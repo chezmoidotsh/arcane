@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Grafana MCP server to call the Grafana API (in-cluster Service, TCP 3000). The
+      matching ingress rule lives in apps/o11y (allow-grafana-from-mcp).
+  name: allow-mcp-to-grafana
+  namespace: mcp
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: grafana
+        io.kubernetes.pod.namespace: o11y
+    toPorts:
+    - ports:
+      - port: "3000"
+        protocol: TCP
+  endpointSelector: {}

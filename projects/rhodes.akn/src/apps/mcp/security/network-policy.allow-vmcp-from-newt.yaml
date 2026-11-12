@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to reach the vMCP (TCP 4483, default vMCP port) for the private Pangolin resource
+      mcp-o11y.chezmoi.sh (the vMCP authenticates its own clients).
+  name: allow-vmcp-from-newt
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "4483"
+              protocol: TCP

@@ -1,0 +1,15 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Lets the ToolHive proxies and the vMCP reach the Kubernetes API (backend discovery in the
+      MCPGroup, configuration and secrets).
+  name: allow-mcp-to-kubernetes-api
+  namespace: mcp
+spec:
+  egress:
+  - toEntities:
+    - kube-apiserver
+  endpointSelector: {}

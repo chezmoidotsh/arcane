@@ -1,0 +1,19 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: victorialogs
+  namespace: mcp
+spec:
+  env:
+  - name: VL_INSTANCE_ENTRYPOINT
+    value: https://data.o11y.chezmoi.sh/logs
+  - name: MCP_SERVER_MODE
+    value: http
+  - name: MCP_LISTEN_ADDR
+    value: :8080
+  groupRef:
+    name: o11y
+  image: oci.chezmoi.sh/ghcr.io/victoriametrics/mcp-victorialogs:v1.9.0
+  mcpPort: 8080
+  transport: streamable-http
