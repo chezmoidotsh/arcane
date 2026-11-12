@@ -17,7 +17,8 @@
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/random": "catalog:",
-		"@pulumi/vault": "catalog:"
+		"@pulumi/vault": "catalog:",
+		"@pulumiverse/grafana": "catalog:"
 	},
 	"devDependencies": {
 		"typescript": "catalog:"
