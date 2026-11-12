@@ -1,7 +1,8 @@
 ---
 # Editor and API go to main; webhooks, forms and MCP go to the webhook processor, which is the only pod
-# serving production webhooks (same paths as the chart's ingress-webhook.yaml). Keep in sync with
-# n8n.internal.httproute.yaml.
+# serving production webhooks (same paths as the chart's ingress-webhook.yaml). Also attached to the
+# internal Gateway so that talosnet-dns (BIND) knows n8n.chezmoi.sh: the pods of the cluster resolve
+# through it, and the n8n MCP proxy needs the name to reach the OAuth endpoints of n8n.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -15,6 +16,11 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: external
+      namespace: kube-system
+      sectionName: chezmoi.sh-websecure
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: internal
       namespace: kube-system
       sectionName: chezmoi.sh-websecure
   rules:
