@@ -5,7 +5,7 @@ metadata:
   annotations:
     policy.networking.k8s.io/description: |
       Allows Newt to reach the mcp-o11y vMCP (TCP 4483), target of the private Pangolin resource
-      mcp-o11y.chezmoi.sh.
+      o11y.mcp.chezmoi.sh.
   labels:
     app.kubernetes.io/name: newt
   name: allow-newt-to-mcp-o11y

@@ -6,5 +6,5 @@ metadata:
   namespace: n8n
 spec:
   inline:
-    issuer: https://mcp-n8n.chezmoi.sh
+    issuer: https://n8n.mcp.chezmoi.sh
   type: inline

@@ -8,6 +8,7 @@ spec:
   secretName: wildcard.chezmoi.sh-certificate
   dnsNames:
     - "*.chezmoi.sh"
+    - "*.mcp.chezmoi.sh"
     - "*.akn.chezmoi.sh"
     - "*.lab.chezmoi.sh"
     - "*.lungmen.akn.chezmoi.sh"

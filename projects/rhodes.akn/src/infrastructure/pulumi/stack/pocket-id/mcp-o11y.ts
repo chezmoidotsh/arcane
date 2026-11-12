@@ -15,7 +15,7 @@ export const mcpO11yOidcClient = new pocketid.OidcClient("mcp-o11y", {
 	allowedUserGroupIds: [adminGroupId],
 	name: "MCP o11y",
 	description: "Outils MCP d'observabilité",
-	callbackUrls: ["https://mcp-o11y.chezmoi.sh/oauth/callback"],
+	callbackUrls: ["https://o11y.mcp.chezmoi.sh/oauth/callback"],
 	isPublic: false,
 	pkceEnabled: true,
 	logoutCallbackUrls: [],

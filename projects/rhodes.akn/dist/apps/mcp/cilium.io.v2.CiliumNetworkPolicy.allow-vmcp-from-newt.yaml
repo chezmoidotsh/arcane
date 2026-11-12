@@ -5,7 +5,7 @@ metadata:
   annotations:
     policy.networking.k8s.io/description: |
       Allows Newt to reach the vMCP (TCP 4483, default vMCP port) for the private Pangolin resource
-      mcp-o11y.chezmoi.sh (the vMCP authenticates its own clients).
+      o11y.mcp.chezmoi.sh (the vMCP authenticates its own clients).
   name: allow-vmcp-from-newt
   namespace: mcp
 spec:

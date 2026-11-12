@@ -201,7 +201,7 @@ flowchart LR
   se trouvent Grafana et Pocket-Id ; les serveurs Victoria sont joints en LAN sur `data.o11y.chezmoi.sh`. n8n reste sur
   `lungmen.akn`. Il passe par ToolHive (exigence), sans vMCP puisqu'il n'a qu'un seul backend : un `MCPRemoteProxy`
   `n8n-mcp` vers le serveur MCP d'instance de n8n (`/mcp-server/http`, et non le chemin `/mcp` du MCP Server Trigger).
-- **Exposition** : les deux points d'entrée (`mcp-o11y.chezmoi.sh`, `mcp-n8n.chezmoi.sh`) sont des ressources Pangolin
+- **Exposition** : les deux points d'entrée (`o11y.mcp.chezmoi.sh`, `n8n.mcp.chezmoi.sh`) sont des ressources Pangolin
   privées (`SiteResource`, accessibles uniquement depuis un appareil qui exécute le client Pangolin, comme
   `n8n.chezmoi.sh`), doublées d'une `HTTPRoute` sur la Gateway `internal` pour le LAN. Elles ne sont pas publiques.
 - **Authentification o11y** : le serveur d'autorisation embarqué du vMCP délègue le login à Pocket-Id (client limité au
@@ -209,7 +209,7 @@ flowchart LR
   n'est configurée : l'opérateur en génère une éphémère, donc les sessions sont perdues à chaque redémarrage
   (compromis déjà accepté).
 - **Authentification n8n** : pas de jeton porteur partagé. Le serveur d'autorisation embarqué de ToolHive
-  (`MCPExternalAuthConfig` de type `embeddedAuthServer`, émetteur `https://mcp-n8n.chezmoi.sh`) délègue le login à
+  (`MCPExternalAuthConfig` de type `embeddedAuthServer`, émetteur `https://n8n.mcp.chezmoi.sh`) délègue le login à
   l'OAuth de n8n (`/mcp-oauth/authorize|token|register`, enregistrement dynamique de client) : chaque utilisateur se
   connecte avec son propre compte n8n, et le jeton n8n amont est transmis au backend. La clé HMAC est dans OpenBao
   `lungmen.akn/n8n/mcp/auth-server`. Si ce flux échoue, le repli est un jeton porteur stocké dans OpenBao.
