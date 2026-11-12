@@ -48,6 +48,7 @@
 - [ImagePullBackOff de Redis : index Zot corrompu](incidents/Incident-2026-05-30-ImagePullBackOff-Redis-Index-Zot-Corrompu.md)
 - [Dérive de l'agent Cilium et de la Gateway API sur Amiya](incidents/Incident-2026-05-31-Derive-Agent-Cilium-Gateway-API-NetworkPolicy-Amiya.md)
 - [ArgoCD inaccessible : wildcard Cilium incohérent](incidents/Incident-2026-06-19-ArgoCD-Inaccessible-Wildcard-Cilium-Incoherent.md)
+- [WAL plein de la base Grafana : Secret de sauvegarde manquant](incidents/Incident-2026-11-12-WAL-Plein-CNPG-Grafana-Secret-Manquant.md)
 
 ### Décisions d'Architecture
 
