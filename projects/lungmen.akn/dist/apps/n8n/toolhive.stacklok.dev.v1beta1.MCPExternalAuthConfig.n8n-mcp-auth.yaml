@@ -16,9 +16,8 @@ spec:
         allowPrivateIPs: true
         authorizationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/authorize
         dcrConfig:
-          registrationEndpoint: http://n8n-main.n8n.svc.cluster.local:5678/mcp-oauth/register
-        insecureAllowHTTP: true
+          registrationEndpoint: https://n8n.chezmoi.sh/mcp-oauth/register
         redirectUri: https://mcp-n8n.chezmoi.sh/oauth/callback
-        tokenEndpoint: http://n8n-main.n8n.svc.cluster.local:5678/mcp-oauth/token
+        tokenEndpoint: https://n8n.chezmoi.sh/mcp-oauth/token
       type: oauth2
   type: embeddedAuthServer

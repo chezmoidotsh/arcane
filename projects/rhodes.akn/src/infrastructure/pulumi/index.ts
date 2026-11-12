@@ -3,6 +3,7 @@
 import "./stack/cert-manager";
 import "./stack/cloudnative-pg";
 import "./stack/grafana";
+import "./stack/grafana-mcp";
 import "./stack/pangolin";
 import "./stack/pocket-id";
 import "./stack/proxmox";
