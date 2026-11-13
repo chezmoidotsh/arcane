@@ -5,8 +5,7 @@
 # Target Allocator; auto-instrumentation and sidecar injection are not used.
 
 manager:
-  image:
-    repository: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+  # The operator image is pinned (mirror + tag) by each project's `images:`.
   # Defaults for collectors/target allocators that don't set their own image.
   # Both collectors of the base pin theirs; these only keep the mirror in use.
   collectorImage:

@@ -14,3 +14,6 @@ resources:
   - cluster.opentelemetrycollector.yaml
   - rbac.yaml
   - security/
+
+configurations:
+  - kustomizeconfig.yaml
