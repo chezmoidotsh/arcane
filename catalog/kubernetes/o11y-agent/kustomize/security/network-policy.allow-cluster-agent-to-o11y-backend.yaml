@@ -1,0 +1,20 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the cluster agent to push its OTLP/HTTP telemetry to the o11y LXC appliance
+      (data.o11y.chezmoi.sh:4318, the only write path, ADR-018).
+  name: allow-cluster-agent-to-o11y-backend
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: opentelemetry-collector
+  egress:
+    - toFQDNs:
+        - matchName: data.o11y.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "4318"
+              protocol: TCP

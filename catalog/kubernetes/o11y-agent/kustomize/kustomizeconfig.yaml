@@ -1,0 +1,10 @@
+---
+# Lets the `images:` of the projects pin the collector and target allocator
+# images, which kustomize does not know as image fields of these CRs.
+images:
+  - kind: OpenTelemetryCollector
+    group: opentelemetry.io
+    path: spec/image
+  - kind: OpenTelemetryCollector
+    group: opentelemetry.io
+    path: spec/targetAllocator/image
