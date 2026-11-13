@@ -75,7 +75,8 @@ Per-cluster alerting and recording rules live in each cluster's own vmalert, not
   (`service.name`, `host.name`). VictoriaMetrics runs with `-opentelemetry.convertMetricNamesToPrometheus` and
   `-opentelemetry.promoteScopeMetadata=false` (no scope labels). MetricsQL accepts dotted labels unquoted:
   `{service.name="zot"}`.
-- VictoriaLogs stream fields are `service.name,host.name`; `scope.name` and `scope.version` are dropped.
+- VictoriaLogs stream fields are `service.name,host.name,k8s.cluster.name,k8s.namespace.name,k8s.pod.name` (the `k8s.*`
+  ones only exist on Kubernetes pod logs); `scope.name` and `scope.version` are dropped.
 - Logs are raw (the message only). Parse at query time, for example `| unpack_json`.
 - A service name differs between logs (journald identifier, `victoria-metrics`) and metrics (scrape job,
   `victoriametrics`): join logs and metrics on `host.name`, not on `service.name`.
