@@ -61,6 +61,7 @@ data:
   enable-health-checking: "true"
   enable-host-firewall: "false"
   enable-hubble: "true"
+  enable-hubble-open-metrics: "true"
   enable-ipv4: "true"
   enable-ipv4-big-tcp: "false"
   enable-ipv4-masquerade: "true"
@@ -105,6 +106,11 @@ data:
   http-stream-idle-timeout: "300"
   hubble-disable-tls: "false"
   hubble-listen-address: :4244
+  hubble-metrics: dns drop:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload
+    tcp flow:labelsContext=source_namespace,source_workload,destination_namespace,destination_workload,traffic_direction
+    port-distribution icmp httpV2:exemplars=true;labelsContext=source_namespace,source_workload,destination_namespace,destination_workload,traffic_direction
+  hubble-metrics-server: :9965
+  hubble-metrics-server-enable-tls: "false"
   hubble-network-policy-correlation-enabled: "true"
   hubble-socket-path: /var/run/cilium/hubble.sock
   hubble-tls-cert-file: /var/lib/cilium/tls/hubble/server.crt
