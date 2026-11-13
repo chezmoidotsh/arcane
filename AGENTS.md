@@ -214,14 +214,15 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   The only write path is OTLP/HTTP on `:4318` (ADR-018), through an OTLP gateway (an OpenTelemetry Collector that turns
   OTLP/JSON into protobuf); `:443` is read-only. It is fed by the shared `catalog/nix/modules/o11y-agent/`
   (`catalog.o11yAgent`) of each LXC, by the Proxmox VE metric server, and on `lungmen.akn` and `rhodes.akn` by the
-  OpenTelemetry Collectors of `catalog/kubernetes/o11y-agent/` (namespace `o11y-agent-system`, OpenTelemetry
-  Operator): a hostNetwork node agent (node metrics, kubelet stats, pod and Talos logs, ServiceMonitor/PodMonitor and
-  `prometheus.io/*` scrapes through the Target Allocator) and a cluster agent (cluster state, events, CRD snapshots).
-  No `VMAgent`: OTLP only. Per-flow Hubble export is not done yet (#1516).
+  OpenTelemetry Collectors of `catalog/kubernetes/o11y-agent/` (namespace `o11y-agent-system`, OpenTelemetry Operator):
+  a hostNetwork node agent (node metrics, kubelet stats, pod and Talos logs, ServiceMonitor/PodMonitor and
+  `prometheus.io/*` scrapes through the Target Allocator) and a cluster agent (cluster state, events, CRD snapshots). No
+  `VMAgent`: OTLP only. Per-flow Hubble export is not done yet (#1516).
 - `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
-  database (`projects/rhodes.akn/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources
-  and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC serves — check the actual
-  cluster before changing anything observability-related.
+  database (`projects/rhodes.akn/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources and authenticates
+  via Pocket-Id OIDC. The Grafana Operator itself runs in `o11y-agent-system` on every cluster: on `rhodes.akn` it
+  manages that instance, elsewhere it points at it in external mode to import the cluster's dashboards. Don't assume
+  Grafana is just a dashboard the LXC serves — check the actual cluster before changing anything observability-related.
 - Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
   (`projects/rhodes.akn/src/infrastructure/pulumi/stack/pangolin/`, `sso: false` at the Pangolin layer — by design, each
   app authenticates its own users, so this isn't "no auth", just no double gate). OpenBao (`vault.chezmoi.sh`) is not

@@ -10,6 +10,10 @@ Two OpenTelemetry Collectors (contrib), managed by the OpenTelemetry Operator:
 | `agent`   | DaemonSet, hostNetwork | Node metrics (`host_metrics`), pod/container usage (`kubelet_stats`), pod logs, Talos service and kernel logs, Prometheus-only apps |
 | `cluster` | Deployment, 1 replica  | Cluster state (`k8s_cluster`), Kubernetes events (logs), snapshots of a few CRDs (logs)                                             |
 
+The same namespace runs the **Grafana Operator** (watching the whole cluster). On `rhodes.akn` it manages the Grafana
+instance of `apps/o11y`; on the other clusters it holds an external-mode `Grafana` resource pointing at that instance
+(`o11y.chezmoi.sh`, API token from OpenBao), so each cluster's `GrafanaDashboard` resources land in the single Grafana.
+
 Per-flow Cilium network logs are not collected here (Hubble only exports to files): see
 [#1516](https://github.com/chezmoidotsh/arcane/issues/1516). Aggregated Hubble metrics are, through the `hubble`
 ServiceMonitor of the Cilium release.
@@ -44,19 +48,20 @@ reach the pods of its node.
 ## Layout
 
 ```text
-helm/opentelemetry-operator.helmvalues.yaml   operator values (mirror images, cert-manager webhook cert)
+helm/opentelemetry-operator.helmvalues.yaml   OpenTelemetry Operator values (mirror images, cert-manager webhook cert)
+helm/grafana-operator.helmvalues.yaml         Grafana Operator values (cluster-wide watch, CRDs rendered as templates)
 kustomize/
 ├── agent.opentelemetrycollector.yaml         node agent + Target Allocator
 ├── cluster.opentelemetrycollector.yaml       cluster agent
 ├── rbac.yaml                                 read-only ClusterRoles, no Secret access
-└── security/                                 CiliumNetworkPolicies (operator, Target Allocator, cluster agent)
+└── security/                                 CiliumNetworkPolicies (operators, Target Allocator, cluster agent)
 ```
 
 Each project adds `infrastructure/kubernetes/o11y-agent/` (namespace `o11y-agent-system`, Pod Security `privileged`)
-with the operator chart, the `prometheus-operator-crds` chart (ServiceMonitor, PodMonitor, Probe and ScrapeConfig CRDs
-only) and a patch setting `K8S_CLUSTER_NAME`. The Talos side lives in the Omni cluster templates: patches
-`o11y-agent-logging` (`machine.logging.destinations`) and `o11y-agent-kmsg` (`KmsgLogConfig`) send the service and
-kernel logs to `tcp://127.0.0.1:6050`.
+with the OpenTelemetry Operator, Grafana Operator and `prometheus-operator-crds` charts (ServiceMonitor, PodMonitor,
+Probe and ScrapeConfig CRDs only) and a patch setting `K8S_CLUSTER_NAME`. The Talos side lives in the Omni cluster
+templates: patches `o11y-agent-logging` (`machine.logging.destinations`) and `o11y-agent-kmsg` (`KmsgLogConfig`) send
+the service and kernel logs to `tcp://127.0.0.1:6050`.
 
 ## Design notes
 
