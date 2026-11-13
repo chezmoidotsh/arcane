@@ -2,9 +2,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaLogs — central log store
 # ─────────────────────────────────────────────────────────────────────────────
-# Ingests OTLP only, via Caddy :4318/v1/logs → /insert/opentelemetry/v1/logs
-# (Caddy pins VL-Stream-Fields to service.name,host.name). Queries come through
-# Caddy :443 /logs/select/*. Binds loopback :9428 only.
+# Ingests OTLP only, via the OTLP gateway → /insert/opentelemetry/v1/logs
+# (the gateway pins VL-Stream-Fields, see etc.otlp-gateway/config.yaml).
+# Queries come through Caddy :443 /logs/select/*. Binds loopback :9428 only.
 #
 # NOTE: `pkgs.victorialogs` must exist on the pinned nixpkgs. If the channel
 # only ships the binary under a different attribute, adjust the ExecStart path

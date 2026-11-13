@@ -70,8 +70,10 @@ exporters:
   otlphttp/victorialogs:
     logs_endpoint: http://127.0.0.1:9428/insert/opentelemetry/v1/logs
     headers:
-      # Every resource attribute would otherwise become a stream field.
-      VL-Stream-Fields: service.name,host.name
+      # Every resource attribute would otherwise become a stream field. The
+      # k8s.* fields split pod logs per cluster and pod (they carry no
+      # host.name); a field missing from a record is simply left out.
+      VL-Stream-Fields: service.name,host.name,k8s.cluster.name,k8s.namespace.name,k8s.pod.name
       # OTLP scope metadata is "unknown" for every log source: noise.
       VL-Ignore-Fields: scope.name,scope.version
     sending_queue:
