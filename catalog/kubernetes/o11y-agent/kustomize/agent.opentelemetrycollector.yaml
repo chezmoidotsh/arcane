@@ -1,0 +1,417 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# o11y node agent — one OpenTelemetry Collector per node (DaemonSet)
+#
+#   /var/log/pods (file_log) ──────────────────────────┐
+#   Talos machined + kernel (tcp_log 127.0.0.1:6050) ──┤
+#   host_metrics (/hostfs) ────────────────────────────┤─▶ k8s_attributes ─▶ identity ─▶ otlp_http ─▶ o11y appliance
+#   kubelet_stats (:10250) ────────────────────────────┤
+#   prometheus (ServiceMonitor/PodMonitor/annotations, │
+#   targets of this node only, via Target Allocator) ──┘
+#
+# hostNetwork, for two reasons:
+#   - Talos machined (host network namespace) ships its service and kernel
+#     logs to a local TCP endpoint (machine.logging.destinations and
+#     KmsgLogConfig in the Omni cluster templates): 127.0.0.1:6050, never
+#     exposed outside the node.
+#   - Scrapes come from the node itself, and Cilium always lets the local host
+#     reach the pods of its node (allow-localhost): apps exposing metrics need
+#     no ingress rule for the agent. The flip side: CiliumNetworkPolicies do not
+#     apply to this pod (host endpoint), its egress is not filtered.
+#
+# Resource attributes on every signal (OTel semantic conventions):
+#   k8s.cluster.name   cluster (K8S_CLUSTER_NAME, set per project)
+#   host.name          pod name for pod-sourced data, node name otherwise
+#   service.name       app.kubernetes.io/name label > workload (deployment,
+#                      statefulset, daemonset, cronjob, job) > container > pod;
+#                      `hostmetrics`, `kubelet` or the Talos service otherwise
+#   k8s.pod.name, k8s.pod.ip, k8s.container.name, k8s.namespace.name and the
+#   workload (k8s.deployment.name, …) when the data comes from a pod.
+#
+# Collector component ids use the snake_case names of 0.16x (file_log,
+# k8s_attributes, …); the old ids are deprecated aliases.
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: agent
+  annotations:
+    # After the operator (wave 0): its validating webhook (failurePolicy Fail)
+    # must answer before the collector can be created.
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  mode: daemonset
+  # oripathy: type=oci upstream=github.com/open-telemetry/opentelemetry-collector-releases tagPrefix=v digest=false
+  image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.162.0
+  serviceAccount: o11y-agent
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  tolerations:
+    - operator: Exists # every node, control plane included
+
+  targetAllocator:
+    enabled: true
+    # oripathy: type=oci upstream=github.com/open-telemetry/opentelemetry-operator tagPrefix=v digest=false
+    image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-operator/target-allocator:0.162.0
+    serviceAccount: o11y-agent-targetallocator
+    # Each agent only scrapes the targets running on its own node.
+    allocationStrategy: per-node
+    prometheusCR:
+      enabled: true
+      scrapeInterval: 30s
+      # Empty selectors: every ServiceMonitor/PodMonitor of the cluster.
+      serviceMonitorSelector: {}
+      podMonitorSelector: {}
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [ALL]
+      readOnlyRootFilesystem: true
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+
+  env:
+    - name: K8S_CLUSTER_NAME
+      value: MUST-BE-SET-PER-PROJECT
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: K8S_NODE_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.hostIP
+    - name: K8S_POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    - name: GOMEMLIMIT
+      value: 400MiB
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+  # root (no capability) to read the root-owned files of /var/log/pods.
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
+    readOnlyRootFilesystem: true
+
+  volumes:
+    - name: varlogpods
+      hostPath:
+        path: /var/log/pods
+        type: Directory
+    - name: hostfs
+      hostPath:
+        path: /
+        type: Directory
+    # file_log offsets and the exporter queue: survive an agent restart or an
+    # appliance outage without re-reading or losing logs.
+    - name: state
+      hostPath:
+        path: /var/lib/o11y-agent
+        type: DirectoryOrCreate
+  volumeMounts:
+    - name: varlogpods
+      mountPath: /var/log/pods
+      readOnly: true
+    - name: hostfs
+      mountPath: /hostfs
+      readOnly: true
+      mountPropagation: HostToContainer
+    - name: state
+      mountPath: /var/lib/o11y-agent
+
+  config:
+    extensions:
+      health_check:
+        endpoint: ${env:K8S_POD_IP}:13133
+      file_storage:
+        directory: /var/lib/o11y-agent
+        create_directory: false
+
+    receivers:
+      # ── Pod logs ──────────────────────────────────────────────────────────
+      file_log/pods:
+        include: [/var/log/pods/*/*/*.log]
+        start_at: end
+        include_file_path: true
+        include_file_name: false
+        storage: file_storage
+        operators:
+          # CRI format; namespace, pod, uid and container from the file path.
+          - type: container
+            add_metadata_from_filepath: true
+
+      # ── Talos service and kernel logs (json_lines) ────────────────────────
+      tcp_log/talos:
+        listen_address: 127.0.0.1:6050
+        operators:
+          - type: json_parser
+            timestamp:
+              parse_from: attributes["talos-time"]
+              layout_type: gotime
+              layout: "2006-01-02T15:04:05.999999999Z07:00"
+            severity:
+              parse_from: attributes["talos-level"]
+          - type: move
+            from: attributes.msg
+            to: body
+
+      # ── Node metrics ──────────────────────────────────────────────────────
+      host_metrics:
+        root_path: /hostfs
+        collection_interval: 30s
+        scrapers:
+          cpu: {}
+          disk: {}
+          load: {}
+          memory: {}
+          network: {}
+          paging: {}
+          processes: {}
+          system: {}
+          filesystem:
+            exclude_mount_points:
+              match_type: regexp
+              mount_points: ["/dev/.*", "/proc/.*", "/sys/.*", "/run/.*", "/var/run/.*", "/var/lib/kubelet/.*", "/var/lib/containerd/.*"]
+            exclude_fs_types:
+              match_type: strict
+              fs_types: [autofs, binfmt_misc, bpf, cgroup2, configfs, debugfs, devpts, devtmpfs, fusectl, hugetlbfs, mqueue, nsfs, overlay, proc, pstore, securityfs, selinuxfs, squashfs, sysfs, tracefs, tmpfs]
+
+      # ── Pod/container resource usage, from the kubelet ────────────────────
+      kubelet_stats:
+        auth_type: serviceAccount
+        endpoint: https://${env:K8S_NODE_IP}:10250
+        # Kubelet serving certificates are signed by the cluster CA
+        # (rotate-server-certificates + kubelet-serving-cert-approver).
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        collection_interval: 30s
+        metric_groups: [node, pod, container, volume]
+        extra_metadata_labels: [container.id, k8s.volume.type]
+
+      # ── Prometheus-only applications ──────────────────────────────────────
+      # The Target Allocator adds the ServiceMonitor/PodMonitor targets and
+      # assigns every target to the agent of its node. The job below adds the
+      # pods annotated `prometheus.io/scrape: "true"` (`prometheus.io/port`,
+      # optional `prometheus.io/path` and `prometheus.io/scheme`).
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: kubernetes-pods
+              scrape_interval: 30s
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - action: keep
+                  source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                  regex: "true"
+                - action: drop
+                  source_labels: [__meta_kubernetes_pod_phase]
+                  regex: Pending|Succeeded|Failed|Completed
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+                  regex: (https?)
+                  target_label: __scheme__
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                  regex: (.+)
+                  target_label: __metrics_path__
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                  regex: (.+);(\d+)
+                  replacement: $$1:$$2
+                  target_label: __address__
+                # Same target labels as a PodMonitor, used by
+                # groupbyattrs/prometheus below.
+                - action: replace
+                  source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_container_name]
+                  target_label: container
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+
+      # Pod metadata of this node only (filter.node_from_env_var).
+      k8s_attributes:
+        auth_type: serviceAccount
+        passthrough: false
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.node.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.pod.ip
+            - k8s.container.name
+            - container.image.name
+            - container.image.tag
+            - k8s.deployment.name
+            - k8s.statefulset.name
+            - k8s.daemonset.name
+            - k8s.replicaset.name
+            - k8s.cronjob.name
+            - k8s.job.name
+          labels:
+            # Temporary, consumed then dropped by transform/identity.
+            - tag_name: app.kubernetes.io/name
+              key: app.kubernetes.io/name
+              from: pod
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.name
+              - from: resource_attribute
+                name: k8s.namespace.name
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.ip
+
+      # The Prometheus receiver puts every scraped series of a target under one
+      # resource (service.name = job, service.instance.id = address) and keeps
+      # the target labels (namespace, pod, container) on the data points. Move
+      # them to the resource so k8s_attributes can find the pod (hostNetwork
+      # targets included, where the IP does not identify a pod).
+      groupbyattrs/prometheus:
+        keys: [namespace, pod, container]
+      transform/prometheus:
+        error_mode: ignore
+        metric_statements:
+          - context: resource
+            statements:
+              - set(resource.attributes["k8s.namespace.name"], resource.attributes["namespace"]) where resource.attributes["namespace"] != nil
+              - set(resource.attributes["k8s.pod.name"], resource.attributes["pod"]) where resource.attributes["pod"] != nil
+              - set(resource.attributes["k8s.container.name"], resource.attributes["container"]) where resource.attributes["container"] != nil
+              - delete_matching_keys(resource.attributes, "^(namespace|pod|container|server\\.port|url\\.scheme)$")
+              # The job name is not a service name: derive it from the pod.
+              - delete_key(resource.attributes, "service.name") where resource.attributes["k8s.pod.name"] != nil
+
+      # Talos: service.name from talos-service, `kernel` for kernel messages.
+      transform/talos:
+        error_mode: ignore
+        log_statements:
+          - context: log
+            statements:
+              - set(log.attributes["service.name"], log.attributes["talos-service"])
+              - set(log.attributes["service.name"], "kernel") where log.attributes["service.name"] == nil and log.attributes["facility"] != nil
+              - set(log.attributes["service.name"], "talos") where log.attributes["service.name"] == nil
+              - delete_matching_keys(log.attributes, "^talos-(service|time)$")
+      groupbyattrs/talos:
+        keys: [service.name]
+
+      # host.name and service.name, on every pipeline (see the header).
+      transform/identity:
+        error_mode: ignore
+        metric_statements: &identity
+          - context: resource
+            statements:
+              - set(resource.attributes["host.name"], "${env:K8S_NODE_NAME}")
+              - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"]) where resource.attributes["k8s.pod.name"] != nil
+              - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.daemonset.name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.cronjob.name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.job.name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.container.name"]) where resource.attributes["service.name"] == nil
+              - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"]) where resource.attributes["service.name"] == nil
+              - delete_key(resource.attributes, "app.kubernetes.io/name")
+        log_statements: *identity
+
+      resource/hostmetrics:
+        attributes:
+          - key: service.name
+            value: hostmetrics
+            action: insert
+      resource/kubelet:
+        attributes:
+          - key: service.name
+            value: kubelet
+            action: insert
+      resource/cluster:
+        attributes:
+          - key: k8s.cluster.name
+            value: ${env:K8S_CLUSTER_NAME}
+            action: upsert
+          - key: k8s.node.name
+            value: ${env:K8S_NODE_NAME}
+            action: insert
+
+      batch: {}
+
+    exporters:
+      otlp_http:
+        endpoint: https://data.o11y.chezmoi.sh:4318
+        compression: gzip
+        sending_queue:
+          storage: file_storage
+
+    service:
+      extensions: [health_check, file_storage]
+      # The collector's own metrics, pushed as OTLP (no self-scrape).
+      telemetry:
+        resource:
+          service.name: o11y-agent
+          host.name: ${env:K8S_NODE_NAME}
+          k8s.cluster.name: ${env:K8S_CLUSTER_NAME}
+        metrics:
+          readers:
+            - periodic:
+                interval: 30000
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: https://data.o11y.chezmoi.sh:4318/v1/metrics
+      pipelines:
+        logs/pods:
+          receivers: [file_log/pods]
+          processors: [memory_limiter, k8s_attributes, transform/identity, resource/cluster, batch]
+          exporters: [otlp_http]
+        logs/talos:
+          receivers: [tcp_log/talos]
+          processors: [memory_limiter, transform/talos, groupbyattrs/talos, transform/identity, resource/cluster, batch]
+          exporters: [otlp_http]
+        metrics/host:
+          receivers: [host_metrics]
+          processors: [memory_limiter, resource/hostmetrics, transform/identity, resource/cluster, batch]
+          exporters: [otlp_http]
+        metrics/kubelet:
+          receivers: [kubelet_stats]
+          processors: [memory_limiter, k8s_attributes, transform/identity, resource/kubelet, resource/cluster, batch]
+          exporters: [otlp_http]
+        metrics/prometheus:
+          receivers: [prometheus]
+          processors: [memory_limiter, groupbyattrs/prometheus, transform/prometheus, k8s_attributes, transform/identity, resource/cluster, batch]
+          exporters: [otlp_http]
