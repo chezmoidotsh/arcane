@@ -116,11 +116,6 @@ spec:
         log_statements:
         - context: resource
           statements:
-          - set(resource.attributes["host.name"], "${env:K8S_POD_NAME}")
-          - set(resource.attributes["host.name"], resource.attributes["k8s.node.name"])
-            where resource.attributes["k8s.node.name"] != nil
-          - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            where resource.attributes["k8s.pod.name"] != nil
           - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"])
             where resource.attributes["service.name"] == nil
           - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"])
@@ -141,11 +136,6 @@ spec:
         metric_statements:
         - context: resource
           statements:
-          - set(resource.attributes["host.name"], "${env:K8S_POD_NAME}")
-          - set(resource.attributes["host.name"], resource.attributes["k8s.node.name"])
-            where resource.attributes["k8s.node.name"] != nil
-          - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"])
-            where resource.attributes["k8s.pod.name"] != nil
           - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"])
             where resource.attributes["service.name"] == nil
           - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"])
@@ -263,8 +253,8 @@ spec:
                   protocol: http/protobuf
               interval: 15000
         resource:
-          host.name: ${env:K8S_POD_NAME}
           k8s.cluster.name: ${env:K8S_CLUSTER_NAME}
+          k8s.pod.name: ${env:K8S_POD_NAME}
           service.name: o11y-cluster-agent
   env:
   - name: K8S_CLUSTER_NAME
