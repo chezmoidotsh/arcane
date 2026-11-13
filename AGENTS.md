@@ -216,9 +216,10 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   (`catalog.o11yAgent`) of each LXC and by the Proxmox VE metric server. The per-cluster agents planned by ADR-013 are
   not deployed: no `VMAgent` or collector exists under `projects/lungmen.akn/` or `projects/rhodes.akn/`.
 - `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
-  database (`projects/rhodes.akn/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources
-  and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC serves — check the actual
-  cluster before changing anything observability-related.
+  database (`projects/rhodes.akn/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources and authenticates
+  via Pocket-Id OIDC. The Grafana Operator itself runs in `o11y-agent-system` on every cluster: on `rhodes.akn` it
+  manages that instance, elsewhere it points at it in external mode to import the cluster's dashboards. Don't assume
+  Grafana is just a dashboard the LXC serves — check the actual cluster before changing anything observability-related.
 - Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
   (`projects/rhodes.akn/src/infrastructure/pulumi/stack/pangolin/`, `sso: false` at the Pangolin layer — by design, each
   app authenticates its own users, so this isn't "no auth", just no double gate). OpenBao (`vault.chezmoi.sh`) is not
