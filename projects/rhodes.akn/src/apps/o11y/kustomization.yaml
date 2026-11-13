@@ -2,14 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: o11y
 
-helmCharts:
-  - repo: https://grafana.github.io/helm-charts
-    name: grafana-operator
-    # oripathy: type=helm upstream=github.com/grafana/grafana-operator tagPrefix=v
-    version: v5.25.0
-    releaseName: grafana-operator
-    namespace: o11y
-    valuesFile: ../../../../../catalog/kubernetes/o11y/helm/grafana/default.helmvalues.yaml
+# The Grafana Operator managing this instance runs in o11y-agent-system
+# (infrastructure/kubernetes/o11y-agent), like on every other cluster.
 
 resources:
   - security/
@@ -26,10 +20,6 @@ resources:
   - dashboards/
 
 images:
-  - name: ghcr.io/grafana/grafana-operator
-    newName: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator
-    # oripathy: type=oci upstream=github.com/grafana/grafana-operator tagPrefix=v digest=false
-    newTag: v5.25.0
   - name: docker.io/grafana/grafana
     newName: oci.chezmoi.sh/docker.io/grafana/grafana
 
