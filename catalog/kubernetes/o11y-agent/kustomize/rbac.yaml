@@ -1,0 +1,144 @@
+---
+# RBAC of the o11y agents, written by hand (the operator's
+# createRbacPermissions is off): read-only, cluster-wide, no Secret access.
+#
+#   o11y-agent                  node agent: k8s_attributes, kubelet_stats
+#   o11y-agent-targetallocator  Prometheus discovery + ServiceMonitor/PodMonitor
+#   o11y-cluster-agent          k8s_cluster, k8s_objects, k8s_attributes
+# ─────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: o11y-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: o11y-agent
+rules:
+  # k8s_attributes: pod metadata and owner chain up to the workload.
+  - apiGroups: [""]
+    resources: [pods, namespaces, nodes]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [replicasets, deployments, statefulsets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch]
+  # kubelet_stats: /stats/summary and /pods of the kubelet.
+  - apiGroups: [""]
+    resources: [nodes/stats, nodes/proxy]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: o11y-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: o11y-agent
+subjects:
+  - kind: ServiceAccount
+    name: o11y-agent
+    namespace: o11y-agent-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: o11y-agent-targetallocator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: o11y-agent-targetallocator
+rules:
+  # Prometheus service discovery (pod, service, endpoints roles) and per-node
+  # allocation.
+  - apiGroups: [""]
+    resources: [pods, services, endpoints, nodes, namespaces]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+  - apiGroups: [monitoring.coreos.com]
+    resources: [servicemonitors, podmonitors, probes, scrapeconfigs]
+    verbs: [get, list, watch]
+  # ponytail: no Secret access, so a ServiceMonitor referencing a Secret
+  # (basicAuth, bearerTokenSecret, TLS keys) is not scraped. Grant
+  # secrets/get to the namespaces that need it if one ever does.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: o11y-agent-targetallocator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: o11y-agent-targetallocator
+subjects:
+  - kind: ServiceAccount
+    name: o11y-agent-targetallocator
+    namespace: o11y-agent-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: o11y-cluster-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: o11y-cluster-agent
+rules:
+  # k8s_cluster
+  - apiGroups: [""]
+    resources:
+      - events
+      - namespaces
+      - namespaces/status
+      - nodes
+      - nodes/spec
+      - pods
+      - pods/status
+      - replicationcontrollers
+      - replicationcontrollers/status
+      - resourcequotas
+      - services
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [daemonsets, deployments, replicasets, statefulsets]
+    verbs: [get, list, watch]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list, watch]
+  # k8s_objects
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [get, list, watch]
+  - apiGroups: [cert-manager.io]
+    resources: [certificates]
+    verbs: [get, list, watch]
+  - apiGroups: [external-secrets.io]
+    resources: [externalsecrets]
+    verbs: [get, list, watch]
+  - apiGroups: [postgresql.cnpg.io]
+    resources: [clusters]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: o11y-cluster-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: o11y-cluster-agent
+subjects:
+  - kind: ServiceAccount
+    name: o11y-cluster-agent
+    namespace: o11y-agent-system

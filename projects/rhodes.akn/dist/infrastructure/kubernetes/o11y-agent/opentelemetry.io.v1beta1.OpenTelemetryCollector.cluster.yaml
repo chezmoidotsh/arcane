@@ -1,0 +1,301 @@
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  name: cluster
+  namespace: o11y-agent-system
+spec:
+  config:
+    exporters:
+      otlp_http:
+        compression: gzip
+        endpoint: https://data.o11y.chezmoi.sh:4318
+    extensions:
+      health_check:
+        endpoint: ${env:K8S_POD_IP}:13133
+    processors:
+      batch: {}
+      filter/events:
+        error_mode: ignore
+        logs:
+          log_record:
+          - log.body["type"] == "DELETED"
+      groupbyattrs/events:
+        keys:
+        - k8s.namespace.name
+        - k8s.pod.name
+        - k8s.node.name
+      groupbyattrs/resources:
+        keys:
+        - k8s.namespace.name
+      k8s_attributes:
+        auth_type: serviceAccount
+        extract:
+          labels:
+          - from: pod
+            key: app.kubernetes.io/name
+            tag_name: app.kubernetes.io/name
+          metadata:
+          - k8s.namespace.name
+          - k8s.node.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - k8s.pod.ip
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.daemonset.name
+          - k8s.replicaset.name
+          - k8s.cronjob.name
+          - k8s.job.name
+        passthrough: false
+        pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resource/cluster:
+        attributes:
+        - action: upsert
+          key: k8s.cluster.name
+          value: ${env:K8S_CLUSTER_NAME}
+      resource/k8s-cluster:
+        attributes:
+        - action: insert
+          key: service.name
+          value: k8s-cluster
+      resource/k8s-events:
+        attributes:
+        - action: insert
+          key: service.name
+          value: k8s-events
+      resource/k8s-objects:
+        attributes:
+        - action: insert
+          key: service.name
+          value: k8s-objects
+      transform/events:
+        error_mode: ignore
+        log_statements:
+        - context: log
+          statements:
+          - set(log.cache["e"], log.body["object"])
+          - set(log.attributes["k8s.namespace.name"], log.cache["e"]["regarding"]["namespace"])
+            where log.cache["e"]["regarding"]["namespace"] != nil
+          - set(log.attributes["k8s.pod.name"], log.cache["e"]["regarding"]["name"])
+            where log.cache["e"]["regarding"]["kind"] == "Pod"
+          - set(log.attributes["k8s.node.name"], log.cache["e"]["regarding"]["name"])
+            where log.cache["e"]["regarding"]["kind"] == "Node"
+          - set(log.attributes["k8s.object.kind"], log.cache["e"]["regarding"]["kind"])
+          - set(log.attributes["k8s.object.name"], log.cache["e"]["regarding"]["name"])
+          - set(log.attributes["k8s.object.uid"], log.cache["e"]["regarding"]["uid"])
+          - set(log.attributes["k8s.event.reason"], log.cache["e"]["reason"])
+          - set(log.attributes["k8s.event.action"], log.cache["e"]["action"]) where
+            log.cache["e"]["action"] != nil
+          - set(log.attributes["k8s.event.reporting_controller"], log.cache["e"]["reportingController"])
+            where log.cache["e"]["reportingController"] != nil
+          - set(log.attributes["k8s.event.count"], log.cache["e"]["deprecatedCount"])
+            where log.cache["e"]["deprecatedCount"] != nil
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["e"]["type"]
+            == "Warning"
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.cache["e"]["type"]
+            != "Warning"
+          - set(log.body, log.cache["e"]["note"])
+          - delete_key(log.attributes, "event.domain")
+      transform/identity:
+        error_mode: ignore
+        log_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["host.name"], "${env:K8S_POD_NAME}")
+          - set(resource.attributes["host.name"], resource.attributes["k8s.node.name"])
+            where resource.attributes["k8s.node.name"] != nil
+          - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            where resource.attributes["k8s.pod.name"] != nil
+          - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.daemonset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.cronjob.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.job.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.container.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+            where resource.attributes["service.name"] == nil
+          - delete_key(resource.attributes, "app.kubernetes.io/name")
+        metric_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["host.name"], "${env:K8S_POD_NAME}")
+          - set(resource.attributes["host.name"], resource.attributes["k8s.node.name"])
+            where resource.attributes["k8s.node.name"] != nil
+          - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"])
+            where resource.attributes["k8s.pod.name"] != nil
+          - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.daemonset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.cronjob.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.job.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.container.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+            where resource.attributes["service.name"] == nil
+          - delete_key(resource.attributes, "app.kubernetes.io/name")
+      transform/resources:
+        error_mode: ignore
+        log_statements:
+        - context: log
+          statements:
+          - set(log.attributes["k8s.namespace.name"], log.body["metadata"]["namespace"])
+            where log.body["metadata"]["namespace"] != nil
+          - set(log.attributes["k8s.object.kind"], log.body["kind"])
+          - set(log.attributes["k8s.object.name"], log.body["metadata"]["name"])
+          - set(log.attributes["k8s.object.uid"], log.body["metadata"]["uid"])
+    receivers:
+      k8s_cluster:
+        allocatable_types_to_report:
+        - cpu
+        - memory
+        - ephemeral-storage
+        - pods
+        auth_type: serviceAccount
+        collection_interval: 30s
+        node_conditions_to_report:
+        - Ready
+        - MemoryPressure
+        - DiskPressure
+        - PIDPressure
+        - NetworkUnavailable
+      k8s_objects/events:
+        auth_type: serviceAccount
+        objects:
+        - group: events.k8s.io
+          mode: watch
+          name: events
+      k8s_objects/resources:
+        auth_type: serviceAccount
+        objects:
+        - group: cert-manager.io
+          interval: 5m
+          mode: pull
+          name: certificates
+        - group: external-secrets.io
+          interval: 5m
+          mode: pull
+          name: externalsecrets
+        - group: postgresql.cnpg.io
+          interval: 5m
+          mode: pull
+          name: clusters
+    service:
+      extensions:
+      - health_check
+      pipelines:
+        logs/events:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - filter/events
+          - transform/events
+          - groupbyattrs/events
+          - k8s_attributes
+          - transform/identity
+          - resource/k8s-events
+          - resource/cluster
+          - batch
+          receivers:
+          - k8s_objects/events
+        logs/resources:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - transform/resources
+          - groupbyattrs/resources
+          - resource/k8s-objects
+          - transform/identity
+          - resource/cluster
+          - batch
+          receivers:
+          - k8s_objects/resources
+        metrics:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - k8s_attributes
+          - transform/identity
+          - resource/k8s-cluster
+          - resource/cluster
+          - batch
+          receivers:
+          - k8s_cluster
+      telemetry:
+        metrics:
+          readers:
+          - periodic:
+              exporter:
+                otlp:
+                  endpoint: https://data.o11y.chezmoi.sh:4318/v1/metrics
+                  protocol: http/protobuf
+              interval: 30000
+        resource:
+          host.name: ${env:K8S_POD_NAME}
+          k8s.cluster.name: ${env:K8S_CLUSTER_NAME}
+          service.name: o11y-cluster-agent
+  env:
+  - name: K8S_CLUSTER_NAME
+    value: rhodes.akn
+  - name: K8S_POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: K8S_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: GOMEMLIMIT
+    value: 400MiB
+  image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.162.0
+  mode: deployment
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  replicas: 1
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+  serviceAccount: o11y-cluster-agent

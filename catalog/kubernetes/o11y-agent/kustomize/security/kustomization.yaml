@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# The node agent runs in the host network namespace: none of these policies
+# select it (host endpoint). They cover the operator, the target allocator and
+# the cluster agent.
+resources:
+  - network-policy.default-hardened.yaml
+  - network-policy.allow-to-kube-apiserver.yaml
+  - network-policy.allow-webhook-from-kubernetes-api.yaml
+  - network-policy.allow-targetallocator-from-agents.yaml
+  - network-policy.allow-cluster-agent-to-o11y-backend.yaml

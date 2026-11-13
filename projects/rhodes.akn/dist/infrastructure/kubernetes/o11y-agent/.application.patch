@@ -1,0 +1,32 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: >-
+        OpenTelemetry agents shipping this cluster's telemetry to the o11y
+        appliance over OTLP: node metrics, pod and Talos logs, kubelet stats,
+        Prometheus-only apps (node DaemonSet), cluster state, Kubernetes
+        events and CRD snapshots (cluster Deployment).
+    - name: Category
+      value: Observability
+    # -- Documentation & Resources
+    - name: OpenTelemetry Operator
+      value: https://github.com/open-telemetry/opentelemetry-operator
+    - name: Collector components
+      value: https://github.com/open-telemetry/opentelemetry-collector-contrib
+
+  syncPolicy:
+    automated:
+      enabled: false # rhodes.akn is production: sync by hand
+
+    # The node agent DaemonSet uses hostNetwork and hostPath mounts
+    # (/var/log/pods, the host root for host_metrics, its state directory):
+    # the default Pod Security level rejects that, so relax enforcement for
+    # the namespace ArgoCD creates for this Application.
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/enforce-version: v1.33
