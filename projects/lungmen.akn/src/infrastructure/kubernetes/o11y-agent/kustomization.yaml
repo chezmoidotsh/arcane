@@ -30,8 +30,28 @@ helmCharts:
         prometheusrules: { enabled: false }
         thanosrulers: { enabled: false }
 
+  - repo: https://grafana.github.io/helm-charts
+    name: grafana-operator
+    # oripathy: type=helm upstream=github.com/grafana/grafana-operator tagPrefix=v
+    version: v5.25.0
+    releaseName: grafana-operator
+    namespace: o11y-agent-system
+    valuesFile: ../../../../../../catalog/kubernetes/o11y-agent/helm/grafana-operator.helmvalues.yaml
+
 resources:
   - ../../../../../../catalog/kubernetes/o11y-agent/kustomize
+  # Grafana Operator in external mode: no local Grafana, only a reference to
+  # the instance on rhodes.akn, which receives this cluster's GrafanaDashboard
+  # CRs (issue 1159).
+  - grafana.external-instance.yaml
+  - grafana.api-token.externalsecret.yaml
+  - network-policy.allow-grafana-operator-to-grafana-api.yaml
+
+images:
+  - name: ghcr.io/grafana/grafana-operator
+    newName: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator
+    # oripathy: type=oci upstream=github.com/grafana/grafana-operator tagPrefix=v digest=false
+    newTag: v5.25.0
 
 patches:
   - target:

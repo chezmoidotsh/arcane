@@ -5,7 +5,7 @@ metadata:
   labels:
     dashboards: grafana
   name: grafana
-  namespace: o11y-system
+  namespace: o11y-agent-system
 spec:
   external:
     apiKey:

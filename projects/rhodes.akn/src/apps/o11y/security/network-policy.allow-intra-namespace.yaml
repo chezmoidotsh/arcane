@@ -3,7 +3,7 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Permits intra-namespace communication in o11y (operator <-> Grafana instance).
+      Permits intra-namespace communication in o11y (Grafana instance <-> its CNPG database).
   name: allow-intra-namespace
 spec:
   endpointSelector: {}

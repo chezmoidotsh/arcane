@@ -9,12 +9,16 @@ spec:
         OpenTelemetry agents shipping this cluster's telemetry to the o11y
         appliance over OTLP: node metrics, pod and Talos logs, kubelet stats,
         Prometheus-only apps (node DaemonSet), cluster state, Kubernetes
-        events and CRD snapshots (cluster Deployment).
+        events and CRD snapshots (cluster Deployment). Grafana Operator
+        managing the Grafana instance of apps/o11y and every GrafanaDashboard
+        CR of the cluster.
     - name: Category
       value: Observability
     # -- Documentation & Resources
     - name: OpenTelemetry Operator
       value: https://github.com/open-telemetry/opentelemetry-operator
+    - name: Grafana Operator
+      value: https://grafana.github.io/grafana-operator/docs/
     - name: Collector components
       value: https://github.com/open-telemetry/opentelemetry-collector-contrib
 

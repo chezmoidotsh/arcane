@@ -1,0 +1,24 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Grafana Operator to call the API of the Grafana instance it manages in the
+      o11y namespace (apps/o11y), to provision its datasources, folders and dashboards. The
+      matching ingress rule is allow-grafana-from-grafana-operator in o11y.
+  name: allow-grafana-operator-to-grafana
+  namespace: o11y-agent-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: grafana
+        io.kubernetes.pod.namespace: o11y
+    toPorts:
+    - ports:
+      - port: "3000"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana-operator

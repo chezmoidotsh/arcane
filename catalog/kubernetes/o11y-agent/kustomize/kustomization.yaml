@@ -5,8 +5,10 @@ kind: Kustomization
 # o11y agents: one OpenTelemetry Collector per node (DaemonSet `agent`) and one
 # per cluster (Deployment `cluster`), managed by the OpenTelemetry Operator
 # and fed with ServiceMonitor/PodMonitor targets by its Target Allocator.
-# Each project deploys the operator and the prometheus-operator CRDs (Helm)
-# next to this base and sets K8S_CLUSTER_NAME on both collectors.
+# Each project deploys the OpenTelemetry Operator, the prometheus-operator
+# CRDs and the Grafana Operator (Helm) next to this base, sets
+# K8S_CLUSTER_NAME on both collectors, and adds the policy letting the Grafana
+# Operator reach its Grafana instance.
 resources:
   - agent.opentelemetrycollector.yaml
   - cluster.opentelemetrycollector.yaml

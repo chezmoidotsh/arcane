@@ -1,6 +1,6 @@
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: Role
 metadata:
   labels:
     app.kubernetes.io/component: operator
@@ -10,12 +10,18 @@ metadata:
     app.kubernetes.io/part-of: grafana-operator
     app.kubernetes.io/version: v5.25.0
     helm.sh/chart: grafana-operator-5.25.0
-  name: grafana-operator
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: grafana-operator
-subjects:
-- kind: ServiceAccount
-  name: grafana-operator
-  namespace: o11y-system
+  name: grafana-operator-leases
+  namespace: o11y-agent-system
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete

@@ -1,3 +1,4 @@
+---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -6,7 +7,7 @@ metadata:
       Allows the Grafana Operator to reach the external Grafana instance's API
       (o11y.chezmoi.sh, on rhodes.akn) to manage the external-mode Grafana CR and
       import this cluster's own GrafanaDashboard CRs into it.
-  name: allow-operator-to-grafana-api
+  name: allow-grafana-operator-to-grafana-api
 spec:
   endpointSelector:
     matchLabels:
