@@ -6,7 +6,7 @@ namespace: o11y-agent-system
 helmCharts:
   - repo: https://open-telemetry.github.io/opentelemetry-helm-charts
     name: opentelemetry-operator
-    # oripathy: type=helm upstream=github.com/open-telemetry/opentelemetry-helm-charts tagPrefix=opentelemetry-operator-
+    # oripathy: type=helm upstream=github.com/open-telemetry/opentelemetry-helm-charts tagPrefix=opentelemetry-operator- name=opentelemetry-operator-chart
     version: 0.129.0
     releaseName: opentelemetry-operator
     namespace: o11y-agent-system
@@ -44,6 +44,18 @@ resources:
   - network-policy.allow-grafana-operator-to-grafana.yaml
 
 images:
+  - name: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+    newName: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
+    # oripathy: type=oci upstream=github.com/open-telemetry/opentelemetry-operator tagPrefix=v digest=false
+    newTag: 0.162.0
+  - name: ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
+    newName: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-operator/target-allocator
+    # oripathy: type=oci upstream=github.com/open-telemetry/opentelemetry-operator tagPrefix=v digest=false
+    newTag: 0.162.0
+  - name: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
+    newName: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
+    # oripathy: type=oci upstream=github.com/open-telemetry/opentelemetry-collector-releases tagPrefix=v digest=false
+    newTag: 0.162.0
   - name: ghcr.io/grafana/grafana-operator
     newName: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator
     # oripathy: type=oci upstream=github.com/grafana/grafana-operator tagPrefix=v digest=false
