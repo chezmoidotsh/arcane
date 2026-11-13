@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the node agents to fetch their scrape targets from the target allocator (port 8080).
+      The agents run in the host network namespace, so they come from the host entity (agent of
+      the same node) or the remote-node entity (agents of the other nodes).
+  name: allow-targetallocator-from-agents
+  namespace: o11y-agent-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: opentelemetry-targetallocator
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

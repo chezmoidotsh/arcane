@@ -4,6 +4,32 @@ kind: Kustomization
 namespace: o11y-agent-system
 
 helmCharts:
+  - repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+    name: opentelemetry-operator
+    # oripathy: type=helm upstream=github.com/open-telemetry/opentelemetry-helm-charts tagPrefix=opentelemetry-operator-
+    version: 0.129.0
+    releaseName: opentelemetry-operator
+    namespace: o11y-agent-system
+    skipTests: true
+    valuesFile: ../../../../../../catalog/kubernetes/o11y-agent/helm/opentelemetry-operator.helmvalues.yaml
+
+  # ServiceMonitor/PodMonitor/Probe/ScrapeConfig CRDs only (no
+  # prometheus-operator): consumed by the Target Allocator.
+  - repo: https://prometheus-community.github.io/helm-charts
+    name: prometheus-operator-crds
+    # oripathy: type=helm upstream=github.com/prometheus-community/helm-charts tagPrefix=prometheus-operator-crds-
+    version: 33.0.2
+    releaseName: prometheus-operator-crds
+    namespace: o11y-agent-system
+    valuesInline:
+      crds:
+        alertmanagerconfigs: { enabled: false }
+        alertmanagers: { enabled: false }
+        prometheusagents: { enabled: false }
+        prometheuses: { enabled: false }
+        prometheusrules: { enabled: false }
+        thanosrulers: { enabled: false }
+
   - repo: https://grafana.github.io/helm-charts
     name: grafana-operator
     # oripathy: type=helm upstream=github.com/grafana/grafana-operator tagPrefix=v
@@ -13,15 +39,27 @@ helmCharts:
     valuesFile: ../../../../../../catalog/kubernetes/o11y-agent/helm/grafana-operator.helmvalues.yaml
 
 resources:
-  - security/
+  - ../../../../../../catalog/kubernetes/o11y-agent/kustomize
   # Grafana Operator in external mode: no local Grafana, only a reference to
   # the instance on rhodes.akn, which receives this cluster's GrafanaDashboard
   # CRs (issue 1159).
   - grafana.external-instance.yaml
   - grafana.api-token.externalsecret.yaml
+  - network-policy.allow-grafana-operator-to-grafana-api.yaml
 
 images:
   - name: ghcr.io/grafana/grafana-operator
     newName: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator
     # oripathy: type=oci upstream=github.com/grafana/grafana-operator tagPrefix=v digest=false
     newTag: v5.25.0
+
+patches:
+  - target:
+      group: opentelemetry.io
+      kind: OpenTelemetryCollector
+    patch: |-
+      - op: replace
+        path: /spec/env/0
+        value:
+          name: K8S_CLUSTER_NAME
+          value: lungmen.akn
