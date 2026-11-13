@@ -1,0 +1,19 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: >-
+        Grafana Operator managing the Grafana instance of apps/o11y and
+        every GrafanaDashboard CR of the cluster.
+    - name: Category
+      value: Observability
+    # -- Documentation & Resources
+    - name: Grafana Operator
+      value: https://grafana.github.io/grafana-operator/docs/
+
+  syncPolicy:
+    automated:
+      enabled: true # Takes over from the operator apps/o11y prunes, without a reconciliation gap

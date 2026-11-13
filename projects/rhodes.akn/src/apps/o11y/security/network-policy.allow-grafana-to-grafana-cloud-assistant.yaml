@@ -6,7 +6,7 @@ metadata:
       Allows Grafana to reach the Grafana Cloud Assistant backend
       (grafana-assistant-app forwards every request there, even when the
       instance is otherwise self-managed -- there is no fully local mode).
-      Distinct from allow-operator-to-grafana-com, which only covers plugin
+      Distinct from allow-grafana-to-grafana-com, which only covers plugin
       catalog downloads, not the Assistant's own runtime traffic.
   name: allow-grafana-to-grafana-cloud-assistant
 spec:

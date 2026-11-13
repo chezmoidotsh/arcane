@@ -1,0 +1,20 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: >-
+        Grafana Operator in external mode (issue 1159): no local Grafana,
+        only a reference to the instance on rhodes.akn, which receives this
+        cluster's GrafanaDashboard CRs.
+    - name: Category
+      value: Observability
+    # -- Documentation & Resources
+    - name: Grafana Operator
+      value: https://grafana.github.io/grafana-operator/docs/
+
+  syncPolicy:
+    automated:
+      enabled: true
