@@ -153,7 +153,11 @@ spec:
       # ── Pod logs ──────────────────────────────────────────────────────────
       file_log/pods:
         include: [/var/log/pods/*/*/*.log]
-        start_at: end
+        # From the beginning of a file the agent has never seen (first start,
+        # new pod). Known files resume from the offset kept in file_storage, so
+        # a restart neither loses nor re-sends logs. A wiped state directory
+        # (node reinstall) re-ships what kubelet still retains.
+        start_at: beginning
         include_file_path: true
         include_file_name: false
         storage: file_storage
@@ -389,7 +393,7 @@ spec:
         metrics:
           readers:
             - periodic:
-                interval: 30000
+                interval: 15000 # milliseconds
                 exporter:
                   otlp:
                     protocol: http/protobuf

@@ -241,7 +241,7 @@ spec:
         metrics:
           readers:
             - periodic:
-                interval: 30000
+                interval: 15000 # milliseconds
                 exporter:
                   otlp:
                     protocol: http/protobuf
