@@ -6,14 +6,34 @@ spec:
     # -- Application metadata
     - name: Description
       value: >-
-        Grafana Operator managing the Grafana instance of apps/o11y and
-        every GrafanaDashboard CR of the cluster.
+        OpenTelemetry agents shipping this cluster's telemetry to the o11y
+        appliance over OTLP: node metrics, pod and Talos logs, kubelet stats,
+        Prometheus-only apps (node DaemonSet), cluster state, Kubernetes
+        events and CRD snapshots (cluster Deployment). Grafana Operator
+        managing the Grafana instance of apps/o11y and every GrafanaDashboard
+        CR of the cluster.
     - name: Category
       value: Observability
     # -- Documentation & Resources
+    - name: OpenTelemetry Operator
+      value: https://github.com/open-telemetry/opentelemetry-operator
     - name: Grafana Operator
       value: https://grafana.github.io/grafana-operator/docs/
+    - name: Collector components
+      value: https://github.com/open-telemetry/opentelemetry-collector-contrib
 
   syncPolicy:
     automated:
-      enabled: true # Takes over from the operator apps/o11y prunes, without a reconciliation gap
+      # Auto-sync since the Grafana Operator moved here (it takes over from the
+      # one apps/o11y prunes). The ApplicationSet ignores later changes to this
+      # field anyway: switching to manual sync is done on the Application.
+      enabled: true
+
+    # The node agent DaemonSet uses hostNetwork and hostPath mounts
+    # (/var/log/pods, the host root for host_metrics, its state directory):
+    # the default Pod Security level rejects that, so relax enforcement for
+    # the namespace ArgoCD creates for this Application.
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/enforce-version: v1.33

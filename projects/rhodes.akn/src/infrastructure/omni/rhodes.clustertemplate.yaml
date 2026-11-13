@@ -139,6 +139,23 @@ patches:
         extraManifests:
           - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/kubelet-serving-cert-approver/0.12.1.yaml
           - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/metric-server/0.9.0.yaml
+  # Talos service and kernel logs, shipped as json_lines to the o11y node agent
+  # (catalog/kubernetes/o11y-agent/, hostNetwork DaemonSet listening on
+  # 127.0.0.1:6050 of every node). Until the agent runs, Talos drops the
+  # messages it cannot deliver.
+  - name: o11y-agent-logging
+    inline:
+      machine:
+        logging:
+          destinations:
+            - endpoint: tcp://127.0.0.1:6050/
+              format: json_lines
+  - name: o11y-agent-kmsg
+    inline:
+      apiVersion: v1alpha1
+      kind: KmsgLogConfig
+      name: o11y-agent
+      url: tcp://127.0.0.1:6050/
 ---
 kind: ControlPlane
 machineClass:

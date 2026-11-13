@@ -119,6 +119,10 @@ spec:
           hostPort: 4244
           name: peer-service
           protocol: TCP
+        - containerPort: 9965
+          hostPort: 9965
+          name: hubble-metrics
+          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
