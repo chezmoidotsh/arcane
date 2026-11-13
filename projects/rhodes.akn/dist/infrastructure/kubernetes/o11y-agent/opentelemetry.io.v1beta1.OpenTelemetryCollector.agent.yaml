@@ -171,7 +171,7 @@ spec:
         operators:
         - add_metadata_from_filepath: true
           type: container
-        start_at: end
+        start_at: beginning
         storage: file_storage
       host_metrics:
         collection_interval: 30s
@@ -363,7 +363,7 @@ spec:
                 otlp:
                   endpoint: https://data.o11y.chezmoi.sh:4318/v1/metrics
                   protocol: http/protobuf
-              interval: 30000
+              interval: 15000
         resource:
           host.name: ${env:K8S_NODE_NAME}
           k8s.cluster.name: ${env:K8S_CLUSTER_NAME}

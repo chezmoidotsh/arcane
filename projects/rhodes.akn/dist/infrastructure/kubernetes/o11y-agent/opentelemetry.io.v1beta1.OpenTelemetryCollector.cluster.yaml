@@ -261,7 +261,7 @@ spec:
                 otlp:
                   endpoint: https://data.o11y.chezmoi.sh:4318/v1/metrics
                   protocol: http/protobuf
-              interval: 30000
+              interval: 15000
         resource:
           host.name: ${env:K8S_POD_NAME}
           k8s.cluster.name: ${env:K8S_CLUSTER_NAME}
