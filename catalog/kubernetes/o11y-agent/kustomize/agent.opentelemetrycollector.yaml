@@ -21,7 +21,9 @@
 #
 # Resource attributes on every signal (OTel semantic conventions):
 #   k8s.cluster.name   cluster (K8S_CLUSTER_NAME, set per project)
-#   host.name          pod name for pod-sourced data, node name otherwise
+#   host.name          node name, only on host-level data (host_metrics, Talos
+#                      logs): data carrying k8s.node.name or k8s.pod.name
+#                      identifies its node through k8s.node.name instead
 #   service.name       app.kubernetes.io/name label > workload (deployment,
 #                      statefulset, daemonset, cronjob, job) > container > pod;
 #                      `hostmetrics`, `kubelet` or the Talos service otherwise
@@ -341,8 +343,7 @@ spec:
         metric_statements: &identity
           - context: resource
             statements:
-              - set(resource.attributes["host.name"], "${env:K8S_NODE_NAME}")
-              - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"]) where resource.attributes["k8s.pod.name"] != nil
+              - set(resource.attributes["host.name"], "${env:K8S_NODE_NAME}") where resource.attributes["k8s.node.name"] == nil and resource.attributes["k8s.pod.name"] == nil
               - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"]) where resource.attributes["service.name"] == nil
               - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"]) where resource.attributes["service.name"] == nil
               - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"]) where resource.attributes["service.name"] == nil

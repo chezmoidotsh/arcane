@@ -20,8 +20,8 @@
 # k8s.object.kind/name/uid. Only CRDs present on every cluster are listed:
 # k8s_objects fails to start on an unknown resource.
 #
-# host.name: pod name for pod-sourced data, node name for node-sourced data,
-# this collector's pod name otherwise (cluster-level data).
+# No host.name: none of this data describes a host. Nodes and pods are
+# identified by k8s.node.name and k8s.pod.name.
 # ─────────────────────────────────────────────────────────────────────────────
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
@@ -183,15 +183,12 @@ spec:
       groupbyattrs/resources:
         keys: [k8s.namespace.name]
 
-      # host.name and service.name, on every pipeline (see the header).
+      # service.name, on every pipeline.
       transform/identity:
         error_mode: ignore
         metric_statements: &identity
           - context: resource
             statements:
-              - set(resource.attributes["host.name"], "${env:K8S_POD_NAME}")
-              - set(resource.attributes["host.name"], resource.attributes["k8s.node.name"]) where resource.attributes["k8s.node.name"] != nil
-              - set(resource.attributes["host.name"], resource.attributes["k8s.pod.name"]) where resource.attributes["k8s.pod.name"] != nil
               - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"]) where resource.attributes["service.name"] == nil
               - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"]) where resource.attributes["service.name"] == nil
               - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"]) where resource.attributes["service.name"] == nil
@@ -236,7 +233,7 @@ spec:
       telemetry:
         resource:
           service.name: o11y-cluster-agent
-          host.name: ${env:K8S_POD_NAME}
+          k8s.pod.name: ${env:K8S_POD_NAME}
           k8s.cluster.name: ${env:K8S_CLUSTER_NAME}
         metrics:
           readers:

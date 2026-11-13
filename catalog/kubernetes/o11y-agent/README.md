@@ -23,8 +23,8 @@ ServiceMonitor of the Cilium release.
 Every signal carries, with the OTel semantic-convention names:
 
 - `k8s.cluster.name` — `lungmen.akn`, `rhodes.akn`, … (set per project);
-- `host.name` — the pod name when the data comes from a pod, the node name otherwise (the collector's pod name for
-  cluster-level data);
+- `host.name` — the node name, only on host-level data (`hostmetrics`, Talos logs). Pod and Kubernetes-object data
+  carry `k8s.node.name` / `k8s.pod.name` instead, so pod telemetry never shows up as a host;
 - `service.name` — label `app.kubernetes.io/name`, else the workload (deployment, statefulset, daemonset, cronjob, job),
   else the container, else the pod. Non-pod sources use `hostmetrics`, `kubelet`, `k8s-cluster`, `k8s-events`,
   `k8s-objects`, or the Talos service (`machined`, `kubelet`, `etcd`, …, `kernel`);
