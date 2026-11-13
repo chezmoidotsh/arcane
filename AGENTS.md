@@ -213,8 +213,11 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   the Proxmox host (ADR-013, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/`), fronted by Caddy.
   The only write path is OTLP/HTTP on `:4318` (ADR-018), through an OTLP gateway (an OpenTelemetry Collector that turns
   OTLP/JSON into protobuf); `:443` is read-only. It is fed by the shared `catalog/nix/modules/o11y-agent/`
-  (`catalog.o11yAgent`) of each LXC and by the Proxmox VE metric server. The per-cluster agents planned by ADR-013 are
-  not deployed: no `VMAgent` or collector exists under `projects/lungmen.akn/` or `projects/rhodes.akn/`.
+  (`catalog.o11yAgent`) of each LXC, by the Proxmox VE metric server, and on `lungmen.akn` and `rhodes.akn` by the
+  OpenTelemetry Collectors of `catalog/kubernetes/o11y-agent/` (namespace `o11y-agent-system`, OpenTelemetry Operator):
+  a hostNetwork node agent (node metrics, kubelet stats, pod and Talos logs, ServiceMonitor/PodMonitor and
+  `prometheus.io/*` scrapes through the Target Allocator) and a cluster agent (cluster state, events, CRD snapshots). No
+  `VMAgent`: OTLP only. Per-flow Hubble export is not done yet (#1516).
 - `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
   database (`projects/rhodes.akn/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources and authenticates
   via Pocket-Id OIDC. The Grafana Operator itself runs in `o11y-agent-system` on every cluster: on `rhodes.akn` it
@@ -451,6 +454,7 @@ kubectl get pvc -A -o wide
 ### Observability checks
 
 ```sh
-# Metrics/logs live on the central NixOS LXC; no in-cluster collector yet. The o11y namespace holds Grafana (rhodes.akn)
+# Metrics/logs live on the central NixOS LXC, fed by the in-cluster OTel agents. The o11y namespace holds Grafana (rhodes.akn)
+kubectl get pods -n o11y-agent-system
 kubectl get pods -n o11y
 ```
