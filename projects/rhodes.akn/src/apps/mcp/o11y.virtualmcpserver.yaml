@@ -42,7 +42,7 @@ spec:
     type: oidc
     oidcConfigRef:
       name: mcp-o11y
-      audience: https://o11y.mcp.chezmoi.sh
-      resourceUrl: https://o11y.mcp.chezmoi.sh
+      audience: https://o11y.mcp.chezmoi.sh/mcp
+      resourceUrl: https://o11y.mcp.chezmoi.sh/mcp
   outgoingAuth:
     source: discovered
