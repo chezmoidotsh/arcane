@@ -132,6 +132,12 @@ gatewayAPI:
 
 # Hubble Observability (flow visibility + UI)
 # hubble.enabled is already true by default; relay/UI are opt-in.
+# Log formats of the agent pods (ADR-020): the Hubble HTTP responses exported
+# on the stdout of cilium-agent (hubble.export below), logfmt otherwise.
+podAnnotations:
+  o11y.chezmoi.sh/log-format: logfmt
+  o11y.chezmoi.sh/log-format.cilium-agent: hubble-http
+
 hubble:
   # Aggregated flow metrics per workload pair, scraped through this
   # ServiceMonitor by the o11y node agent of each node (o11y-agent, Target
@@ -150,6 +156,42 @@ hubble:
     serviceMonitor:
       enabled: true
       interval: 30s
+  # One JSON line per HTTP response of the L7 proxy (the Envoy of the Gateways)
+  # on the stdout of cilium-agent, where the o11y agent turns it into an OTel
+  # HTTP log (hubble-http parser, ADR-020). Responses only: they carry the
+  # method, the URL, the status code and the latency of the request.
+  export:
+    static:
+      enabled: true
+      filePath: stdout
+      allowList:
+        - '{"event_type":[{"type":129}],"http_status_code":["1+","2+","3+","4+","5+"]}'
+      fieldMask:
+        - time
+        - verdict
+        - is_reply
+        - traffic_direction
+        - node_name
+        - l7
+        - source.namespace
+        - source.pod_name
+        - source.workloads
+        - destination.namespace
+        - destination.pod_name
+        - destination.workloads
+  # L7 flows (export, Relay, UI) carry URLs and headers: query strings, user
+  # info and every header but these are replaced by HUBBLE_REDACTED.
+  redact:
+    enabled: true
+    http:
+      urlQuery: true
+      userInfo: true
+      headers:
+        allow:
+          - user-agent
+          - x-forwarded-for
+          - x-request-id
+          - traceparent
   relay:
     enabled: true
     image:

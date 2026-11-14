@@ -17,6 +17,8 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: cilium-agent
+        o11y.chezmoi.sh/log-format: logfmt
+        o11y.chezmoi.sh/log-format.cilium-agent: hubble-http
       labels:
         app.kubernetes.io/name: cilium-agent
         app.kubernetes.io/part-of: cilium
