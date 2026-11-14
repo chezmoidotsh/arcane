@@ -20,7 +20,7 @@ name: 🔭 o11y Log Parsers
 on:
   push:
     branches: [main]
-    paths: &paths
+    paths:
       - ".github/workflows/push,pull_request.o11y-parsers.yaml"
       - ".mise/tasks/o11y/parsers/**"
       - "catalog/kubernetes/o11y-agent/kustomize/**"
@@ -28,7 +28,12 @@ on:
       - "catalog/opa/policies/OBS001:kubernetes.rego"
 
   pull_request:
-    paths: *paths
+    paths:
+      - ".github/workflows/push,pull_request.o11y-parsers.yaml"
+      - ".mise/tasks/o11y/parsers/**"
+      - "catalog/kubernetes/o11y-agent/kustomize/**"
+      - "catalog/kubernetes/o11y-agent/parsers/**"
+      - "catalog/opa/policies/OBS001:kubernetes.rego"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
