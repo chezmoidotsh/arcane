@@ -19,6 +19,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: none
+        o11y.chezmoi.sh/log-format.immich-server: ansi
+        o11y.chezmoi.sh/log-format.redis: redis
       labels:
         app.kubernetes.io/component: server
         app.kubernetes.io/instance: immich

@@ -271,6 +271,8 @@ spec:
     value: 400MiB
   image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.162.0
   mode: deployment
+  podAnnotations:
+    o11y.chezmoi.sh/log-format: zap-console
   podSecurityContext:
     runAsNonRoot: true
     seccompProfile:

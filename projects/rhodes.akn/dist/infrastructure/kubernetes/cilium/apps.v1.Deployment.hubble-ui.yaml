@@ -20,7 +20,10 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations: null
+      annotations:
+        o11y.chezmoi.sh/log-format: logfmt
+        o11y.chezmoi.sh/log-format.cilium-envoy: bracketed
+        o11y.chezmoi.sh/log-format.frontend: none
       labels:
         app.kubernetes.io/name: hubble-ui
         app.kubernetes.io/part-of: cilium
@@ -72,10 +75,8 @@ spec:
             drop:
             - ALL
         terminationMessagePolicy: FallbackToLogsOnError
-        volumeMounts: null
       nodeSelector:
         kubernetes.io/os: linux
-      priorityClassName: null
       securityContext:
         fsGroup: 1001
         runAsGroup: 1001

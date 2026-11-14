@@ -9,3 +9,18 @@ resources:
 images:
   - name: ghcr.io/squat/generic-device-plugin
     newName: oci.chezmoi.sh/ghcr.io/squat/generic-device-plugin
+
+patches:
+  # Log formats of the pods (ADR-020). go-kit logfmt; no line seen in 7 days.
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: logfmt

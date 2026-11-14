@@ -41,3 +41,19 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/kashalls/external-dns-unifi-webhook
     # oripathy: type=oci upstream=github.com/kashalls/external-dns-unifi-webhook tagPrefix=v digest=false
     newTag: v0.5.2
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: logfmt
+              o11y.chezmoi.sh/log-format.webhook: json

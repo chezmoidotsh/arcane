@@ -16,6 +16,8 @@ spec:
       app.kubernetes.io/name: linkding
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: none
       labels:
         app.kubernetes.io/instance: linkding
         app.kubernetes.io/name: linkding

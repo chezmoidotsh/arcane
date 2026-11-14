@@ -17,6 +17,7 @@ spec:
   template:
     metadata:
       annotations:
+        o11y.chezmoi.sh/log-format: logfmt
         prometheus.io/path: /metrics
         prometheus.io/port: "8085"
         prometheus.io/scrape: "true"
@@ -67,7 +68,6 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
-        securityContext: null
         volumeMounts:
         - mountPath: /credentials
           name: cloud-credentials

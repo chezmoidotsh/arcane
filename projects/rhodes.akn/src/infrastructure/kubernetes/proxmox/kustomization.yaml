@@ -60,3 +60,18 @@ images:
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/livenessprobe
     # oripathy: type=oci upstream=github.com/kubernetes-csi/livenessprobe tagPrefix=v digest=false
     newTag: v2.16.0
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: klog

@@ -11,6 +11,9 @@ spec:
       app.kubernetes.io/name: n8n-proxy
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: none
+        o11y.chezmoi.sh/log-format.redis: redis
       labels:
         app.kubernetes.io/name: n8n-proxy
     spec:

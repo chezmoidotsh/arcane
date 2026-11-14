@@ -22,6 +22,7 @@ spec:
   template:
     metadata:
       annotations:
+        o11y.chezmoi.sh/log-format: klog
         prometheus.io/path: /metrics
         prometheus.io/port: "9402"
         prometheus.io/scrape: "true"

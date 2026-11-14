@@ -16,6 +16,8 @@ spec:
       app: csi-smb-node-win
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: klog
       labels:
         app: csi-smb-node-win
         app.kubernetes.io/instance: csi-driver-smb

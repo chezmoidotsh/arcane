@@ -54,3 +54,17 @@ patches:
       metadata:
         name: n8n-task-runners
         namespace: n8n
+  # Log formats of the pods (ADR-020). n8n logs plain text without level.
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: none
+              o11y.chezmoi.sh/log-format.redis: redis

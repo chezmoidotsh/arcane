@@ -16,6 +16,8 @@ spec:
       app.kubernetes.io/name: spoolman
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: uvicorn
       labels:
         app.kubernetes.io/instance: spoolman
         app.kubernetes.io/name: spoolman

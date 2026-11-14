@@ -25,6 +25,8 @@ spec:
     metadata:
       annotations:
         backup.velero.io/backup-volumes: persistent-storage
+        o11y.chezmoi.sh/log-format: bracketed
+        o11y.chezmoi.sh/log-format.redis: redis
       labels:
         app.kubernetes.io/component: webserver
         app.kubernetes.io/instance: paperless-ngx

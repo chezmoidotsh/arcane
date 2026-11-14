@@ -20,6 +20,8 @@ spec:
       app.kubernetes.io/part-of: toolhive-operator
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: golog
       labels:
         app.kubernetes.io/instance: toolhive-operator
         app.kubernetes.io/managed-by: Helm

@@ -18,6 +18,7 @@ spec:
     metadata:
       annotations:
         backup.velero.io/backup-volumes: persistent
+        o11y.chezmoi.sh/log-format: bracketed
       labels:
         app.kubernetes.io/instance: jellyfin
         app.kubernetes.io/name: jellyfin

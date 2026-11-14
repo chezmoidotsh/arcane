@@ -31,3 +31,38 @@ helmCharts:
     namespace: kube-system
 
     valuesFile: helmvalues/default.yaml
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+      name: ^(cilium-envoy|cilium-operator|hubble-relay|hubble-ui|hubble-generate-certs.*)$
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: logfmt
+              o11y.chezmoi.sh/log-format.cilium-envoy: bracketed
+              o11y.chezmoi.sh/log-format.frontend: none
+  - target:
+      kind: CronJob
+      name: ^(cilium-envoy|cilium-operator|hubble-relay|hubble-ui|hubble-generate-certs.*)$
+    patch: |-
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: any
+      spec:
+        jobTemplate:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  o11y.chezmoi.sh/log-format: logfmt
+                  o11y.chezmoi.sh/log-format.cilium-envoy: bracketed
+                  o11y.chezmoi.sh/log-format.frontend: none

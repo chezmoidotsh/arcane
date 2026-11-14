@@ -29,3 +29,19 @@ images:
     newName: oci.chezmoi.sh/docker.io/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=true
     newTag: 8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: bracketed
+              o11y.chezmoi.sh/log-format.redis: redis

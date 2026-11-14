@@ -43,6 +43,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# ── 0. The OPA rule OBS001 knows exactly these formats (plus none) ─────────
+POLICY="${REPO_ROOT}/catalog/opa/policies/OBS001:kubernetes.rego"
+declared="$(sed -n '/^log_formats := {/,/^}/p' "${POLICY}" | grep -o '"[^"]*"' | tr -d '"' | grep -vx none | sort)"
+available="$(for k in "${PARSERS}"/*/kustomization.yaml; do basename "$(dirname "${k}")"; done | sort)"
+if [[ ${declared} != "${available}" ]]; then
+	echo "log_formats of ${POLICY#"${REPO_ROOT}/"} does not match the parser directories:" >&2
+	diff <(echo "${declared}") <(echo "${available}") >&2 || true
+	exit 1
+fi
+
 # ── 1. Agent config as rendered, with every parser component ───────────────
 {
 	echo "apiVersion: kustomize.config.k8s.io/v1beta1"

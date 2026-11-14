@@ -20,4 +20,13 @@ spec:
     name: o11y
   image: oci.chezmoi.sh/ghcr.io/victoriametrics/mcp-victoriametrics:v1.20.2
   mcpPort: 8080
+  podTemplateSpec:
+    metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: logfmt
+  resourceOverrides:
+    proxyDeployment:
+      podTemplateMetadataOverrides:
+        annotations:
+          o11y.chezmoi.sh/log-format: json
   transport: streamable-http

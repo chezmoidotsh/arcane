@@ -14,3 +14,38 @@ resources:
   - o11y.victoriatraces.mcpserver.yaml
   - o11y.virtualmcpserver.yaml
   - o11y.httproute.yaml
+
+# Log formats of the pods the ToolHive operator creates (ADR-020): the MCP
+# servers (logfmt), their proxies (json) and the vMCP (json).
+patches:
+  - target:
+      group: toolhive.stacklok.dev
+      kind: MCPServer
+    patch: |-
+      apiVersion: toolhive.stacklok.dev/v1beta1
+      kind: MCPServer
+      metadata:
+        name: any
+      spec:
+        podTemplateSpec:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: logfmt
+        resourceOverrides:
+          proxyDeployment:
+            podTemplateMetadataOverrides:
+              annotations:
+                o11y.chezmoi.sh/log-format: json
+  - target:
+      group: toolhive.stacklok.dev
+      kind: VirtualMCPServer
+    patch: |-
+      apiVersion: toolhive.stacklok.dev/v1beta1
+      kind: VirtualMCPServer
+      metadata:
+        name: any
+      spec:
+        podTemplateSpec:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: json

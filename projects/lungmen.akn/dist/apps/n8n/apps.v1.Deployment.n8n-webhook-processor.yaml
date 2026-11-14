@@ -24,6 +24,8 @@ spec:
       annotations:
         checksum/config: 185114e55b3517235405d023dfefcd92e2f2e4125453f347038a5b6b04eea754
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+        o11y.chezmoi.sh/log-format: none
+        o11y.chezmoi.sh/log-format.redis: redis
       labels:
         app.kubernetes.io/component: webhook-processor
         app.kubernetes.io/instance: n8n

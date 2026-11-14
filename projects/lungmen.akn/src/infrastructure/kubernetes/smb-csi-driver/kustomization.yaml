@@ -36,3 +36,18 @@ images:
     newTag: v2.18.0
   - name: registry.k8s.io/sig-storage/smbplugin
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: klog

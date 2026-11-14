@@ -21,3 +21,18 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server
     # oripathy: type=oci upstream=github.com/actualbudget/actual tagPrefix=v name=actual-budget digest=false
     newTag: "26.10.0"
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: ansi

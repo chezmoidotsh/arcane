@@ -31,6 +31,19 @@ patches:
     target:
       kind: ClusterSecretStore
       name: vault.chezmoi.sh
+  # Log formats of the pods (ADR-020).
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: json
 
 images:
   - name: oci.external-secrets.io/external-secrets/external-secrets

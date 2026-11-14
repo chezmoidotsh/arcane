@@ -20,6 +20,7 @@ spec:
         metadata:
           annotations:
             checksum/config: 700b041c1b576f5c56572ef93d91c6a78c7f423c4f34a01c9c110c616dc78993
+            o11y.chezmoi.sh/log-format: klog
           labels:
             app.kubernetes.io/instance: descheduler
             app.kubernetes.io/name: descheduler

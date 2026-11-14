@@ -35,6 +35,8 @@ spec:
         type: Recreate
       template:
         metadata:
+          annotations:
+            o11y.chezmoi.sh/log-format: logfmt
           labels:
             app.kubernetes.io/name: grafana
         spec:
