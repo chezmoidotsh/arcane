@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: json (ADR-020) — o11y.chezmoi.sh/log-format: json
+# ─────────────────────────────────────────────────────────────────────────────
+# JSON lines (zap, slog, logrus, hclog, …):
+#   {"level":"info","ts":"…","msg":"…"}   {"@level":"info","@message":"…"}
+# Level from `level`, `@level`, `severity` or `lvl`; exception.message from
+# `error` or `err`, exception.stacktrace from `stacktrace` or `stack`.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-json
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - set(log.cache["json"], ParseJSON(log.body)) where IsMatch(log.body, "^\\s*\\{")
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["level"]) where IsString(log.cache["json"]["level"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["@level"]) where log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["@level"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["severity"]) where log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["severity"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["lvl"]) where log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["lvl"])
+          - set(log.attributes["exception.message"], log.cache["json"]["error"]) where IsString(log.cache["json"]["error"]) and log.cache["json"]["error"] != ""
+          - set(log.attributes["exception.message"], log.cache["json"]["err"]) where log.attributes["exception.message"] == nil and IsString(log.cache["json"]["err"]) and log.cache["json"]["err"] != ""
+          - set(log.attributes["exception.stacktrace"], log.cache["json"]["stacktrace"]) where IsString(log.cache["json"]["stacktrace"])
+          - set(log.attributes["exception.stacktrace"], log.cache["json"]["stack"]) where log.attributes["exception.stacktrace"] == nil and IsString(log.cache["json"]["stack"])
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1json
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-json]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "json"
+    pipelines: [logs/parsers/json]

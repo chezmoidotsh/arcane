@@ -15,5 +15,18 @@ resources:
   - rbac.yaml
   - security/
 
+# Generic log formats, always available; projects add the application ones.
+# A container is parsed only if its pod declares its format (ADR-020).
+components:
+  - ../parsers/ansi
+  - ../parsers/bracketed
+  - ../parsers/golog
+  - ../parsers/json
+  - ../parsers/klog
+  - ../parsers/logfmt
+  - ../parsers/redis
+  - ../parsers/uvicorn
+  - ../parsers/zap-console
+
 configurations:
   - kustomizeconfig.yaml

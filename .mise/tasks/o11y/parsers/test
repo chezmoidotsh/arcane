@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+#MISE description="Run the o11y-agent pod log parsers against their test fixtures with a real collector"
+#MISE tools={jq="latest", kustomize="latest", yq="latest"}
+#USAGE arg "[parser]" help="Only run the fixtures of this parser (directory name under parsers/)"
+#
+# Renders the o11y-agent base with every parser component (kustomize), then
+# runs the pod log routing exactly as rendered (transform/log-format, the
+# routing connector, every logs/parsers/<format> pipeline, transform/severity)
+# on the records of catalog/kubernetes/o11y-agent/parsers/<format>/tests/
+# fixtures.yaml, sent with o11y.log.format=<format> unless they set it, and
+# checks severity_number and attributes of each output record (ADR-020).
+#
+# The collector is otelcol-contrib at the version the agent runs (image tag of
+# agent.opentelemetrycollector.yaml), downloaded by mise from the GitHub
+# releases of open-telemetry/opentelemetry-collector-releases.
+#
+# Fixture format:
+#
+#   - body: 'I1114 05:48:38.081657  1 x.go:1] msg'
+#     resource: {o11y.log.format: none}          # optional
+#     expect:
+#       severity_number: 9                       # 0 = unspecified
+#       attributes: {exception.message: boom}    # subset, typed (25 != "25")
+#       absent: [error.type]                     # optional
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+O11Y="${REPO_ROOT}/catalog/kubernetes/o11y-agent"
+PARSERS="${O11Y}/parsers"
+AGENT="${O11Y}/kustomize/agent.opentelemetrycollector.yaml"
+
+VERSION="$(yq -r '.spec.image | split(":") | .[-1]' "${AGENT}")"
+OTELCOL_TOOL="github:open-telemetry/opentelemetry-collector-releases[asset_pattern=otelcol-contrib_{{ version }}_{{ os(macos=\"darwin\") }}_{{ arch(x64=\"amd64\") }}.tar.gz]@${VERSION}"
+
+# kustomize only accepts relative paths, so the temporary kustomization lives
+# under parsers/; inputs and outputs go to the system temporary directory.
+WORK="$(mktemp -d)"
+KUSTOMIZATION="$(mktemp -d "${PARSERS}/.test.XXXXXX")"
+COLLECTOR_PID=""
+cleanup() {
+	[[ -n ${COLLECTOR_PID} ]] && kill "${COLLECTOR_PID}" 2>/dev/null || true
+	rm -rf "${WORK}" "${KUSTOMIZATION}"
+}
+trap cleanup EXIT
+
+# ── 1. Agent config as rendered, with every parser component ───────────────
+{
+	echo "apiVersion: kustomize.config.k8s.io/v1beta1"
+	echo "kind: Kustomization"
+	echo "resources: [../../kustomize]"
+	echo "components:"
+	for component in "${PARSERS}"/*/kustomization.yaml; do
+		name="$(basename "$(dirname "${component}")")"
+		# The generic formats are already included by the base.
+		grep -q "../parsers/${name}$" "${O11Y}/kustomize/kustomization.yaml" || echo "  - ../${name}"
+	done
+} >"${KUSTOMIZATION}/kustomization.yaml"
+kustomize build "${KUSTOMIZATION}" |
+	yq 'select(.kind == "OpenTelemetryCollector" and .metadata.name == "agent") | .spec.config' \
+		>"${WORK}/rendered.yaml"
+
+# ── 2. Fixtures → one OTLP/JSON line per record ────────────────────────────
+for fixtures in "${PARSERS}"/${usage_parser:-*}/tests/fixtures.yaml; do
+	[[ -f ${fixtures} ]] || {
+		echo "no fixtures: ${fixtures}" >&2
+		exit 1
+	}
+	parser="$(basename "$(dirname "$(dirname "${fixtures}")")")"
+	yq -o=json -I=0 ".[] | .parser = \"${parser}\"" "${fixtures}"
+done >"${WORK}/fixtures.jsonl"
+
+jq -c '{resourceLogs: [{
+	resource: {attributes: ({"o11y.log.format": .parser} + (.resource // {}) | to_entries | map({key, value: {stringValue: (.value | tostring)}}))},
+	scopeLogs: [{logRecords: [{body: {stringValue: .body}}]}]
+}]}' "${WORK}/fixtures.jsonl" >"${WORK}/in.jsonl"
+EXPECTED="$(wc -l <"${WORK}/fixtures.jsonl" | tr -d ' ')"
+
+# ── 3. Run the collector until every record went through ───────────────────
+# Same processors, connectors and format pipelines; only the file receiver
+# and exporter replace the pod logs and the appliance.
+yq "
+	.receivers = {\"otlp_json_file\": {\"include\": [\"${WORK}/in.jsonl\"], \"start_at\": \"beginning\"}} |
+	.processors |= with_entries(select(.key | test(\"^transform/(parse-.+|log-format|severity)$\"))) |
+	.exporters = {\"file\": {\"path\": \"${WORK}/out.jsonl\"}} |
+	del(.extensions) |
+	.service = {\"telemetry\": {\"metrics\": {\"level\": \"none\"}}, \"pipelines\": (.service.pipelines | with_entries(select(.key | test(\"^logs/parsers/\"))))} |
+	.service.pipelines[\"logs/pods\"] = {\"receivers\": [\"otlp_json_file\"], \"processors\": [\"transform/log-format\"], \"exporters\": [\"routing/log-format\"]} |
+	.service.pipelines[\"logs/pods/export\"] = {\"receivers\": [\"routing/log-format\", \"forward/parsed\"], \"processors\": [\"transform/severity\"], \"exporters\": [\"file\"]}
+" "${WORK}/rendered.yaml" >"${WORK}/config.yaml"
+
+echo "otelcol-contrib ${VERSION}, ${EXPECTED} fixtures"
+mise exec "${OTELCOL_TOOL}" -- otelcol-contrib --config="${WORK}/config.yaml" >"${WORK}/collector.log" 2>&1 &
+COLLECTOR_PID=$!
+
+received=0
+for _ in $(seq 1 60); do
+	sleep 0.5
+	# The exporter may be mid-line: an unparsable read just means "not yet".
+	received="$(jq -s '[.[].resourceLogs[].scopeLogs[].logRecords[]] | length' "${WORK}/out.jsonl" 2>/dev/null)" || received=0
+	[[ ${received} -ge ${EXPECTED} ]] && break
+	kill -0 "${COLLECTOR_PID}" 2>/dev/null || break
+done
+kill "${COLLECTOR_PID}" 2>/dev/null || true
+wait "${COLLECTOR_PID}" 2>/dev/null || true
+COLLECTOR_PID=""
+
+# ── 4. Compare ─────────────────────────────────────────────────────────────
+touch "${WORK}/out.jsonl" # nothing exported: every fixture is a MISS
+jq -nr --slurpfile fixtures "${WORK}/fixtures.jsonl" --slurpfile out "${WORK}/out.jsonl" '
+	def value: if has("intValue") then (.intValue | tonumber)
+		elif has("doubleValue") then .doubleValue
+		elif has("boolValue") then .boolValue
+		else .stringValue end;
+	([$out[].resourceLogs[].scopeLogs[].logRecords[] | {key: .body.stringValue, value: .}] | from_entries) as $records
+	| $fixtures[]
+	| . as $f
+	| ($f.body | gsub("\n"; "\\n") | .[0:70]) as $label
+	| $records[$f.body] as $r
+	| if $r == null then "MISS \($f.parser): \($label)"
+	else
+		(($r.attributes // []) | map({key, value: (.value | value)}) | from_entries) as $got
+		| [
+			(($r.severityNumber // 0) as $s | ($f.expect.severity_number // 0) as $w
+				| select($s != $w) | "severity_number \($s) != \($w)"),
+			(($f.expect.attributes // {}) | to_entries[]
+				| select($got[.key] != .value) | "\(.key)=\($got[.key] | tojson) != \(.value | tojson)"),
+			(($f.expect.absent // [])[] as $k | select($got | has($k)) | "\($k) should be absent, got \($got[$k] | tojson)")
+		] as $errors
+		| if ($errors | length) == 0 then "ok   \($f.parser): \($label)"
+		else "FAIL \($f.parser): \($label)" + ($errors | map("\n       " + .) | join(""))
+		end
+	end
+' | tee "${WORK}/results.txt"
+
+failed="$(grep -cE '^(FAIL|MISS) ' "${WORK}/results.txt" || true)"
+echo
+echo "$((EXPECTED - failed))/${EXPECTED} passed"
+if [[ ${failed} -gt 0 ]]; then
+	grep -iE 'error|warn' "${WORK}/collector.log" | tail -20 || true
+	exit 1
+fi

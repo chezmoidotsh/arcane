@@ -1,0 +1,13 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: "I1114 05:48:38.081657       1 leaderelection.go:293] successfully renewed lease proxmox-system/csi"
+  expect: { severity_number: 9 }
+- body: 'E1114 05:51:12.693753       1 instances.go:254] "InstanceMetadata() failed" err="error get ha-groups not authorized" node="worker-1"'
+  expect: { severity_number: 17, attributes: { exception.message: error get ha-groups not authorized } }
+- body: "W1114 06:00:11.917098       1 reflector.go:561] watch ended"
+  expect: { severity_number: 13 }
+- body: "F1114 06:00:12.000000       1 main.go:10] cannot start"
+  expect: { severity_number: 21 }
+- body: '{"level":"info","msg":"json line"}'
+  expect: { severity_number: 0 }

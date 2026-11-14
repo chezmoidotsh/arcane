@@ -1,0 +1,11 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: 'WARN: 2026/11/14 00:04:00 Target 3: health check failed: Get "http://internal:8080": context deadline exceeded'
+  expect: { severity_number: 13 }
+- body: '2026/11/14 11:00:17 INFO Checking for updates...'
+  expect: { severity_number: 9 }
+- body: '2026/11/14 11:00:18.123456 ERROR cannot reach registry'
+  expect: { severity_number: 17 }
+- body: '2026/11/14 11:00:19 plain std log line'
+  expect: { severity_number: 0 }

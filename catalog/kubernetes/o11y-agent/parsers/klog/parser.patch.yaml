@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: klog (ADR-020) — o11y.chezmoi.sh/log-format: klog
+# ─────────────────────────────────────────────────────────────────────────────
+# klog lines (Kubernetes components, CSI sidecars, …):
+#   E1114 05:51:12.693753   1 file.go:254] "msg" err="…" key="value"
+# Level from the I/W/E/F prefix; exception.message from `err=` or `error=`.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-klog
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^(?P<lvl>[IWEF])\\d{4} \\d{2}:\\d{2}:\\d{2}"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""), "upsert")
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=(?P<err>[^\\s\"]\\S*)"), "insert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"] != nil and log.cache["err"] != ""
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1klog
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-klog]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "klog"
+    pipelines: [logs/parsers/klog]

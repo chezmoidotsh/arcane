@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: golog (ADR-020) — o11y.chezmoi.sh/log-format: golog
+# ─────────────────────────────────────────────────────────────────────────────
+# Go standard library logger, with the level before or after the date:
+#   WARN: 2026/11/14 00:04:00 Target 3: health check failed   (newt)
+#   2026/11/14 11:00:17 INFO Checking for updates...           (slog default)
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-golog
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - 'merge_maps(log.cache, ExtractPatterns(log.body, "^(?P<lvl>[A-Z]+): \\d{4}/\\d{2}/\\d{2} "), "upsert")'
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? (?P<lvl>[A-Z]+) "), "insert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1golog
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-golog]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "golog"
+    pipelines: [logs/parsers/golog]

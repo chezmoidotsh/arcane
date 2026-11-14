@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Log format `golog` (ADR-020): processor, pipeline and route of the format.
+patches:
+  - path: parser.patch.yaml
+    target:
+      group: opentelemetry.io
+      kind: OpenTelemetryCollector
+      name: agent
