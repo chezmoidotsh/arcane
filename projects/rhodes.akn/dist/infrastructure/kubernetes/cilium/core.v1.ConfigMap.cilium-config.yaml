@@ -124,7 +124,7 @@ data:
   hubble-network-policy-correlation-enabled: "true"
   hubble-redact-enabled: "true"
   hubble-redact-http-headers-allow: user-agent x-forwarded-for x-request-id traceparent
-  hubble-redact-http-urlquery: "true"
+  hubble-redact-http-urlquery: "false"
   hubble-redact-http-userinfo: "true"
   hubble-socket-path: /var/run/cilium/hubble.sock
   hubble-tls-cert-file: /var/lib/cilium/tls/hubble/server.crt

@@ -185,12 +185,13 @@ hubble:
         - destination.namespace
         - destination.pod_name
         - destination.workloads
-  # L7 flows (export, Relay, UI) carry URLs and headers: query strings, user
-  # info and every header but these are replaced by HUBBLE_REDACTED.
+  # L7 flows (export, Relay, UI) carry URLs and headers: user info and every
+  # header but these are replaced by HUBBLE_REDACTED. Query strings are kept:
+  # without them the HTTP logs lose most of what makes a request tellable apart.
   redact:
     enabled: true
     http:
-      urlQuery: true
+      urlQuery: false
       userInfo: true
       headers:
         allow:

@@ -3,7 +3,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Requires the Hubble static exporter of the cluster to write the L7 HTTP
 # responses on the stdout of cilium-agent (hubble.export.static, filePath:
-# stdout, with redaction), one JSON line each:
+# stdout, with header and user-info redaction), one JSON line each:
 #
 #   {"flow":{"time":"…","verdict":"FORWARDED","is_reply":true,
 #     "source":{"namespace":"vault","pod_name":"openbao-0",
@@ -44,7 +44,7 @@
           - set(log.attributes["error.type"], String(Int(log.cache["http"]["code"]))) where log.cache["http"]["code"] != nil and Int(log.cache["http"]["code"]) >= 500
           - set(log.attributes["cilium.http.duration"], Double(log.cache["flow"]["l7"]["latency_ns"]) / 1000000000.0) where log.cache["flow"]["l7"]["latency_ns"] != nil
 
-          # ── 3. url.* and server.address (the URL is already redacted) ─────────
+          # ── 3. url.* and server.address (user info redacted by Hubble) ────────
           - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["url"], "^(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://(?P<host>[^/:?#]+)(?::(?P<port>\\d+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?"), "upsert") where IsString(log.cache["http"]["url"])
           - set(log.attributes["url.full"], log.cache["http"]["url"]) where log.cache["scheme"] != nil
           - set(log.attributes["url.scheme"], log.cache["scheme"]) where log.cache["scheme"] != nil
