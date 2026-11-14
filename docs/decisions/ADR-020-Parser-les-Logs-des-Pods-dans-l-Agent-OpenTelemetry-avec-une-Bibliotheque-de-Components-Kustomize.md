@@ -233,19 +233,7 @@ flowchart TD
   `info`.
 - `-` Ne sait pas exprimer un format par conteneur ni un conteneur volontairement non parsé.
 
-### Option 4 : Vector à la place du collecteur OpenTelemetry
-
-> **Statut : REJETÉE**
-
-Vector (Rust, VRL compilé) consomme moins de CPU en théorie qu'OTTL interprété, et sait émettre de l'OTLP : il ne
-contredit pas l'[ADR-018](ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md). La seule
-raison de l'écarter est l'ajout d'un composant à côté du collecteur OpenTelemetry déjà déployé.
-
-- `+` Parsing plus rapide sur le papier.
-- `-` Un second agent à exécuter, configurer et mettre à jour, pour un gain de CPU négligeable à environ 12 logs par
-  seconde.
-
-### Option 5 : fragments de configuration chargés par `${file:...}`
+### Option 4 : fragments de configuration chargés par `${file:...}`
 
 > **Statut : REJETÉE**
 
@@ -267,9 +255,8 @@ conteneur (le nom du conteneur dans la clé de l'annotation), et `none` pour ce 
 part, le coût ne dépend pas du nombre de formats, puisque le connecteur `routing` évalue ses routes une fois par lot de
 ressource et qu'une ligne ne traverse que les processeurs de son format ; chaque format garde en plus son pipeline et
 ses métriques. La détection automatique est écartée pour son parseur implicite, son coût par ligne et son risque de
-mauvaise détection ; le `transform` unique pour son coût proportionnel au nombre de formats ; Vector pour le seul
-composant supplémentaire qu'il impose ; les fragments `${file:...}` parce qu'ils n'économisent aucune modification de la
-configuration principale.
+mauvaise détection ; le `transform` unique pour son coût proportionnel au nombre de formats ; les fragments
+`${file:...}` parce qu'ils n'économisent aucune modification de la configuration principale.
 
 Les compromis acceptés sont l'annotation obligatoire de chaque charge de travail (par `podAnnotations` ou par un patch
 Kustomize, plus explicite) et les trois points de patch par composant. Cette décision est à revoir si l'agent dépasse
