@@ -6,6 +6,8 @@ metadata:
   namespace: mcp
 spec:
   authServerConfig:
+    cimd:
+      enabled: true
     hmacSecretRefs:
     - key: hmac
       name: mcp-o11y-auth
