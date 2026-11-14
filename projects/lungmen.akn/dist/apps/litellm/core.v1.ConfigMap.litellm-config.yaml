@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+data:
+  config.yaml: |
+    general_settings:
+      master_key: os.environ/PROXY_MASTER_KEY
+    litellm_settings:
+      drop_params: true
+      telemetry: false
+    model_list:
+    - litellm_params:
+        api_base: http://macstudio-kh37.lia.chezmoi.sh:1234/v1
+        api_key: lm-studio
+        model: openai/*
+      model_name: lmstudio/*
+    - litellm_params:
+        api_key: os.environ/OPENROUTER_API_KEY
+        model: openrouter/*
+      model_name: openrouter/*
+kind: ConfigMap
+metadata:
+  name: litellm-config
