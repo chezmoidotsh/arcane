@@ -1,0 +1,42 @@
+#!/usr/bin/python3 -I
+"""Sync the QEMU guest agent of every running VM that has it enabled.
+
+qemu-ga busy-loops at 100% of a CPU when a reply stays stuck in the
+virtio-serial port because the host client went away before reading it
+(unmerged fix: "qga: don't busy-loop writing to virtio-serial when host
+disconnected", qemu-devel 2026-07). Reading the port stops the loop, so
+syncing every minute bounds each occurrence to one minute.
+
+Talks to the QGA sockets directly: `qm agent` starts a Perl interpreter per
+call, ~50 s of CPU per run for ten VMs. A <vmid>.qga socket only exists for a
+running VM with the agent enabled. Only failures are logged (journal).
+"""
+
+import glob
+import json
+import os
+import random
+import re
+import socket
+import sys
+
+TIMEOUT = 5.0
+
+for path in sorted(glob.glob("/var/run/qemu-server/*.qga")):
+    vmid = os.path.basename(path).removesuffix(".qga")
+    sync_id = random.randint(1, 2**31)
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(TIMEOUT)
+            sock.connect(path)
+            sock.sendall(json.dumps({"execute": "guest-sync", "arguments": {"id": sync_id}}).encode() + b"\n")
+            reply = re.compile(rb'"return":\s*%d\b' % sync_id)
+            buf = b""
+            # Stale replies come first; read until ours.
+            while not reply.search(buf):
+                chunk = sock.recv(65536)
+                if not chunk:
+                    raise ConnectionError("closed before the sync reply")
+                buf = buf[-4096:] + chunk
+    except (OSError, ConnectionError) as exc:
+        print(f"VM {vmid}: guest agent sync failed: {exc}", file=sys.stderr)

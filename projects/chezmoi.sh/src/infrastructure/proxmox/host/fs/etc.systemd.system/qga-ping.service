@@ -1,0 +1,7 @@
+[Unit]
+Description=Ping the QEMU guest agents to unstick the qemu-ga busy loop
+After=pve-guests.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/qga-ping
