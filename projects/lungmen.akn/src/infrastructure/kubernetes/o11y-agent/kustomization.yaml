@@ -85,11 +85,7 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: Deployment, name: grafana-operator}
     patch: |-
-      kind: Deployment
-      metadata: {name: grafana-operator}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: zap-console}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: zap-console}}
   - target: {kind: Deployment, name: opentelemetry-operator}
     patch: |-
-      kind: Deployment
-      metadata: {name: opentelemetry-operator}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: json}

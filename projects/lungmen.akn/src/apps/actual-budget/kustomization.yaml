@@ -26,6 +26,4 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: StatefulSet, name: actual-budget}
     patch: |-
-      kind: StatefulSet
-      metadata: {name: actual-budget}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: ansi}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: ansi}

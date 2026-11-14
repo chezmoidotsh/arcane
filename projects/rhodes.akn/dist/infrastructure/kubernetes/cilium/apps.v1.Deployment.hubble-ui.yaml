@@ -74,8 +74,10 @@ spec:
             drop:
             - ALL
         terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts: null
       nodeSelector:
         kubernetes.io/os: linux
+      priorityClassName: null
       securityContext:
         fsGroup: 1001
         runAsGroup: 1001

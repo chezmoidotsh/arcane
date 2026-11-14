@@ -65,16 +65,10 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: DaemonSet, name: proxmox-csi-plugin-node}
     patch: |-
-      kind: DaemonSet
-      metadata: {name: proxmox-csi-plugin-node}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
   - target: {kind: Deployment, name: proxmox-cloud-controller-manager}
     patch: |-
-      kind: Deployment
-      metadata: {name: proxmox-cloud-controller-manager}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
   - target: {kind: Deployment, name: proxmox-csi-plugin-controller}
     patch: |-
-      kind: Deployment
-      metadata: {name: proxmox-csi-plugin-controller}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}

@@ -27,6 +27,4 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: CronJob, name: descheduler}
     patch: |-
-      kind: CronJob
-      metadata: {name: descheduler}
-      spec: {jobTemplate: {spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}}}
+      - {op: add, path: /spec/jobTemplate/spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}

@@ -41,16 +41,10 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: DaemonSet, name: csi-smb-node-win}
     patch: |-
-      kind: DaemonSet
-      metadata: {name: csi-smb-node-win}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
   - target: {kind: DaemonSet, name: csi-smb-node}
     patch: |-
-      kind: DaemonSet
-      metadata: {name: csi-smb-node}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
   - target: {kind: Deployment, name: csi-smb-controller}
     patch: |-
-      kind: Deployment
-      metadata: {name: csi-smb-controller}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}

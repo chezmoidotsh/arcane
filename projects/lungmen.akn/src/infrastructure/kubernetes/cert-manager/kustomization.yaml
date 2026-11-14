@@ -27,24 +27,16 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: Deployment, name: cert-manager-cainjector}
     patch: |-
-      kind: Deployment
-      metadata: {name: cert-manager-cainjector}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
   - target: {kind: Deployment, name: cert-manager-webhook}
     patch: |-
-      kind: Deployment
-      metadata: {name: cert-manager-webhook}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
   - target: {kind: Deployment, name: cert-manager}
     patch: |-
-      kind: Deployment
-      metadata: {name: cert-manager}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
   - target: {kind: Job, name: cert-manager-startupapicheck}
     patch: |-
-      kind: Job
-      metadata: {name: cert-manager-startupapicheck}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
 
 images:
   - name: quay.io/jetstack/cert-manager-cainjector

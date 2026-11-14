@@ -37,14 +37,10 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: Deployment, name: barman-cloud}
     patch: |-
-      kind: Deployment
-      metadata: {name: barman-cloud}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: json}}
   - target: {kind: Deployment, name: cloudnative-pg}
     patch: |-
-      kind: Deployment
-      metadata: {name: cloudnative-pg}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: json}
 
 images:
   - name: ghcr.io/cloudnative-pg/plugin-barman-cloud

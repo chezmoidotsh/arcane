@@ -29,6 +29,4 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: Deployment, name: toolhive-operator}
     patch: |-
-      kind: Deployment
-      metadata: {name: toolhive-operator}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: golog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: golog}}

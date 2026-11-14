@@ -47,9 +47,7 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: Deployment, name: newt-newt-main-tunnel}
     patch: |-
-      kind: Deployment
-      metadata: {name: newt-newt-main-tunnel}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: golog}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: golog}}
 
 labels:
   - pairs:

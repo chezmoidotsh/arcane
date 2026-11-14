@@ -39,6 +39,7 @@ spec:
         image: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-csi-controller:v0.19.1
         imagePullPolicy: IfNotPresent
         name: proxmox-csi-plugin-controller
+        ports: null
         resources:
           requests:
             cpu: 10m

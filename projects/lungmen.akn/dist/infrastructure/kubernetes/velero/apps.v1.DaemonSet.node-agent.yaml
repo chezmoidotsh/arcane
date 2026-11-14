@@ -68,6 +68,7 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
+        securityContext: null
         volumeMounts:
         - mountPath: /credentials
           name: cloud-credentials

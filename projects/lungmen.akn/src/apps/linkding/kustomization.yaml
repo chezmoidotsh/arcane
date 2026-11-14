@@ -28,6 +28,4 @@ patches:
   # Log formats of the pods (ADR-020). uwsgi access logs carry no level.
   - target: {kind: Deployment, name: linkding}
     patch: |-
-      kind: Deployment
-      metadata: {name: linkding}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: none}}

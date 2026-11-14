@@ -75,19 +75,13 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: DaemonSet, name: node-agent}
     patch: |-
-      kind: DaemonSet
-      metadata: {name: node-agent}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
   - target: {kind: Deployment, name: velero}
     patch: |-
-      kind: Deployment
-      metadata: {name: velero}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
   - target: {kind: Job, name: velero-upgrade-crds}
     patch: |-
-      kind: Job
-      metadata: {name: velero-upgrade-crds}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
 
 images:
   - name: docker.io/velero/velero

@@ -37,31 +37,19 @@ patches:
   # Log formats of the pods (ADR-020).
   - target: {kind: DaemonSet, name: cilium-envoy}
     patch: |-
-      kind: DaemonSet
-      metadata: {name: cilium-envoy}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: bracketed}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: bracketed}}
   - target: {kind: Deployment, name: cilium-operator}
     patch: |-
-      kind: Deployment
-      metadata: {name: cilium-operator}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
   - target: {kind: Deployment, name: hubble-relay}
     patch: |-
-      kind: Deployment
-      metadata: {name: hubble-relay}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
   - target: {kind: Deployment, name: hubble-ui}
     patch: |-
-      kind: Deployment
-      metadata: {name: hubble-ui}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt, o11y.chezmoi.sh/log-format.frontend: none}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt, o11y.chezmoi.sh/log-format.frontend: none}}
   - target: {kind: CronJob, name: hubble-generate-certs}
     patch: |-
-      kind: CronJob
-      metadata: {name: hubble-generate-certs}
-      spec: {jobTemplate: {spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}}}
+      - {op: add, path: /spec/jobTemplate/spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
   - target: {kind: Job, name: hubble-generate-certs-df446b0717}
     patch: |-
-      kind: Job
-      metadata: {name: hubble-generate-certs-df446b0717}
-      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
