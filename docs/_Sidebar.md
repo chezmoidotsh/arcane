@@ -70,6 +70,7 @@
 - [ADR-017 Conserver une phrase secrète Pulumi par projet](decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md)
 - [ADR-018 OTLP comme protocole d'ingestion unique](decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md)
 - [ADR-019 ToolHive pour gérer les serveurs MCP](decisions/ADR-019-ToolHive-pour-Gerer-les-Serveurs-MCP.md)
+- [ADR-020 Parser les logs des pods dans l'agent OpenTelemetry](decisions/ADR-020-Parser-les-Logs-des-Pods-dans-l-Agent-OpenTelemetry-avec-une-Bibliotheque-de-Components-Kustomize.md)
 
 ### Expérimentations
 
