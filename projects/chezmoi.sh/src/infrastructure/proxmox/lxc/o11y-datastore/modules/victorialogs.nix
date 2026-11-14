@@ -36,7 +36,7 @@ in
         # A single regex stats query over 4h took VL from 550 MiB to 1.2 GiB
         # in 30s; cap parallelism so a few of them cannot stack up.
         "-search.maxConcurrentRequests=4"
-        "-search.maxQueryDuration=30s" # explicit: the default, relied upon
+        "-search.maxQueryDuration=5m" # wide 24h stats queries; the vMCP allows the same
         "-loggerFormat=json"
       ];
 

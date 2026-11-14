@@ -181,7 +181,7 @@ less than or equal to zero`). The limits add up to 8.5 GiB on purpose: they are 
 | Service         | `-memory.allowedBytes` | `MemoryMax` | Other limits                                 |
 | --------------- | ---------------------- | ----------- | -------------------------------------------- |
 | VictoriaMetrics | 1 GiB                  | 2 GiB       | `-search.maxMemoryPerQuery=512MiB`           |
-| VictoriaLogs    | 5 GiB                  | 6 GiB       | ~2 GiB per query, 4 concurrent, 30 s each    |
+| VictoriaLogs    | 5 GiB                  | 6 GiB       | ~2 GiB per query, 4 concurrent, 5 min each   |
 | VictoriaTraces  | 256 MiB                | 512 MiB     |                                              |
 | Everything else | —                      | —           | Caddy, gateway, alerting (~400 MiB in use)   |
 
