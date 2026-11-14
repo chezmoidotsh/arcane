@@ -60,7 +60,7 @@ in
       # Memory budget of the 8 GiB CT (see README "Memory budget"): a runaway
       # query gets this service OOM-killed and restarted instead of starving
       # the whole CT into thrashing (2026-11-14 freeze).
-      MemoryMax = "4G";
+      MemoryMax = "6G"; # must stay above -memory.allowedBytes or VL refuses to start
     };
   };
 }
