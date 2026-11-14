@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# o11y pod log parsers — fixtures and OBS001 format list
+# =============================================================================
+# Two independent checks of the pod log parsers of the o11y agent (ADR-020):
+#   - fixtures: `mise run o11y:parsers:test` runs the tests/fixtures.yaml of
+#     every format through the routing of the rendered agent config, on the
+#     otelcol-contrib release of the agent image (downloaded by mise);
+#   - formats:  `mise run o11y:parsers:check-formats` checks that the formats
+#     the OPA rule OBS001 accepts are exactly the parser directories.
+#
+# Events:      push (main), pull_request, on the parsers, the agent base, OBS001
+#              or the tasks only
+# Permissions: contents: read
+# =============================================================================
+
+name: 🔭 o11y Log Parsers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.o11y-parsers.yaml"
+      - ".mise/tasks/o11y/parsers/**"
+      - "catalog/kubernetes/o11y-agent/kustomize/**"
+      - "catalog/kubernetes/o11y-agent/parsers/**"
+      - "catalog/opa/policies/OBS001:kubernetes.rego"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.o11y-parsers.yaml"
+      - ".mise/tasks/o11y/parsers/**"
+      - "catalog/kubernetes/o11y-agent/kustomize/**"
+      - "catalog/kubernetes/o11y-agent/parsers/**"
+      - "catalog/opa/policies/OBS001:kubernetes.rego"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  fixtures:
+    name: 🧪 Run the parser fixtures
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: true
+
+      # The token lifts the GitHub API rate limit mise hits when it resolves
+      # the otelcol-contrib release.
+      - name: 🧪 Run mise run o11y:parsers:test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: mise run o11y:parsers:test
+
+  formats:
+    name: 📋 Check the OBS001 format list
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: true
+
+      - name: 📋 Run mise run o11y:parsers:check-formats
+        run: mise run o11y:parsers:check-formats

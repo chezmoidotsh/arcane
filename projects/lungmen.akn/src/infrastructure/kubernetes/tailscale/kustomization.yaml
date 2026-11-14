@@ -30,3 +30,9 @@ helmCharts:
 images:
   - name: tailscale/k8s-operator
     newName: oci.chezmoi.sh/docker.io/tailscale/k8s-operator
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: operator}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: json}}

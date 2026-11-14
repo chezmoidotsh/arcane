@@ -58,6 +58,9 @@ spec:
         metadata:
           labels:
             app.kubernetes.io/name: grafana
+          # Log format of the Grafana pod (ADR-020).
+          annotations:
+            o11y.chezmoi.sh/log-format: logfmt
         spec:
           # The hardened default pod securityContext (runAsUser/runAsGroup 10001) means a
           # freshly-provisioned PVC mounts root-owned -- fsGroup chowns it to the container's

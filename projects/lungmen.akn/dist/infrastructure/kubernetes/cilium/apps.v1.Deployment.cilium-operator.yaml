@@ -24,6 +24,7 @@ spec:
   template:
     metadata:
       annotations:
+        o11y.chezmoi.sh/log-format: logfmt
         prometheus.io/port: "9963"
         prometheus.io/scrape: "true"
       labels:

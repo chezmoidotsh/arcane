@@ -19,6 +19,8 @@ spec:
     type: RollingUpdate
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: none
       labels:
         app.kubernetes.io/component: machine-learning
         app.kubernetes.io/instance: immich

@@ -12,6 +12,8 @@ metadata:
 spec:
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: logfmt
       labels:
         k8s-app: hubble-generate-certs
     spec:

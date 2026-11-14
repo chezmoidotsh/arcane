@@ -19,6 +19,8 @@ spec:
   backoffLimit: 3
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: logfmt
       name: velero-upgrade-crds
     spec:
       automountServiceAccountToken: true

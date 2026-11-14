@@ -54,3 +54,19 @@ patches:
       metadata:
         name: n8n-task-runners
         namespace: n8n
+  # Log formats of the pods (ADR-020). n8n logs plain text without level.
+  - target: {kind: Deployment, name: n8n-main}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: none}
+  - target: {kind: Deployment, name: n8n-proxy}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: none}}
+  - target: {kind: Deployment, name: n8n-redis}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: redis}}
+  - target: {kind: Deployment, name: n8n-webhook-processor}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: none}
+  - target: {kind: Deployment, name: n8n-worker}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: none}

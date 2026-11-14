@@ -25,6 +25,7 @@ spec:
     metadata:
       annotations:
         checksum/cmd-params: 016723e09a37ae92518580a4e1ef3af6707820646e02fff886fb6155ee7d9e6c
+        o11y.chezmoi.sh/log-format: json
       labels:
         app.kubernetes.io/component: notifications-controller
         app.kubernetes.io/instance: argocd

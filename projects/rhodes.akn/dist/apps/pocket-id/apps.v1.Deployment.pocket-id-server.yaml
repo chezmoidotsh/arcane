@@ -19,6 +19,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: json
       labels:
         app.kubernetes.io/component: application
         app.kubernetes.io/instance: pocket-id

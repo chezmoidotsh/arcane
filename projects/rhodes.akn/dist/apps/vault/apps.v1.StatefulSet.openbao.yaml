@@ -19,6 +19,8 @@ spec:
   serviceName: openbao-internal
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: json
       labels:
         app.kubernetes.io/instance: openbao
         app.kubernetes.io/name: vault

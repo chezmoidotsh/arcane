@@ -16,7 +16,8 @@ spec:
       k8s-app: cilium-envoy
   template:
     metadata:
-      annotations: null
+      annotations:
+        o11y.chezmoi.sh/log-format: bracketed
       labels:
         app.kubernetes.io/name: cilium-envoy
         app.kubernetes.io/part-of: cilium

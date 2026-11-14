@@ -25,6 +25,7 @@ spec:
       annotations:
         checksum/cm: 2c608ec5f78dc71afbc59edcd0178179a22d569f50758347ea140922cbb9cf29
         checksum/cmd-params: 016723e09a37ae92518580a4e1ef3af6707820646e02fff886fb6155ee7d9e6c
+        o11y.chezmoi.sh/log-format: logfmt
       labels:
         app.kubernetes.io/component: application-controller
         app.kubernetes.io/instance: argocd

@@ -808,6 +808,8 @@ spec:
   hostNetwork: true
   image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.162.0
   mode: daemonset
+  podAnnotations:
+    o11y.chezmoi.sh/log-format: zap-console
   podSecurityContext:
     runAsGroup: 0
     runAsUser: 0

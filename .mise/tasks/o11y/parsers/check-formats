@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#MISE description="Check that the log formats known by the OPA rule OBS001 match the o11y-agent parser directories"
+#
+# OBS001 (catalog/opa/policies/OBS001:kubernetes.rego) rejects a log format
+# that is not in its `log_formats` set. That set must list exactly the parser
+# directories of catalog/kubernetes/o11y-agent/parsers, plus `none` (ADR-020):
+# a format missing from the set cannot be declared, a format with no parser
+# is never parsed.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PARSERS="${REPO_ROOT}/catalog/kubernetes/o11y-agent/parsers"
+POLICY="${REPO_ROOT}/catalog/opa/policies/OBS001:kubernetes.rego"
+
+declared="$(sed -n '/^log_formats := {/,/^}/p' "${POLICY}" | grep -o '"[^"]*"' | tr -d '"' | grep -vx none | sort)"
+available="$(for k in "${PARSERS}"/*/kustomization.yaml; do basename "$(dirname "${k}")"; done | sort)"
+
+if [[ ${declared} != "${available}" ]]; then
+	echo "log_formats of ${POLICY#"${REPO_ROOT}/"} does not match the parser directories (< OBS001, > parsers/):" >&2
+	diff <(echo "${declared}") <(echo "${available}") >&2 || true
+	exit 1
+fi
+count="$(grep -c . <<<"${available}")"
+echo "OBS001 knows the ${count} parser formats, plus none"

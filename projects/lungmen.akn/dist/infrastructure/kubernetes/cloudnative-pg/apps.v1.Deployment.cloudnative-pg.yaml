@@ -22,6 +22,7 @@ spec:
         checksum/config: c6fe1fa6b98c0d760424554fb986e1642241c5a0847628867b3f621cf8bfa614
         checksum/monitoring-config: 6867531063629d256977d9d1084cfe308c6e9d697701b1f636e69d3748bc5b48
         checksum/rbac: 210dd2dee5476efdcadab32fcd396c0fc1830de29cefe22580dda961201aaeda
+        o11y.chezmoi.sh/log-format: json
       labels:
         app.kubernetes.io/instance: cloudnative-pg
         app.kubernetes.io/name: cloudnative-pg

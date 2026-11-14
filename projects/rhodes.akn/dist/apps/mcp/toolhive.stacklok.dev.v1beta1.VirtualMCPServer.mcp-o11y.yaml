@@ -42,3 +42,7 @@ spec:
     type: oidc
   outgoingAuth:
     source: discovered
+  podTemplateSpec:
+    metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: json

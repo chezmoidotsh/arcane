@@ -11,6 +11,10 @@ metadata:
 spec:
   statefulSet:
     pod:
+      # Log format of the proxy pods (ADR-020): containerboot and tailscaled
+      # log without a level.
+      annotations:
+        o11y.chezmoi.sh/log-format: none
       tailscaleContainer:
         resources:
           requests:
@@ -44,6 +48,10 @@ metadata:
 spec:
   statefulSet:
     pod:
+      # Log format of the proxy pods (ADR-020): containerboot and tailscaled
+      # log without a level.
+      annotations:
+        o11y.chezmoi.sh/log-format: none
       tailscaleContainer:
         resources:
           requests:

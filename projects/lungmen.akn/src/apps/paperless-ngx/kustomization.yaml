@@ -29,3 +29,12 @@ images:
     newName: oci.chezmoi.sh/docker.io/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=true
     newTag: 8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: StatefulSet, name: paperless-ngx-redis}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: redis}}
+  - target: {kind: StatefulSet, name: paperless-ngx}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: bracketed}

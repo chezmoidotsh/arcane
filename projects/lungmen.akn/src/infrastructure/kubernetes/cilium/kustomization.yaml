@@ -32,3 +32,24 @@ helmCharts:
     namespace: kube-system
 
     valuesFile: helmvalues/default.yaml
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: DaemonSet, name: cilium-envoy}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: bracketed}}
+  - target: {kind: Deployment, name: cilium-operator}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: Deployment, name: hubble-relay}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
+  - target: {kind: Deployment, name: hubble-ui}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt, o11y.chezmoi.sh/log-format.frontend: none}}
+  - target: {kind: CronJob, name: hubble-generate-certs}
+    patch: |-
+      - {op: add, path: /spec/jobTemplate/spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
+  - target: {kind: Job, name: hubble-generate-certs-df446b0717}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}

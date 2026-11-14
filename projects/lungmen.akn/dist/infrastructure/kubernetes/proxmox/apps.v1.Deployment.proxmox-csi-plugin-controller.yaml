@@ -25,6 +25,7 @@ spec:
     metadata:
       annotations:
         checksum/config: ce080eff0c26b50fe73bf9fcda017c8ad47c1000729fd0c555cfe3535c6d6222
+        o11y.chezmoi.sh/log-format: klog
       labels:
         app.kubernetes.io/component: controller
         app.kubernetes.io/instance: proxmox-csi-plugin

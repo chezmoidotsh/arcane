@@ -72,6 +72,16 @@ patches:
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1hook
         value: PreSync
+  # Log formats of the pods (ADR-020).
+  - target: {kind: DaemonSet, name: node-agent}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: Deployment, name: velero}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: Job, name: velero-upgrade-crds}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
 
 images:
   - name: docker.io/velero/velero

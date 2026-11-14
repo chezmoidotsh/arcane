@@ -34,6 +34,13 @@ resources:
 
 patches:
   - path: plugin-barman-cloud.secret-sidecar-image.patch.yaml
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: barman-cloud}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: json}}
+  - target: {kind: Deployment, name: cloudnative-pg}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: json}
 
 images:
   - name: ghcr.io/cloudnative-pg/plugin-barman-cloud

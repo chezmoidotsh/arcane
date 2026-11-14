@@ -18,6 +18,15 @@ spec:
     name: o11y
   image: oci.chezmoi.sh/docker.io/grafana/mcp-grafana:2.3.0
   mcpPort: 8000
+  podTemplateSpec:
+    metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: logfmt
+  resourceOverrides:
+    proxyDeployment:
+      podTemplateMetadataOverrides:
+        annotations:
+          o11y.chezmoi.sh/log-format: json
   secrets:
   - key: token
     name: mcp-grafana-token

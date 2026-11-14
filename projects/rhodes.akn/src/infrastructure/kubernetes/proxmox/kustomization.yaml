@@ -60,3 +60,15 @@ images:
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/livenessprobe
     # oripathy: type=oci upstream=github.com/kubernetes-csi/livenessprobe tagPrefix=v digest=false
     newTag: v2.16.0
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: DaemonSet, name: proxmox-csi-plugin-node}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
+  - target: {kind: Deployment, name: proxmox-cloud-controller-manager}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
+  - target: {kind: Deployment, name: proxmox-csi-plugin-controller}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}

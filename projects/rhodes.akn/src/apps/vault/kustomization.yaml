@@ -78,6 +78,10 @@ patches:
     target:
       kind: StatefulSet
       name: openbao
+  # Log formats of the pods (ADR-020). openbao is OnDelete: applies at the next manual restart.
+  - target: {kind: StatefulSet, name: openbao}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: json}}
 
 images:
   - name: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm

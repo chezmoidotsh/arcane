@@ -37,3 +37,27 @@ images:
   - name: oci.chezmoi.sh/ecr-public.aws.com/docker/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=false
     newTag: 8.10.2-alpine
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: argocd-applicationset-controller}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: Deployment, name: argocd-notifications-controller}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: json}
+  - target: {kind: Deployment, name: argocd-redis}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: redis}}
+  - target: {kind: Deployment, name: argocd-repo-server}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: Deployment, name: argocd-server}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: StatefulSet, name: argocd-application-controller}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: {kind: Job, name: argocd-redis-secret-init}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}

@@ -7,6 +7,8 @@ metadata:
 spec:
   statefulSet:
     pod:
+      annotations:
+        o11y.chezmoi.sh/log-format: none
       securityContext:
         fsGroup: 25778
         runAsGroup: 25778

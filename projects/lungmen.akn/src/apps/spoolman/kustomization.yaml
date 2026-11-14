@@ -22,3 +22,9 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/donkie/spoolman
     # oripathy: type=oci upstream=github.com/Donkie/Spoolman tagPrefix=v digest=false
     newTag: "0.27.0"
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: spoolman}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: uvicorn}}

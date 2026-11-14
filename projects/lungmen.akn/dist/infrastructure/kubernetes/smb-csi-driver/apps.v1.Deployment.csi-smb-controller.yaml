@@ -19,6 +19,8 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: klog
       labels:
         app: csi-smb-controller
         app.kubernetes.io/instance: csi-driver-smb

@@ -20,7 +20,8 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations: null
+      annotations:
+        o11y.chezmoi.sh/log-format: logfmt
       labels:
         app.kubernetes.io/name: hubble-relay
         app.kubernetes.io/part-of: cilium

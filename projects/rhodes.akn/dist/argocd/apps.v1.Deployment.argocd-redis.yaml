@@ -20,6 +20,8 @@ spec:
       app.kubernetes.io/name: argocd-redis
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: redis
       labels:
         app.kubernetes.io/component: redis
         app.kubernetes.io/instance: argocd

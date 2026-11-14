@@ -18,6 +18,8 @@ spec:
       app.kubernetes.io/name: proxmox-csi-plugin
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: klog
       labels:
         app.kubernetes.io/component: node
         app.kubernetes.io/instance: proxmox-csi-plugin

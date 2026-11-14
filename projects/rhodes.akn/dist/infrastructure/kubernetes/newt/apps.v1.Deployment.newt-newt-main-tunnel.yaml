@@ -22,6 +22,8 @@ spec:
       newt.instance: main-tunnel
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: golog
       labels:
         app.kubernetes.io/component: newt
         app.kubernetes.io/instance: newt

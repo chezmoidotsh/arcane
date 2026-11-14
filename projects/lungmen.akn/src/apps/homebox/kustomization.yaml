@@ -25,3 +25,9 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/sysadminsmedia/homebox
     # oripathy: type=oci upstream=github.com/sysadminsmedia/homebox tagPrefix=v digest=false
     newTag: "0.27.1"
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: homebox}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: ansi}}

@@ -16,6 +16,8 @@ spec:
       app.kubernetes.io/name: homebox
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: ansi
       labels:
         app.kubernetes.io/instance: homebox
         app.kubernetes.io/name: homebox

@@ -20,6 +20,8 @@ spec:
   backoffLimit: 4
   template:
     metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: klog
       labels:
         app: startupapicheck
         app.kubernetes.io/component: startupapicheck

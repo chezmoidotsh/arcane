@@ -36,3 +36,15 @@ images:
     newTag: v2.18.0
   - name: registry.k8s.io/sig-storage/smbplugin
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: DaemonSet, name: csi-smb-node-win}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
+  - target: {kind: DaemonSet, name: csi-smb-node}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
+  - target: {kind: Deployment, name: csi-smb-controller}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}

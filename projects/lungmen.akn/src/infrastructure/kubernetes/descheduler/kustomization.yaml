@@ -22,3 +22,9 @@ images:
     newName: oci.chezmoi.sh/registry.k8s.io/descheduler/descheduler
     # oripathy: type=oci upstream=github.com/kubernetes-sigs/descheduler tagPrefix=v digest=false
     newTag: v0.37.0
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: CronJob, name: descheduler}
+    patch: |-
+      - {op: add, path: /spec/jobTemplate/spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}

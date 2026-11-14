@@ -46,6 +46,9 @@ spec:
   # oripathy: type=oci upstream=github.com/open-telemetry/opentelemetry-collector-releases tagPrefix=v digest=false
   image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.162.0
   serviceAccount: o11y-agent
+  # Log format of the collector pods (ADR-020).
+  podAnnotations:
+    o11y.chezmoi.sh/log-format: zap-console
   hostNetwork: true
   priorityClassName: system-node-critical
   tolerations:

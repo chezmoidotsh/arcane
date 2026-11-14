@@ -78,3 +78,10 @@ patches:
         value:
           name: K8S_CLUSTER_NAME
           value: rhodes.akn
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: grafana-operator}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: zap-console}}
+  - target: {kind: Deployment, name: opentelemetry-operator}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: json}

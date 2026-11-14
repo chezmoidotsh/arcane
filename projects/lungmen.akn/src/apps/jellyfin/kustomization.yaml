@@ -21,3 +21,9 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/jellyfin/jellyfin
     # oripathy: type=oci upstream=github.com/jellyfin/jellyfin tagPrefix=v digest=false
     newTag: "12.3"
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: StatefulSet, name: jellyfin}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: bracketed}

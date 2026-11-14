@@ -24,3 +24,9 @@ helmCharts:
 
 resources:
   - security/
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: toolhive-operator}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: golog}}
