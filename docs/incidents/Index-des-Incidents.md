@@ -16,23 +16,24 @@ Root-cause family tagging ».
 
 Familles à 3+ incidents, à traiter comme des projets structurels :
 
-- **`observability-gap`** : 6 incidents
+- **`observability-gap`** : 7 incidents
 - **`bootstrap-coupling`** : 3 incidents
 
 ## Toutes les familles
 
-Total : **11** post-mortems répartis en **9** familles.
+Total : **12** post-mortems répartis en **10** familles.
 
-### `observability-gap` : 6 incident(s) (déclencheur de Pareto)
+### `observability-gap` : 7 incident(s) (déclencheur de Pareto)
 
-| Date       | Sévérité | Statut | Post-mortem                                                                                                                                                                             |
-| ---------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-11-12 | High     | Open   | [Saturation du PVC WAL de la base Grafana sur rhodes.akn : Secret de sauvegarde absent après un changement de namespace](Incident-2026-11-12-WAL-Plein-CNPG-Grafana-Secret-Manquant.md) |
-| 2026-06-19 | Medium   | Open   | [ArgoCD inaccessible : nom d'hôte incompatible avec le wildcard de la Gateway Cilium](Incident-2026-06-19-ArgoCD-Inaccessible-Wildcard-Cilium-Incoherent.md)                            |
-| 2026-05-30 | High     | Open   | [Redis en ImagePullBackOff — index.json corrompu dans Zot et limitation de débit Docker Hub](Incident-2026-05-30-ImagePullBackOff-Redis-Index-Zot-Corrompu.md)                          |
-| 2026-05-30 | Critical | Open   | [Saturation du PVC WAL de CNPG : immich et paperless-ngx indisponibles plus de 4 jours sur lungmen.akn](Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md)                             |
-| 2026-05-25 | Medium   | Open   | [Échec d'authentification Vault du ClusterSecretStore de lungmen.akn](Incident-2026-05-25-Echec-Authentification-Vault-ClusterSecretStore-Lungmen.md)                                   |
-| 2026-05-25 | High     | Open   | [Saturation du disque de Zot : ImagePullBackOff généralisé sur lungmen.akn](Incident-2026-05-25-Saturation-Disque-Zot-ImagePullBackOff.md)                                              |
+| Date       | Sévérité | Statut | Post-mortem                                                                                                                                                                                                                 |
+| ---------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-14 | Medium   | Open   | [Disque plein sur le cluster CNPG apps-secured de lungmen.akn : réplique bloquée en boucle pg_rewind pendant 3 jours et table n8n gonflée à 4,4 Go](Incident-2026-11-14-Disque-Plein-CNPG-Apps-Secured-Replique-Bloquee.md) |
+| 2026-11-12 | High     | Open   | [Saturation du PVC WAL de la base Grafana sur rhodes.akn : Secret de sauvegarde absent après un changement de namespace](Incident-2026-11-12-WAL-Plein-CNPG-Grafana-Secret-Manquant.md)                                     |
+| 2026-06-19 | Medium   | Open   | [ArgoCD inaccessible : nom d'hôte incompatible avec le wildcard de la Gateway Cilium](Incident-2026-06-19-ArgoCD-Inaccessible-Wildcard-Cilium-Incoherent.md)                                                                |
+| 2026-05-30 | High     | Open   | [Redis en ImagePullBackOff — index.json corrompu dans Zot et limitation de débit Docker Hub](Incident-2026-05-30-ImagePullBackOff-Redis-Index-Zot-Corrompu.md)                                                              |
+| 2026-05-30 | Critical | Open   | [Saturation du PVC WAL de CNPG : immich et paperless-ngx indisponibles plus de 4 jours sur lungmen.akn](Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md)                                                                 |
+| 2026-05-25 | Medium   | Open   | [Échec d'authentification Vault du ClusterSecretStore de lungmen.akn](Incident-2026-05-25-Echec-Authentification-Vault-ClusterSecretStore-Lungmen.md)                                                                       |
+| 2026-05-25 | High     | Open   | [Saturation du disque de Zot : ImagePullBackOff généralisé sur lungmen.akn](Incident-2026-05-25-Saturation-Disque-Zot-ImagePullBackOff.md)                                                                                  |
 
 ### `bootstrap-coupling` : 3 incident(s) (déclencheur de Pareto)
 
@@ -87,6 +88,12 @@ Total : **11** post-mortems répartis en **9** familles.
 | Date       | Sévérité | Statut | Post-mortem                                                                                                                                                                                            |
 | ---------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-05-26 | Critical | Open   | [Politique de réécriture d'images Kyverno → dépendance circulaire Zot/Longhorn — ImagePullBackOff sur tout le cluster amiya.akn](Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md) |
+
+### `storage-undersized` : 1 incident(s)
+
+| Date       | Sévérité | Statut | Post-mortem                                                                                                                                                                                                                 |
+| ---------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-14 | Medium   | Open   | [Disque plein sur le cluster CNPG apps-secured de lungmen.akn : réplique bloquée en boucle pg_rewind pendant 3 jours et table n8n gonflée à 4,4 Go](Incident-2026-11-14-Disque-Plein-CNPG-Apps-Secured-Replique-Bloquee.md) |
 
 ## Pour aller plus loin
 
