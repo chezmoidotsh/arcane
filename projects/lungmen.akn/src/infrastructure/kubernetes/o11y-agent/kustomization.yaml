@@ -51,6 +51,8 @@ resources:
 # base (ADR-020).
 components:
   - ../../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres
+  # Needs hubble.export.static on stdout (../cilium/helmvalues).
+  - ../../../../../../catalog/kubernetes/o11y-agent/parsers/hubble-http
 
 images:
   - name: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator

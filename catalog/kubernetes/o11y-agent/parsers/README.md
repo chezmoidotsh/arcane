@@ -27,6 +27,7 @@ and attributes; the body is never modified. `o11y.log.format` stays on the recor
 | `uvicorn`       | the base            | Python logging with a padded level column                                                 |
 | `zap-console`   | the base            | tab-separated zap console; `exception.message` from the `error` field                     |
 | `cnpg-postgres` | lungmen.akn, rhodes | `json`, then the PostgreSQL records of CNPG → `db.*`, `error.type` (SQLSTATE), `client.*` |
+| `hubble-http`   | lungmen.akn, rhodes | Hubble HTTP responses on the stdout of `cilium-agent` → `http.*`, `url.*`; then `logfmt`  |
 
 `cnpg-postgres/annotate` is a component for the kustomizations holding CNPG `Cluster`s: it sets their
 `spec.inheritedMetadata` annotations.

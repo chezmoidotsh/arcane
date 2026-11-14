@@ -44,6 +44,9 @@ spec:
         - condition: resource.attributes["o11y.log.format"] == "cnpg-postgres"
           pipelines:
           - logs/parsers/cnpg-postgres
+        - condition: resource.attributes["o11y.log.format"] == "hubble-http"
+          pipelines:
+          - logs/parsers/hubble-http
     exporters:
       otlp_http:
         compression: gzip
@@ -266,6 +269,66 @@ spec:
           - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d{4}/\\d{2}/\\d{2}
             \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? (?P<lvl>[A-Z]+) "), "insert")
           - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-hubble-http:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body) and IsMatch(log.body, "^\\{\"flow\":")
+          context: log
+          statements:
+          - set(log.cache["flow"], ParseJSON(log.body)["flow"])
+          - set(log.cache["http"], log.cache["flow"]["l7"]["http"]) where log.cache["flow"]["l7"]["http"]
+            != nil
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.cache["http"]
+            != nil
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["http"]
+            != nil and Int(log.cache["http"]["code"]) >= 400
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.cache["http"]
+            != nil and Int(log.cache["http"]["code"]) >= 500
+          - set(log.attributes["http.request.method"], log.cache["http"]["method"])
+            where IsString(log.cache["http"]["method"])
+          - set(log.attributes["http.response.status_code"], Int(log.cache["http"]["code"]))
+            where log.cache["http"]["code"] != nil
+          - set(log.attributes["error.type"], String(Int(log.cache["http"]["code"])))
+            where log.cache["http"]["code"] != nil and Int(log.cache["http"]["code"])
+            >= 500
+          - set(log.attributes["cilium.http.duration"], Double(log.cache["flow"]["l7"]["latency_ns"])
+            / 1000000000.0) where log.cache["flow"]["l7"]["latency_ns"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["url"], "^(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://(?P<host>[^/:?#]+)(?::(?P<port>\\d+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?"),
+            "upsert") where IsString(log.cache["http"]["url"])
+          - set(log.attributes["url.full"], log.cache["http"]["url"]) where log.cache["scheme"]
+            != nil
+          - set(log.attributes["url.scheme"], log.cache["scheme"]) where log.cache["scheme"]
+            != nil
+          - set(log.attributes["server.address"], log.cache["host"]) where log.cache["host"]
+            != nil
+          - set(log.attributes["server.port"], Int(log.cache["port"])) where log.cache["port"]
+            != nil and log.cache["port"] != ""
+          - set(log.attributes["url.path"], log.cache["path"]) where log.cache["path"]
+            != nil and log.cache["path"] != ""
+          - set(log.attributes["url.query"], log.cache["query"]) where log.cache["query"]
+            != nil and log.cache["query"] != ""
+          - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["protocol"], "^(?P<proto_name>[A-Za-z]+)/(?P<proto_version>[0-9.]+)$"),
+            "upsert") where IsString(log.cache["http"]["protocol"])
+          - set(log.attributes["network.protocol.name"], ToLowerCase(log.cache["proto_name"]))
+            where log.cache["proto_name"] != nil
+          - set(log.attributes["network.protocol.version"], log.cache["proto_version"])
+            where log.cache["proto_version"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"key\":\"(?i:user-agent)\",\"value\":\"(?P<ua>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert") where log.cache["http"] != nil
+          - set(log.attributes["user_agent.original"], log.cache["ua"]) where log.cache["ua"]
+            != nil and log.cache["ua"] != ""
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"key\":\"(?i:x-forwarded-for)\",\"value\":\"\\s*(?P<xff>[^,\"
+            ]+)"), "upsert") where log.cache["http"] != nil
+          - set(log.attributes["client.address"], log.cache["xff"]) where log.cache["xff"]
+            != nil and log.cache["xff"] != ""
+          - set(log.attributes["cilium.backend.namespace"], log.cache["flow"]["source"]["namespace"])
+            where log.cache["http"] != nil and IsString(log.cache["flow"]["source"]["namespace"])
+          - set(log.attributes["cilium.backend.pod"], log.cache["flow"]["source"]["pod_name"])
+            where log.cache["http"] != nil and IsString(log.cache["flow"]["source"]["pod_name"])
+          - set(log.attributes["cilium.backend.workload"], log.cache["flow"]["source"]["workloads"][0]["name"])
+            where log.cache["http"] != nil and log.cache["flow"]["source"]["workloads"]
             != nil
       transform/parse-json:
         error_mode: ignore
@@ -590,6 +653,14 @@ spec:
           - forward/parsed
           processors:
           - transform/parse-golog
+          receivers:
+          - routing/log-format
+        logs/parsers/hubble-http:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-hubble-http
+          - transform/parse-logfmt
           receivers:
           - routing/log-format
         logs/parsers/json:

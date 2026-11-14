@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# HTTP responses of the Cilium L7 proxy (the Envoy of the Gateways) → OTel
+# HTTP semantic conventions (ADR-020). Needs the Hubble static exporter on
+# stdout, see the header of parser.patch.yaml.
+patches:
+  - path: parser.patch.yaml
+    target:
+      group: opentelemetry.io
+      kind: OpenTelemetryCollector
+      name: agent

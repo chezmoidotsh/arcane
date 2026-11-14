@@ -1,0 +1,83 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: hubble-http (ADR-020) — Cilium L7 proxy responses → OTel HTTP semconv
+# ─────────────────────────────────────────────────────────────────────────────
+# Requires the Hubble static exporter of the cluster to write the L7 HTTP
+# responses on the stdout of cilium-agent (hubble.export.static, filePath:
+# stdout, with redaction), one JSON line each:
+#
+#   {"flow":{"time":"…","verdict":"FORWARDED","is_reply":true,
+#     "source":{"namespace":"vault","pod_name":"openbao-0",
+#               "workloads":[{"name":"openbao","kind":"StatefulSet"}]},
+#     "destination":{…},"node_name":"…","traffic_direction":"EGRESS",
+#     "l7":{"type":"RESPONSE","latency_ns":"1234567",
+#           "http":{"code":200,"method":"GET","url":"https://vault.chezmoi.sh/v1/x",
+#                   "protocol":"HTTP/1.1","headers":[{"key":"user-agent","value":"…"}]}}},
+#    "node_name":"…","time":"…"}
+#
+# Annotation: o11y.chezmoi.sh/log-format.cilium-agent: hubble-http. The
+# pipeline runs this parser, then `logfmt` for the regular agent lines.
+#
+# In a response flow the source is the backend, the side that answered. The
+# record stays attributed to cilium-agent (resource); the backend goes to
+# cilium.backend.*. Same mapping as the Caddy parser of the LXC agents.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-hubble-http
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body) and IsMatch(log.body, "^\\{\"flow\":")
+        statements:
+          - set(log.cache["flow"], ParseJSON(log.body)["flow"])
+          - set(log.cache["http"], log.cache["flow"]["l7"]["http"]) where log.cache["flow"]["l7"]["http"] != nil
+
+          # ── 1. Severity: 5xx error, 4xx warning ───────────────────────────────
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.cache["http"] != nil
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["http"] != nil and Int(log.cache["http"]["code"]) >= 400
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.cache["http"] != nil and Int(log.cache["http"]["code"]) >= 500
+
+          # ── 2. http.* ─────────────────────────────────────────────────────────
+          - set(log.attributes["http.request.method"], log.cache["http"]["method"]) where IsString(log.cache["http"]["method"])
+          - set(log.attributes["http.response.status_code"], Int(log.cache["http"]["code"])) where log.cache["http"]["code"] != nil
+          - set(log.attributes["error.type"], String(Int(log.cache["http"]["code"]))) where log.cache["http"]["code"] != nil and Int(log.cache["http"]["code"]) >= 500
+          - set(log.attributes["cilium.http.duration"], Double(log.cache["flow"]["l7"]["latency_ns"]) / 1000000000.0) where log.cache["flow"]["l7"]["latency_ns"] != nil
+
+          # ── 3. url.* and server.address (the URL is already redacted) ─────────
+          - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["url"], "^(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://(?P<host>[^/:?#]+)(?::(?P<port>\\d+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?"), "upsert") where IsString(log.cache["http"]["url"])
+          - set(log.attributes["url.full"], log.cache["http"]["url"]) where log.cache["scheme"] != nil
+          - set(log.attributes["url.scheme"], log.cache["scheme"]) where log.cache["scheme"] != nil
+          - set(log.attributes["server.address"], log.cache["host"]) where log.cache["host"] != nil
+          - set(log.attributes["server.port"], Int(log.cache["port"])) where log.cache["port"] != nil and log.cache["port"] != ""
+          - set(log.attributes["url.path"], log.cache["path"]) where log.cache["path"] != nil and log.cache["path"] != ""
+          - set(log.attributes["url.query"], log.cache["query"]) where log.cache["query"] != nil and log.cache["query"] != ""
+
+          # ── 4. network.protocol.*, user_agent, client ─────────────────────────
+          - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["protocol"], "^(?P<proto_name>[A-Za-z]+)/(?P<proto_version>[0-9.]+)$"), "upsert") where IsString(log.cache["http"]["protocol"])
+          - set(log.attributes["network.protocol.name"], ToLowerCase(log.cache["proto_name"])) where log.cache["proto_name"] != nil
+          - set(log.attributes["network.protocol.version"], log.cache["proto_version"]) where log.cache["proto_version"] != nil
+          # Headers are a list of {key, value}, which OTTL cannot search: read them
+          # from the body. ponytail: values keep their JSON escapes (\"), parse the
+          # list with a dedicated function if that ever matters.
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"key\":\"(?i:user-agent)\",\"value\":\"(?P<ua>(?:[^\"\\\\]|\\\\.)*)\""), "upsert") where log.cache["http"] != nil
+          - set(log.attributes["user_agent.original"], log.cache["ua"]) where log.cache["ua"] != nil and log.cache["ua"] != ""
+          # First X-Forwarded-For hop: the client as Pangolin or the LB saw it.
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"key\":\"(?i:x-forwarded-for)\",\"value\":\"\\s*(?P<xff>[^,\" ]+)"), "upsert") where log.cache["http"] != nil
+          - set(log.attributes["client.address"], log.cache["xff"]) where log.cache["xff"] != nil and log.cache["xff"] != ""
+
+          # ── 5. Backend that answered (source of the response flow) ────────────
+          - set(log.attributes["cilium.backend.namespace"], log.cache["flow"]["source"]["namespace"]) where log.cache["http"] != nil and IsString(log.cache["flow"]["source"]["namespace"])
+          - set(log.attributes["cilium.backend.pod"], log.cache["flow"]["source"]["pod_name"]) where log.cache["http"] != nil and IsString(log.cache["flow"]["source"]["pod_name"])
+          - set(log.attributes["cilium.backend.workload"], log.cache["flow"]["source"]["workloads"][0]["name"]) where log.cache["http"] != nil and log.cache["flow"]["source"]["workloads"] != nil
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1hubble-http
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-hubble-http, transform/parse-logfmt]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "hubble-http"
+    pipelines: [logs/parsers/hubble-http]
