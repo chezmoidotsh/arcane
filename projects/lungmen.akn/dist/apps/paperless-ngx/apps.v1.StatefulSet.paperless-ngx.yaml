@@ -91,6 +91,10 @@ spec:
           value: "1"
         - name: S6_READ_ONLY_ROOT
           value: "1"
+        - name: PYTHONDONTWRITEBYTECODE
+          value: ""
+        - name: PYTHONPYCACHEPREFIX
+          value: /tmp/pycache
         image: oci.chezmoi.sh/ghcr.io/paperless-ngx/paperless-ngx:3.3.4@sha256:9bc6e8248891bcfa6f52fffe8b81e4ea8cae75790c3ec1b9906961a7ba55c969
         imagePullPolicy: Always
         livenessProbe:
@@ -132,7 +136,7 @@ spec:
           runAsNonRoot: true
           runAsUser: 21473
         startupProbe:
-          failureThreshold: 60
+          failureThreshold: 180
           httpGet:
             path: /
             port: http

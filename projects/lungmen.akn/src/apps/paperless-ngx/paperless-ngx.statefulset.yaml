@@ -1,4 +1,7 @@
 ---
+# No CPU limit (CKV_K8S_11): the OCR bursts would be throttled and the startup would get slower.
+# CHOWN (CKV_K8S_25) seems to be required by the S6 runtime; paperless can't read secrets from files (CKV_K8S_35).
+# trunk-ignore-all(checkov/CKV_K8S_11,checkov/CKV_K8S_25,checkov/CKV_K8S_35)
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -90,6 +93,13 @@ spec:
               value: "1"
             - name: S6_READ_ONLY_ROOT
               value: "1"
+            # The image ships no .pyc and skips its bytecode step on a read-only
+            # root, so every manage.py call recompiles Django from source. Cache the
+            # bytecode in the /tmp emptyDir, kept across container restarts.
+            - name: PYTHONDONTWRITEBYTECODE
+              value: ""
+            - name: PYTHONPYCACHEPREFIX
+              value: /tmp/pycache
           image: ghcr.io/paperless-ngx/paperless-ngx
           imagePullPolicy: Always
           livenessProbe:
@@ -134,7 +144,8 @@ spec:
             httpGet:
               path: /
               port: http
-            failureThreshold: 60
+            # 6 min: a cold start (no bytecode cache yet) takes ~2 min of init.
+            failureThreshold: 180
             initialDelaySeconds: 0
             periodSeconds: 2
             successThreshold: 1
