@@ -1,0 +1,47 @@
+# Hubble static export lines (GetFlowsResponse as JSON, fieldMask of the
+# clusters), synthetic: the shape follows the Hubble flow API, not a capture.
+---
+- body: '{"flow":{"time":"2026-11-14T10:00:00.123Z","verdict":"FORWARDED","source":{"namespace":"vault","pod_name":"openbao-0","workloads":[{"name":"openbao","kind":"StatefulSet"}]},"destination":{},"node_name":"rhodes-cp-1","l7":{"type":"RESPONSE","latency_ns":"12500000","http":{"code":200,"method":"GET","url":"https://vault.chezmoi.sh/v1/sys/health?standbyok=HUBBLE_REDACTED","protocol":"HTTP/1.1","headers":[{"key":"user-agent","value":"Go-http-client/1.1"},{"key":"x-forwarded-for","value":"192.0.2.10, 10.0.0.2"}]}},"is_reply":true,"traffic_direction":"EGRESS"},"node_name":"rhodes-cp-1","time":"2026-11-14T10:00:00.123Z"}'
+  expect:
+    severity_number: 9
+    attributes:
+      http.request.method: GET
+      http.response.status_code: 200
+      url.full: "https://vault.chezmoi.sh/v1/sys/health?standbyok=HUBBLE_REDACTED"
+      url.scheme: https
+      server.address: vault.chezmoi.sh
+      url.path: /v1/sys/health
+      url.query: standbyok=HUBBLE_REDACTED
+      network.protocol.name: http
+      network.protocol.version: "1.1"
+      user_agent.original: Go-http-client/1.1
+      client.address: 192.0.2.10
+      cilium.http.duration: 0.0125
+      cilium.backend.namespace: vault
+      cilium.backend.pod: openbao-0
+      cilium.backend.workload: openbao
+    absent: [error.type, server.port]
+
+- body: '{"flow":{"time":"2026-11-14T10:00:01Z","verdict":"FORWARDED","source":{"namespace":"o11y","pod_name":"grafana-deployment-abc"},"l7":{"type":"RESPONSE","latency_ns":"2000000","http":{"code":503,"method":"POST","url":"http://o11y.chezmoi.sh:8080/api/ds/query","protocol":"HTTP/2","headers":[{"key":"User-Agent","value":"Mozilla/5.0 (X11; Linux) \"quoted\""}]}},"is_reply":true},"node_name":"n1","time":"2026-11-14T10:00:01Z"}'
+  expect:
+    severity_number: 17
+    attributes:
+      http.response.status_code: 503
+      error.type: "503"
+      url.scheme: http
+      server.port: 8080
+      url.path: /api/ds/query
+      network.protocol.version: "2"
+      user_agent.original: 'Mozilla/5.0 (X11; Linux) \"quoted\"'
+      cilium.backend.pod: grafana-deployment-abc
+    absent: [url.query, client.address, cilium.backend.workload]
+
+- body: '{"flow":{"time":"2026-11-14T10:00:02Z","source":{"namespace":"n8n"},"l7":{"type":"RESPONSE","http":{"code":404,"method":"GET","url":"https://n8n.chezmoi.sh/","protocol":"HTTP/1.1"}},"is_reply":true},"node_name":"n1","time":"2026-11-14T10:00:02Z"}'
+  expect:
+    severity_number: 13
+    attributes: { http.response.status_code: 404, url.path: /, server.address: n8n.chezmoi.sh }
+    absent: [error.type, cilium.http.duration]
+
+# Regular cilium-agent log line: parsed by logfmt, next in the pipeline.
+- body: 'time=2026-11-14T05:49:13.92550349Z level=info msg="FQDN garbage collector work deleted entries" module=agent'
+  expect: { severity_number: 9, absent: [http.request.method] }
