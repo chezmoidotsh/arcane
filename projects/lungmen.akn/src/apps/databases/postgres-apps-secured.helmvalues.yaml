@@ -32,11 +32,12 @@ spec:
     # -- High-Availability configuration (1 Primary + 1 Replica).
     instances: 2
     storage:
-      size: 5Gi
-    # -- Reduced from 5Gi: WAL archiving is disabled (isWALArchiver: false), so WALs are
-    # recycled automatically after each checkpoint. 2Gi is ample for max_wal_size: 100MB.
+      size: 10Gi
+    # -- WAL archiving is disabled (isWALArchiver: false), so WALs are recycled after each
+    # checkpoint, but a lagging or rewinding replica keeps up to wal_keep_size (512MB) +
+    # max_slot_wal_keep_size (1500MB) + max_wal_size: 2Gi left no headroom and filled up.
     walStorage:
-      size: 2Gi
+      size: 4Gi
     postgresql:
       parameters:
         max_wal_size: 100MB

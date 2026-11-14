@@ -74,6 +74,6 @@ spec:
     shared_preload_libraries:
     - vchord
   storage:
-    size: 5Gi
+    size: 10Gi
   walStorage:
-    size: 2Gi
+    size: 4Gi
