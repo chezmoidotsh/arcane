@@ -27,3 +27,18 @@ images:
   # The chart takes its tag from its appVersion: only the registry is rewritten.
   - name: ghcr.io/berriai/litellm
     newName: oci.chezmoi.sh/ghcr.io/berriai/litellm
+
+patches:
+  # Log formats of the pods (ADR-020). No line seen yet to pick a parser.
+  - target:
+      kind: (Deployment|StatefulSet|DaemonSet|Job)
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: any
+      spec:
+        template:
+          metadata:
+            annotations:
+              o11y.chezmoi.sh/log-format: none

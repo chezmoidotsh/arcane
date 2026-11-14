@@ -18,7 +18,8 @@ spec:
   backoffLimit: 4
   template:
     metadata:
-      annotations: null
+      annotations:
+        o11y.chezmoi.sh/log-format: none
       labels:
         app.kubernetes.io/instance: litellm
         app.kubernetes.io/managed-by: Helm

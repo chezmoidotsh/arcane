@@ -21,6 +21,7 @@ spec:
     metadata:
       annotations:
         checksum/config: c5222c0ea0dfc58e97446940a638a6e4b6b6597fee760d6cd0b16e3f00f6beb8
+        o11y.chezmoi.sh/log-format: none
       labels:
         app.kubernetes.io/instance: litellm
         app.kubernetes.io/managed-by: Helm
