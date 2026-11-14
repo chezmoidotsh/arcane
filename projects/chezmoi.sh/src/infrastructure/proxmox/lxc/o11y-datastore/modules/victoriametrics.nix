@@ -66,7 +66,7 @@ in
       # Memory budget of the 8 GiB CT (see README "Memory budget"): a runaway
       # query gets this service OOM-killed and restarted instead of starving
       # the whole CT into thrashing (2026-11-14 freeze).
-      MemoryMax = "2560M";
+      MemoryMax = "2G";
     };
   };
 }
