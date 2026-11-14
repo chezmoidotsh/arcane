@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the vMCP embedded authorization server to fetch the Claude Code Client ID Metadata
+      Document (https://claude.ai/oauth/claude-code-client-metadata) used as its OAuth client_id.
+  name: allow-vmcp-to-claude-cimd
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: virtualmcpserver
+  egress:
+    - toFQDNs:
+        - matchName: claude.ai
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

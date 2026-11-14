@@ -9,3 +9,4 @@ resources:
   - network-policy.allow-mcp-to-pocket-id.yaml
   - network-policy.allow-vmcp-from-ingress-gateway.yaml
   - network-policy.allow-vmcp-from-newt.yaml
+  - network-policy.allow-vmcp-to-claude-cimd.yaml
