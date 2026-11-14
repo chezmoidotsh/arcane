@@ -30,7 +30,7 @@ family covers observability conventions.
 - Every container and init container of a workload template is covered by `o11y.chezmoi.sh/log-format.<container>` or by
   the pod default `o11y.chezmoi.sh/log-format`.
 - Every value is a format of the parser library or `none`. `log_formats` must list the parser directories:
-  `mise run o11y:parsers:test` fails otherwise.
+  `mise run o11y:parsers:check-formats` fails otherwise (CI: the o11y parsers workflow).
 - A custom resource whose operator creates pods sets the pod default `o11y.chezmoi.sh/log-format` in the field the
   operator copies to those pods. These resources do not list their containers, so the per-container keys are optional
   there.

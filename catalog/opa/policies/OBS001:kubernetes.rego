@@ -23,7 +23,7 @@ import rego.v1
 # ──────────────────────────────────────────────────────────────────────────────
 
 # One entry per directory of catalog/kubernetes/o11y-agent/parsers, plus none.
-# The o11y:parsers:test mise task checks both lists match.
+# The o11y:parsers:check-formats mise task checks both lists match.
 log_formats := {
     "ansi",
     "bracketed",
