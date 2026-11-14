@@ -19,6 +19,10 @@ spec:
     name: o11y
   authServerConfig:
     issuer: https://o11y.mcp.chezmoi.sh
+    # Storage is in-memory: DCR registrations are lost on restart and clients keep a dead
+    # client_id. With CIMD the client_id is a metadata URL, so nothing needs to survive a restart.
+    cimd:
+      enabled: true
     hmacSecretRefs:
       - name: mcp-o11y-auth
         key: hmac
