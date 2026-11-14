@@ -96,3 +96,113 @@ test_cnpg_cluster_with_inherited_annotation if {
 test_other_kinds_ignored if {
     count(_obs001({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "cm"}})) == 0
 }
+
+# ── Custom resources that create pods ─────────────────────────────────────────
+
+test_collector_requires_pod_annotations if {
+    count(_obs001({
+        "apiVersion": "opentelemetry.io/v1beta1",
+        "kind": "OpenTelemetryCollector",
+        "metadata": {"name": "agent", "namespace": "o11y"},
+        "spec": {"mode": "daemonset"},
+    })) == 1
+}
+
+test_collector_with_pod_annotations if {
+    count(_obs001({
+        "apiVersion": "opentelemetry.io/v1beta1",
+        "kind": "OpenTelemetryCollector",
+        "metadata": {"name": "agent", "namespace": "o11y"},
+        "spec": {"podAnnotations": {"o11y.chezmoi.sh/log-format": "zap-console"}},
+    })) == 0
+}
+
+test_mcpserver_requires_mcp_and_proxy_pods if {
+    violations := _obs001({
+        "apiVersion": "toolhive.stacklok.dev/v1beta1",
+        "kind": "MCPServer",
+        "metadata": {"name": "mcp", "namespace": "mcp"},
+        "spec": {"podTemplateSpec": {"metadata": {"annotations": {"o11y.chezmoi.sh/log-format": "logfmt"}}}},
+    })
+    count(violations) == 1
+    some msg in violations
+    contains(msg, "proxyDeployment")
+}
+
+test_grafana_external_ignored if {
+    count(_obs001({
+        "apiVersion": "grafana.integreatly.org/v1beta1",
+        "kind": "Grafana",
+        "metadata": {"name": "external", "namespace": "o11y"},
+        "spec": {"external": {"url": "https://o11y.chezmoi.sh"}},
+    })) == 0
+}
+
+test_grafana_instance_checked if {
+    count(_obs001({
+        "apiVersion": "grafana.integreatly.org/v1beta1",
+        "kind": "Grafana",
+        "metadata": {"name": "grafana", "namespace": "o11y"},
+        "spec": {"deployment": {"spec": {"template": {"metadata": {"labels": {"a": "b"}}}}}},
+    })) == 1
+}
+
+test_proxyclass_checked if {
+    count(_obs001({
+        "apiVersion": "tailscale.com/v1alpha1",
+        "kind": "ProxyClass",
+        "metadata": {"name": "restricted"},
+        "spec": {"statefulSet": {"pod": {"annotations": {"o11y.chezmoi.sh/log-format": "none"}}}},
+    })) == 0
+}
+
+test_cr_unknown_format_denied if {
+    violations := _obs001({
+        "apiVersion": "tailscale.com/v1alpha1",
+        "kind": "ProxyClass",
+        "metadata": {"name": "restricted"},
+        "spec": {"statefulSet": {"pod": {"annotations": {"o11y.chezmoi.sh/log-format": "text"}}}},
+    })
+    count(violations) == 1
+    some msg in violations
+    contains(msg, "unknown log format \"text\"")
+}
+
+test_http01_solver_checked if {
+    count(_obs001({
+        "apiVersion": "cert-manager.io/v1",
+        "kind": "ClusterIssuer",
+        "metadata": {"name": "letsencrypt"},
+        "spec": {"acme": {"solvers": [
+            {"dns01": {"cloudflare": {}}},
+            {"http01": {"gatewayHTTPRoute": {}}},
+        ]}},
+    })) == 1
+}
+
+test_dns01_issuer_ignored if {
+    count(_obs001({
+        "apiVersion": "cert-manager.io/v1",
+        "kind": "ClusterIssuer",
+        "metadata": {"name": "letsencrypt"},
+        "spec": {"acme": {"solvers": [{"dns01": {"cloudflare": {}}}]}},
+    })) == 0
+}
+
+test_connector_requires_proxyclass if {
+    count(_obs001({
+        "apiVersion": "tailscale.com/v1alpha1",
+        "kind": "Connector",
+        "metadata": {"name": "lan"},
+        "spec": {"subnetRouter": {"advertiseRoutes": ["10.0.0.0/24"]}},
+    })) == 1
+}
+
+test_connector_with_proxyclass if {
+    count(_obs001({
+        "apiVersion": "tailscale.com/v1alpha1",
+        "kind": "Connector",
+        "metadata": {"name": "lan"},
+        "spec": {"proxyClass": "restricted"},
+    })) == 0
+}
