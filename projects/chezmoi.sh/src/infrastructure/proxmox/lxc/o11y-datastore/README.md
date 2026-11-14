@@ -173,14 +173,17 @@ is a second NIC for the Talos nodes.
 The CT gets 8 GiB and no swap. Each store has a cache size (`-memory.allowedBytes`) and a hard `MemoryMax`, so a
 runaway query gets that one service OOM-killed and restarted by systemd. Without them, VictoriaLogs filled the former
 2 GiB CT on 2026-11-14 and froze it (page cache evicted, everything stuck on disk reads, no OOM kill). VictoriaLogs also
-rejects any query whose state needs more than 40% of its `-memory.allowedBytes` ("requires more than N MB of memory").
+rejects any query whose state needs more than 40% of its `-memory.allowedBytes` ("requires more than N MB of memory"),
+and refuses to start when `-memory.allowedBytes` is not below its `MemoryMax` (`FATAL: remaining memory ... cannot be
+less than or equal to zero`). The limits add up to 8.5 GiB on purpose: they are ceilings, and VictoriaMetrics runs at
+~500 MiB.
 
 | Service         | `-memory.allowedBytes` | `MemoryMax` | Other limits                                 |
 | --------------- | ---------------------- | ----------- | -------------------------------------------- |
 | VictoriaMetrics | 1 GiB                  | 2 GiB       | `-search.maxMemoryPerQuery=512MiB`           |
-| VictoriaLogs    | 5 GiB                  | 4 GiB       | ~2 GiB per query, 4 concurrent, 30 s each    |
+| VictoriaLogs    | 5 GiB                  | 6 GiB       | ~2 GiB per query, 4 concurrent, 30 s each    |
 | VictoriaTraces  | 256 MiB                | 512 MiB     |                                              |
-| Everything else | —                      | —           | ~1.5 GiB left for Caddy, gateway, alerting   |
+| Everything else | —                      | —           | Caddy, gateway, alerting (~400 MiB in use)   |
 
 ### Proxmox firewall
 
