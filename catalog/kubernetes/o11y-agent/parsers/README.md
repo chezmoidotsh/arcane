@@ -26,6 +26,10 @@ and attributes; the body is never modified. `o11y.log.format` stays on the recor
 | `redis`         | the base            | Redis server, `.`/`-`/`*`/`#` markers                                                     |
 | `uvicorn`       | the base            | Python logging with a padded level column                                                 |
 | `zap-console`   | the base            | tab-separated zap console; `exception.message` from the `error` field                     |
+| `cnpg-postgres` | lungmen.akn, rhodes | `json`, then the PostgreSQL records of CNPG → `db.*`, `error.type` (SQLSTATE), `client.*` |
+
+`cnpg-postgres/annotate` is a component for the kustomizations holding CNPG `Cluster`s: it sets their
+`spec.inheritedMetadata` annotations.
 
 ## Add a format
 

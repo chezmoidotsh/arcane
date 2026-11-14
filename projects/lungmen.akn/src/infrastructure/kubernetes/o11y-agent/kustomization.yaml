@@ -47,6 +47,11 @@ resources:
   - grafana.api-token.externalsecret.yaml
   - network-policy.allow-grafana-operator-to-grafana-api.yaml
 
+# Application log formats of this cluster, on top of the generic ones of the
+# base (ADR-020).
+components:
+  - ../../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres
+
 images:
   - name: ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator
     newName: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-operator/opentelemetry-operator

@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: cnpg-postgres (ADR-020) — PostgreSQL logs of CloudNative-PG → DB semconv
+# ─────────────────────────────────────────────────────────────────────────────
+# CNPG instance pods write the PostgreSQL log (csvlog) as JSON on the stdout of
+# their `postgres` container, wrapped by the instance manager:
+#
+#   {"level":"info","ts":"…","logger":"postgres","msg":"record",
+#    "logging_pod":"apps-1","record":{"log_time":"…","user_name":"app",
+#    "database_name":"app","process_id":"25","connection_from":"10.0.0.1:5432",
+#    "command_tag":"SELECT","error_severity":"ERROR","sql_state_code":"42P01",
+#    "message":"relation \"foo\" does not exist","query":"…",…}}
+#
+# Annotation: o11y.chezmoi.sh/log-format.postgres: cnpg-postgres, on the
+# Cluster's spec.inheritedMetadata. The pipeline runs `json` first (the
+# instance manager lines), then this parser on the PostgreSQL records: the
+# wrapper level is always `info`, the PostgreSQL severity
+# (`record.error_severity`) is set directly and wins. The query text
+# (`record.query`) is deliberately not copied to db.query.text: it can carry
+# data or secrets. The body is kept.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-cnpg-postgres
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body) and IsMatch(log.body, "^\\{.*\"logger\":\"postgres\",\"msg\":\"record\"")
+        statements:
+          - set(log.cache["pg"], ParseJSON(log.body)["record"])
+
+          # ── 1. Severity from the PostgreSQL message level ──────────────────────
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where IsMatch(log.cache["pg"]["error_severity"], "^DEBUG[1-5]$")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where IsMatch(log.cache["pg"]["error_severity"], "^(LOG|INFO|NOTICE)$")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["pg"]["error_severity"] == "WARNING"
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.cache["pg"]["error_severity"] == "ERROR"
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where IsMatch(log.cache["pg"]["error_severity"], "^(FATAL|PANIC)$")
+
+          # ── 2. db.* ────────────────────────────────────────────────────────────
+          - set(log.attributes["db.system.name"], "postgresql")
+          - set(log.attributes["db.namespace"], log.cache["pg"]["database_name"]) where IsString(log.cache["pg"]["database_name"]) and log.cache["pg"]["database_name"] != ""
+          # SQL commands only (SELECT, INSERT, …), not the session states (idle, authentication).
+          - set(log.attributes["db.operation.name"], log.cache["pg"]["command_tag"]) where IsMatch(log.cache["pg"]["command_tag"], "^[A-Z][A-Z ]*$")
+          - set(log.attributes["db.response.status_code"], log.cache["pg"]["sql_state_code"]) where IsString(log.cache["pg"]["sql_state_code"]) and log.cache["pg"]["sql_state_code"] != "" and log.cache["pg"]["sql_state_code"] != "00000"
+
+          # ── 3. Errors: error.type is the SQLSTATE, as the DB semconv asks ───────
+          - set(log.attributes["error.type"], log.attributes["db.response.status_code"]) where log.severity_number >= SEVERITY_NUMBER_ERROR and log.attributes["db.response.status_code"] != nil
+          - set(log.attributes["exception.message"], log.cache["pg"]["message"]) where log.severity_number >= SEVERITY_NUMBER_ERROR and IsString(log.cache["pg"]["message"])
+
+          # ── 4. Client and process ──────────────────────────────────────────────
+          - merge_maps(log.cache, ExtractPatterns(log.cache["pg"]["connection_from"], "^(?P<client_address>[^:\\[\\]]+|\\[[^\\]]+\\]):(?P<client_port>\\d+)$"), "insert") where IsString(log.cache["pg"]["connection_from"])
+          - set(log.attributes["client.address"], log.cache["client_address"]) where log.cache["client_address"] != nil
+          - set(log.attributes["client.port"], Int(log.cache["client_port"])) where log.cache["client_port"] != nil
+          - set(log.attributes["process.pid"], Int(log.cache["pg"]["process_id"])) where IsString(log.cache["pg"]["process_id"])
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1cnpg-postgres
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-json, transform/parse-cnpg-postgres]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "cnpg-postgres"
+    pipelines: [logs/parsers/cnpg-postgres]

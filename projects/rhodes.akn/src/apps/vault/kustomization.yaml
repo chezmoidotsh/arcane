@@ -84,3 +84,7 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm
     # oripathy: type=oci upstream=github.com/openbao/openbao tagPrefix=v digest=false
     newTag: 2.7.1-26.11-pkcs11.0.2.1-x86_64-linux
+
+# Log formats of the CNPG pods (ADR-020).
+components:
+  - ../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres/annotate

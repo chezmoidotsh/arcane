@@ -25,3 +25,7 @@ images:
     newName: oci.chezmoi.sh/ghcr.io/pocket-id/pocket-id
     # oripathy: type=oci upstream=github.com/pocket-id/pocket-id tagPrefix=v digest=false
     newTag: v2.19.1
+
+# Log formats of the CNPG pods (ADR-020).
+components:
+  - ../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres/annotate

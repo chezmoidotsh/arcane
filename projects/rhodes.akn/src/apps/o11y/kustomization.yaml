@@ -27,3 +27,7 @@ images:
 # the Grafana CR (datasources/kustomization.yaml).
 configurations:
   - kustomizeconfig.yaml
+
+# Log formats of the CNPG pods (ADR-020).
+components:
+  - ../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres/annotate
