@@ -182,6 +182,24 @@ spec:
           - type: move
             from: attributes.msg
             to: body
+          # Kernel messages (KmsgLogConfig) carry their own time in the body,
+          # `kern:    info: [2026-09-26T15:16:50.47Z]: text`; talos-time is when
+          # Talos forwarded them, so a new destination would date the whole
+          # ring buffer (replayed since boot) at the replay time.
+          - type: regex_parser
+            if: 'body matches "^[a-z]+: +[a-z]+: \\["'
+            regex: '^(?P<facility>[a-z]+): +[a-z]+: \[(?P<kmsg_time>[^\]]+)\]: (?P<kmsg_msg>(?s).*)$'
+            timestamp:
+              parse_from: attributes.kmsg_time
+              layout_type: gotime
+              layout: "2006-01-02T15:04:05.999999999Z07:00"
+          - type: move
+            if: 'attributes.kmsg_msg != nil'
+            from: attributes.kmsg_msg
+            to: body
+          - type: remove
+            if: 'attributes.kmsg_time != nil'
+            field: attributes.kmsg_time
 
       # ── Node metrics ──────────────────────────────────────────────────────
       host_metrics:
@@ -333,7 +351,7 @@ spec:
               - set(log.attributes["service.name"], log.attributes["talos-service"])
               - set(log.attributes["service.name"], "kernel") where log.attributes["service.name"] == nil and log.attributes["facility"] != nil
               - set(log.attributes["service.name"], "talos") where log.attributes["service.name"] == nil
-              - delete_matching_keys(log.attributes, "^talos-(service|time)$")
+              - delete_matching_keys(log.attributes, "^talos-(service|time|level)$")
       groupbyattrs/talos:
         keys: [service.name]
 
