@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Declares the log formats of every CloudNative-PG Cluster of the
+# kustomization (ADR-020): CNPG copies spec.inheritedMetadata to the pods it
+# creates. `postgres` is parsed by cnpg-postgres, the other containers
+# (bootstrap, barman-cloud plugin) log JSON.
+patches:
+  - target:
+      group: postgresql.cnpg.io
+      kind: Cluster
+    patch: |-
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      metadata:
+        name: any
+      spec:
+        inheritedMetadata:
+          annotations:
+            o11y.chezmoi.sh/log-format: json
+            o11y.chezmoi.sh/log-format.postgres: cnpg-postgres

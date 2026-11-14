@@ -27,6 +27,10 @@ spec:
     kind: ClusterImageCatalog
     major: 18
     name: default
+  inheritedMetadata:
+    annotations:
+      o11y.chezmoi.sh/log-format: json
+      o11y.chezmoi.sh/log-format.postgres: cnpg-postgres
   instances: 2
   managed:
     roles:

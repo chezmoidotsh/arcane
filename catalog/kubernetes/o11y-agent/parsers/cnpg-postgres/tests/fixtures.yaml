@@ -1,0 +1,40 @@
+# CNPG instance manager records (2026-11-14 sample shape), anonymised.
+---
+- body: '{"level":"info","ts":"2026-11-14T05:52:48.30221731Z","logger":"postgres","msg":"record","logging_pod":"db-1","record":{"log_time":"2026-11-14 05:52:48.301 UTC","process_id":"25","session_id":"6adde699.19","error_severity":"LOG","sql_state_code":"00000","message":"checkpoint starting: time","backend_type":"checkpointer","query_id":"0"}}'
+  expect:
+    severity_number: 9
+    attributes: { db.system.name: postgresql, process.pid: 25 }
+    absent: [db.response.status_code, db.namespace, error.type, exception.message]
+
+- body: '{"level":"info","ts":"2026-11-14T06:01:02Z","logger":"postgres","msg":"record","logging_pod":"db-1","record":{"log_time":"2026-11-14 06:01:02.001 UTC","user_name":"n8n","database_name":"n8n","process_id":"4242","connection_from":"10.128.3.7:51234","command_tag":"INSERT","error_severity":"ERROR","sql_state_code":"53100","message":"could not extend file: No space left on device","query":"INSERT INTO execution_data VALUES ($1)","backend_type":"client backend"}}'
+  expect:
+    severity_number: 17
+    attributes:
+      db.system.name: postgresql
+      db.namespace: n8n
+      db.operation.name: INSERT
+      db.response.status_code: "53100"
+      error.type: "53100"
+      exception.message: "could not extend file: No space left on device"
+      client.address: 10.128.3.7
+      client.port: 51234
+      process.pid: 4242
+    absent: [db.query.text]
+
+- body: '{"level":"info","ts":"2026-11-14T06:02:00Z","logger":"postgres","msg":"record","logging_pod":"db-1","record":{"user_name":"app","database_name":"app","process_id":"77","connection_from":"[local]","command_tag":"authentication","error_severity":"FATAL","sql_state_code":"28P01","message":"password authentication failed for user \"app\""}}'
+  expect:
+    severity_number: 21
+    attributes: { db.namespace: app, error.type: 28P01 }
+    absent: [db.operation.name, client.address]
+
+- body: '{"level":"info","ts":"2026-11-14T06:03:00Z","logger":"postgres","msg":"record","logging_pod":"db-1","record":{"process_id":"80","error_severity":"WARNING","sql_state_code":"01000","message":"archive command failed"}}'
+  expect: { severity_number: 13, attributes: { db.response.status_code: "01000" }, absent: [error.type] }
+
+# Instance manager lines (not a PostgreSQL record): left to `formats`.
+- body: '{"level":"info","ts":"2026-11-14T06:04:00Z","logger":"postgres","msg":"Checking for free disk space for WALs"}'
+  expect: { severity_number: 9, absent: [db.system.name] }
+
+# Same record from a container declared `none`: default route, not parsed.
+- body: '{"level":"info","ts":"2026-11-14T06:05:00Z","logger":"postgres","msg":"record","record":{"error_severity":"ERROR"}}'
+  resource: { o11y.log.format: none }
+  expect: { severity_number: 0, absent: [db.system.name] }

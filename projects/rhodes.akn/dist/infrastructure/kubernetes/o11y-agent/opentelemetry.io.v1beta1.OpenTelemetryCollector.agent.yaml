@@ -41,6 +41,9 @@ spec:
         - condition: resource.attributes["o11y.log.format"] == "zap-console"
           pipelines:
           - logs/parsers/zap-console
+        - condition: resource.attributes["o11y.log.format"] == "cnpg-postgres"
+          pipelines:
+          - logs/parsers/cnpg-postgres
     exporters:
       otlp_http:
         compression: gzip
@@ -210,6 +213,47 @@ spec:
             "upsert")
           - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
             != nil
+      transform/parse-cnpg-postgres:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body) and IsMatch(log.body, "^\\{.*\"logger\":\"postgres\",\"msg\":\"record\"")
+          context: log
+          statements:
+          - set(log.cache["pg"], ParseJSON(log.body)["record"])
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where IsMatch(log.cache["pg"]["error_severity"],
+            "^DEBUG[1-5]$")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where IsMatch(log.cache["pg"]["error_severity"],
+            "^(LOG|INFO|NOTICE)$")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["pg"]["error_severity"]
+            == "WARNING"
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.cache["pg"]["error_severity"]
+            == "ERROR"
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where IsMatch(log.cache["pg"]["error_severity"],
+            "^(FATAL|PANIC)$")
+          - set(log.attributes["db.system.name"], "postgresql")
+          - set(log.attributes["db.namespace"], log.cache["pg"]["database_name"])
+            where IsString(log.cache["pg"]["database_name"]) and log.cache["pg"]["database_name"]
+            != ""
+          - set(log.attributes["db.operation.name"], log.cache["pg"]["command_tag"])
+            where IsMatch(log.cache["pg"]["command_tag"], "^[A-Z][A-Z ]*$")
+          - set(log.attributes["db.response.status_code"], log.cache["pg"]["sql_state_code"])
+            where IsString(log.cache["pg"]["sql_state_code"]) and log.cache["pg"]["sql_state_code"]
+            != "" and log.cache["pg"]["sql_state_code"] != "00000"
+          - set(log.attributes["error.type"], log.attributes["db.response.status_code"])
+            where log.severity_number >= SEVERITY_NUMBER_ERROR and log.attributes["db.response.status_code"]
+            != nil
+          - set(log.attributes["exception.message"], log.cache["pg"]["message"]) where
+            log.severity_number >= SEVERITY_NUMBER_ERROR and IsString(log.cache["pg"]["message"])
+          - merge_maps(log.cache, ExtractPatterns(log.cache["pg"]["connection_from"],
+            "^(?P<client_address>[^:\\[\\]]+|\\[[^\\]]+\\]):(?P<client_port>\\d+)$"),
+            "insert") where IsString(log.cache["pg"]["connection_from"])
+          - set(log.attributes["client.address"], log.cache["client_address"]) where
+            log.cache["client_address"] != nil
+          - set(log.attributes["client.port"], Int(log.cache["client_port"])) where
+            log.cache["client_port"] != nil
+          - set(log.attributes["process.pid"], Int(log.cache["pg"]["process_id"]))
+            where IsString(log.cache["pg"]["process_id"])
       transform/parse-golog:
         error_mode: ignore
         log_statements:
@@ -531,6 +575,14 @@ spec:
           - forward/parsed
           processors:
           - transform/parse-bracketed
+          receivers:
+          - routing/log-format
+        logs/parsers/cnpg-postgres:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-json
+          - transform/parse-cnpg-postgres
           receivers:
           - routing/log-format
         logs/parsers/golog:

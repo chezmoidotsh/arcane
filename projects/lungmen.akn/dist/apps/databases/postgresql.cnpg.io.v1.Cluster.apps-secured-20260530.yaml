@@ -31,6 +31,10 @@ spec:
     kind: ImageCatalog
     major: 17
     name: postgresql-vchord
+  inheritedMetadata:
+    annotations:
+      o11y.chezmoi.sh/log-format: json
+      o11y.chezmoi.sh/log-format.postgres: cnpg-postgres
   instances: 2
   managed:
     roles:
