@@ -46,6 +46,7 @@ La procédure concernée est
 | `chezmoi.sh`                    | Notifications PVE (`sendmail` par défaut vers `root@pam`)                                                                              | Manuel (omission, limite d'outil) | `PROXMOX-VE.md` : le provider n'expose aucune ressource de notification                                                                                                                                                                                                                                                                                                                                                                 |
 | `chezmoi.sh`                    | Serveur de métriques OpenTelemetry de Proxmox VE (`/etc/pve/status.cfg`)                                                               | Manuel (délibéré)                 | [ADR-018](../decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md) (`accepted`) ; détail dans la section « Serveur de métriques OpenTelemetry de Proxmox VE »                                                                                                                                                                                                                                  |
 | `chezmoi.sh`                    | Collecteur OpenTelemetry de l'hôte Proxmox VE (paquet `otelcol-contrib`, configuration et drop-in systemd)                             | Déclaratif, appliqué à la main    | `src/infrastructure/proxmox/host/` ; tâches `mise` `host:otelcol:install` et `host:otelcol:deploy`. Voir la section « Collecteur OpenTelemetry de l'hôte Proxmox VE »                                                                                                                                                                                                                                                                   |
+| `chezmoi.sh`                    | Ping de l'agent invité QEMU des VM (`qga-ping`, script et timer systemd)                                                               | Déclaratif, appliqué à la main    | `src/infrastructure/proxmox/host/` ; tâche `mise` `host:qga-ping:deploy`. Voir la section « Ping de l'agent invité QEMU »                                                                                                                                                                                                                                                                                                               |
 | `chezmoi.sh`                    | Hook conntrack NOTRACK de `pve-01` (`/etc/network/if-up.d/99-talosnet-lb-notrack`)                                                     | Manuel (omission)                 | `INF-20260730-00` : « non exprimable dans le Pulumi/Ansible de ce dépôt aujourd'hui », aucun rôle Ansible pour `pve-01`. La procédure est l'unique source de vérité : une reconstruction de l'hôte perd le hook s'il n'est pas rejoué. Voir [la procédure](../procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)                                                                               |
 | `chezmoi.sh`                    | VM/OS PBS, disque de cache, clé de chiffrement côté client et paperkey                                                                 | Manuel (délibéré, limite d'outil) | `stack/proxmox-backup-server/README.md`, « Intentionally not managed via Pulumi » (le provider n'a pas de ressource de clé ; la VM/OS relève de la couche Proxmox)                                                                                                                                                                                                                                                                      |
 | `chezmoi.sh`                    | Datastore PBS, backend S3, compte de service, jeton d'API                                                                              | Déclaratif                        | `stack/proxmox-backup-server/` ; `docs/PROXMOX_BACKUP_SERVER.md`                                                                                                                                                                                                                                                                                                                                                                        |
@@ -100,6 +101,28 @@ l'hôte (`hostmetrics`) en OTLP/HTTP vers `data.o11y.chezmoi.sh:4318`, avec `hos
 Il remplace `prometheus-node-exporter` et la redirection rsyslog vers l'ancien LXC `pve-exporter`, retirés de l'hôte le
 2026-11-11 (rsyslog reste en place pour les fichiers locaux). Les étapes sont dans
 [Installer le collecteur OpenTelemetry sur Proxmox](../procedures/infrastructure/INF-20261111-00-Installer-le-Collecteur-OpenTelemetry-sur-Proxmox.md).
+
+## Ping de l'agent invité QEMU
+
+`qemu-ga` (l'extension `siderolabs/qemu-guest-agent` des VM Talos) tourne en boucle à 100 % d'un cœur quand une réponse
+reste bloquée dans son port virtio-serial : le client de l'hôte s'est déconnecté avant de la lire, et l'agent réessaie
+d'écrire sans attendre. Le 2026-11-14, 6 des 7 VM Talos de `pve-01` étaient dans cet état depuis des semaines, soit
+environ 6 cœurs perdus. Un `qm agent <vmid> ping` lit la réponse en attente et arrête la boucle.
+
+Sur `pve-01`, le timer systemd `qga-ping.timer` lance `/usr/local/sbin/qga-ping` toutes les minutes : il envoie un
+`guest-sync` directement sur le socket `/var/run/qemu-server/<vmid>.qga` de chaque VM démarrée dont l'agent est activé,
+sans passer par `qm` (un interpréteur Perl par appel, environ 50 s de CPU par passage), et ne journalise que les échecs. Une occurrence coûte donc au plus une minute
+de CPU.
+
+| Élément               | Source dans le dépôt                                                                |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| Script                | `projects/chezmoi.sh/src/infrastructure/proxmox/host/fs/usr.local.sbin/qga-ping`    |
+| Unités systemd        | `.../host/fs/etc.systemd.system/qga-ping.service` et `qga-ping.timer`               |
+| Déploiement           | tâche `mise` `host:qga-ping:deploy` (`.../host/.mise.toml`)                         |
+
+C'est un contournement : le correctif (« qga: don't busy-loop writing to virtio-serial when host disconnected »,
+qemu-devel, juillet 2026) n'est pas encore intégré. Une fois qu'il le sera dans l'extension, retirer le timer et le
+script.
 
 ## Serveur de métriques OpenTelemetry de Proxmox VE
 

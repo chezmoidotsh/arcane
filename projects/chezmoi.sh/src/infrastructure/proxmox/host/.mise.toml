@@ -9,6 +9,7 @@
 # Usage:
 #   mise run host:otelcol:install -- <pve-host>   # Install the otelcol-contrib package (first time / bump)
 #   mise run host:otelcol:deploy  -- <pve-host>   # Push the config + drop-in, validate, restart
+#   mise run host:qga-ping:deploy -- <pve-host>   # Install the qemu-ga ping script + timer (every minute)
 #
 # Procedure: docs/procedures/infrastructure/INF-20261111-00-Installer-le-Collecteur-OpenTelemetry-sur-Proxmox.md
 # =============================================================================
@@ -60,4 +61,25 @@ run = '''
     systemctl is-active otelcol-contrib
 SCRIPT
   echo "[SUCCESS] otelcol-contrib config deployed on ${host}." >&2
+'''
+
+[tasks."host:qga-ping:deploy"]
+description = "Install the qemu-ga ping script and its systemd timer on a Proxmox VE node, run it once"
+dir = "{{ config_root }}"
+usage = 'arg "<pve_host>" help="Proxmox VE node (e.g. pve-01.pve.chezmoi.sh)"'
+run = '''
+  set -euo pipefail
+  host="${usage_pve_host:?}"
+  scp fs/usr.local.sbin/qga-ping "root@${host}:/usr/local/sbin/qga-ping"
+  scp fs/etc.systemd.system/qga-ping.service fs/etc.systemd.system/qga-ping.timer "root@${host}:/etc/systemd/system/"
+  ssh "root@${host}" bash -s <<'SCRIPT'
+    set -euo pipefail
+    chmod 0755 /usr/local/sbin/qga-ping
+    systemctl daemon-reload
+    systemctl start qga-ping.service
+    systemctl enable qga-ping.timer
+    systemctl restart qga-ping.timer
+    systemctl list-timers qga-ping.timer --no-pager
+SCRIPT
+  echo "[SUCCESS] qga-ping deployed on ${host}." >&2
 '''
