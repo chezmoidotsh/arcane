@@ -30,6 +30,11 @@ in
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
         "-retentionPeriod=${retention.logs}" # set in configuration.nix
+        "-memory.allowedBytes=1GiB" # caches; query buffers come on top
+        # A single regex stats query over 4h took VL from 550 MiB to 1.2 GiB
+        # in 30s; cap parallelism so a few of them cannot stack up.
+        "-search.maxConcurrentRequests=4"
+        "-search.maxQueryDuration=30s" # explicit: the default, relied upon
         "-loggerFormat=json"
       ];
 
@@ -49,6 +54,11 @@ in
       LockPersonality = true;
       SystemCallArchitectures = "native";
       LimitNOFILE = 65536;
+
+      # Memory budget of the 8 GiB CT (see README "Memory budget"): a runaway
+      # query gets this service OOM-killed and restarted instead of starving
+      # the whole CT into thrashing (2026-11-14 freeze).
+      MemoryMax = "3G";
     };
   };
 }
