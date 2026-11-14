@@ -1,0 +1,14 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: "\e[90m5:48AM\e[0m \e[32mINF\e[0m \e[1mlogger.go:56\e[0m\e[36m >\e[0m \e[1mrequest received\e[0m"
+  expect: { severity_number: 9 }
+- body: "\e[31m[Nest] 26  - \e[39m11/14/2026, 7:43:57 AM \e[31m  ERROR\e[39m \e[33m[Api]\e[39m \e[31mboom\e[39m"
+  expect: { severity_number: 17 }
+- body: "\e[32m[Nest] 26  - \e[39m11/14/2026, 7:43:57 AM \e[32m    LOG\e[39m \e[33m[Api]\e[39m \e[32mWebsocket Connect\e[39m"
+  expect: { severity_number: 9 }
+- body: "no colour at all"
+  expect: { severity_number: 0 }
+# winston colorize (Actual Budget)
+- body: "2026-11-08T08:30:09.473Z \e[32minfo\e[39m: GET 304 /account/needs-bootstrap"
+  expect: { severity_number: 9 }

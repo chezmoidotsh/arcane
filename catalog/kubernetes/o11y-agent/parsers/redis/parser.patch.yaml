@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: redis (ADR-020) — o11y.chezmoi.sh/log-format: redis
+# ─────────────────────────────────────────────────────────────────────────────
+# Redis server lines:
+#   1:M 14 Nov 2026 05:51:04.019 * 1 changes in 300 seconds. Saving...
+# Level from the marker: . debug, - verbose, * notice, # warning.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-redis
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d+:[MCSX] \\d{2} \\w{3} \\d{4} [\\d:.]+ (?P<lvl>[.*#-]) "), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1redis
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-redis]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "redis"
+    pipelines: [logs/parsers/redis]

@@ -1,0 +1,9 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: "1:M 14 Nov 2026 05:51:04.019 * 1 changes in 300 seconds. Saving..."
+  expect: { severity_number: 9 }
+- body: "1:M 14 Nov 2026 05:51:04.020 # WARNING Memory overcommit must be enabled!"
+  expect: { severity_number: 13 }
+- body: "1:C 14 Nov 2026 05:51:00.000 - verbose line"
+  expect: { severity_number: 5 }

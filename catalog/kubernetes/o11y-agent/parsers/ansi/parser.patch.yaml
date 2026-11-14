@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: ansi (ADR-020) — o11y.chezmoi.sh/log-format: ansi
+# ─────────────────────────────────────────────────────────────────────────────
+# Colour-coded console lines (zerolog ConsoleWriter, NestJS):
+#   \e[90m5:48AM\e[0m \e[32mINF\e[0m msg      \e[31m[Nest] 26 - … \e[31m  ERROR\e[39m msg
+# Level from the first colour-wrapped level token.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-ansi
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\\x1b\\[[0-9;]*m\\s*(?P<lvl>(?i:TRC|DBG|INF|WRN|ERR|FTL|LOG|DEBUG|VERBOSE|INFO|WARN|WARNING|ERROR|FATAL))\\x1b"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1ansi
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-ansi]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "ansi"
+    pipelines: [logs/parsers/ansi]

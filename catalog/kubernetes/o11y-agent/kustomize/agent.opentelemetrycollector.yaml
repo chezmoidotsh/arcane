@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # o11y node agent — one OpenTelemetry Collector per node (DaemonSet)
 #
-#   /var/log/pods (file_log) ──────────────────────────┐
+#   /var/log/pods (file_log, parsed by format) ────────┐
 #   Talos machined + kernel (tcp_log 127.0.0.1:6050) ──┤
 #   host_metrics (/hostfs) ────────────────────────────┤─▶ k8s_attributes ─▶ identity ─▶ otlp_http ─▶ o11y appliance
 #   kubelet_stats (:10250) ────────────────────────────┤
@@ -310,6 +310,16 @@ spec:
             - tag_name: app.kubernetes.io/name
               key: app.kubernetes.io/name
               from: pod
+          # Declared log format of the pod and of each of its containers
+          # (ADR-020), consumed by transform/log-format on the pod logs,
+          # dropped from the metrics by resource/no-log-format.
+          annotations:
+            - tag_name: o11y.log.format
+              key: o11y.chezmoi.sh/log-format
+              from: pod
+            - tag_name: o11y.log.format.$$1
+              key_regex: ^o11y\.chezmoi\.sh/log-format\.(.+)$$
+              from: pod
         pod_association:
           - sources:
               - from: resource_attribute
@@ -373,6 +383,43 @@ spec:
               - delete_key(resource.attributes, "app.kubernetes.io/name")
         log_statements: *identity
 
+      # ── Pod log parsing (ADR-020) ───────────────────────────────────────
+      # The format of a container is the value of its annotation
+      # `o11y.chezmoi.sh/log-format.<container>`, else the pod's
+      # `o11y.chezmoi.sh/log-format`. routing/log-format sends each batch to
+      # the pipeline of its format (one kustomize component of ../parsers
+      # each); unannotated containers and `none` are not parsed.
+      transform/log-format:
+        error_mode: ignore
+        log_statements:
+          - context: resource
+            statements:
+              - set(resource.attributes["o11y.log.format"], resource.attributes[Concat(["o11y.log.format.", resource.attributes["k8s.container.name"]], "")]) where resource.attributes[Concat(["o11y.log.format.", resource.attributes["k8s.container.name"]], "")] != nil
+              - delete_matching_keys(resource.attributes, "^o11y\\.log\\.format\\..+")
+
+      # Format parsers put the level token they found in o11y.log.level;
+      # this maps it to severity_number (the OTLP gateway of the appliance
+      # writes severity_text from it), unless a parser already set one.
+      transform/severity:
+        error_mode: ignore
+        log_statements:
+          - context: log
+            conditions:
+              - log.attributes["o11y.log.level"] != nil
+            statements:
+              - set(log.severity_number, SEVERITY_NUMBER_TRACE) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"], "^(?i)(trace|trc)$")
+              - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"], "^(?i)(debug|dbg|verbose|\\.|-)$")
+              - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"], "^(?i)(i|info|inf|information|notice|log|\\*)$")
+              - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"], "^(?i)(w|warn|warning|wrn|#)$")
+              - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"], "^(?i)(e|error|err|eror)$")
+              - set(log.severity_number, SEVERITY_NUMBER_FATAL) where log.severity_number == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"], "^(?i)(f|fatal|ftl|crit|critical|crt|panic|dpanic|alert|emerg)$")
+              - delete_key(log.attributes, "o11y.log.level")
+
+      resource/no-log-format:
+        attributes:
+          - pattern: ^o11y\.log\.format(\..+)?$$
+            action: delete
+
       resource/hostmetrics:
         attributes:
           - key: service.name
@@ -393,6 +440,13 @@ spec:
             action: insert
 
       batch: {}
+
+    connectors:
+      # Routes are appended by the parser components (one per format).
+      routing/log-format:
+        default_pipelines: [logs/pods/export]
+        table: []
+      forward/parsed: {}
 
     exporters:
       otlp_http:
@@ -420,7 +474,13 @@ spec:
       pipelines:
         logs/pods:
           receivers: [file_log/pods]
-          processors: [memory_limiter, k8s_attributes, transform/identity, resource/cluster, batch]
+          processors: [memory_limiter, k8s_attributes, transform/identity, transform/log-format]
+          exporters: [routing/log-format]
+        # logs/parsers/<format>: added by the parser components, from
+        # routing/log-format to forward/parsed.
+        logs/pods/export:
+          receivers: [routing/log-format, forward/parsed]
+          processors: [transform/severity, resource/cluster, batch]
           exporters: [otlp_http]
         logs/talos:
           receivers: [tcp_log/talos]
@@ -432,9 +492,9 @@ spec:
           exporters: [otlp_http]
         metrics/kubelet:
           receivers: [kubelet_stats]
-          processors: [memory_limiter, k8s_attributes, transform/identity, resource/kubelet, resource/cluster, batch]
+          processors: [memory_limiter, k8s_attributes, transform/identity, resource/no-log-format, resource/kubelet, resource/cluster, batch]
           exporters: [otlp_http]
         metrics/prometheus:
           receivers: [prometheus]
-          processors: [memory_limiter, groupbyattrs/prometheus, transform/prometheus, k8s_attributes, transform/identity, resource/cluster, batch]
+          processors: [memory_limiter, groupbyattrs/prometheus, transform/prometheus, k8s_attributes, transform/identity, resource/no-log-format, resource/cluster, batch]
           exporters: [otlp_http]

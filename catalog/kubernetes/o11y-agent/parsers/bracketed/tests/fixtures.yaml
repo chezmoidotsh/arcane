@@ -1,0 +1,14 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: "[2026-11-14 05:56:00,014] [INFO] [celery.beat] Scheduler: Sending due task"
+  expect: { severity_number: 9 }
+- body: "[06:13:27] [WRN] [15] Emby.Server: Slow query"
+  expect: { severity_number: 13 }
+- body: "[2026-11-14 05:56:01,000] [ERROR] [paperless.mail] IMAP login failed"
+  expect: { severity_number: 17 }
+- body: '  File "/usr/local/lib/python3.14/site-packages/imap_tools/mailbox.py", line 104, in login'
+  expect: { severity_number: 0 }
+# Envoy (lower-case level)
+- body: "[2026-11-14 00:03:52.722][7][warning][config] [external/envoy/source/extensions/config_subscription/grpc/grpc_stream.h:190] StreamListeners gRPC config stream closed"
+  expect: { severity_number: 13 }

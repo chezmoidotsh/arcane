@@ -1,0 +1,15 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: 'time="2026-11-14T05:48:41Z" level=info msg="Refreshing app status" application=cloudnative-pg'
+  expect: { severity_number: 9 }
+- body: 'time=2026-11-14T05:48:41.832Z level=INFO msg="HTTP request started" method=POST path=/mcp'
+  expect: { severity_number: 9 }
+- body: 'logger=context userId=3 orgId=1 t=2026-11-14T05:48:42.433Z level=warn msg="Request Completed" status=404'
+  expect: { severity_number: 13 }
+- body: 'time="2026-11-14T05:48:43Z" level=error msg="Error listing backups" error="rpc error: code = Unavailable" controller=backup-sync'
+  expect: { severity_number: 17, attributes: { exception.message: "rpc error: code = Unavailable" } }
+- body: "time=2026-11-14T05:49:13Z level=error msg=failed err=timeout module=agent"
+  expect: { severity_number: 17, attributes: { exception.message: timeout } }
+- body: "Worker started execution 4061 (job 1915)"
+  expect: { severity_number: 0 }

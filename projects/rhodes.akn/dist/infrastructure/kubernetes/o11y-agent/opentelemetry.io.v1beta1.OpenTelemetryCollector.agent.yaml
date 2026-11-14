@@ -8,6 +8,39 @@ metadata:
   namespace: o11y-agent-system
 spec:
   config:
+    connectors:
+      forward/parsed: {}
+      routing/log-format:
+        default_pipelines:
+        - logs/pods/export
+        table:
+        - condition: resource.attributes["o11y.log.format"] == "ansi"
+          pipelines:
+          - logs/parsers/ansi
+        - condition: resource.attributes["o11y.log.format"] == "bracketed"
+          pipelines:
+          - logs/parsers/bracketed
+        - condition: resource.attributes["o11y.log.format"] == "golog"
+          pipelines:
+          - logs/parsers/golog
+        - condition: resource.attributes["o11y.log.format"] == "json"
+          pipelines:
+          - logs/parsers/json
+        - condition: resource.attributes["o11y.log.format"] == "klog"
+          pipelines:
+          - logs/parsers/klog
+        - condition: resource.attributes["o11y.log.format"] == "logfmt"
+          pipelines:
+          - logs/parsers/logfmt
+        - condition: resource.attributes["o11y.log.format"] == "redis"
+          pipelines:
+          - logs/parsers/redis
+        - condition: resource.attributes["o11y.log.format"] == "uvicorn"
+          pipelines:
+          - logs/parsers/uvicorn
+        - condition: resource.attributes["o11y.log.format"] == "zap-console"
+          pipelines:
+          - logs/parsers/zap-console
     exporters:
       otlp_http:
         compression: gzip
@@ -33,6 +66,13 @@ spec:
       k8s_attributes:
         auth_type: serviceAccount
         extract:
+          annotations:
+          - from: pod
+            key: o11y.chezmoi.sh/log-format
+            tag_name: o11y.log.format
+          - from: pod
+            key_regex: ^o11y\.chezmoi\.sh/log-format\.(.+)$$
+            tag_name: o11y.log.format.$$1
           labels:
           - from: pod
             key: app.kubernetes.io/name
@@ -89,6 +129,10 @@ spec:
         - action: insert
           key: service.name
           value: kubelet
+      resource/no-log-format:
+        attributes:
+        - action: delete
+          pattern: ^o11y\.log\.format(\..+)?$$
       transform/identity:
         error_mode: ignore
         log_statements:
@@ -135,6 +179,147 @@ spec:
           - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
             where resource.attributes["service.name"] == nil
           - delete_key(resource.attributes, "app.kubernetes.io/name")
+      transform/log-format:
+        error_mode: ignore
+        log_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["o11y.log.format"], resource.attributes[Concat(["o11y.log.format.",
+            resource.attributes["k8s.container.name"]], "")]) where resource.attributes[Concat(["o11y.log.format.",
+            resource.attributes["k8s.container.name"]], "")] != nil
+          - delete_matching_keys(resource.attributes, "^o11y\\.log\\.format\\..+")
+      transform/parse-ansi:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\\x1b\\[[0-9;]*m\\s*(?P<lvl>(?i:TRC|DBG|INF|WRN|ERR|FTL|LOG|DEBUG|VERBOSE|INFO|WARN|WARNING|ERROR|FATAL))\\x1b"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-bracketed:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\\[(?P<lvl>(?i:TRC|DBG|INF|WRN|ERR|FTL|CRT|TRACE|DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL))\\]"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-golog:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - 'merge_maps(log.cache, ExtractPatterns(log.body, "^(?P<lvl>[A-Z]+): \\d{4}/\\d{2}/\\d{2}
+            "), "upsert")'
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d{4}/\\d{2}/\\d{2}
+            \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? (?P<lvl>[A-Z]+) "), "insert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-json:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - set(log.cache["json"], ParseJSON(log.body)) where IsMatch(log.body, "^\\s*\\{")
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["level"]) where
+            IsString(log.cache["json"]["level"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["@level"]) where
+            log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["@level"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["severity"]) where
+            log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["severity"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["lvl"]) where
+            log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["lvl"])
+          - set(log.attributes["exception.message"], log.cache["json"]["error"]) where
+            IsString(log.cache["json"]["error"]) and log.cache["json"]["error"] !=
+            ""
+          - set(log.attributes["exception.message"], log.cache["json"]["err"]) where
+            log.attributes["exception.message"] == nil and IsString(log.cache["json"]["err"])
+            and log.cache["json"]["err"] != ""
+          - set(log.attributes["exception.stacktrace"], log.cache["json"]["stacktrace"])
+            where IsString(log.cache["json"]["stacktrace"])
+          - set(log.attributes["exception.stacktrace"], log.cache["json"]["stack"])
+            where log.attributes["exception.stacktrace"] == nil and IsString(log.cache["json"]["stack"])
+      transform/parse-klog:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^(?P<lvl>[IWEF])\\d{4}
+            \\d{2}:\\d{2}:\\d{2}"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert")
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=(?P<err>[^\\s\"]\\S*)"),
+            "insert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"]
+            != nil and log.cache["err"] != ""
+      transform/parse-logfmt:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)level=\"?(?P<lvl>[A-Za-z]+)"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert")
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=(?P<err>[^\\s\"]\\S*)"),
+            "insert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"]
+            != nil and log.cache["err"] != ""
+      transform/parse-redis:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d+:[MCSX] \\d{2} \\w{3}
+            \\d{4} [\\d:.]+ (?P<lvl>[.*#-]) "), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-uvicorn:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\S+\\s+(?P<lvl>DEBUG|INFO|WARNING|ERROR|CRITICAL)\\s{2,}"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-zap-console:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\S+\\t(?P<lvl>[a-zA-Z]+)\\t"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"error\":\\s*\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"]
+            != nil and log.cache["err"] != ""
       transform/prometheus:
         error_mode: ignore
         metric_statements:
@@ -149,6 +334,32 @@ spec:
           - delete_matching_keys(resource.attributes, "^(namespace|pod|container|server\\.port|url\\.scheme)$")
           - delete_key(resource.attributes, "service.name") where resource.attributes["k8s.pod.name"]
             != nil
+      transform/severity:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - log.attributes["o11y.log.level"] != nil
+          context: log
+          statements:
+          - set(log.severity_number, SEVERITY_NUMBER_TRACE) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(trace|trc)$")
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(debug|dbg|verbose|\\.|-)$")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(i|info|inf|information|notice|log|\\*)$")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(w|warn|warning|wrn|#)$")
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(e|error|err|eror)$")
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(f|fatal|ftl|crit|critical|crt|panic|dpanic|alert|emerg)$")
+          - delete_key(log.attributes, "o11y.log.level")
       transform/talos:
         error_mode: ignore
         log_statements:
@@ -308,17 +519,89 @@ spec:
       - health_check
       - file_storage
       pipelines:
+        logs/parsers/ansi:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-ansi
+          receivers:
+          - routing/log-format
+        logs/parsers/bracketed:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-bracketed
+          receivers:
+          - routing/log-format
+        logs/parsers/golog:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-golog
+          receivers:
+          - routing/log-format
+        logs/parsers/json:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-json
+          receivers:
+          - routing/log-format
+        logs/parsers/klog:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-klog
+          receivers:
+          - routing/log-format
+        logs/parsers/logfmt:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-logfmt
+          receivers:
+          - routing/log-format
+        logs/parsers/redis:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-redis
+          receivers:
+          - routing/log-format
+        logs/parsers/uvicorn:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-uvicorn
+          receivers:
+          - routing/log-format
+        logs/parsers/zap-console:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-zap-console
+          receivers:
+          - routing/log-format
         logs/pods:
           exporters:
-          - otlp_http
+          - routing/log-format
           processors:
           - memory_limiter
           - k8s_attributes
           - transform/identity
+          - transform/log-format
+          receivers:
+          - file_log/pods
+        logs/pods/export:
+          exporters:
+          - otlp_http
+          processors:
+          - transform/severity
           - resource/cluster
           - batch
           receivers:
-          - file_log/pods
+          - routing/log-format
+          - forward/parsed
         logs/talos:
           exporters:
           - otlp_http
@@ -349,6 +632,7 @@ spec:
           - memory_limiter
           - k8s_attributes
           - transform/identity
+          - resource/no-log-format
           - resource/kubelet
           - resource/cluster
           - batch
@@ -363,6 +647,7 @@ spec:
           - transform/prometheus
           - k8s_attributes
           - transform/identity
+          - resource/no-log-format
           - resource/cluster
           - batch
           receivers:

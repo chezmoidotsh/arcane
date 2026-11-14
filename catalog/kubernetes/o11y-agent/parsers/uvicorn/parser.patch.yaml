@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: uvicorn (ADR-020) — o11y.chezmoi.sh/log-format: uvicorn
+# ─────────────────────────────────────────────────────────────────────────────
+# Python logging with a padded level column (uvicorn, Spoolman):
+#   uvicorn.access             INFO     10.0.0.1:51950 - "GET /health HTTP/1.1" 200
+# Level from the column after the logger name.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-uvicorn
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\S+\\s+(?P<lvl>DEBUG|INFO|WARNING|ERROR|CRITICAL)\\s{2,}"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1uvicorn
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-uvicorn]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "uvicorn"
+    pipelines: [logs/parsers/uvicorn]

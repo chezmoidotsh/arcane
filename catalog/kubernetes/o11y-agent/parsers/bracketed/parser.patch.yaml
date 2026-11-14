@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: bracketed (ADR-020) — o11y.chezmoi.sh/log-format: bracketed
+# ─────────────────────────────────────────────────────────────────────────────
+# Level between brackets (Python logging formats, .NET, …):
+#   [2026-11-14 05:56:00,014] [INFO] [celery.beat] msg      [06:13:27] [WRN] msg
+# Level from the first bracketed level token, short or long form.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-bracketed
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\\[(?P<lvl>(?i:TRC|DBG|INF|WRN|ERR|FTL|CRT|TRACE|DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL))\\]"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1bracketed
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-bracketed]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "bracketed"
+    pipelines: [logs/parsers/bracketed]

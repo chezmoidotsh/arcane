@@ -1,0 +1,9 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: 'uvicorn.access             INFO     10.0.0.1:51950 - "GET /health HTTP/1.1" 200'
+  expect: { severity_number: 9 }
+- body: 'spoolman.database          WARNING  Database is locked, retrying'
+  expect: { severity_number: 13 }
+- body: 'INFO: single space is not this format'
+  expect: { severity_number: 0 }

@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: logfmt (ADR-020) — o11y.chezmoi.sh/log-format: logfmt
+# ─────────────────────────────────────────────────────────────────────────────
+# logfmt lines (logrus text, slog text, Grafana, Cilium, Velero, …):
+#   time="…" level=info msg="…" error="…"
+# Level from `level=`; exception.message from `error=` or `err=`.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-logfmt
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)level=\"?(?P<lvl>[A-Za-z]+)"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""), "upsert")
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=(?P<err>[^\\s\"]\\S*)"), "insert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"] != nil and log.cache["err"] != ""
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1logfmt
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-logfmt]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "logfmt"
+    pipelines: [logs/parsers/logfmt]

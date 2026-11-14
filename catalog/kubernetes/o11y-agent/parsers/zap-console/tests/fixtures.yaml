@@ -1,0 +1,9 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: "2026-11-14T05:48:54.536Z\twarn\tinternal/transaction.go:131\tFailed to scrape Prometheus endpoint\t{\"error\": \"connection refused\"}"
+  expect: { severity_number: 13, attributes: { exception.message: connection refused } }
+- body: "2026-11-14T05:48:55.000Z\tinfo\tservice.go:256\tEverything is ready."
+  expect: { severity_number: 9, absent: [exception.message] }
+- body: "plain line without tabs"
+  expect: { severity_number: 0 }

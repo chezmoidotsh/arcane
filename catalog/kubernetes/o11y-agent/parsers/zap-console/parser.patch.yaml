@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Format: zap-console (ADR-020) — o11y.chezmoi.sh/log-format: zap-console
+# ─────────────────────────────────────────────────────────────────────────────
+# zap console lines (OpenTelemetry Collector, …), tab-separated:
+#   2026-11-14T05:48:54.536Z<TAB>warn<TAB>caller.go:131<TAB>msg<TAB>{"error": "…"}
+# Level from the second field; exception.message from the `error` field of
+# the trailing JSON.
+# The level token goes to o11y.log.level, mapped to severity_number by
+# transform/severity of the base. The body is never modified.
+# ─────────────────────────────────────────────────────────────────────────────
+- op: add
+  path: /spec/config/processors/transform~1parse-zap-console
+  value:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        conditions:
+          - IsString(log.body)
+        statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\S+\\t(?P<lvl>[a-zA-Z]+)\\t"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"error\":\\s*\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""), "upsert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"] != nil and log.cache["err"] != ""
+- op: add
+  path: /spec/config/service/pipelines/logs~1parsers~1zap-console
+  value:
+    receivers: [routing/log-format]
+    processors: [transform/parse-zap-console]
+    exporters: [forward/parsed]
+- op: add
+  path: /spec/config/connectors/routing~1log-format/table/-
+  value:
+    condition: resource.attributes["o11y.log.format"] == "zap-console"
+    pipelines: [logs/parsers/zap-console]

@@ -1,0 +1,26 @@
+# Records sent with o11y.log.format set to this format (the test task does it).
+# severity_number: 1 TRACE, 5 DEBUG, 9 INFO, 13 WARN, 17 ERROR, 21 FATAL; 0 = unspecified.
+---
+- body: '{"level":"info","ts":"2026-11-14T05:59:57.001522017Z","logger":"pki","msg":"Periodic TLS certificates maintenance"}'
+  expect: { severity_number: 9, absent: [exception.message] }
+- body: '{"@level":"info","@message":"revoked lease","@module":"expiration","@timestamp":"2026-11-14T05:48:48.458040Z"}'
+  expect: { severity_number: 9 }
+- body: '{"time":"2026-11-14T06:12:56Z","level":"INFO","msg":"Cleaned up expired rows","app":"pocket-id"}'
+  expect: { severity_number: 9 }
+- body: '{"time":"2026-11-14T06:12:57Z","severity":"WARNING","message":"slow request"}'
+  expect: { severity_number: 13 }
+- body: '{"level":"error","ts":"2026-11-14T05:48:45Z","msg":"Failed to watch","error":"secrets is forbidden","stacktrace":"k8s.io/client-go/tools/cache.DefaultWatchErrorHandler\n\treflector.go:227"}'
+  expect:
+    severity_number: 17
+    attributes:
+      exception.message: secrets is forbidden
+      exception.stacktrace: "k8s.io/client-go/tools/cache.DefaultWatchErrorHandler\n\treflector.go:227"
+- body: '{"level":"error","msg":"no error field here","error":""}'
+  expect: { severity_number: 17, absent: [exception.message] }
+# Not JSON: left unspecified, no error.
+- body: 'time="2026-11-14T05:48:41Z" level=info msg="logfmt line"'
+  expect: { severity_number: 0 }
+# Per-container override: the pod says logfmt, its `api` container says json.
+- body: '{"level":"warn","msg":"override wins"}'
+  resource: { o11y.log.format: logfmt, k8s.container.name: api, o11y.log.format.api: json }
+  expect: { severity_number: 13 }
