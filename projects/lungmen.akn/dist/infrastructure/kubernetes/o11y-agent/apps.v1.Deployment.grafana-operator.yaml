@@ -21,8 +21,7 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: json
-        o11y.chezmoi.sh/log-format.grafana-operator: zap-console
+        o11y.chezmoi.sh/log-format: zap-console
       labels:
         app.kubernetes.io/component: operator
         app.kubernetes.io/instance: grafana-operator

@@ -24,15 +24,8 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: StatefulSet, name: actual-budget}
     patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: ansi
+      kind: StatefulSet
+      metadata: {name: actual-budget}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: ansi}}}}

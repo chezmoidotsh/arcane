@@ -40,17 +40,18 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020). immich-machine-learning: no line seen in 7 days.
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: immich-machine-learning}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: none
-              o11y.chezmoi.sh/log-format.immich-server: ansi
-              o11y.chezmoi.sh/log-format.redis: redis
+      metadata: {name: immich-machine-learning}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
+  - target: {kind: Deployment, name: immich-redis}
+    patch: |-
+      kind: Deployment
+      metadata: {name: immich-redis}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: redis}}}}
+  - target: {kind: Deployment, name: immich-server}
+    patch: |-
+      kind: Deployment
+      metadata: {name: immich-server}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: ansi}}}}

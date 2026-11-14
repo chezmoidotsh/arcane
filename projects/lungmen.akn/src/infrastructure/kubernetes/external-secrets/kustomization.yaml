@@ -32,18 +32,21 @@ patches:
       kind: ClusterSecretStore
       name: vault.chezmoi.sh
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: external-secrets-cert-controller}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: json
+      metadata: {name: external-secrets-cert-controller}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
+  - target: {kind: Deployment, name: external-secrets-webhook}
+    patch: |-
+      kind: Deployment
+      metadata: {name: external-secrets-webhook}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
+  - target: {kind: Deployment, name: external-secrets}
+    patch: |-
+      kind: Deployment
+      metadata: {name: external-secrets}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
 
 images:
   - name: oci.external-secrets.io/external-secrets/external-secrets

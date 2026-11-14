@@ -32,16 +32,13 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: StatefulSet, name: paperless-ngx-redis}
     patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: bracketed
-              o11y.chezmoi.sh/log-format.redis: redis
+      kind: StatefulSet
+      metadata: {name: paperless-ngx-redis}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: redis}}}}
+  - target: {kind: StatefulSet, name: paperless-ngx}
+    patch: |-
+      kind: StatefulSet
+      metadata: {name: paperless-ngx}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: bracketed}}}}

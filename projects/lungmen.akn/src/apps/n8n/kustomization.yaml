@@ -55,16 +55,28 @@ patches:
         name: n8n-task-runners
         namespace: n8n
   # Log formats of the pods (ADR-020). n8n logs plain text without level.
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: n8n-main}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: none
-              o11y.chezmoi.sh/log-format.redis: redis
+      metadata: {name: n8n-main}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
+  - target: {kind: Deployment, name: n8n-proxy}
+    patch: |-
+      kind: Deployment
+      metadata: {name: n8n-proxy}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
+  - target: {kind: Deployment, name: n8n-redis}
+    patch: |-
+      kind: Deployment
+      metadata: {name: n8n-redis}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: redis}}}}
+  - target: {kind: Deployment, name: n8n-webhook-processor}
+    patch: |-
+      kind: Deployment
+      metadata: {name: n8n-webhook-processor}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
+  - target: {kind: Deployment, name: n8n-worker}
+    patch: |-
+      kind: Deployment
+      metadata: {name: n8n-worker}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}

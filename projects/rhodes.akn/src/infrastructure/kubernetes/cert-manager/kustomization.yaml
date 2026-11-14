@@ -33,18 +33,26 @@ patches:
         name: letsencrypt-issuer-credentials
         namespace: cert-manager-system
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: cert-manager-cainjector}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: klog
+      metadata: {name: cert-manager-cainjector}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+  - target: {kind: Deployment, name: cert-manager-webhook}
+    patch: |-
+      kind: Deployment
+      metadata: {name: cert-manager-webhook}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+  - target: {kind: Deployment, name: cert-manager}
+    patch: |-
+      kind: Deployment
+      metadata: {name: cert-manager}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
+  - target: {kind: Job, name: cert-manager-startupapicheck}
+    patch: |-
+      kind: Job
+      metadata: {name: cert-manager-startupapicheck}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: klog}}}}
 
 images:
   - name: quay.io/jetstack/cert-manager-cainjector

@@ -19,9 +19,7 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: none
-        o11y.chezmoi.sh/log-format.immich-server: ansi
-        o11y.chezmoi.sh/log-format.redis: redis
+        o11y.chezmoi.sh/log-format: redis
       labels:
         app.kubernetes.io/component: redis
         app.kubernetes.io/instance: immich

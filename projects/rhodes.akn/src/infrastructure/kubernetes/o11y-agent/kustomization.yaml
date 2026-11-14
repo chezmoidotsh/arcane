@@ -79,16 +79,13 @@ patches:
           name: K8S_CLUSTER_NAME
           value: rhodes.akn
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: grafana-operator}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: json
-              o11y.chezmoi.sh/log-format.grafana-operator: zap-console
+      metadata: {name: grafana-operator}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: zap-console}}}}
+  - target: {kind: Deployment, name: opentelemetry-operator}
+    patch: |-
+      kind: Deployment
+      metadata: {name: opentelemetry-operator}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}

@@ -17,9 +17,7 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: logfmt
-        o11y.chezmoi.sh/log-format.cilium-envoy: bracketed
-        o11y.chezmoi.sh/log-format.frontend: none
+        o11y.chezmoi.sh/log-format: bracketed
       labels:
         app.kubernetes.io/name: cilium-envoy
         app.kubernetes.io/part-of: cilium

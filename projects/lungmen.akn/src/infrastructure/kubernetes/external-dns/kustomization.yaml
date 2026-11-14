@@ -44,16 +44,13 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: external-dns-bind}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: logfmt
-              o11y.chezmoi.sh/log-format.webhook: json
+      metadata: {name: external-dns-bind}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+  - target: {kind: Deployment, name: external-dns-unifi}
+    patch: |-
+      kind: Deployment
+      metadata: {name: external-dns-unifi}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json, o11y.chezmoi.sh/log-format.external-dns: logfmt}}}}

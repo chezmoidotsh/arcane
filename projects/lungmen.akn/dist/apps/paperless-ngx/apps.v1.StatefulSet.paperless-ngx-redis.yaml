@@ -19,8 +19,7 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: bracketed
-        o11y.chezmoi.sh/log-format.redis: redis
+        o11y.chezmoi.sh/log-format: redis
       labels:
         app.kubernetes.io/component: tasks-broker
         app.kubernetes.io/instance: paperless-ngx

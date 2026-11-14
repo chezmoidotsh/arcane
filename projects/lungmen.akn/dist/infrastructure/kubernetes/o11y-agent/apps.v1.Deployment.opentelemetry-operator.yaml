@@ -24,7 +24,6 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
         o11y.chezmoi.sh/log-format: json
-        o11y.chezmoi.sh/log-format.grafana-operator: zap-console
       labels:
         app.kubernetes.io/component: controller-manager
         app.kubernetes.io/instance: opentelemetry-operator

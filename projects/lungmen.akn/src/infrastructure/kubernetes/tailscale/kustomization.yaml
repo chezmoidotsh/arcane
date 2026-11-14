@@ -33,15 +33,8 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: operator}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: json
+      metadata: {name: operator}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}

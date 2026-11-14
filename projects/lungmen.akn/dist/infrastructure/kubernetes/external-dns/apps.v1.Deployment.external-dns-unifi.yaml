@@ -21,8 +21,8 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: logfmt
-        o11y.chezmoi.sh/log-format.webhook: json
+        o11y.chezmoi.sh/log-format: json
+        o11y.chezmoi.sh/log-format.external-dns: logfmt
       labels:
         app.kubernetes.io/instance: external-dns-unifi
         app.kubernetes.io/name: external-dns

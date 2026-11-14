@@ -18,8 +18,6 @@ spec:
         metadata:
           annotations:
             o11y.chezmoi.sh/log-format: logfmt
-            o11y.chezmoi.sh/log-format.cilium-envoy: bracketed
-            o11y.chezmoi.sh/log-format.frontend: none
           labels:
             k8s-app: hubble-generate-certs
         spec:

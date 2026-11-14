@@ -22,7 +22,6 @@ spec:
     metadata:
       annotations:
         o11y.chezmoi.sh/log-format: logfmt
-        o11y.chezmoi.sh/log-format.webhook: json
       labels:
         app.kubernetes.io/instance: external-dns-bind
         app.kubernetes.io/name: external-dns

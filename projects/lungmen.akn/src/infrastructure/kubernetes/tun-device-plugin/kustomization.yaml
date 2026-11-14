@@ -12,15 +12,8 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020). go-kit logfmt; no line seen in 7 days.
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: DaemonSet, name: tun-device-plugin}
     patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: logfmt
+      kind: DaemonSet
+      metadata: {name: tun-device-plugin}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}

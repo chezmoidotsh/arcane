@@ -40,17 +40,38 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: argocd-applicationset-controller}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: logfmt
-              o11y.chezmoi.sh/log-format.notifications-controller: json
-              o11y.chezmoi.sh/log-format.redis: redis
+      metadata: {name: argocd-applicationset-controller}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+  - target: {kind: Deployment, name: argocd-notifications-controller}
+    patch: |-
+      kind: Deployment
+      metadata: {name: argocd-notifications-controller}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}
+  - target: {kind: Deployment, name: argocd-redis}
+    patch: |-
+      kind: Deployment
+      metadata: {name: argocd-redis}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: redis}}}}
+  - target: {kind: Deployment, name: argocd-repo-server}
+    patch: |-
+      kind: Deployment
+      metadata: {name: argocd-repo-server}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+  - target: {kind: Deployment, name: argocd-server}
+    patch: |-
+      kind: Deployment
+      metadata: {name: argocd-server}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+  - target: {kind: StatefulSet, name: argocd-application-controller}
+    patch: |-
+      kind: StatefulSet
+      metadata: {name: argocd-application-controller}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}
+  - target: {kind: Job, name: argocd-redis-secret-init}
+    patch: |-
+      kind: Job
+      metadata: {name: argocd-redis-secret-init}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: logfmt}}}}

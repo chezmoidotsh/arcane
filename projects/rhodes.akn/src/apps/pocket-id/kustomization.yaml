@@ -32,15 +32,8 @@ components:
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: pocket-id-server}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: json
+      metadata: {name: pocket-id-server}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: json}}}}

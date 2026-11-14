@@ -21,8 +21,6 @@ spec:
     metadata:
       annotations:
         o11y.chezmoi.sh/log-format: none
-        o11y.chezmoi.sh/log-format.immich-server: ansi
-        o11y.chezmoi.sh/log-format.redis: redis
       labels:
         app.kubernetes.io/component: machine-learning
         app.kubernetes.io/instance: immich

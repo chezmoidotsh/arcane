@@ -14,8 +14,7 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: none
-        o11y.chezmoi.sh/log-format.redis: redis
+        o11y.chezmoi.sh/log-format: redis
       labels:
         app.kubernetes.io/name: n8n-redis
     spec:

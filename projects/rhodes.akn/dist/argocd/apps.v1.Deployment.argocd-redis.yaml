@@ -21,9 +21,7 @@ spec:
   template:
     metadata:
       annotations:
-        o11y.chezmoi.sh/log-format: logfmt
-        o11y.chezmoi.sh/log-format.notifications-controller: json
-        o11y.chezmoi.sh/log-format.redis: redis
+        o11y.chezmoi.sh/log-format: redis
       labels:
         app.kubernetes.io/component: redis
         app.kubernetes.io/instance: argocd
