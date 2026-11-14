@@ -32,6 +32,7 @@ in
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
         "-retentionPeriod=${retention.traces}" # set in configuration.nix
+        "-memory.allowedBytes=256MiB"
         "-loggerFormat=json"
       ];
 
@@ -51,6 +52,11 @@ in
       LockPersonality = true;
       SystemCallArchitectures = "native";
       LimitNOFILE = 65536;
+
+      # Memory budget of the 8 GiB CT (see README "Memory budget"): a runaway
+      # query gets this service OOM-killed and restarted instead of starving
+      # the whole CT into thrashing (2026-11-14 freeze).
+      MemoryMax = "512M";
     };
   };
 }

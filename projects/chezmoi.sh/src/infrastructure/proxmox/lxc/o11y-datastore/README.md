@@ -158,7 +158,7 @@ Back it up (Proxmox snapshot of the dataset at least); the rootfs is rebuilt fro
 ```sh
 pct create <vmid> local:vztmpl/observability.<version>-amd64.tar.xz \
   --hostname observability --ostype nixos --arch amd64 --unprivileged 1 \
-  --cores 2 --memory 4096 --swap 0 --rootfs local-zfs:4 --mp0 local-zfs:64,mp=/persistent \
+  --cores 4 --memory 8192 --swap 0 --rootfs local-zfs:4 --mp0 local-zfs:64,mp=/persistent \
   --net0 name=eth0,bridge=vmbr1,ip=10.0.0.22/22,gw=10.0.0.1,firewall=1,tag=5 --onboot 1
 echo 'lxc.console.path: /dev/console' >> /etc/pve/lxc/<vmid>.conf
 ```
@@ -167,6 +167,19 @@ Before the first start, give `mp0` to the service users (unprivileged LXC, host 
 `pct mount <vmid>`, then `chown 100980:100980 /var/lib/lxc/<vmid>/rootfs/persistent` (`o11y` user) and create
 `/persistent/caddy` owned by `100997` (`caddy` user); `pct unmount <vmid>`. `eth1` (`10.128.0.5/24`, bridge `talosnet`)
 is a second NIC for the Talos nodes.
+
+### Memory budget
+
+The CT gets 8 GiB and no swap. Each store has a cache size (`-memory.allowedBytes`) and a hard `MemoryMax`, so a
+runaway query gets that one service OOM-killed and restarted by systemd. Without them, VictoriaLogs filled the former
+2 GiB CT on 2026-11-14 and froze it (page cache evicted, everything stuck on disk reads, no OOM kill).
+
+| Service         | `-memory.allowedBytes` | `MemoryMax` | Other limits                                 |
+| --------------- | ---------------------- | ----------- | -------------------------------------------- |
+| VictoriaMetrics | 1 GiB                  | 2.5 GiB     | `-search.maxMemoryPerQuery=512MiB`           |
+| VictoriaLogs    | 1 GiB                  | 3 GiB       | 4 concurrent queries, 30 s per query         |
+| VictoriaTraces  | 256 MiB                | 512 MiB     |                                              |
+| Everything else | —                      | —           | ~2 GiB left for Caddy, the gateway, alerting |
 
 ### Proxmox firewall
 

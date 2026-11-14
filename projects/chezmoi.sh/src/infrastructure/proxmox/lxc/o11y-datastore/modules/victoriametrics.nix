@@ -30,7 +30,8 @@ in
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
         "-retentionPeriod=${retention.metrics}" # set in configuration.nix
-        "-memory.allowedPercent=60"
+        "-memory.allowedBytes=1GiB" # caches; RSS ~500 MiB at 9 GB of data
+        "-search.maxMemoryPerQuery=512MiB"
         # OTLP is the only ingest path. Metric names become Prometheus-style
         # (system_cpu_time_seconds_total) but labels keep their OTel dots
         # (service.name, host.name), like the log fields; MetricsQL accepts
@@ -61,6 +62,11 @@ in
       LockPersonality = true;
       SystemCallArchitectures = "native";
       LimitNOFILE = 65536;
+
+      # Memory budget of the 8 GiB CT (see README "Memory budget"): a runaway
+      # query gets this service OOM-killed and restarted instead of starving
+      # the whole CT into thrashing (2026-11-14 freeze).
+      MemoryMax = "2560M";
     };
   };
 }
