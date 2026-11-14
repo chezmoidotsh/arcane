@@ -16,6 +16,8 @@ spec:
     value: :8080
   - name: MCP_DISABLE_LOCALHOST_PROTECTION
     value: "true"
+  - name: MCP_LOG_LEVEL
+    value: warn
   groupRef:
     name: o11y
   image: oci.chezmoi.sh/ghcr.io/victoriametrics/mcp-victoriametrics:v1.20.2

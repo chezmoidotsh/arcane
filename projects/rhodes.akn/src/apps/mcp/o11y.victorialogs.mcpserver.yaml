@@ -17,3 +17,7 @@ spec:
       value: http
     - name: MCP_LISTEN_ADDR
       value: ":8080"
+    # INFO logs every request with its full JSON result (up to MBs per line), which
+    # floods VictoriaLogs and feeds back into the next query. Errors stay logged.
+    - name: MCP_LOG_LEVEL
+      value: warn
