@@ -159,7 +159,7 @@ spec:
             == nil and log.attributes["facility"] != nil
           - set(log.attributes["service.name"], "talos") where log.attributes["service.name"]
             == nil
-          - delete_matching_keys(log.attributes, "^talos-(service|time)$")
+          - delete_matching_keys(log.attributes, "^talos-(service|time|level)$")
     receivers:
       file_log/pods:
         include:
@@ -289,6 +289,20 @@ spec:
         - from: attributes.msg
           to: body
           type: move
+        - if: 'body matches "^[a-z]+: +[a-z]+: \\["'
+          regex: '^(?P<facility>[a-z]+): +[a-z]+: \[(?P<kmsg_time>[^\]]+)\]: (?P<kmsg_msg>(?s).*)$'
+          timestamp:
+            layout: 2006-01-02T15:04:05.999999999Z07:00
+            layout_type: gotime
+            parse_from: attributes.kmsg_time
+          type: regex_parser
+        - from: attributes.kmsg_msg
+          if: attributes.kmsg_msg != nil
+          to: body
+          type: move
+        - field: attributes.kmsg_time
+          if: attributes.kmsg_time != nil
+          type: remove
     service:
       extensions:
       - health_check
