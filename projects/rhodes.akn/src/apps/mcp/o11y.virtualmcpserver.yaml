@@ -17,6 +17,13 @@ metadata:
 spec:
   groupRef:
     name: o11y
+  config:
+    operational:
+      timeouts:
+        # Wide LogsQL stats queries (24h, count_uniq by pod) take minutes; the 30s default
+        # cancels them. Matches -search.maxQueryDuration on the o11y LXC.
+        perWorkload:
+          victorialogs: 5m
   authServerConfig:
     issuer: https://o11y.mcp.chezmoi.sh
     # Storage is in-memory: DCR registrations are lost on restart and clients keep a dead

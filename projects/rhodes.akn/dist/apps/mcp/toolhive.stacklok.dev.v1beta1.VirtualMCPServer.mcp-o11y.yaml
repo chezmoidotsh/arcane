@@ -27,6 +27,11 @@ spec:
         - profile
         - email
       type: oidc
+  config:
+    operational:
+      timeouts:
+        perWorkload:
+          victorialogs: 5m
   groupRef:
     name: o11y
   incomingAuth:
