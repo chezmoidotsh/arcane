@@ -30,15 +30,13 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020). No line seen yet to pick a parser.
-  - target:
-      kind: (Deployment|StatefulSet|DaemonSet|Job)
+  - target: {kind: Deployment, name: litellm}
     patch: |-
-      apiVersion: apps/v1
       kind: Deployment
-      metadata:
-        name: any
-      spec:
-        template:
-          metadata:
-            annotations:
-              o11y.chezmoi.sh/log-format: none
+      metadata: {name: litellm}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
+  - target: {kind: Job, name: litellm-migrations}
+    patch: |-
+      kind: Job
+      metadata: {name: litellm-migrations}
+      spec: {template: {metadata: {annotations: {o11y.chezmoi.sh/log-format: none}}}}
