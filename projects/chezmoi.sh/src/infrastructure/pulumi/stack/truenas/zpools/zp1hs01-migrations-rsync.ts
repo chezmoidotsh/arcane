@@ -13,26 +13,17 @@ import { zp1hs01 } from "./zp1hs01";
 // drop that entry below. Delete this file (and its side-effect import in
 // ../index.ts) once every pair is done.
 //
-// `-rt`: recursive, preserve modification times. Deliberately no `-p`/`-o`/
-// `-g` (permissions/owner/group) or `-A` (ACLs) — new files pick up the
-// destination dataset's own permission scheme instead of carrying over the
-// legacy one. Additive only (no `--delete`): files removed on the legacy
-// side are left alone on the new dataset until the final manual cutover.
+// `-rt`: recursive, preserve modification times. No `-p`/`-o`/`-g`
+// (permissions/owner/group) or `-A` (ACLs), but the job runs as root: every
+// file it creates or rewrites belongs to root, not to the dataset's service
+// account, and an `owner@`-only ACL then locks that account out. Immich hit
+// it: the job rewrote its `.immich` marker files as root, and Immich refused
+// to start until they were chowned back. Additive only (no `--delete`):
+// files removed on the legacy side are left alone on the new dataset until
+// the final manual cutover.
 // =============================================================================
 
 const MIGRATIONS = [
-	{
-		id: "immich",
-		source: "applications/immich",
-		target: "applications/managed/app.immich",
-		scheduleMinute: "20",
-	},
-	{
-		id: "paperless-ngx",
-		source: "applications/paperless",
-		target: "applications/managed/com.paperless-ngx",
-		scheduleMinute: "25",
-	},
 	{
 		id: "userspace",
 		source: "documents",
