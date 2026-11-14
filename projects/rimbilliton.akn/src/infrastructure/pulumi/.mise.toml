@@ -4,6 +4,11 @@
 # Minecraft server on OCI Always Free (see ../../../README.md).
 #
 # First run: see docs/guides/Initialiser-Rimbilliton.md (Pulumi configuration).
+#
+# pulumi:diff / pulumi:apply go through scripts/pulumi:stack, which refreshes
+# only when the last refresh is older than PULUMI_REFRESH_MAX_AGE hours
+# (default 24). Force or skip it: `mise run pulumi:apply -- --refresh` /
+# `-- --no-refresh`.
 # =============================================================================
 
 [tools]
@@ -14,10 +19,11 @@ _.file = "{{ config_root }}/.mise/env.yaml"
 
 [tasks."pulumi:diff"]
 description = "Preview pending changes for the current Pulumi stack"
-run = "pulumi preview --refresh --parallel 15"
+run = "pulumi:stack preview"
 dir = "{{ config_root }}"
 
 [tasks."pulumi:apply"]
+interactive = true
 description = "Apply pending changes to the current Pulumi stack"
-run = ["pulumi up --refresh --parallel 15"]
+run = "pulumi:stack up"
 dir = "{{ config_root }}"

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Run `pulumi preview` or `pulumi up` on the current stack, refreshing first only
+# when the last refresh is older than PULUMI_REFRESH_MAX_AGE hours (default 24).
+#
+# Usage: pulumi:stack <preview|up> [--refresh|--no-refresh] [pulumi args...]
+#
+#   --refresh      always refresh (ignore the age of the last one)
+#   --no-refresh   never refresh
+#
+# "Last refresh" is the newest successful entry of `pulumi stack history` that is
+# a `pulumi refresh` or ran with `--refresh` (recorded as `pulumi.flag.refresh`).
+# Previews are not recorded in the history, so a stale stack keeps refreshing on
+# every preview until an `up` (or a `pulumi refresh`) lands.
+set -euo pipefail
+
+verb="${1:-}"
+case "${verb}" in
+preview | up) shift ;;
+*)
+	echo "usage: pulumi:stack <preview|up> [--refresh|--no-refresh] [pulumi args...]" >&2
+	exit 2
+	;;
+esac
+
+mode=auto
+args=()
+for arg in "$@"; do
+	case "${arg}" in
+	--refresh) mode=always ;;
+	--no-refresh) mode=never ;;
+	*) args+=("${arg}") ;;
+	esac
+done
+
+max_age_h="${PULUMI_REFRESH_MAX_AGE:-24}"
+
+if [[ ${mode} == auto ]]; then
+	# Age in seconds of the last refresh, empty if none in the last 50 operations.
+	# Garage sends no response checksum; without this the AWS SDK warns once per request.
+	age="$(AWS_RESPONSE_CHECKSUM_VALIDATION=when_required pulumi stack history --json --page-size 50 | jq -r '
+		[.[] | select(.result == "succeeded")
+		     | select(.kind == "refresh" or (.environment // {} | has("pulumi.flag.refresh")))]
+		| first // empty
+		| now - (.endTime | sub("\\.[0-9]+Z$"; "Z") | fromdate) | floor')"
+	if [[ -z ${age} ]]; then
+		mode=always
+		echo "[pulumi:stack] no refresh in the last 50 operations, refreshing" >&2
+	elif ((age > max_age_h * 3600)); then
+		mode=always
+		echo "[pulumi:stack] last refresh $((age / 3600))h ago, refreshing (max ${max_age_h}h)" >&2
+	else
+		mode=never
+		echo "[pulumi:stack] last refresh $((age / 3600))h ago, skipping refresh (max ${max_age_h}h, --refresh to force)" >&2
+	fi
+fi
+
+# `${args[@]+...}`: an empty array trips `set -u` on bash < 4.4 (macOS /bin/bash).
+[[ ${mode} == always ]] && args=(--refresh ${args[@]+"${args[@]}"})
+exec pulumi "${verb}" --parallel 15 ${args[@]+"${args[@]}"}
