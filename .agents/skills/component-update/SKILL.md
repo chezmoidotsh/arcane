@@ -56,9 +56,9 @@ Decide from the path of the file that declares the version.
 | ------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
 | `projects/*/src/apps/**`, `projects/*/src/infrastructure/kubernetes/**`, `projects/rhodes.akn/src/argocd/**` | 1. Kubernetes (ArgoCD)                |
 | `catalog/kubernetes/**`                                                                                      | 2. Catalog (shared Kubernetes bases)  |
-| `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/<name>/**`                                               | 3. NixOS LXC appliance                |
+| `fleet/hosts/core.<name>/nix/**`, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/**`     | 3. NixOS LXC appliance                |
 | `projects/kazimierz.akn/src/infrastructure/nixos/**`, `projects/rimbilliton.akn/src/infrastructure/nixos/**` | 4. NixOS host (OCI VPS)               |
-| a `flake.nix` or `flake.lock` elsewhere (`catalog/flakes/**`, other NixOS modules)                           | 5. Nix flake input or nixpkgs package |
+| a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules)                       | 5. Nix flake input or nixpkgs package |
 | no file in the repository (Home Assistant OS, a router firmware, a manual component)                         | 6. Outside the repository             |
 
 When none fits, say so in the issue or the PR. Do not guess a command.
@@ -108,16 +108,17 @@ say that it is left on its own version on purpose. The CloudNative-PG image cata
 
 ## 3. NixOS LXC appliance
 
-The appliances under `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/<name>/` are immutable NixOS tarballs. The full
-procedure is in the [lxc-maintenance skill](../lxc-maintenance/SKILL.md); in short:
+The appliances under `fleet/hosts/core.<name>/` (flake in `nix/`; `o11y-datastore` still under
+`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`) are immutable NixOS tarballs. The full procedure is in the
+[lxc-maintenance skill](../lxc-maintenance/SKILL.md); in short:
 
 1. In the appliance's `flake.nix`, change the upstream version when the component is packaged there (annotated line),
    then **bump the template version** (`imageVersion` or `version` = today `YYYY.MM.DD`, `-N` for a second build the
    same day). Without it the artifact looks identical to the one already on the Proxmox host. `oci-registry` is the
    exception: its `version` is the Zot release; only its `imageVersion` is a date.
-2. If the flake inputs change, `nix flake update` in that directory (case 5).
-3. From the appliance directory: `mise run lxc:build`, then `mise run lxc:push -- <pve-host>`, then
-   `mise run lxc:upgrade -- <pve-host>`.
+2. If the flake inputs change, `nix flake update` in the flake directory (case 5).
+3. From the appliance directory (`fleet/hosts/core.<name>/`, where its `.mise.toml` is): `mise run lxc:build`, then
+   `mise run lxc:push -- <pve-host>`, then `mise run lxc:upgrade -- <pve-host>`.
 4. The upgrade smoke-tests a temporary container, snapshots the running one, swaps the rootfs and health-checks it.
    There is downtime between the stop and the restart. The container keeps its VMID and IP.
 5. Rollback: answer "N" at step 7 of the upgrade (review the health check first), which restores the pre-upgrade

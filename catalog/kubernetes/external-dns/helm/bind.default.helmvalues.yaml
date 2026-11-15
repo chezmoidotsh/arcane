@@ -60,7 +60,7 @@ extraArgs:
   # aren't attached to "internal" at all (e.g. argocd) with nothing to declare on those routes.
   - --gateway-label-filter=external-dns.chezmoi.sh/zone in (internal)
   # talosnet-dns (dns.talosnet.chezmoi.sh, 10.128.0.3) serves chezmoi.sh. The
-  # update-policy grant (projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix)
+  # update-policy grant (fleet/hosts/core.talosnet-dns/nix/modules/bind.nix)
   # lets this key update A/TXT records anywhere in the zone -- record type,
   # not name, is what bounds this key's blast radius; it still can't touch
   # NS/SOA/MX/etc. --rfc2136-zone must be the real zone BIND serves

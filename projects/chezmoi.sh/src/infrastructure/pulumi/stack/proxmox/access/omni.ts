@@ -3,7 +3,7 @@ import * as proxmox from "@pulumi/proxmox";
 // -----------------------------------------------------------------------------
 // omni@pve -- Omni infrastructure provider (VM lifecycle scoped to
 // `/pool/talos`; see
-// projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md)
+// fleet/hosts/core.omni-infra-provider-proxmox/README.md)
 // -----------------------------------------------------------------------------
 
 // Full VM lifecycle (allocate/clone/config/power/console), granted on
