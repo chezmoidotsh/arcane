@@ -8,7 +8,7 @@
 # PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE, loaded via `[env] _.file` below) is set up so these tasks don't prompt.
 # `ssh_authorized_keys`/`unsecure` are set. Still needed before `pulumi up`
 # can run: OCI provider creds as TF_VAR_tenancy_ocid/TF_VAR_user_ocid/
-# TF_VAR_fingerprint/TF_VAR_private_key/TF_VAR_region (see compartments.ts,
+# TF_VAR_fingerprint/TF_VAR_private_key/TF_VAR_region (in `.mise/env.yaml`,
 # not pulumi config -- git-tracked file), plus `pulumi config set
 # cloudflare_zone_id` (see stack/dns.ts). The boot image is resolved live
 # from OCI's platform images, no config key needed for it.

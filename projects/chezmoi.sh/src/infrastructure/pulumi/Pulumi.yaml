@@ -1,6 +1,7 @@
 name: chezmoi-sh-infra
 description: >-
-  Shared cloud infrastructure for chezmoi.sh: Cloudflare API tokens, Tailscale OAuth client.
+  Shared cloud infrastructure for chezmoi.sh: Cloudflare API tokens, Tailscale OAuth client,
+  parent OCI compartment.
 runtime:
   name: nodejs
   options:
