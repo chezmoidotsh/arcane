@@ -93,25 +93,42 @@ The scope is enclosed in square brackets and identifies which part of the reposi
 
 **Allowed scopes (exhaustive list):**
 
-| Scope                   | Path / Description                       |
-| ----------------------- | ---------------------------------------- |
-| `project:amiya.akn`     | `projects/amiya.akn/`                    |
-| `project:chezmoi.sh`    | `projects/chezmoi.sh/`                   |
-| `project:hass`          | `projects/hass/`                         |
-| `project:kazimierz.akn` | `projects/kazimierz.akn/`                |
-| `project:lungmen.akn`   | `projects/lungmen.akn/`                  |
-| `project:rhodes.akn`    | `projects/rhodes.akn/`                   |
-| `project:shodan.akn`    | `projects/shodan.akn/`                   |
-| `catalog:crossplane`    | `catalog/crossplane/`                    |
-| `catalog:flakes`        | `catalog/flakes/`                        |
-| `catalog:kustomize`     | `catalog/kustomize/`                     |
-| `catalog:kairos-bundle` | `catalog/kairos-bundles/`                |
-| `catalog:talos`         | `catalog/talos/`                         |
-| `catalog:nix`           | `catalog/nix/` and Nix-related catalogs  |
-| `catalog:opa`           | `catalog/opa/`                           |
-| `catalog:pulumi`        | `catalog/pulumi/`                        |
-| `gh`                    | `.github/`, root config files            |
-| `deps`                  | Dependency updates (automated or manual) |
+| Scope                                    | Path / Description                             |
+| ---------------------------------------- | ---------------------------------------------- |
+| `project:amiya.akn`                      | `projects/amiya.akn/`                          |
+| `project:chezmoi.sh`                     | `projects/chezmoi.sh/`                         |
+| `project:hass`                           | `projects/hass/`                               |
+| `project:kazimierz.akn`                  | `projects/kazimierz.akn/`                      |
+| `project:lungmen.akn`                    | `projects/lungmen.akn/`                        |
+| `project:rhodes.akn`                     | `projects/rhodes.akn/`                         |
+| `project:shodan.akn`                     | `projects/shodan.akn/`                         |
+| `fleet:rhodes.akn`                       | `fleet/clusters/akn.rhodes`                    |
+| `fleet:lungmen.akn`                      | `fleet/clusters/akn.lungmen`                   |
+| `fleet:closure.akn`                      | `fleet/hosts/akn.closure`                      |
+| `fleet:horn.akn`                         | `fleet/hosts/akn.horn`                         |
+| `fleet:exusiai.akn`                      | `fleet/hosts/akn.exusiai`                      |
+| `fleet:ptilopsis.akn`                    | `fleet/hosts/akn.ptilopsis`                    |
+| `fleet:pve-01.core`                      | `fleet/hosts/core.pve-01`                      |
+| `fleet:pbs.core`                         | `fleet/hosts/core.pbs`                         |
+| `fleet:nas.core`                         | `fleet/hosts/core.nas`                         |
+| `fleet:omni.core`                        | `fleet/hosts/core.omni`                        |
+| `fleet:oci-registry.core`                | `fleet/hosts/core.oci-registry`                |
+| `fleet:omni-infra-provider-proxmox.core` | `fleet/hosts/core.omni-infra-provider-proxmox` |
+| `fleet:talosnet-dns.core`                | `fleet/hosts/core.talosnet-dns`                |
+| `fleet:base`                             | `fleet/base/`                                  |
+| `catalog:crossplane`                     | `catalog/crossplane/`                          |
+| `catalog:flakes`                         | `catalog/flakes/`                              |
+| `catalog:kustomize`                      | `catalog/kustomize/`                           |
+| `catalog:kairos-bundle`                  | `catalog/kairos-bundles/`                      |
+| `catalog:talos`                          | `catalog/talos/`                               |
+| `catalog:nix`                            | `catalog/nix/` and Nix-related catalogs        |
+| `catalog:opa`                            | `catalog/opa/`                                 |
+| `catalog:pulumi`                         | `catalog/pulumi/`                              |
+| `gh`                                     | `.github/`, root config files                  |
+| `deps`                                   | Dependency updates (automated or manual)       |
+
+The `fleet:*` scopes name a cluster or host of the fleet (see `docs/reference/Nommage-des-Machines-Reference.md`);
+`project:*` stays valid until the fleet migration ends.
 
 **Multiple scopes:** `[scope1,scope2]` (comma-separated inside brackets, no spaces, max 3) — only when one logical
 change atomically touches multiple components.
@@ -120,6 +137,7 @@ change atomically touches multiple components.
 
 ```text
 Which files changed?
+├── fleet/<dir>/*       →  fleet:<canonical name> (fleet:base for fleet/base)
 ├── projects/<name>/*   →  project:<name>
 ├── catalog/<type>/*    →  catalog:<type>
 ├── .github/* or root   →  gh
@@ -214,13 +232,13 @@ updated in `.commitlintrc.js`, this section MUST be updated in sync (see "Keepin
 
 ### Scope rules
 
-| Rule               | Level | Value                                                                                                                                                                                                                                                                                                                      |
-| ------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scope-enum`       | warn  | `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`, `catalog:nix`, `catalog:opa`, `catalog:pulumi`, `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:rhodes.akn`, `project:shodan.akn`, `deps`, `gh` |
-| `scope-empty`      | error | never                                                                                                                                                                                                                                                                                                                      |
-| `scope-case`       | error | lower-case                                                                                                                                                                                                                                                                                                                 |
-| `scope-max-length` | error | Infinity                                                                                                                                                                                                                                                                                                                   |
-| `scope-min-length` | error | 0                                                                                                                                                                                                                                                                                                                          |
+| Rule               | Level | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `scope-enum`       | warn  | `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`, `catalog:nix`, `catalog:opa`, `catalog:pulumi`, `fleet:rhodes.akn`, `fleet:lungmen.akn`, `fleet:closure.akn`, `fleet:horn.akn`, `fleet:exusiai.akn`, `fleet:ptilopsis.akn`, `fleet:pve-01.core`, `fleet:pbs.core`, `fleet:nas.core`, `fleet:omni.core`, `fleet:oci-registry.core`, `fleet:omni-infra-provider-proxmox.core`, `fleet:talosnet-dns.core`, `fleet:base`, `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:rhodes.akn`, `project:shodan.akn`, `deps`, `gh` |
+| `scope-empty`      | error | never                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `scope-case`       | error | lower-case                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `scope-max-length` | error | Infinity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `scope-min-length` | error | 0                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 `scope-enum` is set to **warning** because multi-scope commits (`scope1,scope2`) won't match single enum entries.
 Validation is enforced by the cz-git prompt instead.
@@ -352,8 +370,8 @@ git --no-pager log --oneline --no-merges -10
 ### 2. Check for commit splitting
 
 If staged changes span multiple scopes and are not a single atomic change, suggest splitting into separate commits. For
-example, files from both `projects/lungmen.akn/` and `catalog/pulumi/` staged together should usually become two
-commits with different scopes and types. Ask the user if unsure.
+example, files from both `projects/lungmen.akn/` and `catalog/pulumi/` staged together should usually become two commits
+with different scopes and types. Ask the user if unsure.
 
 ### 3. Select the type
 

@@ -78,6 +78,9 @@
 - name: project
   description: Anything under projects/ — which cluster/app is named in the body
   color: 1D76DB
+- name: fleet
+  description: Anything under fleet/ — which cluster/host is named in the body
+  color: 1D76DB
 - name: catalog
   description: Anything under catalog/ — which area (crossplane, pulumi, …) is named in the body
   color: 8B5CF6
