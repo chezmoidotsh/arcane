@@ -164,6 +164,62 @@ const scopes = [
 		value: "project:shodan.akn",
 	},
 	{
+		name: "fleet:rhodes.akn      - Anything related to the rhodes.akn cluster",
+		value: "fleet:rhodes.akn",
+	},
+	{
+		name: "fleet:lungmen.akn     - Anything related to the lungmen.akn cluster",
+		value: "fleet:lungmen.akn",
+	},
+	{
+		name: "fleet:closure.akn     - Anything related to the closure.akn host",
+		value: "fleet:closure.akn",
+	},
+	{
+		name: "fleet:horn.akn        - Anything related to the horn.akn host",
+		value: "fleet:horn.akn",
+	},
+	{
+		name: "fleet:exusiai.akn     - Anything related to the exusiai.akn host",
+		value: "fleet:exusiai.akn",
+	},
+	{
+		name: "fleet:ptilopsis.akn   - Anything related to the ptilopsis.akn host",
+		value: "fleet:ptilopsis.akn",
+	},
+	{
+		name: "fleet:pve-01.core     - Anything related to the pve-01.core host",
+		value: "fleet:pve-01.core",
+	},
+	{
+		name: "fleet:pbs.core        - Anything related to the pbs.core host",
+		value: "fleet:pbs.core",
+	},
+	{
+		name: "fleet:nas.core        - Anything related to the nas.core host",
+		value: "fleet:nas.core",
+	},
+	{
+		name: "fleet:omni.core       - Anything related to the omni.core host",
+		value: "fleet:omni.core",
+	},
+	{
+		name: "fleet:oci-registry.core - Anything related to the oci-registry.core host",
+		value: "fleet:oci-registry.core",
+	},
+	{
+		name: "fleet:omni-infra-provider-proxmox.core - Anything related to the omni-infra-provider-proxmox.core host",
+		value: "fleet:omni-infra-provider-proxmox.core",
+	},
+	{
+		name: "fleet:talosnet-dns.core - Anything related to the talosnet-dns.core host",
+		value: "fleet:talosnet-dns.core",
+	},
+	{
+		name: "fleet:base - Anything related to the shared fleet foundation (fleet/base)",
+		value: "fleet:base",
+	},
+	{
 		name: "deps                  - Dependency updates (automated or manual)",
 		value: "deps",
 	},

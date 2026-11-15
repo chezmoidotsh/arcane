@@ -5,9 +5,10 @@ Chaque étape dit ce qui change, de quelle nature est le changement (déplacemen
 qu'il faut vérifier après et comment revenir en arrière.
 
 > [!NOTE]\
-> **État au 2026-11-14 : non commencée.** Cette page n'a pas été rejouée. Les faits sur l'état actuel sont vérifiés dans
-> le dépôt. Toute commande ou tout comportement marqué **à confirmer** n'a pas pu être vérifié (version de Pulumi,
-> comportement du backend S3, état réel des clusters) et doit l'être avant l'étape concernée.
+> **État au 2026-11-15 : en cours** (voir le tableau « Avancement »). Cette page n'a pas été rejouée. Les faits sur
+> l'état actuel sont vérifiés dans le dépôt. Toute commande ou tout comportement marqué **à confirmer** n'a pas pu être
+> vérifié (version de Pulumi, comportement du backend S3, état réel des clusters) et doit l'être avant l'étape
+> concernée.
 
 ## Contexte
 
@@ -28,7 +29,7 @@ chaque élément ayant son README.
 
 | Étape | Contenu                                                             | État    |
 | ----- | ------------------------------------------------------------------- | ------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | à faire |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite   |
 | 2     | Créer les bases de catalogue manquantes                             | à faire |
 | 3     | Activer le lint de structure                                        | à faire |
 | 4     | Déplacer le catalogue                                               | à faire |
@@ -174,12 +175,16 @@ Les scopes `fleet:*` et le label `fleet` sont ajoutés au début, pour que les c
 utiliser. Les scopes `project:*` restent valides jusqu'à l'étape 11.
 
 - **Ce qui change** : dans `.commitlintrc.js`, ajout d'un scope `fleet:<nom canonique>` par élément (`fleet:rhodes.akn`,
-  `fleet:horn.akn`, `fleet:pve-01.core`, …) ; dans `.github/labels.yaml`, ajout du label `fleet` ; mise à jour de
-  `.agents/skills/git-commit/SKILL.md`.
+  `fleet:horn.akn`, `fleet:pve-01.core`, …) ; dans `.github/labels.yaml`, ajout du label `fleet` ; mise à jour des
+  skills `git-commit`, `create-pr` et `create-issue` (`.agents/skills/`).
 - **Nature** : déplacement simple (configuration).
 - **Vérification** : un commit de test avec un scope `fleet:<nom canonique>` passe `commitlint` ; les scopes `project:*`
   passent toujours.
 - **Retour arrière** : `git revert`.
+- **Constaté** : 14 scopes ajoutés (un par cluster et par hôte du nommage, plus `fleet:base`). `commitlint` n'est pas
+  installé en local : la configuration a été chargée avec node et les scopes testés contre elle (`fleet:horn.akn`
+  accepté, `project:rhodes.akn` toujours accepté). `scope-enum` est une règle de niveau avertissement : un scope inconnu
+  avertit, il ne fait pas échouer.
 
 ### 2. Créer les bases de catalogue manquantes
 
