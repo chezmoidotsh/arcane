@@ -5,7 +5,7 @@ vars: {
   }
 }
 
-...@"../../docs/assets/d2/styles.architecture.d2"
+...@"../../../docs/assets/d2/styles.architecture.d2"
 
 explanation: |md
   # rimbilliton.akn Architecture
@@ -44,7 +44,7 @@ tailnet: {class: network}
 pocket-id: {
   class: [application]
   label: Pocket-ID\n(auth.chezmoi.sh)
-  icon: docs/assets/icons/apps/pocket-id.svg
+  icon: assets/icons/apps/pocket-id.svg
   link: https://pocket-id.org/
   tooltip: OIDC SSO provider (admin and minecraft groups)
 }
@@ -52,7 +52,7 @@ pocket-id: {
 letsencrypt: {
   class: [application]
   label: Let's Encrypt
-  icon: docs/assets/icons/platform/letsencrypt.svg
+  icon: assets/icons/platform/letsencrypt.svg
   link: https://letsencrypt.org/
   tooltip: ACME certificate authority (HTTP-01)
 }
@@ -67,7 +67,7 @@ backblaze: {
 cloudflare: {
   class: [application]
   label: Cloudflare DNS
-  icon: docs/assets/icons/platform/cloudflare.svg
+  icon: assets/icons/platform/cloudflare.svg
   link: https://www.cloudflare.com/
   tooltip: DNS-only record minecraft (no proxy)
 }
@@ -92,7 +92,7 @@ vm: {
   caddy: {
     class: [application-system]
     label: Caddy
-    icon: docs/assets/icons/apps/caddy.svg
+    icon: assets/icons/apps/caddy.svg
     link: https://caddyserver.com/
     tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh and main.minecraft.chezmoi.sh
   }
@@ -134,7 +134,7 @@ vm: {
   tailscale: {
     class: [application-system]
     label: Tailscale
-    icon: docs/assets/icons/platform/tailscale.svg
+    icon: assets/icons/platform/tailscale.svg
     link: https://tailscale.com/
     tooltip: SSH and deployments, OCI SSH stays closed
   }

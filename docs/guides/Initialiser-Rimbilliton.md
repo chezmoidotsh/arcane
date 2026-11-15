@@ -1,25 +1,31 @@
 # Initialiser Rimbilliton
 
-Ce guide monte l'hôte Minecraft de `rimbilliton.akn` depuis rien jusqu'à un NixOS qui exécute Pelican (Panel et Wings),
-avec l'authentification Pocket-Id et des sauvegardes restic vers Backblaze B2. Il couvre le provisionnement Pulumi,
-l'installation de NixOS avec `nixos-anywhere` et la configuration de Pelican.
+Ce guide monte l'hôte Minecraft de `exusiai.akn` (ancien `rimbilliton.akn`) depuis rien jusqu'à un NixOS qui exécute
+Pelican (Panel et Wings), avec l'authentification Pocket-Id et des sauvegardes restic vers Backblaze B2. Il couvre le
+provisionnement Pulumi, l'installation de NixOS avec `nixos-anywhere` et la configuration de Pelican.
 
 > [!WARNING]\
 > Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
 
+> [!NOTE]\
+> L'hôte a été renommé sur place de `rimbilliton.akn` en `exusiai.akn` (projet Pulumi `exusiai-akn`, nom d'hôte
+> `exusiai-akn`), sans réinstallation : voir la
+> [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le nom de ce guide, le fichier
+> `secrets/rimbilliton.sops.yaml`, le `dnsLabel` du VCN et les noms de ressources B2 gardent l'ancien nom.
+
 ## Vue d'ensemble
 
-La stack Pulumi de `src/infrastructure/pulumi/` provisionne les ressources OCI (compartiment, VCN, sous-réseau, NSG,
-instance), les enregistrements DNS, le bucket B2, la clé Tailscale ainsi que le groupe `minecraft`, le client OIDC et le
-secret du client dans Pocket-Id (`stack/pocket-id.ts`). L'instance démarre sur une image Ubuntu standard, avec
-uniquement une clé SSH injectée par cloud-init (configuration Pulumi `ssh_authorized_keys`). NixOS est ensuite installé
-par-dessus avec `nixos-anywhere`, la seule étape manuelle. Le guide jumeau
-[Initialiser Kazimierz](Initialiser-Kazimierz.md) suit le même schéma pour le VPS `kazimierz.akn`.
+La stack Pulumi de `pulumi/` provisionne les ressources OCI (compartiment, VCN, sous-réseau, NSG, instance), les
+enregistrements DNS, le bucket B2, la clé Tailscale ainsi que le groupe `minecraft`, le client OIDC et le secret du
+client dans Pocket-Id (`stack/pocket-id.ts`). L'instance démarre sur une image Ubuntu standard, avec uniquement une clé
+SSH injectée par cloud-init (configuration Pulumi `ssh_authorized_keys`). NixOS est ensuite installé par-dessus avec
+`nixos-anywhere`, la seule étape manuelle. Le guide jumeau [Initialiser Kazimierz](Initialiser-Kazimierz.md) suit le
+même schéma pour le VPS `kazimierz.akn`.
 
-Le flake NixOS vit dans `projects/rimbilliton.akn/src/infrastructure/nixos/` : `flake.nix` expose une sortie par
-architecture (`rimbilliton-akn-aarch64` pour l'OCI A1, `rimbilliton-akn-x86_64` pour un test), `configuration.nix` porte
-la base (réseau, SSH, Tailscale, sops-nix), et les modules `pelican.nix`, `caddy.nix` et `backup.nix` apportent Pelican
-(Panel et Wings en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraft.chezmoi.sh` et Wings
+Le flake NixOS vit dans `fleet/hosts/akn.exusiai/nix/` : `flake.nix` expose une sortie par architecture
+(`exusiai-akn-aarch64` pour l'OCI A1, `exusiai-akn-x86_64` pour un test), `configuration.nix` porte la base (réseau,
+SSH, Tailscale, sops-nix), et les modules `pelican.nix`, `caddy.nix` et `backup.nix` apportent Pelican (Panel et Wings
+en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraft.chezmoi.sh` et Wings
 `main.minecraft.chezmoi.sh`) et les sauvegardes restic.
 
 ## Avant de commencer
@@ -28,11 +34,12 @@ la base (réseau, SSH, Tailscale, sops-nix), et les modules `pelican.nix`, `cadd
   `nonix` (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur, y compris
   `ssh-to-age`.
 - **Identifiants** : OCI sous la forme `TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`,
-  `TF_VAR_private_key` et `TF_VAR_region` (lues par `src/infrastructure/pulumi/.mise/env.yaml`, comme pour
-  `kazimierz.akn`), puis ceux des providers Backblaze, Cloudflare et Tailscale.
+  `TF_VAR_private_key` et `TF_VAR_region` (lues par `pulumi/.mise/env.yaml`, comme pour `kazimierz.akn`), puis ceux des
+  providers Backblaze, Cloudflare et Tailscale.
 - **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
   posé sur la clé par `stack/tailscale.ts`).
-- **Stack parente** : `kazimierz_akn.live` (compartiment parent, lu par `stack/oci/compartments.ts`) déjà appliquée.
+- **Stack parente** : `chezmoi_sh.live` (compartiment parent, sortie `chezmoiShCompartmentId` lue par
+  `stack/oci/compartments.ts`) déjà appliquée.
 - **Pocket-Id** : une clé d'API pour le provider Pulumi (voir l'étape 2) ; le groupe et le client sont gérés par Pulumi.
 
 ## Procédure d'amorçage
@@ -40,9 +47,9 @@ la base (réseau, SSH, Tailscale, sops-nix), et les modules `pelican.nix`, `cadd
 ### 1. Provisionner l'infrastructure
 
 ```sh
-cd projects/rimbilliton.akn/src/infrastructure/pulumi
+cd fleet/hosts/akn.exusiai/pulumi
 pnpm install
-pulumi stack init rimbilliton_akn.live   # puis définir la configuration ci-dessous
+pulumi stack init exusiai_akn.live   # puis définir la configuration ci-dessous
 mise run pulumi:diff && mise run pulumi:apply
 ```
 
@@ -153,8 +160,8 @@ mise run nixos:oci:install ubuntu@"$IP"
 ```
 
 La tâche lance `nixos-anywhere` (épinglé par commit) avec
-`--flake .#rimbilliton-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`. Elle **repartitionne le
-volume de démarrage**.
+`--flake .#exusiai-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`. Elle **repartitionne le volume
+de démarrage**.
 
 > [!IMPORTANT]\
 > **macOS (OrbStack, Docker Desktop) : les conteneurs s'exécutent dans une VM Linux.** `nonix` ne peut donc pas monter
@@ -176,8 +183,8 @@ volume de démarrage**.
 > Sous Linux, le socket est monté directement depuis `$SSH_AUTH_SOCK`.
 
 `nixos-anywhere` ne détecte pas l'architecture de la cible : le flake expose donc une sortie par architecture
-(`platforms/`). `.#rimbilliton-akn-aarch64` correspond à l'OCI A1 (UEFI, production) et `.#rimbilliton-akn-x86_64` à une
-VM x86_64 en BIOS legacy. Il n'existe pas de sortie sans suffixe. Pour répéter l'installation sur une VM de test Proxmox
+(`platforms/`). `.#exusiai-akn-aarch64` correspond à l'OCI A1 (UEFI, production) et `.#exusiai-akn-x86_64` à une VM
+x86_64 en BIOS legacy. Il n'existe pas de sortie sans suffixe. Pour répéter l'installation sur une VM de test Proxmox
 KVM :
 
 ```sh
@@ -192,7 +199,7 @@ Si l'exécution échoue après l'étape kexec, l'instance n'est plus Ubuntu : el
 l'étape disque, en `root` :
 
 ```sh
-nonix run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn-aarch64 \
+nonix run github:nix-community/nixos-anywhere -- --flake .#exusiai-akn-aarch64 \
   --extra-files extra --phases disko,install,reboot --target-host root@"$IP"
 ```
 
@@ -220,8 +227,8 @@ tranquille.
 ### 5. Vérifier le déploiement
 
 ```sh
-tailscale status | grep rimbilliton-akn                    # l'hôte a rejoint le tailnet
-ssh root@rimbilliton-akn systemctl status docker-pelican-panel docker-pelican-wings caddy
+tailscale status | grep exusiai-akn                    # l'hôte a rejoint le tailnet
+ssh root@exusiai-akn systemctl status docker-pelican-panel docker-pelican-wings caddy
 ```
 
 Ouvrir `https://minecraft.chezmoi.sh` : l'installeur web de Pelican doit apparaître. Wings reste arrêté (en redémarrage
@@ -239,7 +246,7 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
    point 1, puis vérifier Paramètres > OAuth et l'onglet OAuth du profil, où lier son propre compte :
 
    ```sh
-   ssh root@rimbilliton-akn 'systemctl restart pelican-plugins; journalctl -u pelican-plugins --no-pager -n 20'
+   ssh root@exusiai-akn 'systemctl restart pelican-plugins; journalctl -u pelican-plugins --no-pager -n 20'
    ```
 
    Le journal doit afficher `Plugin installed and enabled.` la première fois, puis `Plugin is already installed!`
@@ -251,7 +258,7 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
    déjà tourné :
 
    ```sh
-   ssh root@rimbilliton-akn 'systemctl restart pelican-roles; journalctl -u pelican-roles --no-pager -n 10'
+   ssh root@exusiai-akn 'systemctl restart pelican-roles; journalctl -u pelican-roles --no-pager -n 10'
    ```
 
    **Serveurs créés par les utilisateurs** : le plugin officiel `user-creatable-servers` est installé de la même façon
@@ -269,7 +276,7 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
      reste du `config.yml` de Wings est déclaré dans `modules/pelican.nix` et rendu par sops-nix
 
    ```sh
-   cd projects/rimbilliton.akn/src/infrastructure/nixos
+   cd fleet/hosts/akn.exusiai/nix
    sops secrets/rimbilliton.sops.yaml   # ajouter wings_uuid, wings_token_id, wings_token (voir secrets/rimbilliton.example.yaml)
    mise run nixos:oci:update
    ```
@@ -300,10 +307,10 @@ Le `config.yml` de Wings est rendu au démarrage à partir des secrets SOPS (mon
    [BKP-20261005-00](../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md).
 
 Les changements ultérieurs se déploient par Tailscale avec `mise run nixos:oci:update`, qui exécute
-`nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn` via `nonix`. Il n'y a pas de
-mise à jour automatique, volontairement : l'instance n'est pas encore supervisée et un retour arrière propre est
-difficile (voir [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md), qui traite de
-`kazimierz.akn` et s'applique ici aussi, et [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).
+`nixos-rebuild switch --flake .#exusiai-akn-aarch64 --target-host root@exusiai-akn` via `nonix`. Il n'y a pas de mise à
+jour automatique, volontairement : l'instance n'est pas encore supervisée et un retour arrière propre est difficile
+(voir [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md), qui traite de `kazimierz.akn` et
+s'applique ici aussi, et [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).
 
 ## Historique
 
@@ -315,9 +322,12 @@ difficile (voir [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pou
   SOPS, que plus aucun module ne lit, n'est pas mentionnée, et le guide suit `stack/pocket-id.ts` (client géré par
   import) plutôt que le commentaire de `secrets/rimbilliton.example.yaml`.
 
+- _2026-11-15_ : chemins du flake et de la stack déplacés sous `fleet/hosts/akn.exusiai/` (`nix/`, `pulumi/`), sorties
+  du flake `exusiai-akn-*`, nom d'hôte et projet Pulumi `exusiai-akn` (étape 7, tour B de la migration vers la flotte).
+
 ## Pour aller plus loin
 
-- [README de rimbilliton.akn](../../projects/rimbilliton.akn/README.md) : architecture et vue d'ensemble du projet.
+- [README de exusiai.akn](../../fleet/hosts/akn.exusiai/README.md) : architecture et vue d'ensemble du projet.
 - [Restaurer Minecraft depuis restic](../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md) :
   reconstruire l'hôte ou restaurer un monde depuis B2.
 - [Gérer l'état Pulumi et importer des ressources](../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)

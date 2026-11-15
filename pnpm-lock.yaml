@@ -361,6 +361,37 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  fleet/hosts/akn.exusiai/pulumi:
+    dependencies:
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@chezmoi.sh/pulumi-lib':
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/lib
+      '@pulumi/b2':
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/sdks/b2
+      '@pulumi/cloudflare':
+        specifier: 'catalog:'
+        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/oci':
+        specifier: 'catalog:'
+        version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi':
+        specifier: 'catalog:'
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/random':
+        specifier: 'catalog:'
+        version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/tailscale':
+        specifier: 'catalog:'
+        version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   fleet/hosts/akn.ptilopsis/pulumi:
     dependencies:
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
@@ -612,37 +643,6 @@ importers:
       '@pulumiverse/grafana':
         specifier: 'catalog:'
         version: 2.39.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-    devDependencies:
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  projects/rimbilliton.akn/src/infrastructure/pulumi:
-    dependencies:
-      '@axnic/pulumi-pocket-id':
-        specifier: 'catalog:'
-        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@chezmoi.sh/pulumi-lib':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/lib
-      '@pulumi/b2':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/b2
-      '@pulumi/cloudflare':
-        specifier: 'catalog:'
-        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/oci':
-        specifier: 'catalog:'
-        version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pulumi':
-        specifier: 'catalog:'
-        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/random':
-        specifier: 'catalog:'
-        version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/tailscale':
-        specifier: 'catalog:'
-        version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
         specifier: 'catalog:'

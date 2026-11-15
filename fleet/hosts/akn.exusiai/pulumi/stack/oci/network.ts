@@ -14,10 +14,14 @@ const unsecure = config.getBoolean("unsecure") ?? false;
 export const VCN_CIDR = "172.16.1.0/26";
 export const SUBNET_CIDR = "172.16.1.0/28";
 
+// Host renamed rimbilliton.akn -> exusiai.akn in place: displayNames follow
+// (updatable), but the logical names (`rimbilliton-akn-*`, part of the URNs)
+// and `dnsLabel` stay -- `dnsLabel` cannot be updated, changing it would
+// replace the VCN and everything in it.
 export const vcn = new oci.core.Vcn("rimbilliton-akn-vcn", {
 	compartmentId: rimbilliton.id,
 	cidrBlocks: [VCN_CIDR],
-	displayName: "rimbilliton-akn-vcn",
+	displayName: "exusiai-akn-vcn",
 	dnsLabel: "rimbillitonvcn",
 	isIpv6enabled: true,
 	isOracleGuaAllocationEnabled: true,
@@ -53,7 +57,7 @@ export const defaultSecurityList = new oci.core.SecurityList(
 	{
 		compartmentId: rimbilliton.id,
 		vcnId: vcn.id,
-		displayName: "rimbilliton-akn-default-sl",
+		displayName: "exusiai-akn-default-sl",
 		ingressSecurityRules: [
 			{
 				protocol: "1",
@@ -83,14 +87,14 @@ export const subnet = new oci.core.Subnet("rimbilliton-akn-subnet", {
 	cidrBlock: SUBNET_CIDR,
 	routeTableId: routeTable.id,
 	securityListIds: [defaultSecurityList.id],
-	displayName: "rimbilliton-akn-subnet",
+	displayName: "exusiai-akn-subnet",
 });
 
 export const nsg = new oci.core.NetworkSecurityGroup("rimbilliton-akn-nsg", {
 	compartmentId: rimbilliton.id,
 	vcnId: vcn.id,
-	displayName: "rimbilliton-akn-nsg",
-	freeformTags: { project: "rimbilliton.akn", managed_by: "pulumi" },
+	displayName: "exusiai-akn-nsg",
+	freeformTags: { project: "exusiai.akn", managed_by: "pulumi" },
 });
 
 // Ingress, dual-stack:

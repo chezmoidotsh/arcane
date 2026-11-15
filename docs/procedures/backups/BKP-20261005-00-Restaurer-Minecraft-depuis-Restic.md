@@ -1,11 +1,11 @@
 # BKP-20261005-00 Restaurer Minecraft depuis Restic
 
-Cette procédure restaure l'hôte Minecraft de `rimbilliton.akn` (Pelican) à partir de ses sauvegardes hors site : un
-dépôt restic sur Backblaze B2, alimenté chaque jour par le job restic `minecraft`
-(`src/infrastructure/nixos/modules/backup.nix`). Elle couvre quatre cas : inspecter les snapshots (étape 1), restaurer
-le monde d'un serveur (étape 2), restaurer les données du Panel (étape 3) et reconstruire l'hôte après la perte de la VM
-(étape 4). Compter quelques minutes pour les étapes 1 à 3 et plusieurs heures pour l'étape 4, qui inclut le réamorçage
-complet décrit dans [BOOTSTRAP](../../guides/Initialiser-Rimbilliton.md).
+Cette procédure restaure l'hôte Minecraft de `exusiai.akn` (Pelican, ancien `rimbilliton.akn`) à partir de ses
+sauvegardes hors site : un dépôt restic sur Backblaze B2, alimenté chaque jour par le job restic `minecraft`
+(`fleet/hosts/akn.exusiai/nix/modules/backup.nix`). Elle couvre quatre cas : inspecter les snapshots (étape 1),
+restaurer le monde d'un serveur (étape 2), restaurer les données du Panel (étape 3) et reconstruire l'hôte après la
+perte de la VM (étape 4). Compter quelques minutes pour les étapes 1 à 3 et plusieurs heures pour l'étape 4, qui inclut
+le réamorçage complet décrit dans [BOOTSTRAP](../../guides/Initialiser-Rimbilliton.md).
 
 > [!CAUTION]\
 > Cette procédure n'a encore jamais été testée : aucune restauration n'a été rejouée sur l'hôte. Elle a seulement été
@@ -56,10 +56,9 @@ Les accès suivants sont également nécessaires :
 - Un accès SSH en `root` à l'hôte via Tailscale (SSH n'est joignable que par Tailscale), sauf pour la reconstruction
   complète où l'hôte n'existe pas encore.
 - Le mot de passe restic, depuis OpenBao ou avec `sops -d --extract '["restic_password"]' secrets/rimbilliton.sops.yaml`
-  (exécuté depuis `projects/rimbilliton.akn/src/infrastructure/nixos`, avec la clé age de l'administrateur,
-  `SOPS_AGE_KEY_FILE`).
+  (exécuté depuis `fleet/hosts/akn.exusiai/nix`, avec la clé age de l'administrateur, `SOPS_AGE_KEY_FILE`).
 - Les identifiants B2, depuis `pulumi stack output backupsKeyId` et
-  `pulumi stack output backupsKeySecret --show-secrets` (stack `rimbilliton_akn.live`), ou depuis le secret SOPS
+  `pulumi stack output backupsKeySecret --show-secrets` (stack `exusiai_akn.live`), ou depuis le secret SOPS
   `restic_b2_env`.
 - Un accès au Panel en administrateur (`https://minecraft.chezmoi.sh`) pour les étapes 2 et 4.
 
@@ -104,6 +103,12 @@ Cette étape est en lecture seule. L'exécuter sur l'hôte, en `root`.
    restic snapshots
    # → une ligne par snapshot : ID, date, hôte, chemins. Chacun liste /var/lib/pelican/backups et /var/lib/pelican-panel/data
    ```
+
+   > [!NOTE]\
+   > Les snapshots portent le nom d'hôte de leur création : `exusiai-akn` depuis le renommage de l'hôte,
+   > `rimbilliton-akn` pour les plus anciens. Les deux groupes sont dans le même dépôt ; filtrer avec
+   > `--host exusiai-akn` ou `--host rimbilliton-akn` si besoin. Le groupe `rimbilliton-akn` n'est plus alimenté et sa
+   > rétention ne s'applique plus : il reste tel quel jusqu'à suppression manuelle.
 
 3. Inspecter un snapshot (choisir `SNAPSHOT_ID` dans la sortie précédente, ou utiliser `latest`) :
 
@@ -290,8 +295,7 @@ L'ordre compte : la restauration doit avoir lieu **avant** que les conteneurs Pe
 et avant la première exécution de restic (04:30). Sur un hôte neuf, les conteneurs démarrent au boot, créent une base
 SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet état vide serait envoyée.
 
-1. **Reprovisionner l'infrastructure.** Depuis `projects/rimbilliton.akn/src/infrastructure/pulumi`, en suivant l'étape
-   1 de BOOTSTRAP.md :
+1. **Reprovisionner l'infrastructure.** Depuis `fleet/hosts/akn.exusiai/pulumi`, en suivant l'étape 1 de BOOTSTRAP.md :
 
    ```bash
    mise run pulumi:diff && mise run pulumi:apply
@@ -309,9 +313,8 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
 
    sops-nix déchiffre avec la clé SSH de l'hôte. Si une nouvelle clé d'hôte est générée (étape 3 de BOOTSTRAP), sa clé
    age doit être destinataire de `secrets/rimbilliton.sops.yaml` : remplacer l'ancienne clé d'hôte dans
-   `projects/rimbilliton.akn/src/infrastructure/nixos/.sops.yaml`, puis exécuter `sops updatekeys` sur le fichier avant
-   l'installation. Réutiliser l'ancienne `extra/etc/ssh/ssh_host_ed25519_key`, si elle est encore disponible, évite
-   cette opération.
+   `fleet/hosts/akn.exusiai/nix/.sops.yaml`, puis exécuter `sops updatekeys` sur le fichier avant l'installation.
+   Réutiliser l'ancienne `extra/etc/ssh/ssh_host_ed25519_key`, si elle est encore disponible, évite cette opération.
 
 3. **Arrêter tout ce qui concerne Pelican, ainsi que le job de sauvegarde**, dès que l'hôte est joignable par Tailscale
    :
@@ -331,7 +334,7 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
    export RESTIC_PASSWORD_FILE=/run/secrets/restic_password
    set -a; . /run/secrets/restic_b2_env; set +a
    restic snapshots
-   # → les snapshots de l'ancien hôte (le nom d'hôte est le même, ils sont donc listés ensemble)
+   # → les snapshots de l'ancien hôte, sous `exusiai-akn` ou, avant le renommage, `rimbilliton-akn`
    ```
 
    Restaurer ensuite les deux chemins depuis le snapshot choisi, en remplaçant ce que l'installation neuve a créé :
@@ -363,7 +366,7 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
      `token` :
 
      ```bash
-     cd projects/rimbilliton.akn/src/infrastructure/nixos
+     cd fleet/hosts/akn.exusiai/nix
      sops secrets/rimbilliton.sops.yaml   # renseigner wings_uuid, wings_token_id, wings_token
      mise run nixos:oci:update
      # → le switch réussit (même tâche que l'étape 6.4 de BOOTSTRAP.md)
@@ -458,6 +461,8 @@ rm -rf "${RESTORE_DIR}"
 
 ## Historique
 
+- _2026-11-15_ : chemins du flake et de la stack sous `fleet/hosts/akn.exusiai/`, pile `exusiai_akn.live` ; les
+  snapshots créés après le renommage de l'hôte portent le nom `exusiai-akn` (migration MIGR-20261114-00, étape 7).
 - _2026-10-17_ : Reprise après revue : l'état de vérification devient un callout `CAUTION` qui dit que la procédure n'a
   jamais été testée, et les callouts `CAUTION` et `IMPORTANT` sont mis en forme pour que GitHub les affiche.
 - _2026-10-11_ : Migration vers le standard de documentation (rédaction en français, sections du gabarit de procédure).
@@ -471,7 +476,7 @@ rm -rf "${RESTORE_DIR}"
 
 ## Pour aller plus loin
 
-- [BOOTSTRAP de rimbilliton.akn](../../guides/Initialiser-Rimbilliton.md) : provisionnement, clé d'hôte, installation de
+- [BOOTSTRAP de exusiai.akn](../../guides/Initialiser-Rimbilliton.md) : provisionnement, clé d'hôte, installation de
   NixOS et configuration du nœud Wings.
 - [Pulumi : état sur Garage et import](../infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   : récupération de l'état d'une stack et import de ressources existantes.

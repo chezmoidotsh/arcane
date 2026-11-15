@@ -1,9 +1,9 @@
 # Initialiser Kazimierz
 
 Ce guide installe NixOS sur une instance OCI neuve, jusqu'à la passerelle Pangolin de `kazimierz.akn` : Pangolin, Gerbil
-et Traefik tournent et l'hôte a rejoint le tailnet. L'installation passe par `nixos-anywhere`, comme pour
-`rimbilliton.akn` (voir [Initialiser Rimbilliton](Initialiser-Rimbilliton.md)) ; ensuite, `mise run nixos:oci:update`
-applique chaque modification.
+et Traefik tournent et l'hôte a rejoint le tailnet. L'installation passe par `nixos-anywhere`, comme pour `exusiai.akn`
+(voir [Initialiser Rimbilliton](Initialiser-Rimbilliton.md)) ; ensuite, `mise run nixos:oci:update` applique chaque
+modification.
 
 > [!WARNING]\
 > Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
