@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État                                                                         |
-| ----- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                        |
-| 2     | Créer les bases de catalogue manquantes                             | faite                                                                        |
-| 3     | Activer le lint de structure                                        | faite                                                                        |
-| 4     | Déplacer le catalogue                                               | faite                                                                        |
-| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                            |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                            |
-| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer, nom d'hôte d'`horn` à trancher |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                                                                      |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                      |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                      |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                      |
+| Étape | Contenu                                                             | État                                         |
+| ----- | ------------------------------------------------------------------- | -------------------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                        |
+| 2     | Créer les bases de catalogue manquantes                             | faite                                        |
+| 3     | Activer le lint de structure                                        | faite                                        |
+| 4     | Déplacer le catalogue                                               | faite                                        |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer            |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer            |
+| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                                      |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                      |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                      |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                      |
 
 ## Avant de commencer
 
@@ -358,9 +358,9 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
 - **Manuel, renommage du projet Pulumi** (dernier acte de l'élément, voir
   [Renommer un projet Pulumi](#renommer-un-projet-pulumi)) : `hass` devient `closure-akn`, `kazimierz-akn-infra` devient
   `horn-akn`, `rimbilliton-akn-infra` devient `exusiai-akn`.
-- **Manuel, noms d'hôte** : pour `exusiai.akn`, le nom d'hôte NixOS et le nom du nœud Tailscale sont alignés sur le nom
-  canonique pendant la migration (tour B). Pour `horn.akn`, ils restent `kazimierz-akn` : le nom Tailscale fait partie
-  de l'URL de l'API de Pangolin (voir le détail du tour C, **à trancher**).
+- **Manuel, noms d'hôte** : le nom d'hôte NixOS et le nom du nœud Tailscale sont alignés sur le nom canonique
+  (`exusiai-akn` au tour B, `horn-akn` au tour C). Pour `horn.akn`, ce nom fait partie de l'URL de l'API de Pangolin
+  (`pangolin:url`) : voir le détail du tour C.
 - **Constaté** (tour A, `closure.akn`) : `projects/hass` est devenu `fleet/hosts/akn.closure` (`.mise.toml`
   et `README.md` à la racine, code Pulumi dans `pulumi/`), le projet `closure-akn` et la pile
   `closure_akn.live` (fichier `Pulumi.closure_akn.live.yaml`). Aucune `StackReference` ne lit `hass-infra` ; il n'y a ni
@@ -411,70 +411,81 @@ place, comme `exusiai.akn`. **Aucune reconstruction n'est nécessaire à cette �
 propriétaire.
 
 - **Constaté** (tour C) : `projects/kazimierz.akn` devient `fleet/hosts/akn.horn` (`nix/`, `pulumi/`, `assets/`), le
-  projet Pulumi `horn-akn` et la pile `horn_akn.live` (fichier `Pulumi.horn_akn.live.yaml`) et les sorties de flake
-  `horn-akn-{aarch64,x86_64}` (dérivation du système identique : aucun `nixos-rebuild`). Le nom d'hôte NixOS et le nom
-  du nœud Tailscale restent `kazimierz-akn`, comme les cibles SSH `root@kazimierz-akn`.
+  projet Pulumi `horn-akn` et la pile `horn_akn.live` (fichier `Pulumi.horn_akn.live.yaml`), les sorties de flake
+  `horn-akn-{aarch64,x86_64}`, le nom d'hôte NixOS `horn-akn` (le nœud Tailscale le suit) et `pangolin:url` =
+  `https://horn-akn.tail831c5d.ts.net` dans les piles `horn`, `rhodes.akn` et `lungmen.akn`. `nixos:oci:update` et
+  `nixos:backup` visent par défaut `root@horn-akn` (`nixos:oci:update` accepte une cible facultative).
   - **Renommage en place possible.** Vérifié sur le schéma de `@pulumi/oci` 4.20.0 : le `name` et la `description` du
     compartiment, le `displayName` de l'instance (`horn-pangolin`), du VCN, de la liste de sécurité et du NSG
-    (`horn-akn-*`) et les `freeformTags.project` sont modifiables sur place : cinq `update` au total. Le sous-réseau, la
+    (`horn-akn-*`) et les `freeformTags.project` sont modifiables sur place : cinq `update` OCI. Le sous-réseau, la
     table de routage et la passerelle Internet n'ont pas de nom d'affichage dans le code.
+  - **Changement d'`url` sans remplacement.** Les trois piles utilisent le fournisseur Pangolin par défaut
+    (`@pulumi/pangolin` 1.6.1, ponté dynamiquement). Le `DiffConfig` du pont ne remplace le fournisseur que pour les
+    champs `ForcesProviderReplace`, et aucun n'est posé : changer l'`url` est une mise à jour du fournisseur, aucune
+    ressource Pangolin n'est remplacée et les identifiants Newt ne changent pas. Aucun autre usage du nom Tailscale :
+    les ACL passent par des étiquettes et Newt par `pangolin.chezmoi.sh`.
   - **Conservé volontairement** : `dnsLabel: "kazimierzaknvcn"` (non modifiable : le changer remplacerait le VCN, le
-    sous-réseau et l'instance), les noms logiques (URN), l'IP publique (éphémère, elle ne change que si l'instance est
-    recréée), les enregistrements Cloudflare `kazimierz.akn` et `*.kazimierz.akn` (noms publics), le propriétaire du
-    jeton Traefik DNS-01, la description de la clé Tailscale (remplacement de la clé), les noms du dossier et des
-    fichiers de sauvegarde (`nixos:backup`, pour que `nixos:oci:install` retrouve les sauvegardes existantes).
+    sous-réseau et l'instance), les noms logiques (URN), l'IP publique (éphémère), les enregistrements Cloudflare
+    `kazimierz.akn` et `*.kazimierz.akn` (noms publics), le propriétaire du jeton Traefik DNS-01, la description de la
+    clé Tailscale (remplacement de la clé), les noms du dossier et des fichiers de sauvegarde.
+  - **Preuve côté NixOS** : `nix eval` de `…toplevel.drvPath` identique après le déplacement et le changement de nom des
+    sorties ; après le renommage de l'hôte, égal à l'ancien système avec le seul `networking.hostName` changé.
   - **Seule `StackReference` qui lit cette pile** : `catalog/pulumi/lib/src/pangolin.ts`, qui lit désormais
     `organization/horn-akn/horn_akn.live` en gardant son nom logique, donc sans changement d'URN dans `rhodes.akn` ni
     `lungmen.akn`.
 - **Manuel, avant la fusion** (tour C), depuis l'ancienne arborescence pour les points 1 à 3 :
   1. sauvegarder l'état (`pulumi stack export`, `pulumi stack --show-urns`) de `horn`, de `rhodes.akn` et de
-     `lungmen.akn`, et copier à chaud l'état de Pangolin (`mise run nixos:backup`, sans interruption) ;
+     `lungmen.akn`, et copier à chaud l'état de Pangolin (`mise run nixos:backup root@kazimierz-akn`, ancien nom, sans
+     interruption) ;
   2. répéter le renommage sur un backend `file://` (import de la sauvegarde) ;
   3. `pulumi stack rename organization/horn-akn/horn_akn.live` ; à défaut, export, réécriture des URN
      (`kazimierz-akn-infra` vers `horn-akn`, `kazimierz_akn.live` vers `horn_akn.live`), `pulumi stack init` puis
      `pulumi stack import` ;
   4. `sops set pulumi/.mise/env.yaml '["PULUMI_STACK"]' '"horn_akn.live"'` ;
-  5. `mise run pulumi:diff -- --diff` : exactement cinq `update` (compartiment : `name` et `description` ; instance et
-     NSG : `displayName` et `freeformTags.project` ; VCN et liste de sécurité : `displayName`). **Tout `create`,
-     `replace` ou `delete`, tout `update` sur une autre ressource (enregistrement DNS, jeton Traefik, Pangolin,
-     Pocket-Id, clé Tailscale) ou toute autre propriété sur ces cinq ressources arrête l'opération**, en particulier
-     `dnsLabel`, `compartmentId`, `sourceDetails` et `createVnicDetails` ;
-  6. `mise run pulumi:apply`, puis `mise run pulumi:diff` (aucun changement attendu) ;
-  7. `pulumi preview` de `rhodes.akn` et de `lungmen.akn` : **aucun changement de ressource** (la `StackReference` garde
-     son URN et `egressIp` la même valeur) ; tout changement sur une ressource ou une règle Pangolin arrête l'opération
+  5. basculer l'hôte : `mise run nixos:binding-ip`, `nixos-rebuild dry-activate` (aucune unité `docker-*` ne doit être
+     redémarrée), puis `mise run nixos:oci:update root@kazimierz-akn` ; contrôler que le nœud s'appelle `horn-akn` dans
+     le tailnet et que `tailscaled`, `pangolin-tailscale-serve`, `docker-pangolin`, `docker-gerbil` et `docker-traefik`
+     sont actifs ;
+  6. **barrière** : `https://horn-akn.tail831c5d.ts.net/` doit répondre avec un certificat valide (tout code HTTP, 401
+     ou 404 compris), `pangolin.chezmoi.sh` répondre et les deux sites Newt être en ligne. Ne pas continuer sans cette
+     réponse (si le certificat manque : redémarrer `pangolin-tailscale-serve`) ;
+  7. `mise run pulumi:diff -- --diff` dans `horn` : exactement cinq `update` OCI (compartiment : `name` et `description`
+     ; instance et NSG : `displayName` et `freeformTags.project` ; VCN et liste de sécurité : `displayName`) plus un
+     `update` du fournisseur Pangolin par défaut (propriété `url`) ; **tout `create`, `replace` ou `delete` (en
+     particulier un `replace` du fournisseur ou d'une ressource `pangolin:*`), tout `update` sur une autre ressource ou
+     toute autre propriété arrête l'opération** ; puis `mise run pulumi:apply` et un second `mise run pulumi:diff` vide
      ;
-  8. fusionner, avec `pulumi/.mise/env.yaml` commité. Aucun `nixos-rebuild` n'est nécessaire. Contrôles :
-     `pangolin.chezmoi.sh` répond, les deux sites Newt sont en ligne, un service public de chaque cluster répond.
+  8. `mise run pulumi:diff -- --diff` dans `rhodes.akn` et `lungmen.akn` : **uniquement** l'`update` du fournisseur
+     Pangolin (`url`), même condition d'arrêt (un `replace` ferait tourner les identifiants Newt) ; puis
+     `mise run pulumi:apply` dans les deux, pour que l'état référence la nouvelle URL ;
+  9. fusionner, avec `pulumi/.mise/env.yaml` commité. Contrôles : `pangolin.chezmoi.sh` répond, les deux sites Newt sont
+     en ligne, un service public de chaque cluster répond.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : un
   état vide planifierait une seconde passerelle (instance, VCN, enregistrements DNS, dont l'écrasement de
   `*.chezmoi.sh`, IdP, organisation et rôle Pangolin). Ne jamais lancer `nixos:oci:install` ni `nixos:e2e` (elles
-  repartitionnent la cible). Entre le renommage et la fusion, `rhodes.akn` et `lungmen.akn` sur `main` échouent sur leur
-  `StackReference` (rien n'est appliqué) : fusionner vite. L'aperçu de `lungmen.akn` montre aussi le travail `litellm`
-  du propriétaire, issu d'une autre branche : ne juger que les lignes liées aux règles Pangolin.
+  repartitionnent la cible). Entre le renommage de la pile et la fusion, `rhodes.akn` et `lungmen.akn` sur `main`
+  échouent sur leur `StackReference` : fusionner vite. Entre la bascule de l'hôte (point 5) et les trois `apply` (points
+  7 et 8), les piles gardent l'ancienne URL, qui ne répond plus : ne rien appliquer dans les clusters dans cet
+  intervalle. L'aperçu de `lungmen.akn` montre aussi le travail `litellm` du propriétaire, issu d'une autre branche : ne
+  juger que les lignes liées à Pangolin.
 - **À confirmer** : le comportement de `pulumi stack rename` entre deux projets sur le backend S3 maison et
   l'emplacement de l'état dans le bucket ; la validité de la phrase secrète et du sel après le renommage ; la réécriture
-  par OCI des politiques IAM qui nomment le compartiment (aucune n'est déclarée dans le dépôt) ; la répétition du
-  renommage sur une copie de l'état, pas encore faite.
-- **À trancher** : le nom d'hôte d'`horn`. Tailscale nomme le nœud d'après le nom d'hôte, et `pangolin.nix` publie l'API
-  d'intégration de Pangolin avec `tailscale serve` sur `https://kazimierz-akn.tail831c5d.ts.net`, valeur de
-  `pangolin:url` dans trois piles (`horn`, `rhodes.akn`, `lungmen.akn`). Options :
-  1. **garder `kazimierz-akn`** (état actuel) : rien à faire sur la machine ;
-  2. **renommer l'OS seul** : `networking.hostName = "horn-akn"` et nom Tailscale épinglé
-     (`services.tailscale.extraSetFlags = [ "--hostname=kazimierz-akn" ]`), un `nixos:oci:update` ; **à confirmer** que
-     le nom épinglé tient sur un nœud déjà enregistré ;
-  3. **renommer les deux**, et `pangolin:url` vers `https://horn-akn.tail831c5d.ts.net` dans les trois piles : seulement
-     si le fournisseur `pangolin` ne remplace aucune ressource lors d'un changement d'`url` (**à confirmer** par un
-     aperçu de chaque pile : un `replace` de sites ou de ressources Pangolin ferait tourner les identifiants Newt des
-     deux clusters), avec une fenêtre où les deux noms sont servis.
-
-  Les identifiants de composants d'Oripathy passent aussi de `kazimierz.akn/…` à `horn.akn/…` (`pangolin`, `gerbil`,
-  `traefik`, `error-pages`, `nix/disko`, `nix/sops-nix`) : des issues déjà indexées peuvent être dupliquées (même point
-  que l'étape 5).
-
-- **Retour arrière** : avant l'application, renommer la pile en sens inverse (ou réimporter la sauvegarde) et rétablir
-  `PULUMI_STACK` ; après, relancer `pulumi up` avec l'ancien code et la pile renommée en sens inverse remet les anciens
-  noms (cinq `update`, aucune ressource recréée). Les lecteurs n'ont rien appliqué : l'ancien code restaure l'ancien nom
-  de `StackReference`. Côté fichiers : `git revert`.
+  par OCI des politiques IAM qui nomment le compartiment (aucune n'est déclarée dans le dépôt) ; le nœud Tailscale suit
+  bien le nom d'hôte (sinon, il a été renommé à la main dans la console : le renommer en `horn-akn`, et supprimer un
+  éventuel ancien nœud `horn-akn` si le nouveau devient `horn-akn-1`) ; `tailscale serve` obtient un certificat pour le
+  nouveau nom au premier usage ; la répétition du renommage sur une copie de l'état, pas encore faite.
+- **Décidé** : le propriétaire a choisi de renommer à la fois l'hôte et le nom Tailscale (`horn-akn`), avec
+  `pangolin:url` mis à jour dans les trois piles. Les options écartées étaient de garder `kazimierz-akn`, ou de renommer
+  l'OS en épinglant l'ancien nom Tailscale. Les identifiants de composants d'Oripathy passent de `kazimierz.akn/…` à
+  `horn.akn/…` (`pangolin`, `gerbil`, `traefik`, `error-pages`, `nix/disko`, `nix/sops-nix`) : des issues déjà indexées
+  peuvent être dupliquées (même point que l'étape 5).
+- **Retour arrière** : côté hôte, `nixos-rebuild switch --rollback` revient à la génération précédente (`kazimierz-akn`)
+  ; renommer le nœud dans la console Tailscale s'il ne suit pas ; les trois piles doivent alors garder (ou retrouver)
+  `pangolin:url: https://kazimierz-akn.tail831c5d.ts.net`. Avant l'application, renommer la pile en sens inverse (ou
+  réimporter la sauvegarde) et rétablir `PULUMI_STACK` ; après, relancer `pulumi up` avec l'ancien code et la pile
+  renommée en sens inverse remet les anciens noms (cinq `update`) et l'ancienne URL ; dans `rhodes.akn` et
+  `lungmen.akn`, un `pulumi up` avec l'ancien code remet l'ancienne URL (un `update` chacun). Aucune ressource n'est
+  recréée. Côté fichiers : `git revert`.
 
 ### Détail de l'étape 7 : `exusiai.akn`, renommage en place
 

@@ -136,7 +136,7 @@ host (a container image `fooImage = "…"`, a pinned binary, a package).
    hash with `nix:hash:update` from the directory of the `flake.nix`.
 2. For a nixpkgs package or a flake input, see case 5.
 3. Back up the state before an upgrade of the application that owns it: on `horn.akn`,
-   `mise run nixos:backup [root@kazimierz-akn]` (hot copy of Pangolin's state, no downtime).
+   `mise run nixos:backup [root@horn-akn]` (hot copy of Pangolin's state, no downtime).
 4. Apply to the running host: `mise run nixos:oci:update`. It needs the SSH key in your agent and the tailnet. Do not
    run `nixos:oci:install` or `nixos:e2e`: they repartition or target a test VM.
 5. Check: the systemd units and containers are up, the service answers from outside; on `horn.akn`, Pangolin comes back

@@ -319,7 +319,7 @@ in
   # Pangolin's health and Gerbil/Traefik that Compose handled with `condition: service_healthy`.
 
   # --- Integration API on the tailnet ----------------------------------------------------
-  # `tailscale serve` publishes it at https://kazimierz-akn.<tailnet>.ts.net (port 443), the URL the Pulumi stacks
+  # `tailscale serve` publishes it at https://horn-akn.<tailnet>.ts.net (port 443), the URL the Pulumi stacks
   # read from their `pangolin:url` config. It binds the tailnet address only, hence `bindIp` above.
   systemd.services.pangolin-tailscale-serve = {
     description = "Expose the Pangolin Integration API on the tailnet";
