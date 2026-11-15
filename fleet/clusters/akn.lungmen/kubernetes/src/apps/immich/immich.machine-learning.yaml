@@ -1,0 +1,114 @@
+---
+# trunk-ignore(checkov/CKV_K8S_15): Not agreed with these policies about ImagePullPolicy=Always and digest verification for third-party apps
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Immich ML
+# trunk-ignore(checkov/CKV_K8S_11): TODO - Setup resource limits when we have consumption data for Immich ML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-machine-learning
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: immich-machine-learning
+      app.kubernetes.io/component: machine-learning
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: immich-machine-learning
+        app.kubernetes.io/component: machine-learning
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 31847
+        runAsGroup: 31847
+        runAsUser: 31847
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        # trunk-ignore(trivy/KSV0125): ghcr.io/immich-app is trusted registry for Immich official images
+        - name: immich-machine-learning
+          image: ghcr.io/immich-app/immich-machine-learning
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3003
+              protocol: TCP
+          volumeMounts:
+            - name: model-cache
+              mountPath: /.config
+            - name: model-cache
+              mountPath: /.cache
+            - name: model-cache
+              mountPath: /cache
+            - name: temp
+              mountPath: /tmp
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 31847
+            runAsNonRoot: true
+            runAsUser: 31847
+      volumes:
+        - name: temp
+          emptyDir: {}
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: immich-ml-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-ml-cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-machine-learning
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3003
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: immich
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/component: machine-learning

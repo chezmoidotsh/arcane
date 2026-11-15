@@ -1,0 +1,25 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway API to route traffic to the spoolman application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+  labels:
+    app.kubernetes.io/instance: spoolman
+    app.kubernetes.io/name: spoolman
+  name: allow-spoolman-from-cilium-gateway
+  namespace: spoolman
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: spoolman
+  ingress:
+  - fromEntities:
+    - ingress
+    toPorts:
+    - ports:
+      - port: "8000"
+        protocol: TCP

@@ -19,7 +19,8 @@
 # Wraps the two read-only previews omnictl offers, which both exit 0 even when
 # they show a diff:
 #   - omnictl apply --dry-run                 (catalog/omni/machineclasses)
-#   - omnictl cluster template diff -f <file> (projects/*/src/infrastructure/omni)
+#   - omnictl cluster template diff -f <file> (projects/*/src/infrastructure/omni and
+#     fleet/clusters/*/omni: both layouts during MIGR-20261114-00, step 8)
 # Any output from them (minus "unchanged"-style lines) counts as drift.
 # Requires an authenticated omnictl (OMNICONFIG); never writes to Omni.
 #
@@ -79,7 +80,7 @@ fi
 if [[ ${scope} != "--machineclasses" ]]; then
   while IFS= read -r -d '' file; do
     check "${file#"${REPO_ROOT}"/}" "${OMNICTL}" cluster template diff --file "${file}"
-  done < <(find "${REPO_ROOT}/projects" -path "*/src/infrastructure/omni/*.clustertemplate.yaml" -print0 || true)
+  done < <(find "${REPO_ROOT}/projects" "${REPO_ROOT}/fleet/clusters" -path "*/omni/*.clustertemplate.yaml" -print0 2>/dev/null || true)
 fi
 
 if ((ERRORS > 0)); then

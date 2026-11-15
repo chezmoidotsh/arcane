@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État                                         |
-| ----- | ------------------------------------------------------------------- | -------------------------------------------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                        |
-| 2     | Créer les bases de catalogue manquantes                             | faite                                        |
-| 3     | Activer le lint de structure                                        | faite                                        |
-| 4     | Déplacer le catalogue                                               | faite                                        |
-| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer            |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer            |
-| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                                      |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                      |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                      |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                      |
+| Étape | Contenu                                                             | État                                                                       |
+| ----- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                      |
+| 2     | Créer les bases de catalogue manquantes                             | faite                                                                      |
+| 3     | Activer le lint de structure                                        | faite                                                                      |
+| 4     | Déplacer le catalogue                                               | faite                                                                      |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                          |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                          |
+| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                               |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1 code prêt, PR 2 et 4 à faire ; `rhodes.akn` : à faire |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                    |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                    |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                    |
 
 ## Avant de commencer
 
@@ -575,29 +575,54 @@ ce cas. Pour chaque cluster :
 ### Les quatre pull requests de l'étape 8
 
 1. **Dupliquer.** Le code (`src/`) et le `dist/` du cluster sont copiés sous `fleet/clusters/<dossier>/`, avec `omni/`,
-   `pulumi/`, `architecture.d2`, `assets/`, `.mise.toml` et `.sops.yaml`. `dist:render` connaît les deux arborescences
-   (le script découpe aujourd'hui les chemins `projects/<cluster>/src/…`). L'ancien code reste la référence : rien ne
+   `architecture.d2`, `assets/`, `.mise.toml` et `.sops.yaml`. `pulumi/` n'est **pas** dupliqué : une copie serait un
+   second dossier avec le même projet, la même pile et le même état, donc il se déplace directement en pull request 4.
+   Les outils (`dist:render`, lints, CI) connaissent les deux arborescences. L'ancien code reste la référence : rien ne
    pointe vers la copie.
    - Vérification : `dist:render` sur la copie ne diffère pas de l'ancien `dist/` ; aucune `Application` n'a changé.
    - Retour arrière : `git revert`.
 2. **Pointer les ApplicationSets `system` et `applications` vers les nouveaux fichiers.** Le gabarit du `seed` compose,
    pour ce cluster, les chemins de génération vers `fleet/…/kubernetes/dist/…`. Tant qu'un cluster est encore sous
    `projects/`, il produit les deux formes de chemin (par exemple par une condition sur le nom du cluster). L'inversion
-   des segments des noms canoniques est une expression de gabarit Go **à valider** avant l'étape (piste :
-   `splitList "." | reverse | join "."` avec sprig, non testée).
+   des segments des noms canoniques se fait avec `splitList "." | reverse | join "."` (sprig v3, vérifié avec
+   `helm template` : `lungmen.akn` donne `akn.lungmen`) ; un dernier contrôle avec `argocd appset generate` reste **à
+   confirmer**. Les patches du `seed` doivent produire `fleet/clusters/<nom inversé>/kubernetes/dist/{system,apps}/*`
+   (et `.application.patch`) ; `infrastructure/kubernetes` devient `system`.
    - Vérification : `argocd app list` donne les mêmes noms d'`Application` ; aucune n'est supprimée ni recréée ; leur
      état de synchronisation est inchangé ; les `sources[].path` pointent vers `fleet/`.
    - Retour arrière : `git revert`, les chemins reviennent vers l'ancien code, toujours présent.
 3. **Pointer les `shoots` vers les nouveaux chemins** (`rhodes.akn` seulement : ces fichiers n'existent que dans le hub,
-   cette pull request n'a pas d'équivalent pour `lungmen.akn`, à confirmer). `seed.apps/shoot.applicationset.yaml` et
-   `bootstrap.applications.yaml` (`Application` `argocd` et `seed`) pointent vers les copies sous
-   `fleet/clusters/akn.rhodes/`.
+   cette pull request n'a pas d'équivalent pour `lungmen.akn`, qui n'a pas de `src/argocd/`).
+   `seed.apps/shoot.applicationset.yaml` et `bootstrap.applications.yaml` (`Application` `argocd` et `seed`) pointent
+   vers les copies sous `fleet/clusters/akn.rhodes/`.
    - Vérification : les `Application` `argocd` et `seed` sont `Synced` sur les nouveaux chemins ; mêmes `Application`
      qu'avant.
    - Retour arrière : `git revert` et, si le fichier d'amorçage a été réappliqué, le réappliquer depuis l'ancien commit.
 4. **Supprimer l'ancien code.** Le code et le `dist/` sous `projects/<cluster>/` sont supprimés.
    - Vérification : `argocd app list` inchangé ; plus aucune référence aux anciens chemins (`grep`).
    - Retour arrière : `git revert`, l'ancien code revient.
+
+### Détail de l'étape 8 : `lungmen.akn`, pull request 1
+
+- **Constaté** : `projects/lungmen.akn` est copié (depuis l'arbre git de la pile, pas l'arbre de travail) sous
+  `fleet/clusters/akn.lungmen/` : `src/apps` devient `kubernetes/src/apps`, `src/infrastructure/kubernetes` devient
+  `kubernetes/src/system`, idem pour `dist/` ; le modèle Omni va dans `omni/`, `docs/assets` dans `assets/`, et
+  `README.md`, `architecture.d2`, `.mise.toml` et `.sops.yaml` restent à la racine. `.sops.yaml` ne demande qu'une
+  réécriture de `path_regex`, sans rechiffrement. Le `dist/` copié est identique octet à octet à l'ancien,
+  `dist:render --check --all` et les lints passent. Les outils lisent les deux arborescences : `scripts/dist:render`,
+  `oripathy:inventory` (lit `projects/<cluster>` tant qu'il existe, puis la copie, sans double comptage),
+  `omni:template:lint`, `omni:drift:check`, la tâche de mise à jour des DERP, les workflows (fraîcheur du `dist`,
+  conformité partielle et complète, lint Omni, Oripathy, PR Agent, DERP), `.rtunk/rtunk.yaml`, `.gitignore` et
+  `.gitattributes`. Le modèle Omni est dupliqué mais inerte (la synchronisation est manuelle, à faire depuis `projects/`
+  jusqu'à la pull request 4). `external-dns/.application.patch` de la copie garde les anciens chemins `projects/…` pour
+  que le `dist` reste identique ; la pull request 2 le réécrit.
+- **Constaté** : restent sur `projects/` jusqu'à la pull request 4 : `argocd:app:sync`, `bao:secret:audit`,
+  `velero:backup`, `bao:smb:drift-check`, `wiki:publish` et `.agents/skills/cnpg-backup/scripts/discover-cnpg.sh`.
+- **Risque** : les deux copies divergent si quelqu'un ne modifie que l'une d'elles (`--check` ne compare chaque copie
+  qu'à sa propre `src/`). Geler les changements de `lungmen.akn` entre les pull requests 1 et 4, ou les appliquer aux
+  deux. La conformité partielle lance une matrice sur 23 dossiers `dist` de plus, et `dist:render --check --all` est
+  plus lent.
+- **À confirmer** : `argocd appset generate` avec l'expression d'inversion des noms (pull request 2).
 
 ### Ce qui reste à confirmer à l'étape 8
 

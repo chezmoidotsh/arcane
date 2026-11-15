@@ -64,8 +64,10 @@ class BuildItem:
 
     @property
     def project(self) -> str:
+        # projects/<cluster>/src/... or fleet/clusters/<family>.<name>/kubernetes/src/...
         parts = self.rel.split("/")
-        return parts[1] if len(parts) > 1 else ""
+        i = 2 if parts[0] == "fleet" else 1
+        return parts[i] if len(parts) > i else ""
 
     @property
     def src_path(self) -> str:
@@ -136,24 +138,31 @@ def _resource_filename(doc: dict, idx: int, used: set[str]) -> str:
 # ── discovery ─────────────────────────────────────────────────────────────────
 
 
+# Both layouts are rendered during the fleet migration (MIGR-20261114-00, step 8):
+# projects/<cluster>/src/{apps,infrastructure/kubernetes}/<x> and
+# fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<x>.
+_APP_DIR_GLOBS = (
+    "projects/*/src/apps/*",
+    "projects/*/src/infrastructure/kubernetes/*",
+    "projects/*/src/argocd",
+    "fleet/clusters/*/kubernetes/src/apps/*",
+    "fleet/clusters/*/kubernetes/src/system/*",
+    "fleet/clusters/*/kubernetes/src/argocd",
+)
+
+
 def find_app_dirs() -> list[Path]:
-    """All top-level renderable src/ app directories across all projects."""
-    dirs: list[Path] = []
-    for kust in REPO_ROOT.glob("projects/*/src/apps/*/kustomization.yaml"):
-        if kust.parent.parent.name == "apps":
-            dirs.append(kust.parent)
-    for kust in REPO_ROOT.glob(
-        "projects/*/src/infrastructure/kubernetes/*/kustomization.yaml"
-    ):
-        if kust.parent.parent.name == "kubernetes":
-            dirs.append(kust.parent)
-    for kust in REPO_ROOT.glob("projects/*/src/argocd/kustomization.yaml"):
-        dirs.append(kust.parent)
-    return sorted(dirs)
+    """All top-level renderable src/ app directories across all clusters."""
+    return sorted(
+        kust.parent
+        for pattern in _APP_DIR_GLOBS
+        for kust in REPO_ROOT.glob(f"{pattern}/kustomization.yaml")
+    )
 
 
 _APP_DIR_PATTERN = re.compile(
-    r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd))/"
+    r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd)"
+    r"|fleet/clusters/[^/]+/kubernetes/src/(?:(?:apps|system)/[^/]+|argocd))/"
 )
 
 DEFAULT_BRANCH = "main"
@@ -596,6 +605,7 @@ def main() -> None:
             "  dist:render --changed\n"
             "  dist:render -j4 --all\n"
             "  dist:render projects/lungmen.akn/src/apps/forgejo\n"
+            "  dist:render fleet/clusters/akn.lungmen/kubernetes/src/apps/n8n\n"
         ),
     )
     parser.add_argument(
