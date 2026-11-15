@@ -108,8 +108,8 @@ const scopes = [
 		value: "catalog:nix",
 	},
 	{
-		name: "catalog:kustomize     - Anything related to the Kustomize component catalog",
-		value: "catalog:kustomize",
+		name: "catalog:kubernetes    - Anything related to the Kubernetes bases catalog",
+		value: "catalog:kubernetes",
 	},
 	{
 		name: "catalog:kairos-bundle - Anything related to the Kairos bundle catalog",

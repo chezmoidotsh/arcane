@@ -4,7 +4,8 @@ kind: Kustomization
 namespace: kube-system
 
 resources:
-  - ../../../../../../catalog/kustomize/tun-device-plugin
+  - daemonset.tun-device-plugin.yaml
+  - security/networkpolicy.tun-device-plugin.yaml
 
 images:
   - name: ghcr.io/squat/generic-device-plugin
@@ -12,6 +13,6 @@ images:
 
 patches:
   # Log formats of the pods (ADR-020). go-kit logfmt; no line seen in 7 days.
-  - target: {kind: DaemonSet, name: tun-device-plugin}
+  - target: { kind: DaemonSet, name: tun-device-plugin }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}

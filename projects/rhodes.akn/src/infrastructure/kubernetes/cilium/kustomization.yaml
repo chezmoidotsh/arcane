@@ -7,7 +7,8 @@ resources:
   # bundle these.
   - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
 
-  - default.l2announcementpolicy.yaml
+  - ../../../../../../catalog/kubernetes/cilium/kustomize
+
   - external.ippool.yaml
   - internal.ippool.yaml
   - security/
@@ -18,7 +19,6 @@ resources:
   # therefore stuck in this release's namespace (kube-system) — there's no chart value to move it.
   - external.gateway.yaml
   - internal.gateway.yaml
-  - redirect-http-to-https.httproute.yaml
   - wildcard.chezmoi.sh.certificate.yaml
 
 helmCharts:
@@ -30,25 +30,25 @@ helmCharts:
     releaseName: cilium
     namespace: kube-system
 
-    valuesFile: helmvalues/default.yaml
+    valuesFile: ../../../../../../catalog/kubernetes/cilium/helm/default.helmvalues.yaml
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target: {kind: DaemonSet, name: cilium-envoy}
+  - target: { kind: DaemonSet, name: cilium-envoy }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: bracketed}}
-  - target: {kind: Deployment, name: cilium-operator}
+  - target: { kind: Deployment, name: cilium-operator }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
-  - target: {kind: Deployment, name: hubble-relay}
+  - target: { kind: Deployment, name: hubble-relay }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
-  - target: {kind: Deployment, name: hubble-ui}
+  - target: { kind: Deployment, name: hubble-ui }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt, o11y.chezmoi.sh/log-format.frontend: none}}
-  - target: {kind: CronJob, name: hubble-generate-certs}
+  - target: { kind: CronJob, name: hubble-generate-certs }
     patch: |-
       - {op: add, path: /spec/jobTemplate/spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
-  - target: {kind: Job, name: hubble-generate-certs-df446b0717}
+  - target: { kind: Job, name: hubble-generate-certs-df446b0717 }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}

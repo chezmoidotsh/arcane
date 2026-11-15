@@ -1,0 +1,11 @@
+# Kustomization for Cilium default configuration
+# Provides the default L2 announcement policy, the HTTP→HTTPS redirect of the "external" Gateway
+# and the cluster-wide policy letting the Gateway API reach the pods
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - default.l2announcementpolicy.yaml
+  - redirect-http-to-https.httproute.yaml
+  - network-policy.allow-ingress-gateway.yaml

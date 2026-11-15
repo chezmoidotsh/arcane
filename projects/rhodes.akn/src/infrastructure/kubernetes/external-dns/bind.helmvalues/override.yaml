@@ -1,0 +1,4 @@
+---
+# Distinguishes this instance's TXT ownership records from any other
+# external-dns instance/cluster writing into the same zone.
+txtOwnerId: external-dns.rhodesakn
