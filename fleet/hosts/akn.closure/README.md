@@ -1,12 +1,12 @@
 <h1 align="center">
-  Home Assistant <sub>(hass)</sub>
+  Home Assistant <sub>(closure.akn)</sub>
 </h1>
 
 <h4 align="center">Personal <a href="https://www.home-assistant.io/">Home Assistant</a> instance</h4>
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../../LICENSE)
 
 <!-- trunk-ignore-begin(markdown-link-check/404) -->
 
@@ -28,7 +28,7 @@ consumption, rather than using it for purely automation purposes.
 
 ## 🛡️ License
 
-This repository is licensed under the [Apache-2.0](../../LICENSE).
+This repository is licensed under the [Apache-2.0](../../../LICENSE).
 
 > \[!CAUTION] This is a personal project intended for my own use. Feel free to explore and use the code, but please note
 > that it comes with no warranties or guarantees. Use it at your own risk.

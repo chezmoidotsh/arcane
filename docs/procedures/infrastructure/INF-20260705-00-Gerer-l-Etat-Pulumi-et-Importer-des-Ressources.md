@@ -13,12 +13,12 @@ Elle s'applique à tous les projets Pulumi du dépôt, dont les `Pulumi.yaml` po
 ## Cadre technique et conventions
 
 Les six projets Pulumi du dépôt déclarent le même backend dans leur `Pulumi.yaml`
-(`projects/<projet>/src/infrastructure/pulumi/`) :
+(`projects/<projet>/src/infrastructure/pulumi/`, ou `fleet/hosts/<hôte>/pulumi/` pour les hôtes déjà déplacés) :
 
 | Projet            | Nom Pulumi              |
 | ----------------- | ----------------------- |
 | `chezmoi.sh`      | `chezmoi-sh-infra`      |
-| `hass`            | `hass-infra`            |
+| `closure.akn`     | `closure-akn`           |
 | `kazimierz.akn`   | `kazimierz-akn-infra`   |
 | `lungmen.akn`     | `lungmen-akn-infra`     |
 | `rhodes.akn`      | `rhodes-akn-infra`      |
@@ -225,6 +225,8 @@ pulumi state delete $URN
 
 ## Historique
 
+- _2026-11-15_ : `hass` devient `closure.akn` (`fleet/hosts/akn.closure/pulumi/`, projet `closure-akn`), migration
+  MIGR-20261114-00 étape 7.
 - _2026-11-11_ : Exemple complet remplacé : le rôle `Exporter` (identité `prometheus@pve`, supprimée avec le LXC
   `pve-exporter`) n'existe plus ; l'exemple importe le rôle `OmniProvider` de `access/omni.ts`.
 - _2026-10-17_ : Alignement sur le gabarit de procédure v2 : état de vérification en callout, entrées en bloc `export`
