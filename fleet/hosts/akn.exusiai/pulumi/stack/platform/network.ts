@@ -3,7 +3,7 @@ import * as oci from "@pulumi/oci";
 import { unsecure } from "../config";
 import { ociCompartment } from "./oci-compartment";
 
-// Dedicated dual-stack VCN (kazimierz-akn-vcn uses 172.16.0.0/26).
+// Dedicated dual-stack VCN (horn.akn's VCN uses 172.16.0.0/26).
 const VCN_CIDR = "172.16.1.0/26";
 const SUBNET_CIDR = "172.16.1.0/28";
 
@@ -44,7 +44,7 @@ const routeTable = new oci.core.RouteTable("exusiai-akn-rt", {
 
 // The VCN's auto-created default SecurityList ships a blanket SSH ingress and
 // can't be detached (OCI requires >= 1 list), so replace it with an
-// ICMP-only list -- same reasoning as kazimierz-akn-default-sl.
+// ICMP-only list -- same reasoning as horn.akn's default security list.
 const defaultSecurityList = new oci.core.SecurityList(
 	"exusiai-akn-default-sl",
 	{

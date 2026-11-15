@@ -17,7 +17,7 @@ One recipe per kind of component. Find the case first (table below), then follow
 
 An update starts from:
 
-- the component: `<project>/<name>`, for example `kazimierz.akn/traefik` or `catalog/postgresql-17`;
+- the component: `<project>/<name>`, for example `horn.akn/traefik` or `catalog/postgresql-17`;
 - the current and the target version;
 - the files that declare the version (path and line). Oripathy's BOM lists them; otherwise `rg` the old version in the
   component's application directory (see [Oripathy Reference](../../../docs/reference/Oripathy-Reference.md)).
@@ -57,7 +57,7 @@ Decide from the path of the file that declares the version.
 | `projects/*/src/apps/**`, `projects/*/src/infrastructure/kubernetes/**`, `projects/rhodes.akn/src/argocd/**` | 1. Kubernetes (ArgoCD)                |
 | `catalog/kubernetes/**`                                                                                      | 2. Catalog (shared Kubernetes bases)  |
 | `fleet/hosts/core.<name>/nix/**`, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/**`     | 3. NixOS LXC appliance                |
-| `projects/kazimierz.akn/src/infrastructure/nixos/**`, `fleet/hosts/akn.exusiai/nix/**`                       | 4. NixOS host (OCI VPS)               |
+| `fleet/hosts/akn.horn/nix/**`, `fleet/hosts/akn.exusiai/nix/**`                                              | 4. NixOS host (OCI VPS)               |
 | a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules)                       | 5. Nix flake input or nixpkgs package |
 | no file in the repository (Home Assistant OS, a router firmware, a manual component)                         | 6. Outside the repository             |
 
@@ -128,25 +128,24 @@ Needs `nix`, `sops` and SSH access to the Proxmox host: this is done from the ma
 
 ## 4. NixOS host (OCI VPS)
 
-`kazimierz.akn` (public gateway: Pangolin, Gerbil, Traefik) and `exusiai.akn` (Minecraft host) are NixOS machines
-deployed with `nixos-rebuild switch --target-host` over the tailnet (ADR-016). The version lives in a module under
-`src/infrastructure/nixos/` (`kazimierz.akn`) or `nix/` (`exusiai.akn`) (a container image `fooImage = "…"`, a pinned
-binary, a package).
+`horn.akn` (public gateway: Pangolin, Gerbil, Traefik) and `exusiai.akn` (Minecraft host) are NixOS machines deployed
+with `nixos-rebuild switch --target-host` over the tailnet (ADR-016). The version lives in a module under `nix/` of the
+host (a container image `fooImage = "…"`, a pinned binary, a package).
 
 1. Change the annotated line (`tag`, and the digest when `digest=true`). For a pinned binary or `fetchurl`, refresh its
    hash with `nix:hash:update` from the directory of the `flake.nix`.
 2. For a nixpkgs package or a flake input, see case 5.
-3. Back up the state before an upgrade of the application that owns it: on `kazimierz.akn`,
+3. Back up the state before an upgrade of the application that owns it: on `horn.akn`,
    `mise run nixos:backup [root@kazimierz-akn]` (hot copy of Pangolin's state, no downtime).
 4. Apply to the running host: `mise run nixos:oci:update`. It needs the SSH key in your agent and the tailnet. Do not
    run `nixos:oci:install` or `nixos:e2e`: they repartition or target a test VM.
-5. Check: the systemd units and containers are up, the service answers from outside; on `kazimierz.akn`, Pangolin comes
-   back and the Newt tunnel clients of the clusters reconnect.
+5. Check: the systemd units and containers are up, the service answers from outside; on `horn.akn`, Pangolin comes back
+   and the Newt tunnel clients of the clusters reconnect.
 6. Rollback: NixOS keeps generations, `nixos-rebuild switch --rollback` on the host returns to the previous one. A state
    migration done by the new version is not rolled back with it: restore the backup.
 
-`kazimierz.akn` is the only public entry point of the homelab: a restart cuts every published service for its duration.
-Say so in the issue and do it outside busy hours.
+`horn.akn` is the only public entry point of the homelab: a restart cuts every published service for its duration. Say
+so in the issue and do it outside busy hours.
 
 ## 5. Nix flake input or nixpkgs package
 
