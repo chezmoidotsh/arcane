@@ -1,10 +1,10 @@
 # talosnet-dns (BIND) is authoritative for chezmoi.sh and does not recurse
 # out to public DNS, so pangolin.chezmoi.sh -- a public-only record living in
-# Cloudflare's zone, resolved by Pangolin's kazimierz.akn VPS -- comes back
+# Cloudflare's zone, resolved by Pangolin's horn.akn VPS -- comes back
 # NXDOMAIN from inside this cluster. This DNSEndpoint adds that one record to
 # the internal zone so Newt can resolve it. Target matches the same
 # instance.publicIp Cloudflare A record content set in
-# projects/kazimierz.akn/src/infrastructure/pulumi/stack/oci/dns.ts.
+# fleet/hosts/akn.horn/pulumi/stack/oci/dns.ts.
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
