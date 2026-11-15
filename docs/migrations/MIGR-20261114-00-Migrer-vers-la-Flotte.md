@@ -31,7 +31,7 @@ chaque élément ayant son README.
 | ----- | ------------------------------------------------------------------- | ------- |
 | 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite   |
 | 2     | Créer les bases de catalogue manquantes                             | faite   |
-| 3     | Activer le lint de structure                                        | à faire |
+| 3     | Activer le lint de structure                                        | faite   |
 | 4     | Déplacer le catalogue                                               | à faire |
 | 5     | Les petits hôtes du groupe `core`                                   | à faire |
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | à faire |
@@ -213,11 +213,18 @@ utiliser. Les scopes `project:*` restent valides jusqu'à l'étape 11.
 - **Ce qui change** : un lint de structure en CI (sur le modèle de `omni:template:lint`) vérifie que chaque `system/<x>`
   présent sur deux clusters ou plus a sa base `catalog/kubernetes/<x>/`, et que les dossiers sous `fleet/hosts` et
   `fleet/clusters` portent une famille `core.` ou `akn.`. Le lint ne s'applique qu'à `fleet/` tant que `projects/`
-  existe (**à confirmer** : le nombre de clusters est compté dans `projects/` et `fleet/`).
+  existe : les deux arborescences sont parcourues (`projects/<cluster>/src/infrastructure/kubernetes/` et
+  `fleet/clusters/<famille>.<nom>/kubernetes/src/system/`) et un cluster présent dans les deux n'est compté qu'une fois.
 - **Manuel** : écrire le lint ; il ne peut pas être activé avant l'étape 2.
 - **Vérification** : le lint passe sur l'état courant, et échoue sur un `system/<x>` partagé auquel on retire sa base
   (test volontaire sur une branche).
-- **Retour arrière** : retirer le workflow.
+- **Retour arrière** : retirer le linter `fleet-structure` de `.rtunk/rtunk.yaml`.
+- **Constaté** : le lint est le linter rtunk `fleet-structure`
+  (`.rtunk/local-plugin/linters/fleet-structure/`), lancé par `mise run lint` et donc par la CI. Son script avec
+  `--self-test` couvre les
+  quatre cas (composant partagé sans base : échec ; avec base : succès ; cluster présent dans les deux arborescences :
+  compté une fois ; nom de dossier invalide : échec). En local, le lint peut signaler `tailscale` à cause d'un dossier
+  `projects/amiya.akn/` non suivi resté sur le disque ; en CI ce dossier n'existe pas.
 
 ### 4. Déplacer le catalogue
 
