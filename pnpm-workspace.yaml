@@ -3,6 +3,7 @@ packages:
   - catalog/pulumi/components/*
   - catalog/pulumi/sdks/*
   - projects/*/src/infrastructure/pulumi
+  - fleet/hosts/*/pulumi
 
 allowBuilds:
   "@pulumi/kubernetes": true

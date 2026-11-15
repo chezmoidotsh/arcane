@@ -5,7 +5,7 @@ via `omnictl`. Each class is an auto-provisioning template the [Proxmox infra pr
 when Omni scales a cluster.
 
 The provider and Omni instance themselves are deployed as Proxmox LXCs — see
-[`omni/`](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni/) (Omni + Dex + Caddy) and
+[`omni/`](../../../fleet/hosts/core.omni/) (Omni + Dex + Caddy) and
 [`omni-infra-provider-proxmox/`][provider] (the provider that creates the VMs). This directory is only the **fleet
 sizing catalog**.
 
@@ -117,6 +117,6 @@ dedicated class instead. `additional_nics` is the exception: every base class se
 `talosnet` (dual-NIC V2 layout), so a per-cluster NIC would still need a dedicated class.
 
 [omni-mc]: https://docs.siderolabs.com/omni/how-to-guides/create-a-machine-class/
-[provider]: ../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/
+[provider]: ../../../fleet/hosts/core.omni-infra-provider-proxmox/
 [field-ref]:
-  ../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md#field-reference
+  ../../../fleet/hosts/core.omni-infra-provider-proxmox/README.md#field-reference

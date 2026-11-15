@@ -1,0 +1,69 @@
+# =============================================================================
+# zot-registry LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs the Zot OCI registry (oci.chezmoi.sh) with Caddy HTTPS termination.
+#
+# Usage:
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from Pulumi → nix/secrets/caddy.sops.env
+#   mise run lxc:build                                     # Build the LXC tarball with Cloudflare token baked in
+#   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> --vmid <vmid>        # Upgrade a running LXC in place
+#
+# Typical workflow (first time):
+#   mise run lxc:secrets:sync              # Requires Pulumi (pulumi up first)
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#
+# Typical workflow (upgrade):
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#   mise run lxc:upgrade -- pve.lan --vmid <vmid>
+#
+# File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - Pulumi CLI with access to the oci-registry_core.live stack (see pulumi/.mise.toml); run pulumi up first
+#   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
+#   - SSH key-based access to root@<pve-host> (for lxc:push)
+# =============================================================================
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secret Management
+# -----------------------------------------------------------------------------
+# Reads the zotRegistryDns01Token output of the oci-registry_core.live Pulumi
+# stack (pulumi/) and writes it into nix/secrets/caddy.sops.env with
+# `sops set`, which leaves every other key of that file untouched, so it can be
+# baked into the LXC image at build time. `mise exec` runs pulumi from pulumi/
+# so that its .mise/env.yaml (stack name and passphrase) is loaded: a task
+# `dir` alone does not load the env of that directory.
+#
+# Requires `pulumi up` to have run in pulumi/ first.
+
+[tasks."lxc:secrets:sync"]
+description = "Fetch Cloudflare DNS-01 token from Pulumi and write nix/secrets/caddy.sops.env"
+dir = "{{ config_root }}/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(mise exec -- pulumi stack output zotRegistryDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  sops set --input-type dotenv --output-type dotenv \
+    "{{ config_root }}/nix/secrets/caddy.sops.env" \
+    '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in nix/secrets/caddy.sops.env" >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with token baked in)
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)

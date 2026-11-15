@@ -120,7 +120,7 @@ machine:
 
 Le CCM et le CSI s'authentifient chacun avec un token d'API dédié, rattaché à un utilisateur du realm `@pve` aux
 privilèges limités. Le pool `talos` contient déjà les VM et les stockages associés (voir
-[`omni-infra-provider-proxmox`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/))
+[`omni-infra-provider-proxmox`](../../fleet/hosts/core.omni-infra-provider-proxmox/nix/))
 : les ACL s'appuient dessus. Commandes à lancer sur l'hôte Proxmox :
 
 ```sh

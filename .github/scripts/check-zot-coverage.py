@@ -16,7 +16,7 @@ is mapped to a local *destination* path under oci.chezmoi.sh/  e.g.
 
 This script reads the Zot upstream configuration from the Nix upstreams file
 of the LXC deployment:
-  projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/upstreams.nix
+  fleet/hosts/core.oci-registry/nix/upstreams.nix
 Hosts are extracted by matching mkUpstream / mkUpstreamMulti calls.
 
 The script then scans the dist/ directory for any string that starts with
@@ -27,7 +27,7 @@ USAGE
     python check-zot-coverage.py --dist projects/lungmen.akn/dist/apps/forgejo
     python check-zot-coverage.py \
         --dist projects/lungmen.akn/dist/apps/forgejo \
-        --zot-upstreams-nix projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/upstreams.nix
+        --zot-upstreams-nix fleet/hosts/core.oci-registry/nix/upstreams.nix
 
 EXIT CODES
 ----------
@@ -42,7 +42,7 @@ import sys
 from pathlib import Path
 
 ZOT_UPSTREAMS_NIX_DEFAULT = (
-    "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/upstreams.nix"
+    "fleet/hosts/core.oci-registry/nix/upstreams.nix"
 )
 
 # Prefixes hosted natively on Zot (images are pushed, not pulled through an

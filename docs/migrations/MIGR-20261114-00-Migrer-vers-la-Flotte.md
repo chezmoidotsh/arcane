@@ -33,7 +33,7 @@ chaque élément ayant son README.
 | 2     | Créer les bases de catalogue manquantes                             | faite                             |
 | 3     | Activer le lint de structure                                        | faite                             |
 | 4     | Déplacer le catalogue                                               | faite                             |
-| 5     | Les petits hôtes du groupe `core`                                   | à faire                           |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer |
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | à faire                           |
 | 7     | Les hôtes du groupe `akn`                                           | à faire                           |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                           |
@@ -233,38 +233,68 @@ utiliser. Les scopes `project:*` restent valides jusqu'à l'étape 11.
   `opa test` des fiches de règles (`-p policies/opa/`).
 - **Manuel** : aucun. Les modèles de cluster Omni référencent `catalog/talos/manifests` par des URL
   `raw.githubusercontent.com` épinglées sur un SHA de commit : elles continuent de fonctionner après le déplacement. Les
-  modèles ne changent de chemin qu'à leur prochaine mise à jour de SHA (**à confirmer** sur chaque modèle).
-- **Reconstruction** : les images construites par `catalog/flakes` (`n8n`, `openbao`) : le flake déplacé garde ses
-  entrées, mais son `flake.lock` et les workflows qui le construisent sont à vérifier (**à confirmer**).
+  modèles ne changent de chemin qu'à leur prochaine mise à jour de SHA (vérifié sur les trois fichiers concernés :
+  `catalog/omni/clustertemplates/base.yaml` et les modèles de `lungmen` et de `rhodes`, laissés inchangés).
+- **Reconstruction** : les images construites par `catalog/flakes` (`n8n`, `openbao`) : les flakes déplacés n'ont aucune
+  entrée `path:` relative et leur `flake.lock` ne change pas ; les images n'ont pas été reconstruites. Le workflow
+  `flakes` déduisait le fabricant GHCR de la position d'un segment du chemin : corrigé.
 - **Vérification** : `opa test policies/opa/ -v` réussit, la CI de conformité passe, `docs` ne référence plus
   `catalog/opa`.
 - **Retour arrière** : `git revert`.
+- **Constaté** : `catalog/talos/` n'existe plus (`catalog/talos/README.md` est parti avec `manifests`). `policies/opa/`
+  contient les 12 fichiers `.rego` à plat, `rules/` et `README.md`. `opa test policies/opa/ -v` : 91 tests réussis,
+  autant qu'avant le déplacement ; `conftest` donne le même résultat sur un dossier rendu de chaque cluster ;
+  `dist:render --check --all` : rien de périmé ; `nix flake metadata` évalue les flakes déplacés.
 
 ### 5. Les petits hôtes du groupe `core`
 
 Concerne `core.omni`, `core.oci-registry`, `core.talosnet-dns`, `core.omni-infra-provider-proxmox`.
 
-- **Déplacement simple** : le dossier du LXC (`flake.nix`, `configuration.nix`, `modules/`, `secrets/`, README,
-  `.mise.toml` du LXC) vers `fleet/hosts/core.<nom>/nix/`.
+- **Déplacement simple** : le dossier du LXC (`flake.nix`, `configuration.nix`, `modules/`, `secrets/`) vers
+  `fleet/hosts/core.<nom>/nix/` ; le README, le `.mise.toml` et `.mise/` du LXC vont à la racine de
+  `fleet/hosts/core.<nom>/`, comme dans la
+  [page de référence](../reference/Architecture-du-Depot-Reference.md).
 - **Reconstruction** : chacun de ces flakes déclare `inputs.arcane.url = "path:../../../../../../../catalog/nix"` et son
   `flake.lock` enregistre ce chemin relatif. Le chemin change avec la profondeur : mettre à jour l'entrée, puis
   `nix flake lock` et reconstruire l'image avec `nix:build:lxc`. Le conteneur déjà déployé n'est pas touché ; la
-  reconstruction sert au prochain déploiement. Comparer le résultat avec l'image précédente pour confirmer qu'elle ne
-  change pas (**à confirmer**).
+  reconstruction sert au prochain déploiement. Le résultat est comparé à l'image précédente (voir **Constaté**).
 - **Manuel (Pulumi, `core.omni` et `core.oci-registry` seulement)** : scinder `stack/omni.ts` et `stack/zot-registry.ts`
   hors de `chezmoi_sh`, dans de nouveaux projets `omni-core` et `oci-registry-core` (motif `<nom>-<famille>`). Chaque
-  nouveau projet a son `Pulumi.yaml` (même backend S3 que les autres), sa pile (proposition : `<nom>_core.live`), sa
+  nouveau projet a son `Pulumi.yaml` (même backend S3 que les autres), sa pile (`<nom>_core.live`), sa
   propre `PULUMI_CONFIG_PASSPHRASE` dans un `.mise/env.yaml` chiffré par SOPS
   ([ADR-017](../decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md))
   et son entrée dans `pnpm-workspace.yaml`. Le transfert de l'état se fait avec `pulumi state move` (**à confirmer** :
-  disponibilité dans la version de Pulumi épinglée par `mise`, et comportement entre deux piles dont les phrases
-  secrètes diffèrent). Les tâches `lxc:secrets:sync` des LXC (jetons DNS-01 et Tailscale) doivent viser la nouvelle
-  pile.
+  comportement entre deux piles dont les phrases secrètes diffèrent ; la commande existe dans la version épinglée par
+  `mise`). Les tâches `lxc:secrets:sync` des LXC (jeton DNS-01) lisent la sortie de la nouvelle pile.
 - **Vérification** : `pulumi preview` vide **dans la pile source et dans la pile destination** après chaque `state move`
   ; `mise run lxc:secrets:sync` rend les mêmes valeurs ; l'image reconstruite se déploie sur un LXC de test si
   disponible (**à confirmer**).
 - **Retour arrière** : `pulumi state move` dans l'autre sens, ou restauration de l'état exporté avant l'étape
   (`pulumi stack import`) ; `git revert` pour les fichiers.
+- **Constaté** : les quatre dossiers LXC sont dans `fleet/hosts/core.<nom>/nix/`, avec `README.md`, `.mise.toml` et
+  `.mise/` à la racine de l'hôte. Dans les flakes, l'entrée `arcane` est `path:../../../../catalog/nix` ; la dérivation
+  de l'image (`packages.x86_64-linux.default`, ce que construit `nix:build:lxc`) est identique avant et après le
+  déplacement pour les quatre hôtes (comparée par `drvPath`, aucune image n'a été reconstruite). Les entrées des
+  `flake.lock` ont été modifiées à la main, car Nix refuse les fichiers non suivis : `nix flake lock` dans chaque
+  dossier après la fusion ne doit montrer aucune différence. Côté Pulumi, les projets `omni-core` (pile
+  `omni_core.live`) et `oci-registry-core` (pile `oci-registry_core.live`) sont créés ; chacun ne porte que son jeton
+  Cloudflare DNS-01 (`caddy-dns01-omni`, `caddy-dns01-zot` : un composant et son `AccountToken`). Les noms logiques, les
+  types et les parents sont inchangés et le fournisseur Cloudflare est celui par défaut : aucun alias n'est nécessaire.
+  Les projets lisent l'identifiant du compte et celui de la zone Cloudflare dans leur propre configuration, sans
+  `StackReference`. `pulumi state move` existe dans la version épinglée par `mise` (v3.268.0) ; son comportement entre
+  deux piles à phrases secrètes différentes reste **à confirmer** et doit être essayé d'abord sur une copie de l'état.
+  `lxc:secrets:sync` de `core.omni` et de `core.oci-registry` lit la sortie de sa propre pile. La bibliothèque commune
+  des LXC (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`) reste à côté de `o11y-datastore` et
+  est référencée par les hôtes déplacés ; elle bouge à l'étape 10.
+- **Manuel, avant la fusion** : créer la phrase secrète de chaque projet (`.mise/env.yaml`, SOPS), `pulumi stack init`,
+  renseigner les deux clés de configuration secrètes, lancer les deux `state move`, vérifier que les trois
+  `pulumi preview` sont vides.
+- **Risque** : tant que le déplacement d'état n'est pas fait, aucun `pulumi up` ne doit tourner dans `chezmoi_sh` depuis
+  cette branche : le code ne déclare plus les deux jetons, un `up` les révoquerait.
+- **À trancher** : l'ADR-017 dit que les piles d'avant le bootstrap sont isolées et regroupées dans `chezmoi.sh`, alors
+  que le plan en scinde deux : amender l'ADR ou confirmer la formulation.
+- **À trancher** : les identifiants de composant Oripathy de ces hôtes changent (`chezmoi.sh/…` vers `omni.core/…`,
+  etc.) ; les issues Oripathy existantes indexées sur les anciens identifiants risquent d'être dupliquées.
 
 ### 6. Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`
 

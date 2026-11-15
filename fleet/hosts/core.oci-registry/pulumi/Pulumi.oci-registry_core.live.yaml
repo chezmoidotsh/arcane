@@ -1,0 +1,5 @@
+# `pulumi stack init` adds `encryptionsalt`. The secret keys
+# `oci-registry-core:cloudflare_account_id` and
+# `oci-registry-core:cloudflare_zone_id` are set with
+# `pulumi config set --secret` (same values as the chezmoi_sh.live stack).
+config: {}

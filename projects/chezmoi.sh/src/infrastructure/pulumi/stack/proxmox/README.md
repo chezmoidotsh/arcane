@@ -53,9 +53,8 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 ## Access model
 
 Two service identities, each scoped to the minimum the manual `pveum`/`pvesh` recipes they replace actually granted (see
-`docs/experiments/20260617-proxmox-csi-ccm/README.md` and
-`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md`, "Proxmox user and role
-setup" — the recipes this stack codifies):
+`docs/experiments/20260617-proxmox-csi-ccm/README.md` and `fleet/hosts/core.omni-infra-provider-proxmox/README.md`,
+"Proxmox user and role setup" — the recipes this stack codifies):
 
 - **`rhodes-akn-bootstrap@pve`** — `Administrator` scoped to `/access` only (users, roles, ACLs, tokens — nothing on
   VMs, storage or SDN). A delegation credential, not a service identity for a workload: `rhodes.akn`'s own Pulumi
