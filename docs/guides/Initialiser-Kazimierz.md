@@ -9,10 +9,10 @@ Ce guide installe NixOS sur une instance OCI neuve, jusqu'à la passerelle Pango
 > Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
 
 > [!NOTE]\
-> L'hôte a été renommé sur place de `kazimierz.akn` en `horn.akn` (projet Pulumi `horn-akn`, pile `horn_akn.live`), sans
-> réinstallation : voir la [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le nom
-> d'hôte NixOS et le nom du nœud Tailscale restent `kazimierz-akn` (le nom Tailscale fait partie du `pangolin:url` des
-> piles Pulumi), comme le nom du guide, le `dnsLabel` du VCN et les enregistrements DNS `kazimierz.akn`.
+> L'hôte a été renommé sur place de `kazimierz.akn` en `horn.akn` (projet Pulumi `horn-akn`, pile `horn_akn.live`, nom
+> d'hôte NixOS et nœud Tailscale `horn-akn`), sans réinstallation : voir la
+> [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le nom de ce guide, le `dnsLabel`
+> du VCN, les enregistrements DNS `kazimierz.akn` et les noms des sauvegardes gardent l'ancien nom.
 
 L'hôte est passé d'Ubuntu, Ansible et Docker Compose à NixOS le 2026-10-10 :
 [l'archive de la migration](../archives/Migration-de-Kazimierz-vers-NixOS.md) en garde la trace et
@@ -43,9 +43,9 @@ error-pages.
    `fleet/hosts/akn.horn/pulumi/`), une instance Always Free `VM.Standard.A1.Flex` en `eu-paris-1`, sous Ubuntu.
 3. **Accès SSH public** : fermé au niveau du NSG OCI. Activer temporairement l'option Pulumi `unsecure` pour
    l'installation (`pulumi config set unsecure true && pulumi up`), puis la remettre à `false`.
-4. **Tailnet** : `tag:svc-pangolin` doit exister dans les `tagOwners` de l'ACL, et aucune machine nommée `kazimierz-akn`
-   ne doit rester dans la console d'administration Tailscale. Sinon, la nouvelle s'enregistre sous `kazimierz-akn-1`, et
-   le `pangolin:url` des stacks Pulumi est construit à partir de ce nom.
+4. **Tailnet** : `tag:svc-pangolin` doit exister dans les `tagOwners` de l'ACL, et aucune machine nommée `horn-akn` ne
+   doit rester dans la console d'administration Tailscale. Sinon, la nouvelle s'enregistre sous `horn-akn-1`, et le
+   `pangolin:url` des stacks Pulumi est construit à partir de ce nom.
 5. **Clé SSH** : la clé privée qui correspond à `ssh_authorized_keys` de la config Pulumi doit être dans l'agent SSH.
 
 ## Étapes
@@ -120,8 +120,8 @@ mise run nixos:e2e <user@host>   # la cible est obligatoire ; son adresse devien
 ## Vérifier le résultat
 
 ```sh
-tailscale status | grep kazimierz-akn
-ssh root@kazimierz-akn 'systemctl status docker-pangolin docker-gerbil docker-traefik docker-error-pages \
+tailscale status | grep horn-akn
+ssh root@horn-akn 'systemctl status docker-pangolin docker-gerbil docker-traefik docker-error-pages \
   pangolin-prepare pangolin-tailscale-serve; docker ps; tailscale serve status'
 curl -sI https://pangolin.chezmoi.sh | head -n1
 ```
@@ -155,13 +155,13 @@ l'efface s'il n'est pas restauré :
 
 ## Dépanner
 
-| Symptôme                                                              | Cause et correction                                                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Please login as the user ubuntu` en se connectant en `root`          | Les images Ubuntu d'OCI préfixent `/root/.ssh/authorized_keys` d'une restriction `command="echo 'Please login as the user ubuntu'..."`. Copier le `authorized_keys` de l'utilisateur `ubuntu` vers root avant `nixos-anywhere`, ou installer en `ubuntu@<ip>`.                                                                                                                                                                 |
-| `Too many authentication failures`                                    | Le sshd de l'hôte a `MaxAuthTries 3` ; un agent qui propose plusieurs clés l'épuise. Utiliser `IdentitiesOnly yes` (avec `-i <clé>`) ou un agent dédié qui ne contient que la bonne clé.                                                                                                                                                                                                                                       |
-| `Connection refused` sur le socket de l'agent depuis `nonix` (macOS)  | Le conteneur ne voit que l'agent de la session `launchd` : `launchctl setenv SSH_AUTH_SOCK ...` puis redémarrer OrbStack (voir l'[encadré macOS de Rimbilliton](Initialiser-Rimbilliton.md#4-installer-nixos)).                                                                                                                                                                                                                |
-| Tailscale ne s'enregistre pas, ou le nœud s'appelle `kazimierz-akn-1` | La `tailscaleAuthKey` (`TailnetKey` Pulumi, usage unique, 7 jours) est consommée par un premier boot : une installation refaite ou une vieille clé exige d'en générer une nouvelle avec `pulumi up --replace <urn de kazimierz-tailscale-key>`, puis de mettre à jour `tailscale_authkey` dans le fichier SOPS. Supprimer l'ancien nœud de la console Tailscale **avant** le premier boot, sinon il devient `kazimierz-akn-1`. |
-| `pulumi stack output` échoue ou vise la mauvaise stack                | La stack en service est `horn_akn.live` : passer `--stack horn_akn.live` (les tâches `nixos:*` le font déjà).                                                                                                                                                                                                                                                                                                                  |
+| Symptôme                                                             | Cause et correction                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Please login as the user ubuntu` en se connectant en `root`         | Les images Ubuntu d'OCI préfixent `/root/.ssh/authorized_keys` d'une restriction `command="echo 'Please login as the user ubuntu'..."`. Copier le `authorized_keys` de l'utilisateur `ubuntu` vers root avant `nixos-anywhere`, ou installer en `ubuntu@<ip>`.                                                                                                                                                            |
+| `Too many authentication failures`                                   | Le sshd de l'hôte a `MaxAuthTries 3` ; un agent qui propose plusieurs clés l'épuise. Utiliser `IdentitiesOnly yes` (avec `-i <clé>`) ou un agent dédié qui ne contient que la bonne clé.                                                                                                                                                                                                                                  |
+| `Connection refused` sur le socket de l'agent depuis `nonix` (macOS) | Le conteneur ne voit que l'agent de la session `launchd` : `launchctl setenv SSH_AUTH_SOCK ...` puis redémarrer OrbStack (voir l'[encadré macOS de Rimbilliton](Initialiser-Rimbilliton.md#4-installer-nixos)).                                                                                                                                                                                                           |
+| Tailscale ne s'enregistre pas, ou le nœud s'appelle `horn-akn-1`     | La `tailscaleAuthKey` (`TailnetKey` Pulumi, usage unique, 7 jours) est consommée par un premier boot : une installation refaite ou une vieille clé exige d'en générer une nouvelle avec `pulumi up --replace <urn de kazimierz-tailscale-key>`, puis de mettre à jour `tailscale_authkey` dans le fichier SOPS. Supprimer l'ancien nœud de la console Tailscale **avant** le premier boot, sinon il devient `horn-akn-1`. |
+| `pulumi stack output` échoue ou vise la mauvaise stack               | La stack en service est `horn_akn.live` : passer `--stack horn_akn.live` (les tâches `nixos:*` le font déjà).                                                                                                                                                                                                                                                                                                             |
 
 ## Appliquer une modification après l'amorçage
 
@@ -173,9 +173,9 @@ mise run nixos:oci:update
 ```
 
 La tâche rafraîchit l'IP de liaison, puis lance
-`nixos-rebuild switch --flake .#horn-akn-aarch64 --target-host root@kazimierz-akn`. `nixos-rebuild --rollback` sur
-l'hôte revient à la génération précédente. Il n'y a volontairement aucune mise à jour automatique : l'instance n'est pas
-encore supervisée et un rollback est difficile à faire proprement (voir
+`nixos-rebuild switch --flake .#horn-akn-aarch64 --target-host root@horn-akn`. `nixos-rebuild --rollback` sur l'hôte
+revient à la génération précédente. Il n'y a volontairement aucune mise à jour automatique : l'instance n'est pas encore
+supervisée et un rollback est difficile à faire proprement (voir
 l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)). Rafraîchir les entrées avec
 `nonix flake update`, puis déployer.
 

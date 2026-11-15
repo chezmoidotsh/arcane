@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Back up Pangolin's state from the running host (hot copy, no downtime) into a local tarball"
-#USAGE arg "[host]" default="root@kazimierz-akn" help="SSH target of the running host (NixOS)"
+#USAGE arg "[host]" default="root@horn-akn" help="SSH target of the running host (NixOS)"
 #
 # Content: db/ (SQLite, copied through the SQLite backup API so it is consistent while Pangolin runs), key (Gerbil's
 # WireGuard key), letsencrypt/, config.yml, traefik/*.yml. geoip/, logs/ and openapi.yaml are regenerated.

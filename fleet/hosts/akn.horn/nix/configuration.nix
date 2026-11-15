@@ -4,9 +4,9 @@
 { config, lib, pkgs, ... }:
 {
   system.stateVersion = "26.05";
-  # Not renamed to `horn-akn` (fleet migration, step 7): the Tailscale node name follows the host name, and the
-  # Pangolin Integration API URL of three Pulumi stacks (`pangolin:url`) is derived from it (see below).
-  networking.hostName = "kazimierz-akn";
+  # Was `kazimierz-akn` until the fleet migration (step 7). The Tailscale node name follows it, and so does the
+  # Pangolin Integration API URL of three Pulumi stacks (`pangolin:url`, see below).
+  networking.hostName = "horn-akn";
   networking.domain = "chezmoi.sh";
   time.timeZone = "UTC";
 
@@ -84,9 +84,9 @@
     "fs.suid_dumpable" = 0;
   };
 
-  # Joins the tailnet under the same name as before (`kazimierz-akn`): the Integration API URL used by the Pulumi
-  # stacks (`pangolin:url`) is derived from it. Delete the old node from the tailnet before the first boot, or this
-  # one comes up as `kazimierz-akn-1`.
+  # Joins the tailnet as `horn-akn` (the host name): the Integration API URL used by the Pulumi stacks
+  # (`pangolin:url`) is derived from it. On a reinstall, delete the old node from the tailnet before the first boot,
+  # or this one comes up as `horn-akn-1`.
   services.tailscale = {
     enable = true;
     authKeyFile = config.sops.secrets.tailscale_authkey.path;
