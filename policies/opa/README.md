@@ -1,4 +1,4 @@
-# catalog/opa/
+# policies/opa/
 
 OPA/Rego policies for CI-time validation of Kubernetes manifests. Enforced via [conftest](https://www.conftest.dev/) in
 the GitHub Actions compliance workflows, on the rendered `dist/` manifests.
@@ -17,13 +17,13 @@ rules/      Rule documentation (rationale, references, exclusions)
 
 ```sh
 # Check a single manifest
-mise exec conftest -- conftest test <manifest.yaml> -p catalog/opa/policies/
+mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 
 # Check every manifest of a rendered directory, as the compliance workflows do
-mise exec conftest -- conftest test projects/<cluster>/dist/<app> -p catalog/opa/policies/ --combine
+mise exec conftest -- conftest test projects/<cluster>/dist/<app> -p policies/opa/ --combine
 
 # Run all unit tests
-mise exec opa -- opa test catalog/opa/policies/ -v
+mise exec opa -- opa test policies/opa/ -v
 ```
 
 ## Adding policies

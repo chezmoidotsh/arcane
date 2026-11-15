@@ -192,15 +192,15 @@ images de la couche de stockage via un registre qui dépend de ce même stockage
 
 ## Registre des changements
 
-- [x] [due:: 2026-05-26] [priority:: high] [size:: S] [owner:: Alexandre] Retirer Kyverno d'amiya.akn et de
-      lungmen.akn (cluster en production)
+- [x] [due:: 2026-05-26] [priority:: high] [size:: S] [owner:: Alexandre] Retirer Kyverno d'amiya.akn et de lungmen.akn
+      (cluster en production)
   - **Vérification :**
     `kubectl get pods,validatingwebhookconfigurations,mutatingwebhookconfigurations -n kyverno-system` ne renvoie rien
     sur les deux clusters
   - **Sinon :** l'effondrement du cluster se reproduit à la prochaine mise à jour
 
-- [x] [due:: 2026-05-26] [priority:: high] [size:: S] [owner:: Alexandre] Retirer les sources Kyverno du catalogue
-      et de tous les arbres src des projets
+- [x] [due:: 2026-05-26] [priority:: high] [size:: S] [owner:: Alexandre] Retirer les sources Kyverno du catalogue et de
+      tous les arbres src des projets
   - **Vérification :** `find . -path '*/kyverno*' -type d` ne renvoie aucun répertoire de politique
   - **Sinon :** ArgoCD réinstalle Kyverno à la prochaine synchronisation
 
@@ -213,8 +213,8 @@ images de la couche de stockage via un registre qui dépend de ce même stockage
   - **Sinon :** le cluster fonctionne sans application des règles de chaîne d'approvisionnement indéfiniment (risque
     accepté mais non borné)
 
-- [x] [due:: 2026-06-15] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter une liste de contrôle d'audit
-      des cycles de dépendances au processus de rédaction des politiques : « De quoi dépend le registre ou la cible
+- [x] [due:: 2026-06-15] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter une liste de contrôle d'audit des
+      cycles de dépendances au processus de rédaction des politiques : « De quoi dépend le registre ou la cible
       d'admission ? Ces namespaces sont-ils exclus ? »
   - **Vérification :** liste de contrôle visible à côté des futures PR de politique ; relue au moins une fois sur un
     vrai changement de politique
@@ -246,5 +246,5 @@ images de la couche de stockage via un registre qui dépend de ce même stockage
   l'incident de la veille, dont le contournement `system-cluster-critical` était le signal d'alerte manqué
 - [ADR-012 Remplacer Kyverno par OPA](../decisions/ADR-012-Remplacer-Kyverno-par-OPA.md) : la décision qui a remplacé la
   réécriture d'images à l'exécution par une vérification en CI
-- [SEC001 Imposer le registre local](../../catalog/opa/rules/SEC001-enforce-local-registry.md) : la règle OPA qui
+- [SEC001 Imposer le registre local](../../policies/opa/rules/SEC001-enforce-local-registry.md) : la règle OPA qui
   remplace la politique Kyverno

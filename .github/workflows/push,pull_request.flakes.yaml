@@ -3,7 +3,7 @@
 # =============================================================================
 # Catalog Nix flakes — build and push the images to GHCR
 # =============================================================================
-# Builds the modified flakes of catalog/flakes/ (any directory holding a flake.nix, so a new flake needs
+# Builds the modified flakes of catalog/nix/images/ (any directory holding a flake.nix, so a new flake needs
 # no change here) into an OCI image and, on main, pushes it to
 # ghcr.io/<owner>/flakes/<vendor>/<image name>:<tag>, with the name and tag the flake computes
 # (e.g. ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:<version>-<nixpkgs>-pkcs11.<plugin>-x86_64-linux).
@@ -16,7 +16,7 @@
 # Only x86_64-linux is built (what rhodes.akn pulls); the flakes also expose aarch64-linux, add an arm
 # runner to the matrix when something needs it.
 #
-# Events:      push (main), pull_request, on catalog/flakes/ except n8n/
+# Events:      push (main), pull_request, on catalog/nix/images/ except n8n/
 # Permissions: contents: read, packages: write (build job only)
 # =============================================================================
 
@@ -27,13 +27,13 @@ on:
     branches: [main]
     paths:
       - .github/workflows/push,pull_request.flakes.yaml
-      - catalog/flakes/**
-      - "!catalog/flakes/n8n/**"
+      - catalog/nix/images/**
+      - "!catalog/nix/images/n8n/**"
   pull_request:
     paths:
       - .github/workflows/push,pull_request.flakes.yaml
-      - catalog/flakes/**
-      - "!catalog/flakes/n8n/**"
+      - catalog/nix/images/**
+      - "!catalog/nix/images/n8n/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -60,8 +60,8 @@ jobs:
         id: changed
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: catalog/flakes/**
-          files_ignore: catalog/flakes/n8n/**
+          files: catalog/nix/images/**
+          files_ignore: catalog/nix/images/n8n/**
           dir_names: true
           dir_names_max_depth: 4
           json: true
@@ -81,7 +81,7 @@ jobs:
         run: |
           # Every flake when the workflow itself changed, otherwise only the modified ones (still existing)
           if [[ ${WORKFLOW_CHANGED} == true ]]; then
-            dirs="$(find catalog/flakes -name flake.nix -not -path 'catalog/flakes/n8n/*' -exec dirname {} \; | sort)"
+            dirs="$(find catalog/nix/images -name flake.nix -not -path 'catalog/nix/images/n8n/*' -exec dirname {} \; | sort)"
           else
             dirs="$(jq --raw-output '.[]' <<<"${CHANGED}")"
           fi
@@ -129,8 +129,8 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTOR: ${{ github.actor }}
         run: |
-          # catalog/flakes/<vendor>/<name> -> ghcr.io/<owner>/flakes/<vendor>/<image name>:<tag>
-          vendor="$(cut -d/ -f3 <<<"${FLAKE}")"
+          # catalog/nix/images/<vendor>/<name> -> ghcr.io/<owner>/flakes/<vendor>/<image name>:<tag>
+          vendor="$(cut -d/ -f4 <<<"${FLAKE}")"
           name="$(nix eval --raw '.#default.imageName')"
           tag="$(nix eval --raw '.#default.imageTag')"
           skopeo copy --dest-creds "${ACTOR}:${TOKEN}" \

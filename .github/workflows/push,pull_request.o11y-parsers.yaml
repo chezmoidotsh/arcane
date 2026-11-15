@@ -25,7 +25,7 @@ on:
       - ".mise/tasks/o11y/parsers/**"
       - "catalog/kubernetes/o11y-agent/kustomize/**"
       - "catalog/kubernetes/o11y-agent/parsers/**"
-      - "catalog/opa/policies/OBS001:kubernetes.rego"
+      - "policies/opa/OBS001:kubernetes.rego"
 
   pull_request:
     paths:
@@ -33,7 +33,7 @@ on:
       - ".mise/tasks/o11y/parsers/**"
       - "catalog/kubernetes/o11y-agent/kustomize/**"
       - "catalog/kubernetes/o11y-agent/parsers/**"
-      - "catalog/opa/policies/OBS001:kubernetes.rego"
+      - "policies/opa/OBS001:kubernetes.rego"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

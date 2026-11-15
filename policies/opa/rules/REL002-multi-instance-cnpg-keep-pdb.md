@@ -10,9 +10,9 @@
 
 ## Rationale
 
-CloudNative-PG defaults `spec.enablePDB` to `true` and creates a `PodDisruptionBudget` on the primary. With more than one
-instance that budget is what protects the primary during a node drain: without it, the eviction can hit the primary with
-no prior switchover, and the database is unavailable until a replica is promoted.
+CloudNative-PG defaults `spec.enablePDB` to `true` and creates a `PodDisruptionBudget` on the primary. With more than
+one instance that budget is what protects the primary during a node drain: without it, the eviction can hit the primary
+with no prior switchover, and the database is unavailable until a replica is promoted.
 
 A `Cluster` with `spec.instances > 1` must therefore not set `spec.enablePDB: false`. Draining the node of a primary
 then waits for a switchover (`kubectl cnpg promote <cluster> <replica>`) instead of killing the primary.
@@ -37,13 +37,13 @@ A `postgresql.cnpg.io/v1` `Cluster` with `spec.instances > 1` is denied when `sp
 
 ```sh
 # CI (GitHub Actions)
-conftest test projects/*/dist --policy catalog/opa/policies/ --combine
+conftest test projects/*/dist --policy policies/opa/ --combine
 
 # Local
-mise exec conftest -- conftest test <manifest.yaml> -p catalog/opa/policies/
+mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 
 # OPA unit tests
-mise exec opa -- opa test catalog/opa/policies/ -v
+mise exec opa -- opa test policies/opa/ -v
 ```
 
 CI enforcement is **blocking**. All manifests in `projects/*/dist/` must be compliant before merging.

@@ -253,7 +253,7 @@ les workloads tournent longtemps sur la nouvelle version, moins le retour est s�
 
 ## Pour aller plus loin
 
-- [Règle REL001](../../../catalog/opa/rules/REL001-single-instance-cnpg-disable-pdb.md) : la règle OPA qui impose
+- [Règle REL001](../../../policies/opa/rules/REL001-single-instance-cnpg-disable-pdb.md) : la règle OPA qui impose
   `enablePDB: false` aux clusters CNPG mono-instance.
 - [Mettre à jour Kubernetes avec Omni](./INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md) : la mise à jour de
   Kubernetes, à coordonner avec celle de Talos.

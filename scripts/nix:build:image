@@ -6,7 +6,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/nix:_lib"
 
 show_usage() {
-  cat <<EOF
+	cat <<EOF
 Usage: $(basename "$0") [--load] [--no-sandbox] [--system <platform>] [--platforms] <path-to-flake-dir>
 
 Options:
@@ -16,11 +16,11 @@ Options:
   --platforms         Show available platforms for the flake and exit
 
 Examples:
-  $(basename "$0") catalog/flakes/hashicorp/vault
-  $(basename "$0") --load catalog/flakes/openbao/openbao
-  $(basename "$0") --system aarch64-linux catalog/flakes/openbao/openbao
-  $(basename "$0") --load --system x86_64-linux catalog/flakes/hashicorp/vault
-  $(basename "$0") --platforms catalog/flakes/hashicorp/vault
+  $(basename "$0") catalog/nix/images/hashicorp/vault
+  $(basename "$0") --load catalog/nix/images/openbao/openbao
+  $(basename "$0") --system aarch64-linux catalog/nix/images/openbao/openbao
+  $(basename "$0") --load --system x86_64-linux catalog/nix/images/hashicorp/vault
+  $(basename "$0") --platforms catalog/nix/images/hashicorp/vault
 EOF
 }
 
@@ -31,69 +31,69 @@ SHOW_PLATFORMS=false
 USE_SANDBOX=true
 
 while [[ $# -gt 0 ]]; do
-  case $1 in
-  --load)
-    LOAD_IMAGE=true
-    shift
-    ;;
-  --no-sandbox)
-    USE_SANDBOX=false
-    shift
-    ;;
-  --system)
-    if [[ -n ${2-} && $2 != -* ]]; then
-      TARGET_SYSTEM="$2"
-      shift 2
-    else
-      log_error "Option --system requires a platform argument."
-      show_usage
-      exit 1
-    fi
-    ;;
-  --platforms)
-    SHOW_PLATFORMS=true
-    shift
-    ;;
-  -*)
-    log_error "Unknown option: $1"
-    show_usage
-    exit 1
-    ;;
-  *)
-    if [[ -z ${FLAKE_DIR} ]]; then
-      FLAKE_DIR="$1"
-    else
-      log_error "Multiple flake directories specified."
-      show_usage
-      exit 1
-    fi
-    shift
-    ;;
-  esac
+	case $1 in
+	--load)
+		LOAD_IMAGE=true
+		shift
+		;;
+	--no-sandbox)
+		USE_SANDBOX=false
+		shift
+		;;
+	--system)
+		if [[ -n ${2-} && $2 != -* ]]; then
+			TARGET_SYSTEM="$2"
+			shift 2
+		else
+			log_error "Option --system requires a platform argument."
+			show_usage
+			exit 1
+		fi
+		;;
+	--platforms)
+		SHOW_PLATFORMS=true
+		shift
+		;;
+	-*)
+		log_error "Unknown option: $1"
+		show_usage
+		exit 1
+		;;
+	*)
+		if [[ -z ${FLAKE_DIR} ]]; then
+			FLAKE_DIR="$1"
+		else
+			log_error "Multiple flake directories specified."
+			show_usage
+			exit 1
+		fi
+		shift
+		;;
+	esac
 done
 
 if [[ -z ${FLAKE_DIR} ]]; then
-  show_usage
-  exit 1
+	show_usage
+	exit 1
 fi
 
 if [[ ! -d ${FLAKE_DIR} || ! -f "${FLAKE_DIR}/flake.nix" ]]; then
-  log_error "Flake directory '${FLAKE_DIR}' or '${FLAKE_DIR}/flake.nix' not found."
-  exit 1
+	log_error "Flake directory '${FLAKE_DIR}' or '${FLAKE_DIR}/flake.nix' not found."
+	exit 1
 fi
 
 _nix_resolve_flake_dir "${FLAKE_DIR}"
 
 if [[ ${SHOW_PLATFORMS} == true ]]; then
-  log_info "Inspecting flake at '${FLAKE_DIR}' for available platforms..."
-  docker run --rm \
-    -v "${REPO_ROOT}:/src" \
-    -w "/src/${RELATIVE_FLAKE_PATH:-.}" \
-    nixos/nix sh -c '
+	log_info "Inspecting flake at '${FLAKE_DIR}' for available platforms..."
+	docker run --rm \
+		-v "${REPO_ROOT}:/src" \
+		-w "/src/${RELATIVE_FLAKE_PATH:-.}" \
+		nixos/nix sh -c '
       rm -rf /homeless-shelter
       nix --extra-experimental-features "nix-command flakes" flake show --all-systems 2>/dev/null
     '
-  exit 0
+	exit 0
 fi
 
 _nix_ensure_volumes
@@ -109,14 +109,14 @@ log_info "Building flake from '${FLAKE_DIR}'${TARGET_SYSTEM:+ (platform: ${TARGE
 # The working directory is set to the specific flake location within /src
 # so Nix can access git context and use self.lastModifiedDate.
 docker run --rm \
-  -v "${NIX_CACHE_VOLUME}:/nix" \
-  -v "${NIX_TOOLS_VOLUME}:/tools" \
-  -v "${REPO_ROOT}:/src" \
-  -w "/src/${RELATIVE_FLAKE_PATH:-.}" \
-  ${DOCKER_TTY_FLAGS[@]+"${DOCKER_TTY_FLAGS[@]}"} \
-  -e USE_SANDBOX="${USE_SANDBOX}" \
-  -e TARGET_SYSTEM="${TARGET_SYSTEM}" \
-  nixos/nix sh -c '
+	-v "${NIX_CACHE_VOLUME}:/nix" \
+	-v "${NIX_TOOLS_VOLUME}:/tools" \
+	-v "${REPO_ROOT}:/src" \
+	-w "/src/${RELATIVE_FLAKE_PATH:-.}" \
+	${DOCKER_TTY_FLAGS[@]+"${DOCKER_TTY_FLAGS[@]}"} \
+	-e USE_SANDBOX="${USE_SANDBOX}" \
+	-e TARGET_SYSTEM="${TARGET_SYSTEM}" \
+	nixos/nix sh -c '
     set -euo pipefail
     rm -rf /homeless-shelter
 
@@ -143,17 +143,17 @@ docker run --rm \
 log_success "Image tarball is ready at '${OUTPUT_TAR}'."
 
 if [[ ${LOAD_IMAGE} == true ]]; then
-  log_info "Loading image into Docker..."
-  if docker load <"${OUTPUT_TAR}"; then
-    log_success "Image successfully loaded into Docker!"
-    log_info "Available images:"
-    docker images --filter "reference=*$(basename "${FLAKE_DIR}")*" \
-      --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | tail -n +2 || true
-  else
-    log_error "Failed to load image into Docker."
-    exit 1
-  fi
+	log_info "Loading image into Docker..."
+	if docker load <"${OUTPUT_TAR}"; then
+		log_success "Image successfully loaded into Docker!"
+		log_info "Available images:"
+		docker images --filter "reference=*$(basename "${FLAKE_DIR}")*" \
+			--format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | tail -n +2 || true
+	else
+		log_error "Failed to load image into Docker."
+		exit 1
+	fi
 else
-  log_info "To load into Docker, run: docker load < ${OUTPUT_TAR}"
-  log_info "Or use the --load flag: $(basename "$0") --load ${FLAKE_DIR}"
+	log_info "To load into Docker, run: docker load < ${OUTPUT_TAR}"
+	log_info "Or use the --load flag: $(basename "$0") --load ${FLAKE_DIR}"
 fi

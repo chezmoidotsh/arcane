@@ -207,7 +207,7 @@ flowchart LR
 - Sur une pull request, le workflow construit et valide les BOM, lance `--check`, ne chiffre ni ne publie rien.
 - **Périmètre d'une pull request** : le job lance `scripts/oripathy:inventory --changed-from origin/<base>` et ne scanne
   que les clusters que `git diff <base>...HEAD` touche : un fichier de `projects/<cluster>/`, de `catalog/nix` (pour
-  `chezmoi.sh`), de `catalog/flakes` ou de `catalog/kubernetes` (pour `catalog`). Une modification du script ou du
+  `chezmoi.sh`), de `catalog/nix/images` ou de `catalog/kubernetes` (pour `catalog`). Une modification du script ou du
   workflow scanne tout ; les autres fichiers ne scannent rien, et le bundle peut alors être vide sur une pull request
   (jamais sur les exécutions planifiées ou manuelles).
 - **Nix sur une pull request** : il n'est installé que si la pull request touche un `.nix`, un `flake.lock`, le script

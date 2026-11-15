@@ -304,8 +304,9 @@ Workflows live in `.github/workflows/`, named `<sorted triggers>.<action>.yaml`.
 permissions), SHA-pinned actions, `permissions: {}` at the top with each job declaring what it needs, and a
 `concurrency` group.
 
-- **Linting** is rtunk (`.rtunk/rtunk.yaml`, trunk-compatible): `mise run lint`, `mise run lint:fix` (the repo-local linters `wiki-lint` and `fleet-structure` live in `.rtunk/local-plugin/linters/`). CI runs it through
-  the `axnic/rtunk` action (`merge_group,pull_request.all.lint.yaml`). OPA policies are _not_ part of it: the compliance
+- **Linting** is rtunk (`.rtunk/rtunk.yaml`, trunk-compatible): `mise run lint`, `mise run lint:fix` (the repo-local
+  linters `wiki-lint` and `fleet-structure` live in `.rtunk/local-plugin/linters/`). CI runs it through the
+  `axnic/rtunk` action (`merge_group,pull_request.all.lint.yaml`). OPA policies are _not_ part of it: the compliance
   workflows run conftest on the rendered `dist/` directories.
 - **PR Agent** (`issue_comment,pull_request.pr-agent.yaml`) answers `/describe`, `/review`, `/improve`, `/ask` and
   `/help` in pull request comments — nothing runs automatically, and its answers are advisory. It needs the repository
