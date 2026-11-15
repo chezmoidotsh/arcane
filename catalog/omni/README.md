@@ -97,7 +97,7 @@ holds today. Wiring it into a scheduled workflow requires creating that secret �
 - [VLAN / SDN VNet layout](../../docs/reference/IPAM-Reference.md) — VLAN 5 and the `talosnet` SDN.
 - [Machine-class catalog README](machineclasses/README.md) — detailed sizing, naming, and provider tuning (includes the
   YAML).
-- [Proxmox infra provider README](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md)
+- [Proxmox infra provider README](../../fleet/hosts/core.omni-infra-provider-proxmox/README.md)
   — the provider that turns a machine class into a Talos VM.
 
 <!-- link references -->

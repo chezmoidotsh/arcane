@@ -50,8 +50,8 @@ be emulated (`x86_64-linux`). Equivalent without mise, from `catalog/nix`:
 ## Use
 
 - **NixOS appliance** (the supported path): the `omni-infra-provider-proxmox` LXC
-  (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox`) wraps it in a systemd service and
-  feeds it the Proxmox credentials and the Omni service account key.
+  (`fleet/hosts/core.omni-infra-provider-proxmox/nix`) wraps it in a systemd service and feeds it the Proxmox
+  credentials and the Omni service account key.
 - **Binary**: `bin/omni-infra-provider-proxmox --help`. It needs the Omni API endpoint and key, and a Proxmox
   URL/username/password (see upstream's documentation).
 - **Container**: the package ships no image. Use the image published by upstream, or wrap the binary with

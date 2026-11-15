@@ -25,7 +25,7 @@ cluster décrivent l'état voulu (versions de Kubernetes et de Talos, machine cl
 bootstrap), et Omni provisionne et réconcilie les VM Proxmox sur cet état.
 
 Omni tourne dans un **LXC Proxmox autonome**
-([NixOS, Omni, un fournisseur OIDC Dex colocalisé et Caddy](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni))
+([NixOS, Omni, un fournisseur OIDC Dex colocalisé et Caddy](../../../fleet/hosts/core.omni/nix))
 sur l'[hôte Proxmox `pve-01.pve.chezmoi.sh`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md). Il n'est une charge de
 travail d'aucun cluster Kubernetes.
 

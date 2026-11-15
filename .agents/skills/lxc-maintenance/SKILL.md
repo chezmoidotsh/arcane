@@ -1,8 +1,9 @@
 ---
 name: lxc-maintenance
 description: >
-  Build, push, and upgrade Proxmox LXC appliances in the chezmoi.sh project. Use when asked to build an LXC image,
-  upload it to Proxmox, upgrade a running container, or add a new LXC appliance using the shared library.
+  Build, push, and upgrade the Proxmox LXC appliances (fleet/hosts/core.*, plus o11y-datastore in chezmoi.sh). Use when
+  asked to build an LXC image, upload it to Proxmox, upgrade a running container, or add a new LXC appliance using the
+  shared library.
 compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 ---
 
@@ -10,33 +11,38 @@ compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 
 ## Overview
 
-The `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` directory contains six NixOS-based LXC appliances, each built
-as an immutable tarball and upgraded in place: the running container keeps its VMID (and therefore its static IP and PBS
-backup identity) while its rootfs volume is swapped for a freshly built one, with a Proxmox snapshot as the rollback
-path.
+Five NixOS-based LXC appliances live in the repository, each built as an immutable tarball and upgraded in place: the
+running container keeps its VMID (and therefore its static IP and PBS backup identity) while its rootfs volume is
+swapped for a freshly built one, with a Proxmox snapshot as the rollback path.
 
 ```text
-lxc/
+fleet/hosts/
+├── core.oci-registry/          ← Zot OCI registry
+├── core.omni/                  ← Omni cluster manager
+├── core.omni-infra-provider-proxmox/
+└── core.talosnet-dns/          ← BIND for the talosnet subnet
+projects/chezmoi.sh/src/infrastructure/proxmox/lxc/
 ├── .mise/
 │   └── lib/lxc.sh              ← shared build/push/upgrade library (single source of truth)
-├── o11y-datastore/             ← VictoriaMetrics + VictoriaLogs + VictoriaTraces + OTLP gateway + Alertmanager
-├── oci-registry/               ← Zot OCI registry
-├── omni/                       ← Omni cluster manager
-├── omni-infra-provider-proxmox/
-└── talosnet-dns/               ← BIND for the talosnet subnet
+└── o11y-datastore/             ← VictoriaMetrics + VictoriaLogs + VictoriaTraces + OTLP gateway + Alertmanager
 ```
 
-Each appliance has the same layout:
+`o11y-datastore` keeps the old flat layout (flake, `modules/`, `secrets/`, `.mise.toml` in one directory) until its own
+migration. The `fleet/hosts/core.<name>/` appliances use the host layout of the fleet:
 
 ```text
-<name>/
-├── flake.nix                   ← version declared here (imageVersion or version)
-├── modules/                    ← NixOS modules
-├── secrets/                    ← SOPS-encrypted .sops.env files
-└── .mise/tasks/lxc/
-    ├── build                   ← mise run lxc:build
-    ├── push                    ← mise run lxc:push -- <pve-host>
-    └── upgrade                 ← mise run lxc:upgrade -- <pve-host>
+core.<name>/
+├── .mise.toml                  ← mise tasks (secrets)
+├── .mise/tasks/lxc/
+│   ├── build                   ← mise run lxc:build
+│   ├── push                    ← mise run lxc:push -- <pve-host>
+│   └── upgrade                 ← mise run lxc:upgrade -- <pve-host>
+├── .sops.yaml                  ← SOPS creation rules for nix/secrets/ (and pulumi/.mise/env.yaml)
+├── nix/
+│   ├── flake.nix               ← version declared here (imageVersion or version)
+│   ├── modules/                ← NixOS modules
+│   └── secrets/                ← SOPS-encrypted .sops.env files
+└── pulumi/                     ← only omni and oci-registry: the Cloudflare DNS-01 token
 ```
 
 ## Daily operations
@@ -48,9 +54,9 @@ the same day). The version names the template (`<name>.<ver>-amd64.tar.xz`) and 
 so rebuilding under an unchanged version ships an artifact that looks identical to the one already on the PVE host.
 
 ```sh
-# from the lxc/ directory, bump every date-versioned appliance at once
+# from the repository root, bump every date-versioned appliance at once
 perl -pi -e 's/^(\s*(?:version|imageVersion) = ")20\d\d\.\d\d\.\d\d(?:-\d+)?";/${1}'"$(date +%Y.%m.%d)"'";/' \
-  */flake.nix
+  fleet/hosts/core.*/nix/flake.nix projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/flake.nix
 ```
 
 `oci-registry` is the exception: its `version` is the upstream Zot release (`vX.Y.Z`, managed by Renovate) and is left
@@ -60,7 +66,7 @@ alone — only its `imageVersion` is a date. Note that the shared library takes 
 ### Build a template
 
 ```sh
-cd projects/chezmoi.sh/src/infrastructure/proxmox/lxc/<name>
+cd fleet/hosts/core.<name>   # or projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore
 mise run lxc:build
 ```
 
@@ -71,7 +77,7 @@ What happens:
 3. `nix:build:lxc` builds the NixOS system closure and produces `<name>.<ver>-amd64.tar.xz`.
 4. Secrets are unset from the environment immediately after build.
 
-The artifact lands at `<name>/<name>.<version>-amd64.tar.xz`.
+The artifact lands next to `flake.nix`: `core.<name>/nix/<name>.<version>-amd64.tar.xz`.
 
 ### Push to Proxmox
 
@@ -122,22 +128,22 @@ runs the same rollback before exiting.
 
 ## Shared library reference
 
-All appliance scripts source the shared library:
+All appliance scripts source the shared library, which stays next to `o11y-datastore`:
 
 ```bash
 CONFIG_ROOT="$(pwd)"
 # shellcheck source=/dev/null
-source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
 ```
 
-The library is at `lxc/.mise/lib/lxc.sh`. Functions:
+(`o11y-datastore` uses `${CONFIG_ROOT}/../.mise/lib/lxc.sh`.) Functions:
 
 ### `lxc_init <name> <config_root> [tag ...]`
 
 Must be called first. Sets all globals used by subsequent functions.
 
 - `<name>` — LXC appliance name (e.g. `observability`)
-- `<config_root>` — absolute path to the appliance directory (`$CONFIG_ROOT`)
+- `<config_root>` — absolute path to the directory of `flake.nix` and `secrets/` (`$CONFIG_ROOT/nix` in `fleet/hosts`)
 - `[tag ...]` — extra PVE tag names for auto-detection (e.g. `_o11y`)
 
 Sets: `LXC_NAME`, `LXC_VERSION`, `LXC_TAGS`, `LXC_TEMPLATE`, `LXC_ARTIFACT`, `LXC_REMOTE_PATH`
@@ -208,16 +214,20 @@ Run the full upgrade flow. Flags:
 
 ## Adding a new LXC appliance
 
-1. Create the directory structure:
+1. Name the host (`docs/reference/Nommage-des-Machines-Reference.md`) and create the directory structure:
 
    ```text
-   lxc/<name>/
-   ├── flake.nix              ← declare version = "YYYY.MM.DD" or imageVersion = "..."
-   ├── modules/               ← NixOS modules
-   └── secrets/               ← SOPS-encrypted .sops.env files
+   fleet/hosts/core.<name>/
+   ├── .sops.yaml             ← creation rule for nix/secrets/.*\.sops\.env$
+   └── nix/
+       ├── flake.nix          ← declare version = "YYYY.MM.DD" or imageVersion = "..."
+       ├── modules/           ← NixOS modules
+       └── secrets/           ← SOPS-encrypted .sops.env files
    ```
 
-2. Create the three mise task scripts under `lxc/<name>/.mise/tasks/lxc/`:
+   The flake reaches the catalog with `inputs.arcane.url = "path:../../../../catalog/nix";`.
+
+2. Create the three mise task scripts under `fleet/hosts/core.<name>/.mise/tasks/lxc/`:
 
    **`build`**:
 
@@ -230,9 +240,9 @@ Run the full upgrade flow. Flags:
 
    CONFIG_ROOT="$(pwd)"
    # shellcheck source=/dev/null
-   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+   source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
 
-   lxc_init "<name>" "${CONFIG_ROOT}" _<tag>
+   lxc_init "<name>" "${CONFIG_ROOT}/nix" _<tag>
    lxc_secret "secrets/<file>.sops.env" KEY1 KEY2
    lxc_build
    ```
@@ -250,9 +260,9 @@ Run the full upgrade flow. Flags:
 
    CONFIG_ROOT="$(pwd)"
    # shellcheck source=/dev/null
-   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+   source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
 
-   lxc_init "<name>" "${CONFIG_ROOT}" _<tag>
+   lxc_init "<name>" "${CONFIG_ROOT}/nix" _<tag>
    lxc_push "${usage_pve_host}"
    ```
 
@@ -271,9 +281,9 @@ Run the full upgrade flow. Flags:
 
    CONFIG_ROOT="$(pwd)"
    # shellcheck source=/dev/null
-   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+   source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
 
-   lxc_init "<name>" "${CONFIG_ROOT}" _<tag>
+   lxc_init "<name>" "${CONFIG_ROOT}/nix" _<tag>
    lxc_services "service1" "service2" "o11y-agent"
    lxc_mp "mp0" "subdir" <uid>
    lxc_e2e_hint "curl -sSf https://<name>.chezmoi.sh/"
@@ -285,9 +295,9 @@ Run the full upgrade flow. Flags:
      ${usage_yes:+--yes}
    ```
 
-3. Make the scripts executable: `chmod +x lxc/<name>/.mise/tasks/lxc/{build,push,upgrade}`
+3. Make the scripts executable: `chmod +x fleet/hosts/core.<name>/.mise/tasks/lxc/{build,push,upgrade}`
 
-4. Register the tasks in `lxc/<name>/.mise.toml` (the task discovery file for mise).
+4. Register the tasks in `fleet/hosts/core.<name>/.mise.toml` (the task discovery file for mise).
 
 5. Run `rtunk check` on the new scripts before committing.
 
@@ -305,6 +315,6 @@ Run the full upgrade flow. Flags:
 ## References
 
 - Shared library: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`
-- Existing appliances: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`
+- Existing appliances: `fleet/hosts/core.*/` and `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/`
 - Observability README (full deploy procedure):
   `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md`

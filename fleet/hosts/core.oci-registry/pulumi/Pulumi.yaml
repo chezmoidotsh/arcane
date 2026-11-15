@@ -1,0 +1,11 @@
+name: oci-registry-core
+description: >-
+  Cloudflare DNS-01 token for the oci-registry.core LXC (Caddy in front of Zot).
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

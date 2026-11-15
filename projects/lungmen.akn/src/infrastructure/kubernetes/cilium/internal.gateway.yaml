@@ -16,7 +16,7 @@ metadata:
       Same *.chezmoi.sh hostnames as the "external" Gateway — split-horizon: talosnet-dns (BIND,
       RFC2136-updated by external-dns) answers this IP for those names, everyone else gets
       "external"'s VLAN5 IP via Unifi. See
-      projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix.
+      fleet/hosts/core.talosnet-dns/nix/modules/bind.nix.
       Apps attach one HTTPRoute here AND to "external" (same hostname, both parentRefs) rather
       than a route per Gateway — external-dns-bind's --gateway-label-filter
       (external-dns.chezmoi.sh/zone=internal) picks this Gateway's parent out of the route's

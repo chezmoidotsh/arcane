@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the oci-registry LXC template with Cloudflare token baked in"
+# [MISE] dir="{{config_root}}"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# Shared library, left next to the o11y-datastore LXC that still uses it.
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+
+lxc_init "oci-registry" "${CONFIG_ROOT}/nix" _oci_registry
+lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN
+lxc_build
