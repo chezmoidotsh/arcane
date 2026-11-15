@@ -63,23 +63,38 @@ spec:
                     value: {{ .name | quote }}
                 target:
                   kind: ApplicationSet
+              # Rendered manifests of each cluster (ADR-011). During the fleet migration (MIGR-20261114-00, step 8), the
+              # clusters listed in `has $host (list ...)` read fleet/clusters/<family>.<name>/kubernetes/dist (the segments of
+              # the hostname reversed: lungmen.akn -> akn.lungmen, `infrastructure/kubernetes` renamed `system`); the others
+              # still read projects/<hostname>/dist. Application names and namespaces come from the directory basename, so
+              # they do not change.
               - patch: |
+                  {{- $host := index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
+                  {{- $dist := printf "projects/%s/dist/infrastructure/kubernetes" $host }}
+                  {{- if has $host (list "lungmen.akn") }}
+                  {{- $dist = printf "fleet/clusters/%s/kubernetes/dist/system" ($host | splitList "." | reverse | join ".") }}
+                  {{- end }}
                   - op: add
                     path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/infrastructure/kubernetes/*
+                    value: {{ $dist }}/*
                   - op: add
                     path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/infrastructure/kubernetes/*/.application.patch
+                    value: {{ $dist }}/*/.application.patch
                 target:
                   kind: ApplicationSet
                   name: system
               - patch: |
+                  {{- $host := index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
+                  {{- $dist := printf "projects/%s/dist/apps" $host }}
+                  {{- if has $host (list "lungmen.akn") }}
+                  {{- $dist = printf "fleet/clusters/%s/kubernetes/dist/apps" ($host | splitList "." | reverse | join ".") }}
+                  {{- end }}
                   - op: add
                     path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*
+                    value: {{ $dist }}/*
                   - op: add
                     path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*/.application.patch
+                    value: {{ $dist }}/*/.application.patch
                 target:
                   kind: ApplicationSet
                   name: applications
