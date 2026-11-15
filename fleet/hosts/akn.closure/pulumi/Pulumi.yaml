@@ -1,4 +1,4 @@
-name: hass-infra
+name: closure-akn
 description: >-
   Cloudflare API token for Home Assistant.
 runtime:
