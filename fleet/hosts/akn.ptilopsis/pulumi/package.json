@@ -1,0 +1,14 @@
+{
+	"name": "ptilopsis-akn",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"dependencies": {
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@chezmoi.sh/pulumi-sops-file": "workspace:*",
+		"@pulumi/pulumi": "catalog:"
+	},
+	"devDependencies": {
+		"typescript": "catalog:"
+	}
+}

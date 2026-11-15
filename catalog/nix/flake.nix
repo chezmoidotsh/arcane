@@ -1,5 +1,5 @@
 {
-  description = "Arcane Nix catalog — shared NixOS modules for LXC appliances and infrastructure";
+  description = "Arcane Nix catalog — shared NixOS and nix-darwin modules for appliances and infrastructure";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
@@ -14,6 +14,10 @@
     {
       nixosModules.o11yAgent = ./modules/o11y-agent;
       nixosModules.staticNetwork = ./modules/lxc-static-network;
+
+      # nix-darwin modules (launchd daemons), used by the Mac hosts.
+      darwinModules.o11yAgent = ./modules/o11y-agent/darwin.nix;
+      darwinModules.logTrim = ./modules/darwin-log-trim;
 
       # Packages missing from nixpkgs, written in nixpkgs' `pkgs/by-name`
       # layout (callPackage-able, no flake-specific code) so they can be
