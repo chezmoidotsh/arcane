@@ -25,11 +25,11 @@ proxmox-csi system extensions, and the Talos schematic published via `systemExte
 To create a real cluster:
 
 1. **Copy** the base to the cluster's project as a standalone full file:
-   `projects/<cluster>/src/infrastructure/omni/<name>.clustertemplate.yaml`.
+   `fleet/clusters/<family>.<name>/omni/<name>.clustertemplate.yaml`.
 2. **Override in place** at minimum: cluster `name`, pod CIDR, and machineClass sizes/counts.
 
 The worked example is lungmen —
-[`../../projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml`](../../projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml)
+[`../../fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml`](../../fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml)
 (`lungmen-akn`, pod CIDR `172.30.32.0/19`, service CIDR `172.31.0.0/19` and clusterDNS `172.31.0.10` are shared defaults
 (all clusters, ClusterMesh-ready) per [ADR-014][], `c1.minimal`×1 control plane, `w1.large`×3 workers — sized to survive
 a one-at-a-time Talos reboot under real load; `rhodes.akn`'s copy overrides this back down to 2, so worker count is a
@@ -51,7 +51,7 @@ base is a future improvement; today the copy is intentional.)
 omnictl cluster template validate -f <path/to/template>.clustertemplate.yaml
 ```
 
-lungmen exposes this as a project mise task — from `projects/lungmen.akn/`:
+lungmen exposes this as a mise task — from `fleet/clusters/akn.lungmen/`:
 
 ```sh
 mise run omni:clustertemplate:validate
@@ -76,7 +76,7 @@ online, authenticated, state-changing operation and does not belong in a per-clu
 **Drift check (online, read-only, manual):**
 
 ```sh
-omni:drift:check                    # machine classes + every projects/*/src/infrastructure/omni/*.clustertemplate.yaml
+omni:drift:check                    # machine classes + every fleet/clusters/*/omni/ and projects/*/src/infrastructure/omni/ template
 omni:drift:check --machineclasses   # machine classes only
 omni:drift:check --templates        # cluster templates only
 ```

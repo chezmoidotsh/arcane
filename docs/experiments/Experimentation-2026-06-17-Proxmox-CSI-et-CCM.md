@@ -120,8 +120,8 @@ machine:
 
 Le CCM et le CSI s'authentifient chacun avec un token d'API dédié, rattaché à un utilisateur du realm `@pve` aux
 privilèges limités. Le pool `talos` contient déjà les VM et les stockages associés (voir
-[`omni-infra-provider-proxmox`](../../fleet/hosts/core.omni-infra-provider-proxmox/nix/))
-: les ACL s'appuient dessus. Commandes à lancer sur l'hôte Proxmox :
+[`omni-infra-provider-proxmox`](../../fleet/hosts/core.omni-infra-provider-proxmox/nix/)) : les ACL s'appuient dessus.
+Commandes à lancer sur l'hôte Proxmox :
 
 ```sh
 # Rôle CCM : lecture seule de la config des VM, du guest-agent et de l'état des nœuds
@@ -248,7 +248,7 @@ Suites prévues par l'issue #1028 :
 
 ## Pour aller plus loin
 
-- [`projects/lungmen.akn/src/infrastructure/kubernetes/proxmox/`](../../projects/lungmen.akn/src/infrastructure/kubernetes/proxmox/kustomization.yaml)
+- [`fleet/clusters/akn.lungmen/kubernetes/src/system/proxmox/`](../../fleet/clusters/akn.lungmen/kubernetes/src/system/proxmox/kustomization.yaml)
   : le déploiement du CSI et du CCM issu de cette expérience.
 - [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
   : la topologie Proxmox sur laquelle tournent les VM Talos.

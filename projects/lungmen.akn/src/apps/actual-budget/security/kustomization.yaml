@@ -1,9 +1,0 @@
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - network-policy.default-hardened.yaml
-  - network-policy.allow-actual-budget-from-cilium-gateway.yaml
-  - network-policy.allow-actual-budget-from-n8n.yaml
-  - network-policy.allow-actual-budget-to-sso.yaml

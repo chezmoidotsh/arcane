@@ -1,6 +1,6 @@
 # `@chezmoi.sh/pulumi-lib`
 
-A multi-helper shared library for the per-project Pulumi stacks in `projects/*/src/infrastructure/pulumi/`. Each helper
+A multi-helper shared library for the Pulumi stacks in `fleet/*/*/pulumi/` and `projects/*/src/infrastructure/pulumi/`. Each helper
 lives in its own module under [`src/`](./src/) and is re-exported from [`src/index.ts`](./src/index.ts), so consumers
 import everything from the package root:
 

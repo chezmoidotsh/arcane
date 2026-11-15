@@ -604,7 +604,7 @@ def main() -> None:
             "  dist:render --staged-only\n"
             "  dist:render --changed\n"
             "  dist:render -j4 --all\n"
-            "  dist:render projects/lungmen.akn/src/apps/forgejo\n"
+            "  dist:render projects/rhodes.akn/src/apps/vault\n"
             "  dist:render fleet/clusters/akn.lungmen/kubernetes/src/apps/n8n\n"
         ),
     )

@@ -31,6 +31,21 @@ PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
 PATH_REGEX = re.compile(r'^projects/([^/]+)/src/(apps|infrastructure/kubernetes)/(.+)$')
 YAML_PATH_REGEX = re.compile(r'^projects/([^/]+)/src/(apps|infrastructure/kubernetes)/(.+)\.ya?ml$')
+# Fleet layout (MIGR-20261114-00): fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>
+FLEET_PATH_REGEX = re.compile(r'^fleet/clusters/([^/.]+)\.([^/]+)/kubernetes/src/(apps|system)/(.+)$')
+FLEET_YAML_PATH_REGEX = re.compile(r'^fleet/clusters/([^/.]+)\.([^/]+)/kubernetes/src/(apps|system)/(.+)\.ya?ml$')
+
+
+def match_app_path(norm_path: str, yaml_file: bool) -> tuple[str, str, str] | None:
+    """(cluster, app_type, rest) for both layouts; app_type is "apps" or "infrastructure/kubernetes"."""
+    match = (YAML_PATH_REGEX if yaml_file else PATH_REGEX).match(norm_path)
+    if match:
+        return match.groups()
+    match = (FLEET_YAML_PATH_REGEX if yaml_file else FLEET_PATH_REGEX).match(norm_path)
+    if match:
+        family, name, kind, rest = match.groups()
+        return f"{name}.{family}", "infrastructure/kubernetes" if kind == "system" else "apps", rest
+    return None
 
 HOSTNAME_REGEX = re.compile(r'[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+\.[a-zA-Z]+')
 ARGOCD_REGEX = re.compile(r'argocd\.[a-zA-Z0-9.-]+\.[a-zA-Z]+')
@@ -103,15 +118,15 @@ def parse_yaml_path(yaml_path: str) -> dict:
         console.print(f"[bold red]Error:[/bold red] File '{yaml_path}' is not a YAML file.")
         sys.exit(1)
 
-    match = YAML_PATH_REGEX.match(norm_path)
+    match = match_app_path(norm_path, yaml_file=True)
     if not match:
         console.print("[bold red]Invalid path format.[/bold red]")
-        console.print("Expected: projects/<cluster>/src/apps/<app>/<file>.yaml")
-        console.print("Or: projects/<cluster>/src/infrastructure/kubernetes/<app>/<file>.yaml")
+        console.print("Expected: fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>/<file>.yaml")
+        console.print("Or: projects/<cluster>/src/{apps,infrastructure/kubernetes}/<app>/<file>.yaml")
         console.print(f"Resolved path: '{norm_path}'")
         sys.exit(1)
 
-    cluster, app_type, _ = match.groups()
+    cluster, app_type, _ = match
     yaml_p = Path(norm_path)
     app_dir = yaml_p.parent
     app_name = app_dir.name.lstrip('*')
@@ -133,15 +148,15 @@ def parse_app_path(app_path: str) -> dict:
         console.print(f"[bold red]Error:[/bold red] Path '{app_path}' is not a directory.")
         sys.exit(1)
 
-    match = PATH_REGEX.match(norm_path)
+    match = match_app_path(norm_path, yaml_file=False)
     if not match:
         console.print("[bold red]Invalid path format.[/bold red]")
-        console.print("Expected: projects/<cluster>/src/apps/<app>")
-        console.print("Or: projects/<cluster>/src/infrastructure/kubernetes/<app>")
+        console.print("Expected: fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>")
+        console.print("Or: projects/<cluster>/src/{apps,infrastructure/kubernetes}/<app>")
         console.print(f"Resolved path: '{norm_path}'")
         sys.exit(1)
 
-    cluster, app_type, app_name = match.groups()
+    cluster, app_type, app_name = match
     app_name = app_name.lstrip('*')
     app_project = "system" if app_type == "infrastructure/kubernetes" else "applications"
 

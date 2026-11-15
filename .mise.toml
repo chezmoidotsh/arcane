@@ -11,7 +11,8 @@
 #   mise trust      # Trust this configuration (if prompted)
 #
 # For project-specific configurations, see:
-#   projects/{cluster}/.mise.toml         # Cluster-specific tasks
+#   fleet/{clusters,hosts}/<element>/.mise.toml   # Element-specific tasks
+#   projects/{cluster}/.mise.toml                 # Not migrated yet (rhodes.akn, chezmoi.sh)
 # =============================================================================
 
 [env]

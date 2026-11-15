@@ -117,7 +117,7 @@ conftest test projects/<cluster>/dist/apps/<app>/ -p policies/opa/ --combine
 
 # Local — test a specific app
 mise exec conftest -- conftest test \
-  projects/lungmen.akn/dist/apps/linkding/ \
+  fleet/clusters/akn.lungmen/kubernetes/dist/apps/linkding/ \
   -p policies/opa/ \
   --combine
 

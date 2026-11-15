@@ -12,13 +12,8 @@
 set -euo pipefail
 
 DERPMAP_URL="https://controlplane.tailscale.com/derpmap/default"
-POLICY_FILE="security/network-policy.allow-tailscale-to-derp.yaml"
-# Both copies of lungmen.akn are kept in step during the fleet migration (MIGR-20261114-00, step 8);
-# the ones that exist are updated.
-RENDER_DIRS=(
-	"projects/lungmen.akn/src/infrastructure/kubernetes/tailscale"
-	"fleet/clusters/akn.lungmen/kubernetes/src/system/tailscale"
-)
+RENDER_DIR="fleet/clusters/akn.lungmen/kubernetes/src/system/tailscale"
+POLICY="${RENDER_DIR}/security/network-policy.allow-tailscale-to-derp.yaml"
 # A broken response must never wipe the policy: the real map has dozens of relays.
 MIN_RELAYS=20
 
@@ -77,23 +72,19 @@ HEADER
 FOOTER
 } >"${GENERATED}"
 
-for render_dir in "${RENDER_DIRS[@]}"; do
-	[[ -d ${render_dir} ]] || continue
-	policy="${render_dir}/${POLICY_FILE}"
-	if [[ -f ${policy} ]] && cmp -s "${GENERATED}" "${policy}"; then
-		echo "${policy} is up to date (${#ADDRESSES[@]} relays)."
-		continue
-	fi
+if [[ -f ${POLICY} ]] && cmp -s "${GENERATED}" "${POLICY}"; then
+	echo "${POLICY} is up to date (${#ADDRESSES[@]} relays)."
+	exit 0
+fi
 
-	if [[ ${usage_check:-false} == "true" ]]; then
-		echo "${policy} is out of date (${#ADDRESSES[@]} relays in the DERP map), run: mise run tailscale:derp:update" >&2
-		exit 1
-	fi
+if [[ ${usage_check:-false} == "true" ]]; then
+	echo "${POLICY} is out of date (${#ADDRESSES[@]} relays in the DERP map), run: mise run tailscale:derp:update" >&2
+	exit 1
+fi
 
-	cp "${GENERATED}" "${policy}"
-	echo "Updated ${policy} (${#ADDRESSES[@]} relays)."
+cp "${GENERATED}" "${POLICY}"
+echo "Updated ${POLICY} (${#ADDRESSES[@]} relays)."
 
-	if [[ ${usage_no_render:-false} != "true" ]]; then
-		dist:render "${render_dir}"
-	fi
-done
+if [[ ${usage_no_render:-false} != "true" ]]; then
+	dist:render "${RENDER_DIR}"
+fi
