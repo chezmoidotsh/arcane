@@ -37,7 +37,8 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 └── talos/          Talos Linux bootstrap manifests + machine config patches
 
 docs/           Documentation, source of the GitHub Wiki: guides/, reference/, procedures/, decisions/ (ADRs),
-                incidents/, experiments/, archives/, plan-de-reprise/ (draft, being reworked) (see "Documentation" below)
+                migrations/ (plans of one-off migrations in progress), incidents/, experiments/, archives/,
+                plan-de-reprise/ (draft, being reworked) (see "Documentation" below)
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry

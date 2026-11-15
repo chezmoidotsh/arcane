@@ -3,14 +3,25 @@
 ## Why we write ADRs
 
 An ADR is not documentation — it is institutional memory. Its purpose is to let a future reader (including the author,
-six months later) understand not just _what_ was decided but _why_, _what forces were in play_, and _what alternatives
-were ruled out and why_. A reader who disagrees with the decision should be able to learn from the ADR whether their
-objection was already considered.
+six months later) understand _what_ was decided and _why this and not something else_. A reader who disagrees with the
+decision should be able to learn from the ADR whether their objection was already considered.
 
-The difference between a mediocre ADR and a great one is the depth of the context. Describing the current state is not
-enough — you must explain what is broken or missing, why the problem surfaced now, and what the cost of inaction would
-be. Options should be described with enough substance to stand on their own, not just as a list of bullets. The
-rationale for the chosen option must be argued, not merely stated.
+An ADR does three things, in this order, and nothing else:
+
+1. **It gives the context around the problem**: how things work today, what is broken or missing, why it surfaces now.
+2. **It gives the answer**: the decision, or the vision when the decision is a change of direction rather than a tool
+   choice. Stated plainly, before any justification.
+3. **It explains why this answer and not another**: the reasoning that clinched it, the trade-offs accepted, and the
+   alternatives that were _really_ on the table.
+
+It is not a comparison grid. The earlier template forced a numbered list of options with a status each; in practice the
+decision was already made and the options were invented afterwards to make it look like the outcome of a contest. That
+is the "dummy alternative" anti-pattern built into the structure. From template 3.0.0, an alternative appears only if it
+was genuinely considered, and it appears as part of the argument, not as a peer of the decision.
+
+It is not a plan either. How to get there (migration steps, paths to update, commands) lives in a separate, living page
+that the ADR links to: a migration under `docs/migrations/` (see `migration-template.md`), or a procedure or an issue
+for smaller work. The ADR is a dated record; the plan changes every week.
 
 ## When NOT to write an ADR
 
@@ -37,9 +48,10 @@ When in doubt, write a short draft and let the user decide whether it deserves a
 2. **Gather:** Collect from the user what is needed to populate each section. Be specific:
    - What broke, what is missing, or what constraint emerged that triggered this decision?
    - What is the core **strategic question** this ADR answers?
-   - What options were seriously considered?
-   - What clinched the choice? If information is missing, ask targeted questions rather than inventing plausible
-     answers.
+   - What is the answer, in one or two sentences?
+   - What clinched the choice? Which alternatives were _really_ considered, if any, and what ruled each out? Do not
+     invent alternatives to fill the page: if the user never weighed another path, the ADR says why this answer fits the
+     problem and stops there. If information is missing, ask targeted questions rather than inventing plausible answers.
 
 3. **Research:** Where relevant, look up authoritative external references — official docs, RFCs, NIST guidelines,
    project-specific best practices — to anchor the reasoning in something a reader can follow up on independently. The
@@ -65,7 +77,9 @@ When the user wants to change status, record a pivot, or add a changelog entry:
 2. Make the minimal targeted update:
    - Status change → update `status` in frontmatter + add to `Évolution de la décision` if the decision itself changed,
      and add an `Historique des modifications` entry.
-   - Implementation progress → update `Détails de mise en œuvre et état` + `Historique des modifications`.
+   - Implementation progress → it is tracked in the living page the ADR links to (guide, procedure, issue), not in the
+     ADR. The ADR only changes when the work is done: `status: implemented`, `implementation-completed`, and an
+     `Historique des modifications` entry.
    - Post-implementation deprecation → update `status`, add `> [!CAUTION]` callout on deprecated content, update `date`,
      add `Historique des modifications` entry.
 3. Update `date` in frontmatter to today's date.
@@ -83,7 +97,7 @@ implementation-completed: YYYY-MM-DD # optional, add only once implemented
 decision-makers: ["Alexandre"] # the human(s) who own this decision
 assisted-by: ["claude-sonnet-4.6"] # AI models that contributed; format: <model-name>
 informed: []
-template-version: "2.0.0" # ADR template revision this file was created from
+template-version: "3.0.0" # ADR template revision this file was created from
 ---
 ```
 
@@ -112,16 +126,17 @@ empty.
 
 1. `## Contexte et problème` (Context and Problem Statement)
 2. `## Hors périmètre` (Non-Goals, optional)
-3. `## Facteurs de décision` (Decision Drivers)
-4. `## Options envisagées` (Considered Options, with `### Option N : …`)
-5. `## Décision retenue` (Decision Outcome)
-6. `## Conséquences` (optional, with `### Positives`, `### Négatives`, `### Neutres`)
-7. `## Détails de mise en œuvre et état` (Implementation Details / Status, optional)
-8. `## Évolution de la décision` (Decision Evolution, optional)
-9. `## Historique des modifications` (Changelog)
-10. `## Pour aller plus loin` (references and related decisions, always last)
+3. `## Décision` (the answer)
+4. `## Pourquoi ce choix` (the rationale, with an optional `### Alternatives écartées`)
+5. `## Conséquences` (optional, with `### Positives`, `### Négatives`, `### Neutres`)
+6. `## Questions ouvertes` (optional, only while `proposed`)
+7. `## Évolution de la décision` (Decision Evolution, optional)
+8. `## Historique des modifications` (Changelog)
+9. `## Pour aller plus loin` (references and related decisions, always last)
 
-The sections below use these French names.
+The sections below use these French names. ADRs written on template 2.0.0 or earlier keep their sections
+(`Facteurs de décision`, `Options envisagées`, `Décision retenue`, `Détails de mise en œuvre et état`): they are not
+back-migrated.
 
 ### Contexte et problème — the most important section
 
@@ -135,40 +150,40 @@ This section fails most often. A strong context does three things:
    (ADR-001), "How can we reduce resource overhead and operational complexity of PostgreSQL instances while maintaining
    security and performance…" (ADR-009).
 
-### Options envisagées — give them substance
+The context is also where the status quo is dealt with. If it explains why the current state no longer holds, "keep
+things as they are" does not need to come back later as an alternative.
 
-Each option should have a paragraph describing _how it works architecturally and what its impact would be_. Pros/cons
-bullets alone are not enough — a reader should be able to understand the option without any prior knowledge. Mark the
-status of each option using a bold text marker on the first line:
+### Décision — the answer, stated plainly
 
-```markdown
-### Option N : Titre
+Say what is decided, in the present tense, before justifying anything. A reader who stops after this section knows the
+answer. Two shapes are fine:
 
-> **Statut : ACCEPTÉE** (ou REJETÉE, ou PROPOSÉE)
+- **A choice**: "PostgreSQL instances are consolidated into two shared CloudNative-PG clusters."
+- **A vision**: when the decision is a change of direction (how the repository is organised, how secrets are laid out),
+  describe the target model in a few paragraphs: its principles and its rules, not its inventory.
 
-Paragraph describing the option...
+Keep it short. The durable, detailed description of the result (full conventions, inventories, target trees) belongs in
+a reference page that stays up to date; the steps to get there belong in a guide or a procedure. The ADR links to both
+and does not repeat them. A diagram is welcome here when it shows the resulting architecture.
 
-- `+` pro
-- `-` con
-```
+### Pourquoi ce choix — argue, don't just state
 
-When several options were rejected with strong reasoning, consider adding an "Alternatives écartées" subsection (see
-ADR-002 for an example) that dedicates a paragraph to _why_ each rejected option was ruled out — not just that it was.
+"We chose X because it is better" is not a rationale. Explain what the answer had to satisfy (the requirements and
+constraints that actually weighed, not an exhaustive list), how it satisfies them, what trade-offs were accepted and why
+they are acceptable given the context, and what would have to change for the answer to be different.
 
-### Décision retenue — argue, don't just state
-
-"We chose X because it is better" is not a rationale. Explain specifically how the chosen option addresses each decision
-driver, what trade-offs were accepted and why they are acceptable given the context, and what would need to change for a
-different option to win.
+`### Alternatives écartées` is optional. Use it only for alternatives that were genuinely considered: something the user
+hesitated over, tried, or that a reasonable reader would propose. Give each one a short paragraph: what it is, and the
+specific reason it lost. No status labels, no numbering, no symmetric pros and cons. One real alternative is better than
+three decorative ones, and zero is a legitimate number.
 
 ### Hors périmètre — say what you are NOT deciding
 
 State explicitly what the ADR does _not_ decide. This is not padding — it is the cheapest way to prevent three failure
 modes:
 
-1. **A settled premise misread as an open option.** If a prior decision (a POC result, an earlier ADR) fixes part of the
-   design, name it as a non-goal so a reader does not think the options reopen it. If one of your "options" is really
-   the already-settled question, you have the wrong options — the real decision is narrower than you framed it.
+1. **A settled premise misread as an open question.** If a prior decision (a POC result, an earlier ADR) fixes part of
+   the design, name it as a non-goal so a reader does not think this ADR reopens it.
 2. **A tempting adjacent area silently excluded.** If the decision deliberately leaves something out (a system that
    stays manual, a capability not migrated), say so _and why_. Otherwise a future reader re-proposes exactly what you
    already rejected.
@@ -188,19 +203,22 @@ These are the recurring ways ADRs go wrong. Named anti-patterns follow Olaf Zimm
   that and keep it out of the load-bearing rationale. A driver the reader cannot verify is worse than no driver: it
   invites a rebuttal that collapses the whole argument. Distinguish _validated_ from _expected_ explicitly, and cite
   where each came from.
-- **Fairy tale** — only pros, no cons; truisms as justification. Every option (including the chosen one) must list what
-  it costs. An option with no `-` bullets is under-analyzed.
-- **Dummy alternative** — a straw-man option that exists only to be knocked down. If your decisive drivers eliminate an
-  option _the moment they are stated_, that option is not really discriminating the decision. Prefer options that all
-  pass the hard constraints, so the rationale has to argue the _real_ trade-off (e.g. two viable designs separated by
-  blast radius, not by a constraint one of them fails outright).
-- **Restating instead of arguing (repetition)** — the same argument appearing in Contexte et problème, every option's
-  cons, Décision retenue, and Conséquences reads as length without information. State the core argument _once_, sharply,
-  in Décision retenue; elsewhere refer to it, don't re-derive it. Density of reasoning per line matters more than word
-  count.
-- **Mega-ADR / more than one decision** — one ADR decides one thing. If the title says one decision but the options
-  quietly bundle several (tool choice _and_ execution model _and_ operational policy), split them or narrow the framing.
-  The title and the strategic question must name the _same_ decision.
+- **Fairy tale** — only pros, no cons; truisms as justification. The decision must say what it costs, in
+  `Pourquoi ce choix` (trade-offs accepted) and in `Conséquences` (negatives).
+- **Dummy alternative** — an alternative that exists only to be knocked down, written after the decision to make it look
+  contested. This was the most common flaw of the ADRs of this repo. If the reasoning eliminates an alternative _the
+  moment it is stated_, or if nobody ever considered it, leave it out. "Statu quo" is the usual offender: the context
+  already explains why it fails.
+- **Restating instead of arguing (repetition)** — the same argument appearing in Contexte et problème, every
+  alternative, Pourquoi ce choix, and Conséquences reads as length without information. State the core argument _once_,
+  sharply, in Pourquoi ce choix; elsewhere refer to it, don't re-derive it. Density of reasoning per line matters more
+  than word count.
+- **Mega-ADR / more than one decision** — one ADR decides one thing. If the title says one decision but the text quietly
+  bundles several (tool choice _and_ execution model _and_ operational policy), split them or narrow the framing. The
+  title and the strategic question must name the _same_ decision. A vision counts as one decision as long as its rules
+  follow from the same idea.
+- **Plan in disguise** — migration steps, lists of paths to update, commands, rollout status. They age within days and
+  bury the reasoning. Put them in a migration page (`docs/migrations/`), a procedure or an issue, and link to it.
 - **Free lunch coupon** — ignoring hard or long-term consequences. Negative consequences, especially operational ones a
   future operator will hit, must be spelled out, not softened.
 
@@ -209,18 +227,18 @@ These are the recurring ways ADRs go wrong. Named anti-patterns follow Olaf Zimm
 | Section                                 | Include when                                                                                                                                               |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Hors périmètre**                      | A settled premise, a deliberately excluded adjacent area, or a knowingly dropped capability could be misread as an oversight (see "Hors périmètre" above)  |
+| **Alternatives écartées** (sub-section) | An alternative was genuinely considered and the reason it lost is not obvious                                                                              |
 | **Conséquences**                        | The decision has non-obvious downstream effects worth calling out explicitly                                                                               |
-| **Détails de mise en œuvre et état**    | A high-level architecture diagram or current rollout status is useful; avoid runbooks and low-level configs (those belong in Git or `docs/procedures/`)    |
+| **Questions ouvertes**                  | The ADR is `proposed` and a question still blocks the _decision_. Implementation questions go to the plan; a question already out of scope is not open     |
 | **Évolution de la décision**            | The decision pivoted during implementation — document _why_ with the specific technical discovery that caused the pivot (ADR-001 is the canonical example) |
-| **Alternatives écartées** (sub-section) | Multiple options were seriously considered and rejected with non-obvious reasons (ADR-002)                                                                 |
-| **Pour aller plus loin**                | Always, and always last — link upstream ADRs (relative `.md` links), relevant RFCs, official docs, security frameworks                                     |
+| **Pour aller plus loin**                | Always, and always last — link the living pages (reference, guide), upstream ADRs (relative `.md` links), relevant RFCs, official docs                     |
 
 Never include a section just to have it. An omitted section is better than a section with placeholder text.
 
 ### Diagrams
 
-Use ASCII or Mermaid diagrams in `Détails de mise en œuvre et état` when a visual helps understand the resulting
-architecture. ADR-001 and ADR-002 have good examples. The template supports Mermaid code blocks natively.
+Use ASCII or Mermaid diagrams in `Décision` when a visual helps understand the resulting architecture. ADR-001 and
+ADR-002 have good examples. The template supports Mermaid code blocks natively.
 
 ### Callout syntax
 
@@ -274,29 +292,25 @@ Prefixes: `FEATURE`, `FIX`, `SECURITY`, `DEPRECATION`, `CLARIFICATION`, `CHORE`.
 > The strategic question this ADR answers is: how can we reduce resource overhead and operational complexity of
 > PostgreSQL instances while maintaining security and performance in a growing homelab infrastructure?
 
-**Good — option with status marker and substance:**
+**Good — a real alternative, with the specific reason it lost:**
 
 ```markdown
-### Option 2: Multiple KV Mounts per Project + Shared Mount
+### Alternatives écartées
 
-> **Status: ACCEPTED**
-
-Dedicated KV v2 mount per project plus a centralized shared mount. Each project's mount acts as a policy boundary,
-enabling fine-grained RBAC without the administrative overhead of full namespace isolation. Secrets that cross project
-boundaries (shared certificates, third-party credentials) live in a dedicated `shared/` mount with their own governance.
-
-- `+` Complete policy isolation prevents accidental cross-project access
-- `+` Linear growth model through standardized mount creation
-- `-` Requires Infrastructure-as-Code for mount lifecycle management
+**Un seul montage KV avec des chemins par projet.** C'est le plus simple à déclarer, et c'est ce qui a été essayé en
+premier. Une politique y porte sur un préfixe de chemin : une faute de frappe dans un préfixe ouvre les secrets d'un
+autre projet, et rien ne le signale. Un montage par projet fait de la frontière une ressource déclarée.
 ```
 
-**Bad — option with no substance:**
+**Bad — a decorative alternative nobody considered:**
 
 ```markdown
-### Option 2: Multiple KV Mounts
+### Option 1 : statu quo
 
-- `+` Better isolation
-- `-` More complex
+> **Statut : REJETÉE**
+
+- `+` Aucun travail
+- `-` Ne résout pas le problème
 ```
 
 **Good — decision evolution capturing a real pivot:**
@@ -350,6 +364,12 @@ tracked, and so each ADR records the template revision it was born from (via the
 
 ### Template changelog
 
+- **3.0.0** (2026-11-15): The ADR stops being a comparison grid. `Facteurs de décision`, `Options envisagées` (numbered
+  options with a status) and `Décision retenue` are replaced by `Décision` (the answer, stated first) and
+  `Pourquoi ce choix` (the rationale, with an optional `Alternatives écartées` for alternatives genuinely considered).
+  `Détails de mise en œuvre et état` is removed: the detailed result lives in a reference page, the plan in a guide, a
+  procedure or an issue. `Questions ouvertes` is added as an optional section. Prompted by the ADR-021 review: options
+  were being invented after the fact to justify a decision already made.
 - **2.0.0** (2026-10-11): Template translated into French; sections renamed (`Contexte et problème`, `Hors périmètre`,
   `Facteurs de décision`, `Options envisagées`, `Décision retenue`, `Conséquences`, `Détails de mise en œuvre et état`,
   `Évolution de la décision`, `Historique des modifications`, `Pour aller plus loin`). The manual table of contents is
