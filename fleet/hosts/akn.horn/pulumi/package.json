@@ -1,0 +1,19 @@
+{
+	"name": "horn-akn",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"dependencies": {
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@pulumi/cloudflare": "catalog:",
+		"@pulumi/oci": "catalog:",
+		"@pulumi/pangolin": "workspace:*",
+		"@pulumi/tailscale": "catalog:",
+		"@axnic/pulumi-pocket-id": "catalog:",
+		"@pulumi/pulumi": "catalog:"
+	},
+	"devDependencies": {
+		"typescript": "catalog:"
+	}
+}

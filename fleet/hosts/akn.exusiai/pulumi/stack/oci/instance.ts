@@ -6,13 +6,13 @@ import { nsg, subnet } from "./network";
 
 const config = new pulumi.Config();
 
-// Same single AD as kazimierz.akn (eu-paris-1).
+// Same single AD as horn.akn (eu-paris-1).
 const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 
 // Always Free A1 quota of this tenancy is 2 OCPU / 12 GB in total and
-// kazimierz-pangolin already uses 1 OCPU / 6 GB -- this instance takes the
+// horn.akn's instance already uses 1 OCPU / 6 GB -- this instance takes the
 // other half. Boot volume: 50 GB (OCI minimum is 47), 100 GB already used by
-// kazimierz => 150 / 200 GB Always Free block storage. World data lives on
+// horn.akn => 150 / 200 GB Always Free block storage. World data lives on
 // the boot volume (no separate data volume -- backups go to Backblaze B2).
 //
 // The image is a plain Ubuntu Minimal, only a *bootstrap* OS: NixOS is

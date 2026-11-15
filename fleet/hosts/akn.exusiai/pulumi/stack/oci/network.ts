@@ -10,7 +10,7 @@ const config = new pulumi.Config();
 // for a break-glass session.
 const unsecure = config.getBoolean("unsecure") ?? false;
 
-// Dedicated dual-stack VCN, distinct from kazimierz-akn-vcn (172.16.0.0/26).
+// Dedicated dual-stack VCN, distinct from horn.akn's VCN (172.16.0.0/26).
 export const VCN_CIDR = "172.16.1.0/26";
 export const SUBNET_CIDR = "172.16.1.0/28";
 
@@ -51,7 +51,7 @@ export const routeTable = new oci.core.RouteTable("rimbilliton-akn-rt", {
 
 // The VCN's auto-created default SecurityList ships a blanket SSH ingress and
 // can't be detached (OCI requires >= 1 list), so replace it with an
-// ICMP-only list -- same reasoning as kazimierz-akn-default-sl.
+// ICMP-only list -- same reasoning as horn.akn's default security list.
 export const defaultSecurityList = new oci.core.SecurityList(
 	"rimbilliton-akn-default-sl",
 	{

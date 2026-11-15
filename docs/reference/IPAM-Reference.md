@@ -284,8 +284,8 @@ routage natif (par exemple un futur pair ClusterMesh) est ajouté.
 | VCN `kazimierz-akn-vcn`       | `172.16.0.0/26` | VCN OCI de kazimierz.akn (dual-stack : IPv4 et GUA Oracle `/56`) |
 | Subnet `kazimierz-akn-subnet` | `172.16.0.0/28` | Instance gateway Pangolin                                        |
 
-Provisionné par Pulumi : `projects/kazimierz.akn/src/infrastructure/pulumi/stack/oci/network.ts`. Le `/56` IPv6 du VCN
-est attribué par Oracle à la création ; le `/64` du subnet se lit sur le VCN réel après provisionnement.
+Provisionné par Pulumi : `fleet/hosts/akn.horn/pulumi/stack/oci/network.ts`. Le `/56` IPv6 du VCN est attribué par
+Oracle à la création ; le `/64` du subnet se lit sur le VCN réel après provisionnement.
 
 Overlay de l'organisation Pangolin (adressage WireGuard applicatif hébergé sur kazimierz, pas une ressource OCI) :
 
@@ -294,9 +294,8 @@ Overlay de l'organisation Pangolin (adressage WireGuard applicatif hébergé sur
 | Sous-réseau de l'org Pangolin `chezmoi-sh`   | `172.16.1.0/24` | Overlay WireGuard des sites Newt       |
 | Sous-réseau utilitaire de l'org `chezmoi-sh` | `172.16.2.0/24` | Sous-réseau utilitaire Pangolin/Gerbil |
 
-Provisionné par Pulumi : `projects/kazimierz.akn/src/infrastructure/pulumi/stack/pangolin/org.ts`. Valeurs fixées à la
-création de l'organisation, non modifiables ensuite. Même raisonnement que pour le VCN : tunnel uniquement, jamais
-routé.
+Provisionné par Pulumi : `fleet/hosts/akn.horn/pulumi/stack/pangolin/org.ts`. Valeurs fixées à la création de
+l'organisation, non modifiables ensuite. Même raisonnement que pour le VCN : tunnel uniquement, jamais routé.
 
 ## Règles de pare-feu
 
