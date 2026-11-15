@@ -1,0 +1,7 @@
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - kind: Grafana
+        group: grafana.integreatly.org
+        path: spec/deployment/spec/template/spec/volumes/configMap/name

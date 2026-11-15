@@ -1,0 +1,59 @@
+---
+# Validates the tokens issued by the vMCP embedded authorization server (issuer must match
+# authServerConfig.issuer below).
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPOIDCConfig
+metadata:
+  name: mcp-o11y
+spec:
+  type: inline
+  inline:
+    issuer: https://o11y.mcp.chezmoi.sh
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: VirtualMCPServer
+metadata:
+  name: mcp-o11y
+spec:
+  groupRef:
+    name: o11y
+  config:
+    operational:
+      timeouts:
+        # Wide LogsQL stats queries (24h, count_uniq by pod) take minutes; the 30s default
+        # cancels them. Matches -search.maxQueryDuration on the o11y LXC.
+        perWorkload:
+          victorialogs: 5m
+  authServerConfig:
+    issuer: https://o11y.mcp.chezmoi.sh
+    # Storage is in-memory: DCR registrations are lost on restart and clients keep a dead
+    # client_id. With CIMD the client_id is a metadata URL, so nothing needs to survive a restart.
+    cimd:
+      enabled: true
+    hmacSecretRefs:
+      - name: mcp-o11y-auth
+        key: hmac
+    upstreamProviders:
+      - name: pocket-id
+        type: oidc
+        oidcConfig:
+          issuerUrl: https://auth.chezmoi.sh
+          # auth.chezmoi.sh resolves to a private IP (the internal Gateway): ToolHive refuses it by default.
+          allowPrivateIPs: true
+          clientId: 7a1c0e7e-5f0b-4f43-9c2b-3b6f3a8d1c10
+          clientSecretRef:
+            name: mcp-o11y-auth
+            key: client_secret
+          redirectUri: https://o11y.mcp.chezmoi.sh/oauth/callback
+          scopes:
+            - openid
+            - profile
+            - email
+  incomingAuth:
+    type: oidc
+    oidcConfigRef:
+      name: mcp-o11y
+      audience: https://o11y.mcp.chezmoi.sh/mcp
+      resourceUrl: https://o11y.mcp.chezmoi.sh/mcp
+  outgoingAuth:
+    source: discovered

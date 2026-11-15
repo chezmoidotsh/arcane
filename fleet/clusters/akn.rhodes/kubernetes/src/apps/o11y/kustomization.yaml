@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: o11y
+
+# The Grafana Operator managing this instance runs in o11y-agent-system
+# (infrastructure/kubernetes/o11y-agent), like on every other cluster.
+
+resources:
+  - security/
+  - grafana.instance.yaml
+  - grafana.plugins.persistentvolumeclaim.yaml
+  - grafana.oidc.externalsecret.yaml
+  - grafana.admin-credentials.externalsecret.yaml
+  - grafana.database.externalsecret.yaml
+  - grafana.cnpg.objectstore.yaml
+  - grafana.cnpg.cluster.yaml
+  - grafana.cnpg.scheduledbackup.yaml
+  - grafana.main.httproute.yaml
+  - datasources/
+  - dashboards/
+
+images:
+  - name: docker.io/grafana/grafana
+    newName: oci.chezmoi.sh/docker.io/grafana/grafana
+
+# Lets kustomize rewrite the hashed grafana-datasources ConfigMap name inside
+# the Grafana CR (datasources/kustomization.yaml).
+configurations:
+  - kustomizeconfig.yaml
+
+# Log formats of the CNPG pods (ADR-020).
+components:
+  - ../../../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres/annotate

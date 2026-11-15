@@ -1,0 +1,65 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cert-manager-system
+
+helmCharts:
+  - repo: https://charts.jetstack.io
+    name: cert-manager
+    # oripathy: type=helm upstream=github.com/cert-manager/cert-manager tagPrefix=v
+    version: v1.21.3
+
+    releaseName: cert-manager
+    namespace: cert-manager-system
+
+    valuesFile: ../../../../../../../catalog/kubernetes/cert-manager/helm/default.helmvalues.yaml
+    additionalValuesFiles:
+      - ../../../../../../../catalog/kubernetes/cert-manager/helm/hardened.helmvalues.yaml
+      - cert-manager.helmvalues/override.yaml
+
+resources:
+  - ../../../../../../../catalog/kubernetes/cert-manager/kustomize
+  - security/
+
+patches:
+  # letsencrypt-issuer-credentials is written directly by Pulumi's Kubernetes
+  # provider (stack/cert-manager.ts), not synced via ESO/Vault like other
+  # clusters — drop the catalog base's ExternalSecret for it.
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: letsencrypt-issuer-credentials
+        namespace: cert-manager-system
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: cert-manager-cainjector}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
+  - target: {kind: Deployment, name: cert-manager-webhook}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
+  - target: {kind: Deployment, name: cert-manager}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: klog}
+  - target: {kind: Job, name: cert-manager-startupapicheck}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: klog}}
+
+images:
+  - name: quay.io/jetstack/cert-manager-cainjector
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-cainjector
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.3
+  - name: quay.io/jetstack/cert-manager-controller
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-controller
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.3
+  - name: quay.io/jetstack/cert-manager-startupapicheck
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-startupapicheck
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.3
+  - name: quay.io/jetstack/cert-manager-webhook
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-webhook
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.3

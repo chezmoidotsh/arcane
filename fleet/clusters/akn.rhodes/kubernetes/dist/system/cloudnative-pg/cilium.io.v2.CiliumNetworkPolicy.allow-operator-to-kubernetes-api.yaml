@@ -1,0 +1,17 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Lets both cloudnative-pg-system pods (operator, barman-cloud plugin) reach the Kubernetes
+      API. Neither carries the cnpg.io/cluster label (that's only on managed Postgres instances,
+      covered by the clusterwide allow-cnpg-to-kubernetes-api) and the two share no other label,
+      so this matches the whole namespace instead of trying to name each one.
+  name: allow-operator-to-kubernetes-api
+  namespace: cloudnative-pg-system
+spec:
+  egress:
+  - toEntities:
+    - kube-apiserver
+  endpointSelector: {}

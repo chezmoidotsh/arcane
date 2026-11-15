@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows every pod in the argocd namespace to query kube-dns. Without this, Cilium never
+      observes the DNS lookups behind the toFQDNs egress rules (github.com,
+      objects.githubusercontent.com, auth.chezmoi.sh) and never learns the FQDN->IP mapping needed
+      to let that traffic through - same root cause as the cert-manager-system ACME timeout fixed
+      earlier on this cluster.
+  name: allow-to-kube-dns
+  namespace: argocd
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: '*'
+  endpointSelector: {}

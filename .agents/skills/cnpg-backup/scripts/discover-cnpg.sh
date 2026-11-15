@@ -82,6 +82,8 @@ kube_root_of() {
 # the same dist/ directory whose spec.cluster.name matches this cluster.
 # Clusters with at least one Database are classified as "mutualized".
 
+# Note on the dist/ collection at the end of emit_clusters: a cluster present in both layouts during
+# step 8 of MIGR-20261114-00 is read from projects/ only (the tree ArgoCD deploys), its fleet/ copy is skipped.
 emit_clusters() {
 	local file project app_dir dist_dir name ns ns_source src_kust
 	local plugin_enabled dbs_json db_count source_type db_file db_name
@@ -166,8 +168,14 @@ emit_clusters() {
 	done < <({
 		# Collect dist/ directories under projects/ and fleet/clusters/ and search only inside them.
 		dist_dirs=()
-		while IFS= read -r d; do dist_dirs+=("${d}"); done \
-			< <(find projects fleet/clusters -mindepth 2 -maxdepth 3 -type d \( -path 'projects/*/dist' -o -path 'fleet/clusters/*/kubernetes/dist' \) 2>/dev/null | sort)
+		while IFS= read -r d; do
+			if [[ ${d} == fleet/clusters/* ]]; then
+				rest="${d#fleet/clusters/}"
+				folder="${rest%%/*}"
+				[[ -d "projects/${folder#*.}.${folder%%.*}/dist" ]] && continue
+			fi
+			dist_dirs+=("${d}")
+		done < <(find projects fleet/clusters -mindepth 2 -maxdepth 3 -type d \( -path 'projects/*/dist' -o -path 'fleet/clusters/*/kubernetes/dist' \) 2>/dev/null | sort)
 		if [[ ${#dist_dirs[@]} -gt 0 ]]; then
 			rg -l --no-messages 'apiVersion:\s*postgresql\.cnpg\.io/v1' \
 				-g '*.yaml' -g '*.yml' \

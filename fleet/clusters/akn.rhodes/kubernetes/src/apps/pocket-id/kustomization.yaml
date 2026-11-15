@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: pocket-id
+
+labels:
+  - pairs:
+      app.kubernetes.io/instance: pocket-id
+      app.kubernetes.io/name: pocket-id
+    includeTemplates: true
+    includeSelectors: true
+
+resources:
+  - main.deployment.yaml
+  - main.httproute.yaml
+  - database.externalsecret.yaml
+  - cnpg.cluster.yaml
+  - cnpg.objectstore.amiya-akn.yaml
+  - cnpg.objectstore.yaml
+  - cnpg.scheduledbackup.yaml
+  - security/
+
+images:
+  - name: ghcr.io/pocket-id/pocket-id
+    newName: oci.chezmoi.sh/ghcr.io/pocket-id/pocket-id
+    # oripathy: type=oci upstream=github.com/pocket-id/pocket-id tagPrefix=v digest=false
+    newTag: v2.19.1
+
+# Log formats of the CNPG pods (ADR-020).
+components:
+  - ../../../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres/annotate
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: pocket-id-server}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: json}}
