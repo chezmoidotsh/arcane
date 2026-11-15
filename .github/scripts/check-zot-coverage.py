@@ -24,9 +24,9 @@ The script then scans the dist/ directory for any string that starts with
 
 USAGE
 -----
-    python check-zot-coverage.py --dist projects/lungmen.akn/dist/apps/forgejo
+    python check-zot-coverage.py --dist fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n
     python check-zot-coverage.py \
-        --dist projects/lungmen.akn/dist/apps/forgejo \
+        --dist fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n \
         --zot-upstreams-nix fleet/hosts/core.oci-registry/nix/upstreams.nix
 
 EXIT CODES
@@ -99,7 +99,7 @@ def main() -> None:
         "--dist",
         required=True,
         type=Path,
-        help="Path to the dist/ directory to scan (e.g. projects/lungmen.akn/dist/apps/forgejo)",
+        help="Path to the dist/ directory to scan (e.g. fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n)",
     )
     parser.add_argument(
         "--zot-upstreams-nix",

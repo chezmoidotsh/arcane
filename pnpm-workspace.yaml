@@ -4,6 +4,7 @@ packages:
   - catalog/pulumi/sdks/*
   - fleet/hosts/*/pulumi
   - projects/*/src/infrastructure/pulumi
+  - fleet/clusters/*/pulumi
   - fleet/hosts/*/pulumi
 
 allowBuilds:

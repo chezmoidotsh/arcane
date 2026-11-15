@@ -25,7 +25,7 @@ export {VAR_1}=<{Ce que c'est}>   # ex. {valeur d'exemple}
 <!-- La commande d'abord, puis le résultat attendu, puis quoi faire si le résultat diffère. -->
 
 ```sh
-omnictl cluster template sync -f projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml
+omnictl cluster template sync -f fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml
 ```
 
 ## Vérifier le résultat

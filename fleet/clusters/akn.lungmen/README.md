@@ -18,10 +18,6 @@
 
 ---
 
-> \[!IMPORTANT] **Migration in progress** ([MIGR-20261114-00](../../../docs/migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md),
-> step 8): this folder is a copy of `projects/lungmen.akn/`, which ArgoCD still syncs and which stays the reference
-> until it is removed. Apply every change to both copies in the meantime.
-
 > \[!NOTE] **Why Lungmen?** In Arknights lore, Lungmen (龙门) is a prosperous city-state known for its advanced
 > infrastructure, sophisticated urban services, and technological innovation. Just like the fictional city provides
 > comprehensive services to its citizens, this platform delivers all essential home services through modern
