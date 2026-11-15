@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-plugins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: proxmox-lvmthin-ext4
+  resources:
+    requests:
+      storage: 5Gi

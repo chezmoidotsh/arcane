@@ -1,0 +1,16 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows every ArgoCD component (application-controller, server, repo-server,
+      applicationset-controller, notifications-controller, redis-secret-init) to reach the
+      Kubernetes API server, required for reconciling Applications/ApplicationSets against the
+      local cluster (destination server: https://kubernetes.default.svc) and for their own RBAC
+      watches.
+  name: allow-argocd-to-kubernetes-api
+spec:
+  endpointSelector: {}
+  egress:
+    - toEntities:
+        - kube-apiserver

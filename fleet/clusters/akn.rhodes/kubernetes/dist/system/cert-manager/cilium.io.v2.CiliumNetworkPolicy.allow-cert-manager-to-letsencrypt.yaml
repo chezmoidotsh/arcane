@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the cert-manager controller to reach Let's Encrypt's ACME endpoint to request and
+      finalize X.509 certificate issuance for the letsencrypt ClusterIssuer.
+  name: allow-cert-manager-to-letsencrypt
+  namespace: cert-manager-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: acme-v02.api.letsencrypt.org
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: cert-manager
