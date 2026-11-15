@@ -30,7 +30,7 @@ chaque élément ayant son README.
 | Étape | Contenu                                                             | État    |
 | ----- | ------------------------------------------------------------------- | ------- |
 | 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite   |
-| 2     | Créer les bases de catalogue manquantes                             | à faire |
+| 2     | Créer les bases de catalogue manquantes                             | faite   |
 | 3     | Activer le lint de structure                                        | à faire |
 | 4     | Déplacer le catalogue                                               | à faire |
 | 5     | Les petits hôtes du groupe `core`                                   | à faire |
@@ -200,6 +200,13 @@ utiliser. Les scopes `project:*` restent valides jusqu'à l'étape 11.
 - **Vérification** : `dist:render` ne produit aucune différence dans `dist/` (ou seulement les différences voulues, lues
   une par une) ; `catalog/kubernetes/README.md` décrit la règle.
 - **Retour arrière** : `git revert` de la pull request ; aucun état à défaire.
+- **Constaté** : bases créées dans `catalog/kubernetes/` pour `cilium`, `external-dns`, `newt`, `proxmox` et `toolhive`
+  ; les versions de chart, les images, les correctifs et les valeurs propres à un cluster restent dans chaque cluster.
+  `tun-device-plugin` est intégré au composant de `lungmen.akn` et `catalog/kustomize/` est supprimé (il ne contenait
+  rien d'autre). `dist:render --check --all` : rien de périmé, le `dist/` rendu est identique octet pour octet. Relevé
+  et laissé tel quel (hors périmètre) : sur `lungmen.akn`, `newt/security/` contient deux politiques réseau
+  (`allow-newt-to-jellyseerr`, `allow-newt-to-mealie`) que son `kustomization.yaml` ne liste pas : elles ne sont pas
+  déployées.
 
 ### 3. Activer le lint de structure
 

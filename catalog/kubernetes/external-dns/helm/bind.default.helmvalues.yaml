@@ -17,9 +17,8 @@ sources:
   - ingress
   - service
 
-# Distinguishes this instance's TXT ownership records from any other
-# external-dns instance/cluster writing into the same zone.
-txtOwnerId: external-dns.lungmenakn
+# txtOwnerId (TXT ownership records) is unique per cluster: each project sets it in its
+# own bind.helmvalues/override.yaml.
 
 rbac:
   create: true

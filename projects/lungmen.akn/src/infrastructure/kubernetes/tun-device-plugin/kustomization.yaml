@@ -4,7 +4,8 @@ kind: Kustomization
 namespace: kube-system
 
 resources:
-  - ../../../../../../catalog/kustomize/tun-device-plugin
+  - daemonset.tun-device-plugin.yaml
+  - security/networkpolicy.tun-device-plugin.yaml
 
 images:
   - name: ghcr.io/squat/generic-device-plugin

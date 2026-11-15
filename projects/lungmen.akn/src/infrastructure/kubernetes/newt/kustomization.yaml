@@ -4,8 +4,8 @@ kind: Kustomization
 namespace: newt-system
 
 resources:
+  - ../../../../../../catalog/kubernetes/newt/kustomize
   - newt.externalsecret.yaml
-  - newt.dnsendpoint.yaml
 
   # Include security policies
   - security/
@@ -19,19 +19,7 @@ helmCharts:
     releaseName: newt
     namespace: newt-system
 
-    valuesInline:
-      newtInstances:
-        - name: "main-tunnel"
-          auth:
-            existingSecretName: "newt-credentials"
-            keys:
-              endpointKey: "PANGOLIN_ENDPOINT"
-              idKey: "NEWT_ID"
-              secretKey: "NEWT_SECRET"
-          # Required for Pangolin private resources (n8n.chezmoi.sh): without it
-          # Newt only serves public targets and refuses client (Olm) traffic.
-          acceptClients: true
-          enabled: true
+    valuesFile: ../../../../../../catalog/kubernetes/newt/helm/default.helmvalues.yaml
 
 # kustomize's namespace transformer does not post-process helmCharts resources.
 # The newt Deployment template does not call {{ .Release.Namespace }}, so the

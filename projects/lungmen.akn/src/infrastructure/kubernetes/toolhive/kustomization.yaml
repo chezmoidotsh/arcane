@@ -20,10 +20,10 @@ helmCharts:
     releaseName: toolhive-operator
     namespace: toolhive-system
 
-    valuesFile: toolhive-operator.helmvalues/default.yaml
+    valuesFile: ../../../../../../catalog/kubernetes/toolhive/helm/default.helmvalues.yaml
 
 resources:
-  - security/
+  - ../../../../../../catalog/kubernetes/toolhive/kustomize
 
 patches:
   # Log formats of the pods (ADR-020).

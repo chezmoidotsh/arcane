@@ -4,7 +4,7 @@
 # Reference: https://www.talos.dev/latest/kubernetes-guides/network/deploying-cilium/#installation-using-helm
 
 # Image registry overrides
-# lungmen-akn's nodes have no direct internet egress for image pulls -- every image must
+# The nodes have no direct internet egress for image pulls -- every image must
 # go through the oci.chezmoi.sh pull-through cache, mirrored under
 # oci.chezmoi.sh/<upstream-registry>/<upstream-path> (same pattern as external-dns's
 # kustomize image override). Only the components actually enabled below need one.
@@ -25,6 +25,7 @@ certgen:
 
 # Cilium Operator Configuration
 operator:
+  # A single replica: rhodes.akn runs a single node
   replicas: 1
   updateStrategy:
     type: RollingUpdate
@@ -104,7 +105,9 @@ l2announcements:
 # despite a leader being elected for it - every external client gets "no
 # route to host" reaching the Gateway's IP. eth1 (talosnet SDN, has a DHCP IP)
 # is selected by default already; listed here anyway to keep this explicit
-# and not rely on auto-detection for either interface.
+# and not rely on auto-detection for either interface. Found live during a
+# rhodes.akn DR drill (2026-07-28), the first cluster to use this V2 dual-NIC
+# pattern.
 devices:
   - eth0
   - eth1
@@ -115,7 +118,9 @@ devices:
 # eth0: the kernel has no IPv4 route on that interface (VLAN5 trunk, no IP, see dual-nic
 # machine patch), so replies for external clients take the only default route (via eth1,
 # talosnet) and never make it back. BPF host routing keeps replies symmetric with their
-# ingress device, sidestepping kernel routing entirely for this path.
+# ingress device, sidestepping kernel routing entirely for this path. Found live via
+# packet capture + host-netns curl during a rhodes.akn Gateway access investigation
+# (2026-07-30).
 bpf:
   masquerade: true
 
