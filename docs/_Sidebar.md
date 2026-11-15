@@ -35,6 +35,8 @@
 - [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)
 - [Renovate](reference/Renovate-Reference.md)
 - [Infrastructure manuelle](reference/Infrastructure-Manuelle-Reference.md)
+- [Architecture du dépôt](reference/Architecture-du-Depot-Reference.md)
+- [Nommage des machines](reference/Nommage-des-Machines-Reference.md)
 
 ### Post-mortems
 
@@ -71,6 +73,8 @@
 - [ADR-018 OTLP comme protocole d'ingestion unique](decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md)
 - [ADR-019 ToolHive pour gérer les serveurs MCP](decisions/ADR-019-ToolHive-pour-Gerer-les-Serveurs-MCP.md)
 - [ADR-020 Parser les logs des pods dans l'agent OpenTelemetry](decisions/ADR-020-Parser-les-Logs-des-Pods-dans-l-Agent-OpenTelemetry-avec-une-Bibliotheque-de-Components-Kustomize.md)
+- [ADR-021 Passer d'une vue projet à une vue flotte](decisions/ADR-021-Passer-d-une-Vue-Projet-a-une-Vue-Flotte.md)
+- [ADR-022 Héberger l'appliance d'observabilité sur un Mac Studio dédié](decisions/ADR-022-Heberger-l-Appliance-d-Observabilite-sur-un-Mac-Studio-Dedie.md)
 
 ### Expérimentations
 
@@ -79,6 +83,11 @@
 - [Sauvegarde de PVC avec Velero](experiments/Experimentation-2026-08-03-Sauvegarde-de-PVC-avec-Velero.md)
 - [Propriétés des applications ArgoCD](experiments/Experimentation-2025-01-10-Proprietes-des-Applications-ArgoCD.md)
 - [ArgoCD en Zero Trust avec Tailscale](experiments/Experimentation-2025-03-12-ArgoCD-Zero-Trust-avec-Tailscale.md)
+
+### Migrations
+
+- [Migrer vers la flotte](migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md)
+- [Migrer l'observabilité vers le Mac Studio](migrations/MIGR-20261115-00-Migrer-l-Observabilite-vers-le-Mac-Studio.md)
 
 ### Archives
 

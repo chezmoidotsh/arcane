@@ -5,14 +5,15 @@ implementation-completed: { YYYY-MM-DD when the implementation was finalized (op
 decision-makers: ["Alexandre"]
 assisted-by: ["<model-name>"]
 informed: []
-template-version: "2.0.0"
+template-version: "3.0.0"
 ---
 
 <!--
-  GABARIT D'ADR v2.0.0 — voir la section "Template Versioning" de
+  GABARIT D'ADR v3.0.0 — voir la section "Template Versioning" de
   .agents/skills/documentation-writer/references/adr.md pour l'historique et les règles de ce fichier.
   Conserver le champ `template-version` du front matter : il enregistre la révision du gabarit qui a produit l'ADR.
-  La version 2.0.0 traduit le gabarit en français (sections renommées). Les clés du front matter et les valeurs de
+  La version 3.0.0 supprime la grille d'options : un ADR donne le contexte du problème, la réponse, puis explique
+  pourquoi cette réponse et pas une autre. Les clés du front matter et les valeurs de
   `status` restent en anglais : des scripts et la convention des ADR les lisent. Supprimer ce commentaire HTML à la
   rédaction. Le titre `#` reprend le nom du fichier (ADR-NNN-Titre-En-Francais.md), sans tirets entre les mots.
 -->
@@ -29,6 +30,9 @@ template-version: "2.0.0"
 > - **Vue d'ensemble de l'architecture actuelle** : comment les choses fonctionnent aujourd'hui.
 > - **Problèmes critiques identifiés** : ce qui est cassé, limitant ou manquant dans l'approche actuelle.
 > - **Question stratégique** : la question centrale à laquelle cet ADR répond, écrite en gras.
+>
+> C'est aussi ici que l'on dit pourquoi l'état actuel ne tient plus : le statu quo ne revient pas plus bas comme une
+> alternative.
 
 {Écrire ici un contexte complet...}
 
@@ -38,8 +42,8 @@ template-version: "2.0.0"
 > champ et empêchent un lecteur de prendre une omission pour un oubli. Inclure cette section quand l'un des cas suivants
 > s'applique :
 >
-> - Une décision liée est déjà actée ailleurs et constitue une _prémisse_ ici, pas une option (l'énoncer, pour que les
->   options ne soient pas lues comme la rouvrant).
+> - Une décision liée est déjà actée ailleurs et constitue une _prémisse_ ici (l'énoncer, pour que cet ADR ne soit pas
+>   lu comme la rouvrant).
 > - La décision exclut délibérément un domaine voisin tentant (dire pourquoi — sinon un futur lecteur le proposera à
 >   nouveau).
 > - Une capacité de l'approche remplacée est abandonnée volontairement.
@@ -50,55 +54,43 @@ template-version: "2.0.0"
 - {Point hors périmètre 1 — et pourquoi il est écarté}
 - {Point hors périmètre 2 — et pourquoi il est écarté}
 
-## Facteurs de décision
+## Décision
 
-> Lister les forces, préoccupations et exigences qui orientent la décision. Les classer pour ne rien omettre :
+> Donner la réponse, au présent, avant toute justification : un lecteur qui s'arrête ici sait ce qui est décidé. C'est
+> un choix (« les bases sont regroupées dans deux clusters partagés ») ou une vision, quand la décision est un
+> changement de cap : décrire alors le modèle cible par ses principes et ses règles, pas par son inventaire.
 >
-> - **Exigences fonctionnelles** : ce que la solution doit faire.
-> - **Exigences non fonctionnelles** : les qualités attendues (fiabilité, sécurité, maintenabilité, etc.).
-> - **Contraintes** : les limites avec lesquelles composer (écosystème, infrastructure existante, budget, etc.).
+> Rester court. La description détaillée et durable du résultat (conventions complètes, inventaires, arborescences) va
+> dans une page de référence ; les étapes pour y arriver vont dans une page de migration (`docs/migrations/`), une
+> procédure ou une issue. L'ADR renvoie vers ces pages et ne les répète pas. Un diagramme (Mermaid ou ASCII) est
+> bienvenu s'il montre l'architecture qui en résulte.
 
-- {Facteur de décision 1}
-- {Facteur de décision 2}
+{Énoncer la décision ou la vision...}
 
-## Options envisagées
+## Pourquoi ce choix
 
-> Détailler les options envisagées. Pour une décision complexe, on peut les regrouper par catégorie. Fournir un
-> paragraphe substantiel et détaillé pour chaque option avant de lister ses avantages et inconvénients. Marquer le
-> statut de chaque option par une étiquette en gras : ACCEPTÉE, REJETÉE ou PROPOSÉE.
+> Argumenter, en paragraphes : ce que la réponse devait satisfaire (les exigences et contraintes qui ont réellement
+> pesé, pas une liste exhaustive), comment elle y répond, quels compromis sont acceptés et pourquoi ils sont
+> acceptables, et ce qui devrait changer pour que la réponse soit différente. L'argument central est énoncé une fois,
+> ici.
 
-### Option 1 : {Titre de l'option 1}
+{Écrire ici l'argumentation...}
 
-> **Statut : PROPOSÉE**
+### Alternatives écartées [Facultatif]
 
-> Écrire une description complète et concise du fonctionnement de l'option, de son impact architectural et de la façon
-> dont elle répond aux facteurs de décision.
+> Uniquement les alternatives réellement envisagées : celles sur lesquelles on a hésité, que l'on a essayées, ou qu'un
+> lecteur raisonnable proposerait. Un court paragraphe chacune : ce que c'est, et la raison précise pour laquelle elle a
+> perdu. Pas de statut, pas de numéro, pas de liste symétrique d'avantages et d'inconvénients. Ne pas inventer
+> d'alternative pour étoffer la page ; zéro est un nombre légitime, et la sous-section disparaît alors.
 
-- `+` {Avantage 1}
-- `+` {Avantage 2}
-- `-` {Inconvénient 1}
-
-### Option 2 : {Titre de l'option 2}
-
-> **Statut : PROPOSÉE**
-
-> Écrire une description complète et concise du fonctionnement de l'option, de son impact architectural et de la façon
-> dont elle répond aux facteurs de décision.
-
-- `+` {Avantage 1}
-- `-` {Inconvénient 1}
-
-## Décision retenue
-
-**Option retenue : « {titre de l'option retenue} »**, parce que {Fournir une justification détaillée et complète, sous
-forme de paragraphe. Expliquer comment elle répond de façon unique aux facteurs de décision critiques, résout les forces
-en jeu ou atténue les contraintes principales. Ne pas lésiner sur l'argumentation}.
+**{Alternative réellement envisagée}.** {Ce que c'est, et pourquoi elle a été écartée.}
 
 ---
 
 ## Conséquences [Facultatif]
 
-> Détailler les effets en cascade de cette décision. Être explicite sur les mesures d'atténuation nécessaires.
+> Détailler les effets en cascade de cette décision, y compris ce qu'elle coûte. Être explicite sur les mesures
+> d'atténuation nécessaires. Le coût d'une migration se résume ici en quelques lignes ; son plan vit ailleurs.
 
 ### Positives
 
@@ -114,24 +106,12 @@ en jeu ou atténue les contraintes principales. Ne pas lésiner sur l'argumentat
 
 ---
 
-## Détails de mise en œuvre et état [Facultatif]
+## Questions ouvertes [Facultatif]
 
-> Documenter l'architecture de haut niveau qui résulte de cette décision (par exemple avec des diagrammes Mermaid ou
-> ASCII).
+> Seulement tant que l'ADR est `proposed`, et seulement les questions qui bloquent encore la _décision_. Une question de
+> mise en œuvre va dans le plan ; un sujet hors périmètre n'est pas une question ouverte.
 
-> [!CAUTION]\
-> **ANTI-MODÈLE** : NE PAS inclure dans ce document de plan de migration pas à pas, de tutoriel, de runbook ni de
-> configuration de bas niveau (valeurs Helm précises, noms de comptes RBAC, chemins de fichiers exacts).
->
-> - Les **plans de migration et runbooks** vont dans les issues GitHub, les PR ou `docs/procedures/`.
-> - Les **configurations de bas niveau** vont dans le code, seule source de vérité.
->
-> Garder cette section centrée sur l'architecture _conceptuelle_ et sur l'_état_ de la mise en œuvre.
-
-- **Composants terminés** : {Ce qui a été déployé, sur le plan conceptuel}
-- **Composants restants** : {Ce qui reste à faire, sur le plan conceptuel}
-- **Architecture** : {Diagrammes (par exemple Mermaid) ou description technique de haut niveau}
-- **Spécification des standards** : {Les nouvelles conventions, étiquettes ou règles de nommage introduites par cet ADR}
+- {Question qui reste à trancher avant d'accepter la décision}
 
 ---
 
@@ -157,10 +137,11 @@ en jeu ou atténue les contraintes principales. Ne pas lésiner sur l'argumentat
 
 ## Pour aller plus loin
 
-> Liens relatifs vers des fichiers `.md` (autres ADR, documentation d'architecture) et références externes
-> indispensables pour comprendre cet ADR, chacun avec une phrase d'introduction. Cette section est la dernière section
-> `##` de la page.
+> Liens relatifs vers des fichiers `.md` (la page de référence qui décrit le résultat, la migration ou la procédure de
+> mise en œuvre, les autres ADR) et références externes indispensables pour comprendre cet ADR, chacun avec une phrase
+> d'introduction. Cette section est la dernière section `##` de la page.
 
 - [{ADR lié}]({ADR-NNN-Titre-En-Francais.md}) : {Par exemple la gestion centralisée des secrets}
-- [{Documentation d'architecture}]({../reference/Page.md}) : {Guide d'architecture interne ou externe}
+- [{Page de référence}]({../reference/Page-Reference.md}) : {La description détaillée et vivante du résultat}
+- [{Migration}]({../migrations/MIGR-AAAAMMJJ-NN-Titre.md}) : {Le plan de mise en œuvre, étape par étape}
 - [{Référence externe}]({https://exemple.org}) : {Bonnes pratiques de sécurité ou documentation de l'outil}

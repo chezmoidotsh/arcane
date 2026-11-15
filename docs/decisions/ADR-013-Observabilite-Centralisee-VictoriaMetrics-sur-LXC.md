@@ -10,6 +10,11 @@ template-version: "2.0.0"
 # ADR-013 Observabilité centralisée VictoriaMetrics sur LXC
 
 > [!NOTE]\
+> La partie hébergement de cet ADR (LXC NixOS sur `pve-01`) est proposée au remplacement par
+> [ADR-022](./ADR-022-Heberger-l-Appliance-d-Observabilite-sur-un-Mac-Studio-Dedie.md) (statut `proposed`, appliance
+> déplacée sur un Mac Studio dédié). Le reste de la décision reste valable.
+
+> [!NOTE]\
 > La partie ingestion de cet ADR (Vector pour les journaux, `remote_write` pour les métriques, Vector central côté
 > conteneur) est remplacée par
 > [ADR-018](./ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md) : OTLP/HTTP est

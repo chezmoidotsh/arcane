@@ -48,15 +48,17 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    | Guide            | `guides/`      | `Verb-Phrase.md`                      |
    | Reference        | `reference/`   | `Topic-Reference.md`                  |
    | Procedure        | `procedures/`  | `<ID>-Verb-Phrase.md`                 |
+   | Migration        | `migrations/`  | `MIGR-YYYYMMDD-NN-Verb-Phrase.md`     |
    | ADR              | `decisions/`   | `ADR-NNN-Title.md`                    |
    | Post-mortem      | `incidents/`   | `Incident-YYYY-MM-DD-Title.md`        |
    | Experiment       | `experiments/` | `Experimentation-YYYY-MM-DD-Title.md` |
    | Project overview | `projects/`    | `Projet-<name>.md`                    |
    | Archive          | `archives/`    | `[<ID>-]Titre.md`                     |
 
-   An archive keeps the identifier of the document it replaces (`MIGR-20260628-00-...`); a document that had none is
-   archived without one (`Migration-de-Kazimierz-vers-NixOS`). Everything else (a diagram, an image) goes in
-   `docs/assets/`. `Home.md`, `_Sidebar.md` and `_Footer.md` stay at the root of `docs/`.
+   A finished migration is replaced by an archive. An archive keeps the identifier of the document it replaces
+   (`MIGR-20260628-00-...`); a document that had none is archived without one (`Migration-de-Kazimierz-vers-NixOS`).
+   Everything else (a diagram, an image) goes in `docs/assets/`. `Home.md`, `_Sidebar.md` and `_Footer.md` stay at the
+   root of `docs/`.
 
 2. **File names use `Title-Case-With-Hyphens.md` [lint].** Letters, digits and hyphens only: no dots, spaces,
    underscores or non-ASCII characters. Function words (articles, prepositions, conjunctions: _le_, _la_, _les_, _un_,

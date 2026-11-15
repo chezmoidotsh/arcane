@@ -2,13 +2,14 @@
 name: documentation-writer
 description: >
   Single entry point for writing, rewriting, reviewing and migrating any documentation of this repository: guides,
-  references, project overviews, procedures / SOPs / runbooks, Architecture Decision Records (ADR), post-mortems and
-  root-cause analyses, experiment write-ups. Routes to the right page type, template and rules. Use it for "document X",
-  "write a guide / a reference page", "write a procedure for X", "turn this into a runbook", "add an SOP", "write an
-  ADR", "document this decision", "update ADR-00N", "write a post-mortem", "what went wrong", "why did this fail",
-  "lessons learned", "move this doc to the wiki", "fix the docs", and right after a significant design decision, a
-  multi-step manual operation or an incident worth preserving, even if nobody asked. Do not use it for code comments,
-  component READMEs that describe a directory, OPA rule sheets under catalog/opa/, or agent files (AGENTS.md, .agents/).
+  references, project overviews, procedures / SOPs / runbooks, migrations, Architecture Decision Records (ADR),
+  post-mortems and root-cause analyses, experiment write-ups. Routes to the right page type, template and rules. Use it
+  for "document X", "write a guide / a reference page", "write a procedure for X", "turn this into a runbook", "write a
+  migration plan", "how do we migrate X", "add an SOP", "write an ADR", "document this decision", "update ADR-00N",
+  "write a post-mortem", "what went wrong", "why did this fail", "lessons learned", "move this doc to the wiki", "fix
+  the docs", and right after a significant design decision, a multi-step manual operation or an incident worth
+  preserving, even if nobody asked. Do not use it for code comments, component READMEs that describe a directory, OPA
+  rule sheets under catalog/opa/, or agent files (AGENTS.md, .agents/).
 ---
 
 # Documentation writer
@@ -35,6 +36,7 @@ Match the intent to one row, then read the files in the last column **in that or
 | Understand _why_ a technical choice was made                       | ADR              | [adr.md](references/adr.md), then [adr-template.md](references/adr-template.md)                                                                          |
 | Learn from a failure, an outage or a missed target                 | Post-mortem      | [postmortem.md](references/postmortem.md), then [templates/postmortem.md](templates/postmortem.md) or [postmortem-lite.md](templates/postmortem-lite.md) |
 | Know what was tried, what was concluded, and where the code lives  | Experiment       | [experiment-template.md](references/experiment-template.md)                                                                                              |
+| Carry out a one-off change from one state to another, step by step | Migration        | [migration-template.md](references/migration-template.md)                                                                                                |
 | Keep the trace of a finished or obsolete document                  | Archive          | [archive-template.md](references/archive-template.md)                                                                                                    |
 | Get the overview of a project under `projects/`                    | Project overview | [project-template.md](references/project-template.md)                                                                                                    |
 
@@ -46,6 +48,15 @@ Tell-apart rules when two rows seem to fit:
   become a procedure that the post-mortem links to.
 - **Guide or procedure?** A guide teaches and can be read start to finish at leisure. A procedure is followed literally,
   possibly at 2 a.m., and carries expected output and rollback.
+- **Migration or procedure?** A procedure is repeatable and stays valid. A migration happens once: it has a starting
+  state, an end criterion and a progress table, it is updated while it runs, and it is archived when it is done.
+- **Migration or guide?** A guide gets a reader to a result any time. If the page stops being true once the work is
+  done, it is a migration.
+- **ADR or migration?** The ADR says what was decided and why, and never changes with the progress of the work. The
+  steps, the paths to update and the status live in the migration, which names the ADR that drives it in its context.
+- **Reference or migration?** A reference is a stable page that states the target: what is true, or what must become
+  true. It never describes the current state when that differs from the target, nor a before/after mapping, nor
+  progress. All of that goes in the migration, which links to the reference for the target.
 - **Nothing fits?** The content is probably two pages. Split it.
 
 ## 2. What goes where
@@ -53,6 +64,7 @@ Tell-apart rules when two rows seem to fit:
 | Content                                                                  | Where it lives                     |
 | ------------------------------------------------------------------------ | ---------------------------------- |
 | Guides, references, procedures, ADRs, post-mortems, experiments          | `docs/`, in its type directory     |
+| The plan and the progress of a one-off migration                         | `docs/migrations/`                 |
 | A README that describes a directory (what it contains, how to change it) | Next to the code, as a `README.md` |
 | OPA policies and their rule sheets                                       | `catalog/opa/`, never in `docs/`   |
 | Agent instructions, skills and knowledge                                 | `AGENTS.md`, `.agents/`            |
@@ -106,6 +118,7 @@ it changed. See the "Records" section of the style guide.
 | [references/page-templates.md](references/page-templates.md)                                                      | Skeletons: guide, reference, experiment, project, and the frame of the others |
 | [references/procedure.md](references/procedure.md)                                                                | How to write a procedure (SOP)                                                |
 | [references/procedure-template.md](references/procedure-template.md)                                              | Procedure skeleton                                                            |
+| [references/migration-template.md](references/migration-template.md)                                              | Migration skeleton (context and driving ADR, progress, steps, end criterion)  |
 | [references/adr.md](references/adr.md)                                                                            | How to write an ADR                                                           |
 | [references/adr-template.md](references/adr-template.md)                                                          | ADR skeleton                                                                  |
 | [references/postmortem.md](references/postmortem.md)                                                              | How to run a blameless post-mortem                                            |
