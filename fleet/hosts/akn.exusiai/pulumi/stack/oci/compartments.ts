@@ -13,9 +13,9 @@ const chezmoiShCompartmentId = chezmoiSh.requireOutput(
 	"chezmoiShCompartmentId",
 ) as pulumi.Output<string>;
 
-// Dedicated compartment: isolates rimbilliton.akn's VCN/instance from the rest.
+// Dedicated compartment: isolates exusiai.akn's VCN/instance from the rest.
 export const rimbilliton = new oci.identity.Compartment("rimbilliton", {
 	compartmentId: chezmoiShCompartmentId,
-	name: "rimbilliton.akn",
-	description: "rimbilliton.akn -- Minecraft server",
+	name: "exusiai.akn",
+	description: "exusiai.akn -- Minecraft server",
 });

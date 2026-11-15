@@ -1,6 +1,6 @@
-name: rimbilliton-akn-infra
+name: exusiai-akn
 description: >-
-  OCI Free Tier infrastructure for rimbilliton.akn (Minecraft server): dedicated VCN/subnet,
+  OCI Free Tier infrastructure for exusiai.akn (Minecraft server): dedicated VCN/subnet,
   ARM instance, Cloudflare DNS, Backblaze B2 backup bucket, Tailscale key, Pocket-Id OIDC client.
 runtime:
   name: nodejs

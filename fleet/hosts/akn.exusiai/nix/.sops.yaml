@@ -1,4 +1,4 @@
-# Exception to the per-project layout (projects/rimbilliton.akn/.sops.yaml): these secrets are consumed at build time
+# Exception to the per-project layout (fleet/hosts/akn.exusiai/.sops.yaml): these secrets are consumed at build time
 # (sops-nix, `sops.defaultSopsFile`), so their rule lives next to them. sops looks for .sops.yaml from the *current
 # directory* upward and never merges configs, so run sops from this directory (or below) and keep the admin key here.
 # path_regex is relative to this file's directory.
