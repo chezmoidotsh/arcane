@@ -91,9 +91,10 @@ fnox exec -- bws project list
 │   ├── incidents                   # Post-mortems
 │   ├── procedures                  # Operational procedures
 │   └── reference                   # Network, IPAM and configuration reference
+├── fleet                           # Machines of the fleet
+│   └── hosts                       # One directory per host (Home Assistant, observability, …)
 ├── projects                        # Infrastructure projects
 │   ├── chezmoi.sh                  # Shared resources
-│   ├── hass                        # Home Assistant configuration
 │   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
 │   ├── rhodes.akn                  # Rhodes cluster configuration
