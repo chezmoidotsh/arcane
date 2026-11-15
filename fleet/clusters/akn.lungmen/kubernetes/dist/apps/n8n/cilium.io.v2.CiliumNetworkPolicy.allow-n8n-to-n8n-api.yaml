@@ -1,0 +1,40 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows n8n to reach api.n8n.io (templates and MCP servers catalogs), and nothing else on it.
+      Cilium inspects the TLS traffic so that only the HTTP paths below are reachable: it presents
+      a certificate signed by the egress-inspection CA (trusted by the pod through
+      NODE_EXTRA_CA_CERTS) and re-validates the real upstream certificate. The material lives in
+      cilium-secrets (infrastructure/kubernetes/cilium/egress-inspection.yaml). Keep api.n8n.io out
+      of allow-n8n-egress: an L4-only rule there would bypass the path filtering. Paths are regexes
+      matched against the path including the query string (Strapi adds pagination parameters).
+  name: allow-n8n-to-n8n-api
+  namespace: n8n
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: api.n8n.io
+    toPorts:
+    - originatingTLS:
+        secret:
+          name: egress-inspection-upstream-roots
+          namespace: cilium-secrets
+      ports:
+      - port: "443"
+        protocol: TCP
+      rules:
+        http:
+        - method: GET
+          path: /api/mcp-servers(\?.*)?
+        - method: GET
+          path: /(api/)?templates/.*
+      terminatingTLS:
+        secret:
+          name: egress-inspection-api.n8n.io
+          namespace: cilium-secrets
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: n8n

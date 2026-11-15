@@ -1,0 +1,213 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-movies-smb-storage
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: smb
+  volumeName: jellyfin-movies-smb-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
+  name: jellyfin-movies-smb-storage
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=64710
+    - gid=64710
+    - noperm
+    - mfsymlinks
+    - cache=strict
+    - noserverino # required to prevent data corruption
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: true
+    # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
+    # make sure this value is unique for every share in the cluster
+    volumeHandle: smb-server.default.svc.cluster.local/jellyfin-movies##
+    volumeAttributes:
+      source: //nas.chezmoi.sh/Films
+    nodeStageSecretRef:
+      name: jellyfin-smb-credentials
+      namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-tvshows-smb-storage
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: smb
+  volumeName: jellyfin-tvshows-smb-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
+  name: jellyfin-tvshows-smb-storage
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=64710
+    - gid=64710
+    - noperm
+    - mfsymlinks
+    - cache=strict
+    - noserverino # required to prevent data corruption
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: true
+    # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
+    # make sure this value is unique for every share in the cluster
+    volumeHandle: smb-server.default.svc.cluster.local/jellyfin-tvshows##
+    volumeAttributes:
+      source: //nas.chezmoi.sh/Series TV
+    nodeStageSecretRef:
+      name: jellyfin-smb-credentials
+      namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-musics-smb-storage
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: smb
+  volumeName: jellyfin-musics-smb-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
+  name: jellyfin-musics-smb-storage
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=64710
+    - gid=64710
+    - noperm
+    - mfsymlinks
+    - cache=strict
+    - noserverino # required to prevent data corruption
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: true
+    # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
+    # make sure this value is unique for every share in the cluster
+    volumeHandle: smb-server.default.svc.cluster.local/jellyfin-musics##
+    volumeAttributes:
+      source: //nas.chezmoi.sh/Musiques
+    nodeStageSecretRef:
+      name: jellyfin-smb-credentials
+      namespace: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-animes-smb-storage
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Ti
+  storageClassName: smb
+  volumeName: jellyfin-animes-smb-storage
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
+  name: jellyfin-animes-smb-storage
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=64710
+    - gid=64710
+    - noperm
+    - mfsymlinks
+    - cache=strict
+    - noserverino # required to prevent data corruption
+  csi:
+    driver: smb.csi.k8s.io
+    readOnly: true
+    # volumeHandle format: {smb-server-address}#{sub-dir-name}#{share-name}
+    # make sure this value is unique for every share in the cluster
+    volumeHandle: smb-server.default.svc.cluster.local/jellyfin-animes##
+    volumeAttributes:
+      source: //nas.chezmoi.sh/Animes
+    nodeStageSecretRef:
+      name: jellyfin-smb-credentials
+      namespace: jellyfin
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: jellyfin-smb-credentials
+  namespace: jellyfin
+spec:
+  data:
+    - remoteRef:
+        key: lungmen.akn/jellyfin/storage/smb
+        property: username
+      secretKey: username
+    - remoteRef:
+        key: lungmen.akn/jellyfin/storage/smb
+        property: password
+      secretKey: password
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: jellyfin-smb-credentials

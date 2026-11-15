@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+data:
+  longhorn: proxmox-lvmthin-ext4
+kind: ConfigMap
+metadata:
+  labels:
+    velero.io/change-storage-class: RestoreItemAction
+    velero.io/plugin-config: ""
+  name: change-storage-class-config
+  namespace: velero-system

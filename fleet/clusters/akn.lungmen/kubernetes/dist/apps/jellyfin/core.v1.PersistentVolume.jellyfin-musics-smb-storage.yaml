@@ -1,0 +1,35 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: smb.csi.k8s.io
+  labels:
+    app.kubernetes.io/instance: jellyfin
+    app.kubernetes.io/name: jellyfin
+  name: jellyfin-musics-smb-storage
+spec:
+  accessModes:
+  - ReadOnlyMany
+  capacity:
+    storage: 1Ti
+  csi:
+    driver: smb.csi.k8s.io
+    nodeStageSecretRef:
+      name: jellyfin-smb-credentials
+      namespace: jellyfin
+    readOnly: true
+    volumeAttributes:
+      source: //nas.chezmoi.sh/Musiques
+    volumeHandle: smb-server.default.svc.cluster.local/jellyfin-musics##
+  mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=64710
+  - gid=64710
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb

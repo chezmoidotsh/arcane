@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: >
+      Allows Immich to access SSO for authentication.
+      Permits outbound HTTPS connections to auth.chezmoi.sh on port 443.
+  name: allow-immich-to-sso
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: immich
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+          serverNames:
+            - auth.chezmoi.sh

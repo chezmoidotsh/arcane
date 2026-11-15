@@ -1,0 +1,216 @@
+---
+# No CPU limit (CKV_K8S_11): the OCR bursts would be throttled and the startup would get slower.
+# CHOWN (CKV_K8S_25) seems to be required by the S6 runtime; paperless can't read secrets from files (CKV_K8S_35).
+# trunk-ignore-all(checkov/CKV_K8S_11,checkov/CKV_K8S_25,checkov/CKV_K8S_35)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    checkov.io/skip1: CKV2_K8S_6=Checkov don't manage properly Network Policies
+    checkov.io/skip2: CKV_K8S_25=CHOWN seems to be required by S6 runtime... it works but with some error logs
+    checkov.io/skip3: CKV_K8S_35=Paperless don't handle secret value through files
+  labels:
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/instance: paperless-ngx-webserver
+  name: paperless-ngx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: webserver
+  serviceName: paperless-ngx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: webserver
+        app.kubernetes.io/instance: paperless-ngx-webserver
+      annotations:
+        backup.velero.io/backup-volumes: persistent-storage
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV0125): ghcr.io/paperless-ngx/paperless-ngx is trusted
+        # trunk-ignore(trivy/KSV022): CHOWN seems to be required by S6 runtime... it works but with some error logs
+        - name: paperless-ngx
+          env:
+            - name: PAPERLESS_APPS
+              value: allauth.socialaccount.providers.openid_connect
+            - name: PAPERLESS_CONSUMER_POLLING
+              value: "60"
+            - name: PAPERLESS_CORS_ALLOWED_HOSTS
+              value: https://archives.chezmoi.sh
+            - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
+              value: https://archives.chezmoi.sh
+
+            - name: PAPERLESS_DBENGINE
+              value: postgresql
+            - name: PAPERLESS_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: host
+            - name: PAPERLESS_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: port
+            - name: PAPERLESS_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: dbname
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: username
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: password
+            - name: PAPERLESS_DISABLE_REGULAR_LOGIN
+              value: "true"
+            - name: PAPERLESS_REDIRECT_LOGIN_TO_SSO
+              value: "true"
+
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-ngx-redis:6379
+            - name: PAPERLESS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-configuration
+                  key: secret_key
+            - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-configuration
+                  key: socialaccount_providers
+            - # In order to avoid 'Invalid cross-device link' errors
+              name: PAPERLESS_SCRATCH_DIR
+              value: /usr/src/paperless/media/.paperlessscratch
+            - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
+              value: "1"
+            - name: S6_READ_ONLY_ROOT
+              value: "1"
+            # The image ships no .pyc and skips its bytecode step on a read-only
+            # root, so every manage.py call recompiles Django from source. Cache the
+            # bytecode in the /tmp emptyDir, kept across container restarts.
+            - name: PYTHONDONTWRITEBYTECODE
+              value: ""
+            - name: PYTHONPYCACHEPREFIX
+              value: /tmp/pycache
+          image: ghcr.io/paperless-ngx/paperless-ngx
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 250m
+            limits:
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              # trunk-ignore(trivy/KSV106): CHOWN seems to be required by S6 runtime... it works but with some error logs
+              add:
+                - CHOWN # required by the official image
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 21473
+            runAsNonRoot: true
+            runAsUser: 21473
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            # 6 min: a cold start (no bytecode cache yet) takes ~2 min of init.
+            failureThreshold: 180
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /usr/src/paperless/media
+              subPath: media
+            - name: persistent-storage
+              mountPath: /usr/src/paperless/data
+              subPath: data
+            - name: temp
+              mountPath: /run
+              subPath: run
+            - name: temp
+              mountPath: /tmp
+              subPath: tmp
+            - name: temp
+              mountPath: /usr/src/paperless/consume
+              subPath: consume
+            - name: smb-storage
+              mountPath: /usr/src/paperless/media/documents/archive/nas.chezmoi.sh
+      securityContext:
+        fsGroup: 21473
+        runAsGroup: 21473
+        runAsUser: 21473
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: temp
+          emptyDir: {}
+        - name: smb-storage
+          persistentVolumeClaim:
+            claimName: paperless-ngx-smb-storage
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          app.kubernetes.io/component: webserver
+          app.kubernetes.io/instance: paperless-ngx-webserver
+        name: persistent-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        # -- Retain policy: a stray PVC/StatefulSet deletion detaches the disk instead of
+        # destroying it (see proxmox-csi-plugin.helmvalues/default.yaml).
+        storageClassName: proxmox-lvmthin-ext4-retain
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/instance: paperless-ngx-webserver
+  name: paperless-ngx
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    app.kubernetes.io/component: webserver
+  type: ClusterIP

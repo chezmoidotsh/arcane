@@ -1,0 +1,17 @@
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: actual-budget
+  namespace: velero-system
+spec:
+  schedule: 0 */12 * * *
+  template:
+    includedNamespaces:
+    - actual-budget
+    includedResources:
+    - pods
+    - persistentvolumeclaims
+    - persistentvolumes
+    storageLocation: default
+    ttl: 168h0m0s

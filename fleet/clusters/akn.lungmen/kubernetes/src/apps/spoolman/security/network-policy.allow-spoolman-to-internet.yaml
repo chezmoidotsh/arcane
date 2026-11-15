@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Spoolman to sync the external filament/material database from
+      donkie.github.io/SpoolmanDB on startup and periodically thereafter.
+  name: allow-spoolman-to-internet
+  namespace: spoolman
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: spoolman
+  egress:
+    - toFQDNs:
+        - matchName: donkie.github.io
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: paperless-ngx
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: paperless-ngx
+      app.kubernetes.io/instance: paperless-ngx
+    includeTemplates: true
+    includeSelectors: true
+
+resources:
+  - paperless-ngx.configuration.externalsecret.yaml
+  - paperless-ngx.database.externalsecret.yaml
+  - paperless-ngx.httproute.yaml
+  - paperless-ngx.redis.yaml
+  - paperless-ngx.smb-storage.yaml
+  - paperless-ngx.statefulset.yaml
+
+  - security/
+
+images:
+  - name: ghcr.io/paperless-ngx/paperless-ngx
+    newName: oci.chezmoi.sh/ghcr.io/paperless-ngx/paperless-ngx
+    # oripathy: type=oci upstream=github.com/paperless-ngx/paperless-ngx tagPrefix=v digest=true
+    newTag: 3.3.4@sha256:9bc6e8248891bcfa6f52fffe8b81e4ea8cae75790c3ec1b9906961a7ba55c969
+  - name: docker.io/library/redis
+    newName: oci.chezmoi.sh/docker.io/library/redis
+    # oripathy: type=oci upstream=github.com/redis/redis digest=true
+    newTag: 8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: StatefulSet, name: paperless-ngx-redis}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: redis}}
+  - target: {kind: StatefulSet, name: paperless-ngx}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: bracketed}

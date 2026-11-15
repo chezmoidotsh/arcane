@@ -1,0 +1,38 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tailscale-system
+
+resources:
+  # Required secrets and ProxyClass for Tailscale Operator
+  - restricted.proxyclass.yaml
+  - operator-oauth.externalsecret.yaml
+
+  - security/
+
+helmCharts:
+  - repo: https://pkgs.tailscale.com/helmcharts
+    name: tailscale-operator
+    # oripathy: type=helm upstream=github.com/tailscale/tailscale tagPrefix=v image=tailscale/k8s-operator name=tailscale
+    version: 1.98.3
+
+    releaseName: tailscale-operator
+    namespace: tailscale-system
+
+    valuesInline:
+      operatorConfig:
+        hostname: lungmen-akn
+    valuesFile: tailscale.helmvalues/default.yaml
+    additionalValuesFiles:
+      - tailscale.helmvalues/hardened.yaml
+    includeCRDs: true
+
+images:
+  - name: tailscale/k8s-operator
+    newName: oci.chezmoi.sh/docker.io/tailscale/k8s-operator
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: {kind: Deployment, name: operator}
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: json}}

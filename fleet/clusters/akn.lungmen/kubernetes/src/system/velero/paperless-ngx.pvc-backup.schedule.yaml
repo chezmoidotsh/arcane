@@ -1,0 +1,24 @@
+---
+# One Schedule per app (rather than one shared Schedule across namespaces) so each
+# app's backups have their own timeline/name prefix — simpler to target for restore
+# (`velero restore create --from-backup paperless-ngx-<timestamp>`) without needing
+# to filter a multi-app backup down to one namespace.
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: paperless-ngx
+spec:
+  schedule: "0 */12 * * *"
+  template:
+    includedNamespaces:
+      - paperless-ngx
+    includedResources:
+      - pods
+      - persistentvolumeclaims
+      # PersistentVolume is cluster-scoped but Velero still correlates it to
+      # includedNamespaces via spec.claimRef.namespace — see jellyfin's Schedule
+      # for the full reasoning (verified live, and dropping this was tried and
+      # reverted).
+      - persistentvolumes
+    storageLocation: default
+    ttl: 168h0m0s

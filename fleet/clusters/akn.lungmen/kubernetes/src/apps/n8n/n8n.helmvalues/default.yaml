@@ -1,0 +1,185 @@
+---
+# Queue mode: three kinds of pods sharing the same image, PostgreSQL and S3.
+#   - main:              editor, REST API, test webhooks, triggers/schedules (single replica)
+#   - webhook-processor: production webhooks, forms and MCP endpoints (/webhook, /form, /mcp, ...)
+#   - worker:            runs the executions pulled from the Redis queue (n8n-redis)
+# Routing is done by the Cilium Gateway (n8n.httproute.yaml, and n8n.internal.httproute.yaml for Pangolin).
+queueMode:
+  enabled: true
+  workerReplicaCount: 1
+  workerConcurrency: 10
+webhookProcessor:
+  enabled: true
+  replicaCount: 1
+  # Production webhooks only on the processor (main keeps the test webhooks, /webhook-test/).
+  disableProductionWebhooksOnMainProcess: true
+# Redis is a plain Deployment in this namespace (n8n.redis.yaml), not part of the chart.
+redis:
+  enabled: true
+  useExternal: true
+  host: n8n-redis.n8n.svc.cluster.local
+  port: 6379
+
+# docker.n8n.io (the chart default) is not mirrored by the OCI registry.
+image:
+  repository: ghcr.io/n8n-io/n8n
+
+# A single main handles the triggers: never run two of them at once (duplicated
+# triggers during a rollout).
+strategy:
+  type: Recreate
+
+# No local persistent storage: workflows/credentials live in PostgreSQL, binary
+# data in S3 (see `config.extraEnv`) and the pod only gets an emptyDir.
+persistence:
+  enabled: false
+
+# Sized per role: main only runs the editor and triggers, executions happen in the worker.
+resources:
+  main:
+    requests:
+      cpu: 100m
+      memory: 2Gi
+    limits:
+      # null drops the chart's default CPU limit: throttling starved the event loop and the GC.
+      cpu: null
+      memory: 2Gi
+  worker:
+    requests:
+      cpu: 250m
+      memory: 2Gi
+    limits:
+      memory: 2Gi
+  webhookProcessor:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 512Mi
+
+database:
+  type: postgresdb
+  useExternal: true
+  host: apps-secured-20260530-rw.databases.svc.cluster.local
+  port: 5432
+  database: n8n
+  user: n8n
+  passwordSecret:
+    name: n8n-database-n8n
+    key: password
+
+# N8N_ENCRYPTION_KEY, N8N_HOST, N8N_PORT and N8N_PROTOCOL come from the
+# `n8n-conf` Secret (see n8n.configuration.externalsecret.yaml).
+secretRefs:
+  existingSecret: n8n-conf
+
+editor:
+  url: https://n8n.chezmoi.sh
+webhook:
+  url: https://n8n.chezmoi.sh
+
+config:
+  timezone: Europe/Paris
+  extraEnv:
+    # Node caps its heap at ~50% of the container memory by default and aborts before the cgroup
+    # limit (main crashed with "heap out of memory" at ~510 MB of 1Gi): follow the limit instead.
+    - name: NODE_OPTIONS
+      value: --max-old-space-size-percentage=75
+
+    # Traffic reaches n8n through Pangolin (Traefik) or the Cilium Gateway.
+    - name: N8N_PROXY_HOPS
+      value: "1"
+
+    # Keep calls to n8n's servers (api.n8n.io, telemetry) to the strict minimum: only the
+    # templates and MCP servers catalogs are wanted (see security/).
+    - name: N8N_DIAGNOSTICS_ENABLED
+      value: "false"
+    - name: N8N_VERSION_NOTIFICATIONS_ENABLED
+      value: "false"
+    - name: N8N_TEMPLATES_ENABLED
+      value: "true"
+
+    # vault.chezmoi.sh sits behind Cilium's Envoy, whose HTTP/1 parser rejects the non-standard
+    # `LIST` verb (400): make n8n list KV secrets with `GET ?list=true` instead.
+    - name: N8N_EXTERNAL_SECRETS_PREFER_GET
+      value: "true"
+
+    # Trust the egress-inspection CA (Cilium inspects the TLS traffic to api.n8n.io).
+    - name: NODE_EXTRA_CA_CERTS
+      value: /etc/egress-inspection/ca.crt
+
+    # Community nodes are baked into OCI images (catalog/nix/images/n8n/) and mounted below: n8n
+    # must never install packages by itself.
+    - name: N8N_COMMUNITY_PACKAGES_ENABLED
+      value: "false"
+    - name: N8N_CUSTOM_EXTENSIONS
+      value: /opt/n8n-nodes/actual
+
+    # Binary data in S3 (Enterprise external storage). Credentials in `n8n-enterprise`.
+    - name: N8N_AVAILABLE_BINARY_DATA_MODES
+      value: filesystem,s3
+    - name: N8N_DEFAULT_BINARY_DATA_MODE
+      value: s3
+    - name: N8N_EXTERNAL_STORAGE_S3_HOST
+      value: s3.chezmoi.sh
+    - name: N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME
+      value: n8n-lungmen-akn
+    - name: N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION
+      value: fr-par-1
+    - name: N8N_EXTERNAL_STORAGE_S3_FORCE_PATH_STYLE
+      value: "true"
+
+    # OIDC through Pocket-Id, applied at every startup (UI controls locked).
+    # Client id/secret come from `n8n-enterprise`.
+    - name: N8N_SSO_MANAGED_BY_ENV
+      value: "true"
+    - name: N8N_SSO_OIDC_LOGIN_ENABLED
+      value: "true"
+    - name: N8N_SSO_OIDC_DISCOVERY_ENDPOINT
+      value: https://auth.chezmoi.sh/.well-known/openid-configuration
+
+    # Instance role from the `n8n_instance_role` claim (set on Pocket-Id groups, see
+    # chezmoi.sh stack/pocket-id.ts); no claim means global:member.
+    - name: N8N_SSO_USER_ROLE_PROVISIONING
+      value: instance_role
+
+  extraEnvFrom:
+    - secretRef:
+        name: n8n-enterprise
+
+extraContainers:
+  - name: local-license-server
+    image: oci.chezmoi.sh/chezmoidotsh/n8n-self-license:2.44.6
+    resources:
+      requests:
+        cpu: 10m
+        memory: 50Mi
+      limits:
+        cpu: 50m
+        memory: 50Mi
+
+extraVolumes:
+  - name: egress-inspection-ca
+    secret:
+      secretName: n8n-egress-inspection-ca
+      items:
+        - key: ca.crt
+          path: ca.crt
+  - name: n8n-nodes-actual
+    image:
+      reference: oci.chezmoi.sh/ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
+      pullPolicy: IfNotPresent
+extraVolumeMounts:
+  - name: egress-inspection-ca
+    mountPath: /etc/egress-inspection
+    readOnly: true
+  - name: n8n-nodes-actual
+    mountPath: /opt/n8n-nodes/actual
+    readOnly: true
+
+# Ingress is handled by the Gateway API (n8n.httproute.yaml); network policies
+# by Cilium (security/).
+ingress:
+  enabled: false
+networkPolicy:
+  enabled: false
