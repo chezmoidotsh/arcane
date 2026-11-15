@@ -5,7 +5,7 @@
 # =============================================================================
 # Runs the unit tests of the OPA/Rego policies (`opa test`) when a policy changes.
 #
-# Events:      push (main), pull_request, on catalog/opa/ only
+# Events:      push (main), pull_request, on policies/opa/ only
 # Permissions: contents: read
 # =============================================================================
 
@@ -16,12 +16,12 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/push,pull_request.opa-test.yaml"
-      - "catalog/opa/**"
+      - "policies/opa/**"
 
   pull_request:
     paths:
       - ".github/workflows/push,pull_request.opa-test.yaml"
-      - "catalog/opa/**"
+      - "policies/opa/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -46,4 +46,4 @@ jobs:
           install: true
 
       - name: 🧪 Run opa test
-        run: mise exec opa -- opa test catalog/opa/policies/ -v
+        run: mise exec opa -- opa test policies/opa/ -v

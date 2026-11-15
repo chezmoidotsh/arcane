@@ -9,7 +9,7 @@ description: >
   "write a post-mortem", "what went wrong", "why did this fail", "lessons learned", "move this doc to the wiki", "fix
   the docs", and right after a significant design decision, a multi-step manual operation or an incident worth
   preserving, even if nobody asked. Do not use it for code comments, component READMEs that describe a directory, OPA
-  rule sheets under catalog/opa/, or agent files (AGENTS.md, .agents/).
+  rule sheets under policies/opa/, or agent files (AGENTS.md, .agents/).
 ---
 
 # Documentation writer
@@ -66,7 +66,7 @@ Tell-apart rules when two rows seem to fit:
 | Guides, references, procedures, ADRs, post-mortems, experiments          | `docs/`, in its type directory     |
 | The plan and the progress of a one-off migration                         | `docs/migrations/`                 |
 | A README that describes a directory (what it contains, how to change it) | Next to the code, as a `README.md` |
-| OPA policies and their rule sheets                                       | `catalog/opa/`, never in `docs/`   |
+| OPA policies and their rule sheets                                       | `policies/opa/`, never in `docs/`  |
 | Agent instructions, skills and knowledge                                 | `AGENTS.md`, `.agents/`            |
 | Output of a generator (`projects/chezmoi.sh/docs/*.md`)                  | Where its generator writes it      |
 | Diagrams and icons used by READMEs                                       | `docs/assets/`                     |

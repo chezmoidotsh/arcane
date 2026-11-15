@@ -113,14 +113,14 @@ after the cluster is fully operational, so all HTTPRoute backends are regular ap
 
 ```sh
 # CI (GitHub Actions) — per-app directory with --combine
-conftest test projects/<cluster>/dist/apps/<app>/ -p catalog/opa/policies/ --combine
+conftest test projects/<cluster>/dist/apps/<app>/ -p policies/opa/ --combine
 
 # Local — test a specific app
 mise exec conftest -- conftest test \
   projects/lungmen.akn/dist/apps/linkding/ \
-  -p catalog/opa/policies/ \
+  -p policies/opa/ \
   --combine
 
 # OPA unit tests
-mise exec opa -- opa test catalog/opa/policies/ -v
+mise exec opa -- opa test policies/opa/ -v
 ```

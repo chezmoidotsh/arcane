@@ -16,11 +16,11 @@ Options:
   --platforms         Show available platforms for the flake and exit
 
 Examples:
-  $(basename "$0") catalog/flakes/hashicorp/vault
-  $(basename "$0") --load catalog/flakes/openbao/openbao
-  $(basename "$0") --system aarch64-linux catalog/flakes/openbao/openbao
-  $(basename "$0") --load --system x86_64-linux catalog/flakes/hashicorp/vault
-  $(basename "$0") --platforms catalog/flakes/hashicorp/vault
+  $(basename "$0") catalog/nix/images/hashicorp/vault
+  $(basename "$0") --load catalog/nix/images/openbao/openbao
+  $(basename "$0") --system aarch64-linux catalog/nix/images/openbao/openbao
+  $(basename "$0") --load --system x86_64-linux catalog/nix/images/hashicorp/vault
+  $(basename "$0") --platforms catalog/nix/images/hashicorp/vault
 EOF
 }
 

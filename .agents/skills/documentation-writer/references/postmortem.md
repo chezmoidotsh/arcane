@@ -316,7 +316,7 @@ must map to a concrete artifact** in the "De la leçon au contrôle" table:
 | Artifact type    | When to use                                                              |
 | ---------------- | ------------------------------------------------------------------------ |
 | ADR              | A design decision or principle is involved (`docs/decisions/`)           |
-| OPA rule         | The lesson can be expressed as a manifest validation (`catalog/opa/`)    |
+| OPA rule         | The lesson can be expressed as a manifest validation (`policies/opa/`)   |
 | Runbook step     | The lesson is procedural (`docs/procedures/`)                            |
 | Alert rule       | A signal could have surfaced the precursor                               |
 | CI test          | Lesson can be encoded as a build-time check                              |
