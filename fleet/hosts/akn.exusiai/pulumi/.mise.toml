@@ -1,7 +1,7 @@
 # =============================================================================
-# rimbilliton.akn Pulumi stack - Mise configuration
+# exusiai.akn Pulumi stack - Mise configuration
 # =============================================================================
-# Minecraft server on OCI Always Free (see ../../../README.md).
+# Minecraft server on OCI Always Free (see ../README.md), stack exusiai_akn.live.
 #
 # First run: see docs/guides/Initialiser-Rimbilliton.md (Pulumi configuration).
 #

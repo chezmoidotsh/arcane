@@ -16,7 +16,7 @@ const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 // the boot volume (no separate data volume -- backups go to Backblaze B2).
 //
 // The image is a plain Ubuntu Minimal, only a *bootstrap* OS: NixOS is
-// installed over it with nixos-anywhere (kexec), see ../../nixos/README.md and
+// installed over it with nixos-anywhere (kexec), see ../../../README.md and
 // docs/guides/Initialiser-Rimbilliton.md. Hence ignoreChanges on sourceDetails/metadata -- once
 // NixOS is installed, a newer Ubuntu image must not trigger a replacement
 // (which would wipe the world).
@@ -55,9 +55,9 @@ export const instance = new oci.core.Instance(
 			nsgIds: [nsg.id],
 		},
 		metadata: { ssh_authorized_keys: config.require("ssh_authorized_keys") },
-		displayName: "rimbilliton-minecraft",
+		displayName: "exusiai-minecraft",
 		freeformTags: {
-			project: "rimbilliton.akn",
+			project: "exusiai.akn",
 			role: "minecraft",
 			managed_by: "pulumi",
 		},

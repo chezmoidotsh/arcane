@@ -3,7 +3,7 @@
 { config, lib, pkgs, ... }:
 {
   system.stateVersion = "26.05";
-  networking.hostName = "rimbilliton-akn";
+  networking.hostName = "exusiai-akn";
   time.timeZone = "UTC";
 
   # Boot loader, disk layout and console live in platforms/ (selected by the flake output).

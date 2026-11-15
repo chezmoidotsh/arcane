@@ -1,15 +1,15 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo.dark.svg">
-      <img alt="Stylized letter 'R' with a futuristic font and a subscript 11, representing Rimbilliton·AKN branding" src="./docs/assets/logo.light.svg" width="200">
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
+      <img alt="Stylized letter 'R' with a futuristic font and a subscript 11, representing Rimbilliton·AKN branding" src="./assets/logo.light.svg" width="200">
   </picture>
 </h1>
 
-<h4 align="center">Rimbilliton·AKN - Minecraft Server with Pelican</h4>
+<h4 align="center">Exusiai·AKN (formerly Rimbilliton·AKN) - Minecraft Server with Pelican</h4>
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../../LICENSE)
 
 <a href="#about">About</a> · <a href="#services-overview">Services Overview</a> ·
 <a href="#current-project-structure">Project Structure</a> · <a href="#security-considerations">Security
@@ -50,8 +50,8 @@ This architecture provides:
 
 ## Services Overview
 
-![Architecture diagram](./docs/assets/architecture-dark.svg#gh-dark-mode-only)
-![Architecture diagram](./docs/assets/architecture-light.svg#gh-light-mode-only)
+![Architecture diagram](./assets/architecture-dark.svg#gh-dark-mode-only)
+![Architecture diagram](./assets/architecture-light.svg#gh-light-mode-only)
 
 ---
 
@@ -77,7 +77,7 @@ community plugin, and a pool of game ports that Wings allocates to servers on de
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/apps/caddy.svg" alt="Caddy Logo" width="120" align="right" style="margin-left: 16px;">
+<img src="../../../docs/assets/icons/apps/caddy.svg" alt="Caddy Logo" width="120" align="right" style="margin-left: 16px;">
 
 ### [Caddy](https://caddyserver.com/)
 
@@ -109,7 +109,7 @@ than snapshotting a live world.\*
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/platform/tailscale.svg" alt="Tailscale Logo" width="120" align="left" style="margin-right: 16px;">
+<img src="../../../docs/assets/icons/platform/tailscale.svg" alt="Tailscale Logo" width="120" align="left" style="margin-right: 16px;">
 
 ### [Tailscale](https://tailscale.com/)
 
@@ -128,7 +128,7 @@ Mesh VPN providing SSH access and `nixos-rebuild` deployments. SSH is closed on 
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/apps/pocket-id.svg" alt="Pocket-ID Logo" width="120" align="right" style="margin-left: 16px;">
+<img src="../../../docs/assets/icons/apps/pocket-id.svg" alt="Pocket-ID Logo" width="120" align="right" style="margin-left: 16px;">
 
 ### [Pocket-ID](https://pocket-id.org/) (auth.chezmoi.sh)
 
@@ -162,46 +162,42 @@ S3-compatible object storage holding the restic repository, in a private bucket 
 This project contains documentation and infrastructure-as-code (Pulumi and NixOS) for the Minecraft server:
 
 ```txt
-rimbilliton.akn/
+akn.exusiai/
 ├── README.md                                   # This documentation
 ├── architecture.d2                             # Architecture diagram source (D2 format)
-├── docs/
-│   ├── assets/                                 # Generated diagrams and assets
-│   │   ├── architecture-dark.svg               # Dark theme architecture diagram
-│   │   ├── architecture-light.svg              # Light theme architecture diagram
-│   │   ├── logo.dark.svg                       # Dark theme logo
-│   │   └── logo.light.svg                      # Light theme logo
-│   └── BOOTSTRAP.md                            # Complete bootstrap procedure
-└── src/
-    └── infrastructure/
-        ├── nixos/                              # NixOS flake (infrastructure-as-code)
-        │   ├── flake.nix                       # Inputs and host definition
-        │   ├── platforms/                      # Boot + disk layout: oci.a1.nix (prod, aarch64), proxmox.kvm.nix (test VM)
-        │   ├── configuration.nix               # Base system (boot, network, SSH, Tailscale, sops)
-        │   ├── modules/
-        │   │   ├── pelican.nix                 # Pelican Panel and Wings containers (Docker)
-        │   │   ├── caddy.nix                   # Caddy: TLS for the Panel and Wings
-        │   │   └── backup.nix                  # restic to Backblaze B2
-        │   └── secrets/                        # SOPS secrets (template only)
-        └── pulumi/                             # Provisions the OCI VM, network, DNS, B2 and SSO client
-            └── stack/
-                ├── oci/                        # Compartment, VCN/NSG, instance
-                ├── backblaze.ts                # Backup bucket and scoped key
-                ├── dns.ts                      # Cloudflare DNS records
-                ├── pocket-id.ts                # OIDC client for the admin panel (disabled, provider broken)
-                └── tailscale.ts                # First-boot auth key
+├── assets/                                     # Generated diagrams and assets
+│   ├── architecture-dark.svg                   # Dark theme architecture diagram
+│   ├── architecture-light.svg                  # Light theme architecture diagram
+│   ├── logo.dark.svg                           # Dark theme logo
+│   └── logo.light.svg                          # Light theme logo
+├── nix/                                        # NixOS flake (infrastructure-as-code)
+│   ├── flake.nix                               # Inputs and host definition
+│   ├── platforms/                              # Boot + disk layout: oci.a1.nix (prod, aarch64), proxmox.kvm.nix (test VM)
+│   ├── configuration.nix                       # Base system (boot, network, SSH, Tailscale, sops)
+│   ├── modules/
+│   │   ├── pelican.nix                         # Pelican Panel and Wings containers (Docker)
+│   │   ├── caddy.nix                           # Caddy: TLS for the Panel and Wings
+│   │   └── backup.nix                          # restic to Backblaze B2
+│   └── secrets/                                # SOPS secrets (template only)
+└── pulumi/                                     # Provisions the OCI VM, network, DNS, B2 and SSO client
+    └── stack/
+        ├── oci/                                # Compartment, VCN/NSG, instance
+        ├── backblaze.ts                        # Backup bucket and scoped key
+        ├── dns.ts                              # Cloudflare DNS records
+        ├── pocket-id.ts                        # OIDC client for the admin panel (disabled, provider broken)
+        └── tailscale.ts                        # First-boot auth key
 ```
 
 ## Installation and Setup
 
-The OCI resources are provisioned first via the Pulumi stack in `src/infrastructure/pulumi/`. NixOS is then installed
+The OCI resources are provisioned first via the Pulumi stack in `pulumi/`. NixOS is then installed
 over the bootstrap image and managed with `nixos-rebuild` from then on:
 
 ```bash
 mise run nixos:oci:install ubuntu@<public-ip>   # then: mise run nixos:oci:update
 ```
 
-See [Initialiser Rimbilliton](../../docs/guides/Initialiser-Rimbilliton.md) for the complete bootstrap procedure.
+See [Initialiser Rimbilliton](../../../docs/guides/Initialiser-Rimbilliton.md) for the complete bootstrap procedure.
 
 ## Security Considerations
 
@@ -223,7 +219,7 @@ See [Initialiser Rimbilliton](../../docs/guides/Initialiser-Rimbilliton.md) for 
 
 ## License
 
-This repository is licensed under the [Apache-2.0](../../LICENSE).
+This repository is licensed under the [Apache-2.0](../../../LICENSE).
 
 > \[!CAUTION] This is a personal project intended for my own use. Feel free to explore and use the code, but please note
 > that it comes with no warranties or guarantees. Use it at your own risk.
