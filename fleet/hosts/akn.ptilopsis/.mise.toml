@@ -1,0 +1,20 @@
+# =============================================================================
+# ptilopsis.akn — Task Automation
+# =============================================================================
+# Usage:
+#   mise run nix:eval     # Evaluate the nix-darwin configuration (no build, no activation)
+#   mise run nix:switch   # Rebuild THIS Mac (macOS only, once nix-darwin is installed; asks first)
+# =============================================================================
+
+[tasks."nix:eval"]
+description = "Evaluate the nix-darwin configuration without building it"
+dir = "{{ config_root }}/nix"
+run = "nix eval --raw .#darwinConfigurations.ptilopsis.system.drvPath"
+
+[tasks."nix:switch"]
+description = "Apply the nix-darwin configuration to this Mac (macOS only, once nix-darwin is installed)"
+dir = "{{ config_root }}/nix"
+# Skipped (not an error) outside macOS, and until nix-darwin is installed: the first install is manual (see README).
+skip_if = '[ "$(uname -s)" != "Darwin" ] || ! command -v darwin-rebuild >/dev/null'
+confirm = "Apply the ptilopsis nix-darwin configuration to THIS machine (sudo darwin-rebuild switch)?"
+run = "sudo darwin-rebuild switch --flake .#ptilopsis"
