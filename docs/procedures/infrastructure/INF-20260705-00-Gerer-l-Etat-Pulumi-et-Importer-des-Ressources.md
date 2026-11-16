@@ -64,11 +64,10 @@ dans le répertoire du projet cible, ce qui fournit Node et la CLI `pulumi`), `s
 Les accès suivants sont également nécessaires :
 
 - une clé d'application Garage sur `pulumi-states`, exportée dans `AWS_ACCESS_KEY_ID` et `AWS_SECRET_ACCESS_KEY` ;
-- pour `projects/chezmoi.sh` en particulier, des identifiants de fournisseur au-delà des valeurs par défaut : toute
-  ressource **ACME** de Proxmox VE exige une vraie session `root@pam` (nom d'utilisateur et mot de passe), car ces
-  points d'accès rejettent les jetons d'API. Le stockage du mot de passe dans le Keychain macOS est décrit dans
-  [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md), section «
-  Bootstrapping ».
+- pour `pve-01.core` en particulier, des identifiants de fournisseur au-delà des valeurs par défaut : toute ressource
+  **ACME** de Proxmox VE exige une vraie session `root@pam` (nom d'utilisateur et mot de passe), car ces points d'accès
+  rejettent les jetons d'API. Le stockage du mot de passe dans le Keychain macOS est décrit dans
+  [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md), section « Première installation ».
 
 ## Entrées requises
 
@@ -143,9 +142,7 @@ la stack) et doit passer sous gestion Pulumi sans cycle destruction/création.
 Déclarer d'abord la ressource, avec des paramètres aussi proches que possible de l'objet réel, et rester à plat : ne pas
 renseigner l'option de ressource `parent`. Un import fait sans `--parent` correspondant produit un URN différent de
 celui d'une ressource déclarée avec `parent`, ce qui apparaît ensuite comme un delete+create parasite (cas rencontré sur
-la stack Proxmox VE ; voir
-[`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md), « Adding a
-new identity or ACL binding »).
+la stack Proxmox VE ; voir [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md), « Contribuer »).
 
 ### Importer dans l'état
 

@@ -18,7 +18,7 @@
 # only when the last refresh is older than PULUMI_REFRESH_MAX_AGE hours
 # (default 24). Force or skip it: `mise run pulumi:apply -- --refresh` /
 # `-- --no-refresh`. Both need the `root@pam` username/password in the
-# environment, see ../README.md, "Bootstrapping".
+# environment, see ../README.md, « Première installation ».
 # =============================================================================
 
 [tools]

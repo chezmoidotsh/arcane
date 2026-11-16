@@ -37,7 +37,7 @@ const acmeDns01Token = new Dns01TokenComponent("acme-dns-pve", {
 // `root@pam` ticket/password session, which this endpoint specifically
 // requires). Managing this resource is why this stack's provider
 // authenticates via `root@pam` username/password instead of an API token --
-// see ../README.md, "Bootstrapping". Without it, ACME can mint the plugin's
+// see ../README.md, « Première installation ». Without it, ACME can mint the plugin's
 // Cloudflare token but never actually touch the account it authenticates
 // against, defeating the point of managing ACME here at all.
 //

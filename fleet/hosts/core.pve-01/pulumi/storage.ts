@@ -21,7 +21,7 @@ const pveBackupTokenSecret = config.requireSecret("pveBackupTokenSecret");
 
 // `encryptionKey` is the datastore's client-side encryption key -- the same
 // key material described in fleet/hosts/core.pbs/README.md,
-// "Bootstrapping" step 6 (generated once via `proxmox-backup-client key
+// "Première installation" step 6 (generated once via `proxmox-backup-client key
 // create` on the PBS VM, with no Pulumi-managed origin). Sourced *only* from
 // PVE_PBS_STORE_ENCRYPTION_KEY, a path to a local keyfile -- deliberately no
 // Pulumi-config fallback: a credential this sensitive never gets an option

@@ -25,7 +25,7 @@ PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s {{host.fqdn
 > The password never goes into Pulumi config — not even as `--secret`. `Pulumi.<stack>.yaml` is committed to git, and
 > encrypted-at-rest is not the same as safe to commit. Read it from a password manager inline, as above, and never
 > `export` it into a long-lived shell. The one-time Keychain setup is in
-> [`README.md`](./README.md), "Bootstrapping".
+> [`README.md`](./README.md), « Première installation ».
 
 Applying also regenerates this document from the resulting state, so it never drifts from what is deployed.
 
@@ -122,4 +122,4 @@ See
 > [!IMPORTANT]
 > ACME resources cannot be imported or applied with an API token. Proxmox VE's ACME endpoints reject token
 > authentication outright — even a full-privilege one — and require a real `root@pam` password session. See
-> [`README.md`](./README.md), "Bootstrapping".
+> [`README.md`](./README.md), « Première installation ».
