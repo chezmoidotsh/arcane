@@ -18,7 +18,7 @@ spec:
     metadata:
       annotations:
         # Source reference for argocd-extension-application-map
-        source-ref.argocd.argoproj.io/0.path: projects/rhodes.akn/src/argocd/shoot.apps
+        source-ref.argocd.argoproj.io/0.path: fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps
         source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
         source-ref.argocd.argoproj.io/0.target-revision: main
 
@@ -35,7 +35,7 @@ spec:
       project: seed
       sources:
         - repoURL: https://github.com/chezmoidotsh/arcane.git
-          path: projects/rhodes.akn/src/argocd/shoot.apps
+          path: fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps
           targetRevision: main
 
           kustomize:

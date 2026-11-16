@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État                                                                                                                   |
-| ----- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                                                                  |
-| 2     | Créer les bases de catalogue manquantes                             | faite                                                                                                                  |
-| 3     | Activer le lint de structure                                        | faite                                                                                                                  |
-| 4     | Déplacer le catalogue                                               | faite                                                                                                                  |
-| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                                                                      |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                      |
-| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                           |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 et 2 code prêt, PR 3 et 4 à faire |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                                                                |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                |
+| Étape | Contenu                                                             | État                                                                                                                 |
+| ----- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                                                                |
+| 2     | Créer les bases de catalogue manquantes                             | faite                                                                                                                |
+| 3     | Activer le lint de structure                                        | faite                                                                                                                |
+| 4     | Déplacer le catalogue                                               | faite                                                                                                                |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                                                                    |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                    |
+| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                         |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1, 2 et 3 code prêt, PR 4 à faire |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                                                              |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                              |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                              |
 
 ## Avant de commencer
 
@@ -731,6 +731,32 @@ ce cas. Pour chaque cluster :
   de `path_regex`, rien à rechiffrer.
 - **À confirmer** : `argocd appset generate` sur le `seed` (comme pour `lungmen.akn`).
 - **Retour arrière** : `git revert` ; les chemins reviennent vers `projects/`, toujours présent.
+
+### Détail de l'étape 8 : `rhodes.akn`, pull request 3
+
+- **Constaté** : le `seed` (les deux copies, `projects/rhodes.akn/src/argocd/seed.apps/` et
+  `fleet/clusters/akn.rhodes/kubernetes/src/argocd/seed.apps/`, identiques) fait lire aux `Application` `shoot` (une par
+  cluster, `lungmen.akn` compris) `fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps` au lieu de
+  `projects/rhodes.akn/src/argocd/shoot.apps`. `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml` pointe
+  l'`Application` `argocd` vers `…/kubernetes/dist/argocd` et `…/kubernetes/src/argocd/sops`, et l'`Application` `seed`
+  vers `…/kubernetes/src/argocd/seed.apps`. Les commandes d'amorçage du README d'ArgoCD de la copie visent la copie.
+- **Constaté** : `shoot.apps`, `dist/argocd` et `src/argocd/sops` sont identiques entre les deux arborescences
+  (`diff -r`), donc aucun manifeste ne change ; `dist:render --check` sur `src/argocd` passe. Les chemins factices
+  `projects/{{ … }}/…` des générateurs de `shoot.apps` restent : les patches du `seed` les remplacent, ils partent en
+  pull request 4.
+- **Constaté** : les `Application` `argocd` et `seed` n'ont pas de synchronisation automatique, et
+  `bootstrap.applications.yaml` n'est lu par aucune `Application` : la fusion seule ne change que les `shoot` (via le
+  `seed` encore servi depuis `projects/`, une fois synchronisé à la main).
+- **Manuel après la fusion** : `argocd app sync argocd/seed` (les `shoot` passent sur le `shoot.apps` de la copie, mêmes
+  ApplicationSets) ; puis
+  `kubectl apply --server-side -f fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml` (les objets ont été
+  créés en server-side, pas d'annotation `last-applied-configuration`) ; puis `argocd app sync argocd/argocd` et
+  `argocd app sync argocd/seed` ; vérifier `argocd app get argocd/argocd -o json | jq '.spec.sources[].path'` et idem
+  pour `seed` (chemins `fleet/`), les deux `Synced`, `argocd app list` inchangé.
+- **Risque** : `argocd` gère ArgoCD lui-même ; une erreur de chemin le laisse `Unknown`/`ComparisonError` sans rien
+  supprimer (`Prune=confirm`, `Delete=confirm`). Ne pas lancer de synchronisation avec élagage pendant la bascule.
+- **Retour arrière** : `git revert`, puis réappliquer `projects/rhodes.akn/src/bootstrap.applications.yaml`
+  (`--server-side`), toujours présent jusqu'à la pull request 4.
 
 ### Ce qui reste à confirmer à l'étape 8
 
