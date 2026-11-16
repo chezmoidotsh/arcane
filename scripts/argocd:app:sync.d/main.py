@@ -43,7 +43,6 @@ def match_app_path(norm_path: str, yaml_file: bool) -> tuple[str, str, str] | No
     return None
 
 HOSTNAME_REGEX = re.compile(r'[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+\.[a-zA-Z]+')
-ARGOCD_REGEX = re.compile(r'argocd\.[a-zA-Z0-9.-]+\.[a-zA-Z]+')
 
 COMMON_URL_PATTERNS = [
     "https://argocd.{cluster_name}.chezmoi.sh",
@@ -224,21 +223,10 @@ def search_argocd_in_files(search_regex, file_pattern: str) -> str | None:
     return None
 
 def detect_argocd_server(cluster_name: str) -> str | None:
-    pattern1 = f"projects/{cluster_name}/src/apps/*argocd/argocd.httproute.yaml"
-    s = search_argocd_in_files(HOSTNAME_REGEX, pattern1)
+    # ArgoCD runs on the hub cluster only (fleet/clusters/akn.rhodes), whatever cluster the app targets.
+    s = search_argocd_in_files(HOSTNAME_REGEX, "fleet/clusters/*/kubernetes/src/argocd/*.httproute.yaml")
     if s:
         return s
-
-    pattern2 = f"projects/{cluster_name}/src/apps/*argocd/*ingress*.yaml"
-    s = search_argocd_in_files(ARGOCD_REGEX, pattern2)
-    if s:
-        return s
-
-    for p in PROJECT_ROOT.glob("projects/*/src/apps/*argocd/argocd.httproute.yaml"):
-        rel_p = str(p.relative_to(PROJECT_ROOT))
-        s = search_argocd_in_files(HOSTNAME_REGEX, rel_p)
-        if s:
-            return s
 
     import ssl
     ctx = ssl.create_default_context()

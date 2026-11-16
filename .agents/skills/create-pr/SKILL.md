@@ -98,9 +98,9 @@ Before pushing anything:
    `references/pr-examples.md`.
 6. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the
    commit symbol format is for git log, not for PR titles).
-7. Apply the scope label(s) matching the changed paths (`project`, `fleet`, `catalog`, `agents:skills`,
-   `agents:sessions`, `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for
-   PRs; type is a GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
+7. Apply the scope label(s) matching the changed paths (`fleet`, `catalog`, `agents:skills`, `agents:sessions`,
+   `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for PRs; type is a
+   GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
 8. Launch the post-creation monitor (see "Post-creation monitoring" below) so merges and new comments are picked up
    without the user having to check back manually.
 
@@ -178,17 +178,17 @@ When adding a commit to a branch that already has an open PR:
 
 ## PR title format
 
-Sentence form, no symbol prefix, no bracketed scope. Scope lives in the **scope label** (`project`, `catalog`,
+Sentence form, no symbol prefix, no bracketed scope. Scope lives in the **scope label** (`fleet`, `catalog`,
 `agents:skills`, …) — there's no `type::*` label for PRs, type is a GitHub-native Issue Type field on issues only. The
 commit symbol format stays where it belongs — on commits — and is validated by commitlint there.
 
 Examples:
 
-| Bad (commit format applied to a PR)                       | Good (sentence + labels)                            |
-| --------------------------------------------------------- | --------------------------------------------------- |
-| `+[project:lungmen.akn]: Add Forgejo Git hosting service` | `Add Forgejo as a self-hosted Git forge on lungmen` |
-| `![project:lungmen.akn]: WAL volume full`                 | `Fix CNPG apps-secured WAL retention on lungmen`    |
-| `^[deps]: cert-manager to v1.16`                          | `Bump cert-manager to v1.16`                        |
+| Bad (commit format applied to a PR)                     | Good (sentence + labels)                            |
+| ------------------------------------------------------- | --------------------------------------------------- |
+| `+[fleet:lungmen.akn]: Add Forgejo Git hosting service` | `Add Forgejo as a self-hosted Git forge on lungmen` |
+| `![fleet:lungmen.akn]: WAL volume full`                 | `Fix CNPG apps-secured WAL retention on lungmen`    |
+| `^[deps]: cert-manager to v1.16`                        | `Bump cert-manager to v1.16`                        |
 
 Rules:
 
@@ -328,7 +328,7 @@ gh pr create \
   --title "Sentence describing the change" \
   --body-file /tmp/pr_body.md \
   --base main \
-  --label "project"
+  --label "fleet"
 rm /tmp/pr_body.md
 ```
 
@@ -336,9 +336,9 @@ rm /tmp/pr_body.md
 
 - **PR title**: sentence-case English, verb-first, no symbol prefix, no bracketed scope, no trailing period. The commit
   symbol format stays on commits.
-- **PR labels**: the scope label(s) matching the changed paths are mandatory (see `.github/labels.yaml`: `project`,
-  `fleet`, `catalog`, `agents:skills`, `agents:sessions`, `agents:knowledge`, `gh`, `deps`). Add `size::*` when you have
-  signal; `priority::*` is issues-only.
+- **PR labels**: the scope label(s) matching the changed paths are mandatory (see `.github/labels.yaml`: `fleet`,
+  `catalog`, `agents:skills`, `agents:sessions`, `agents:knowledge`, `gh`, `deps`). Add `size::*` when you have signal;
+  `priority::*` is issues-only.
 - **Commits**: All commits must have the symbol-based `type[scope]: Subject` format, GPG signature (`-S`), and
   `Assisted-by:` trailer. Signed-off-by is the user's responsibility — never add `-s` yourself.
 - **PR body line length**: No hard limit — do NOT wrap PR body text at 80 characters. GitHub renders Markdown, so
@@ -374,10 +374,10 @@ capabilities for personal infrastructure development.
 
 ### New Application: Forgejo
 
-- **[`forgejo.deployment.yaml`](projects/lungmen.akn/src/apps/forgejo/forgejo.deployment.yaml)** — Deploys Forgejo 10.0 from Codeberg official image
-- **[`forgejo.httproute.yaml`](projects/lungmen.akn/src/apps/forgejo/forgejo.httproute.yaml)** — External access via Envoy Gateway on forgejo.chezmoi.sh
-- **[`forgejo.database.externalsecret.yaml`](projects/lungmen.akn/src/apps/forgejo/forgejo.database.externalsecret.yaml)** — PostgreSQL credentials from OpenBao
-- **[`security/network-policy.default-hardened.yaml`](projects/lungmen.akn/src/apps/forgejo/security/network-policy.default-hardened.yaml)** — Default-deny baseline for the forgejo namespace
+- **[`forgejo.deployment.yaml`](fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/forgejo.deployment.yaml)** — Deploys Forgejo 10.0 from Codeberg official image
+- **[`forgejo.httproute.yaml`](fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/forgejo.httproute.yaml)** — External access via Envoy Gateway on forgejo.chezmoi.sh
+- **[`forgejo.database.externalsecret.yaml`](fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/forgejo.database.externalsecret.yaml)** — PostgreSQL credentials from OpenBao
+- **[`security/network-policy.default-hardened.yaml`](fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/security/network-policy.default-hardened.yaml)** — Default-deny baseline for the forgejo namespace
 
 ## Technical Impact
 
@@ -423,7 +423,7 @@ gh pr create \
   --title "Add Forgejo as a self-hosted Git forge on lungmen" \
   --body-file /tmp/pr_body.md \
   --base main \
-  --label "project"
+  --label "fleet"
 rm /tmp/pr_body.md
 ```
 

@@ -16,10 +16,10 @@ solution est en production sur `rhodes.akn` et `lungmen.akn`.
 ## Question
 
 Les ApplicationSets d'Arcane découvrent les applications avec un Git Directory Generator : chaque sous-répertoire de
-`projects/<cluster>/src/apps/*` devient une Application ArgoCD.
+`fleet/clusters/<famille>.<nom>/kubernetes/src/apps/*` devient une Application ArgoCD.
 
 ```text
-projects/lungmen.akn/src/apps/
+fleet/clusters/akn.lungmen/kubernetes/src/apps/
 ├── *argocd/          → Application argocd (synchronisation manuelle)
 ├── actual-budget/    → Application actual-budget (synchronisation automatique)
 ├── immich/           → Application immich (synchronisation automatique)
@@ -293,10 +293,11 @@ ApplicationSets de production.
 > [`applications`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/applications.applicationset.yaml) de
 > `rhodes.akn` fusionnent un générateur Git Directory et un générateur Git Files sur `*/.application.patch`, chacun dans
 > un Matrix avec un List, et appliquent un `templatePatch`. Leur chemin se construit à partir de l'annotation
-> `device.tailscale.com/hostname` ou du nom du cluster ; `projects/lungmen.akn/src/` n'a pas de dossier `argocd/`. Le
-> dépôt contient 9 fichiers `.application.patch` sous `projects/rhodes.akn/src/` et 13 sous `projects/lungmen.akn/src/`.
-> La clé de fusion est `.key` (le `basename` du chemin) au lieu de `app_name` et `app_path`. Plus aucun dossier
-> d'application ne porte le préfixe `*` dans `projects/*/src/apps/`.
+> `device.tailscale.com/hostname` ou du nom du cluster ; `fleet/clusters/akn.lungmen/kubernetes/src/` n'a pas de dossier
+> `argocd/`. Le dépôt contient 9 fichiers `.application.patch` sous `fleet/clusters/akn.rhodes/kubernetes/src/` et 13
+> sous `fleet/clusters/akn.lungmen/kubernetes/src/`. La clé de fusion est `.key` (le `basename` du chemin) au lieu de
+> `app_name` et `app_path`. Plus aucun dossier d'application ne porte le préfixe `*` dans
+> `fleet/clusters/*/kubernetes/src/apps/`.
 
 ## Pour aller plus loin
 

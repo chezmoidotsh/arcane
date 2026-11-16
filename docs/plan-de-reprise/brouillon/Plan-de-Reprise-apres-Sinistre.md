@@ -125,7 +125,7 @@ partie de la reprise est impossible.
 | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | Clé privée age (`SOPS_AGE_KEY_FILE`)                                        | `.mise/age/key.txt` sur le poste de l'opérateur (ignoré par Git), et le Secret `argocd-sops-age-key` sur `rhodes.akn` | Tout fichier SOPS : passphrases Pulumi, secrets des LXC, unseal d'OpenBao, ArgoCD |
 | Clé d'application Garage sur `pulumi-states`                                | Variables `AWS_ACCESS_KEY_ID` et `AWS_SECRET_ACCESS_KEY` de l'opérateur                                               | Toute commande `pulumi`                                                           |
-| Mot de passe `root@pam` de `pve-01`                                         | Coffre de l'opérateur                                                                                                 | `pulumi up` de `chezmoi-sh-infra` (ressources ACME)                               |
+| Mot de passe `root@pam` de `pve-01`                                         | Coffre de l'opérateur                                                                                                 | `pulumi up` de `pve-01-core` (ressources ACME)                                    |
 | Root token et parts Shamir d'OpenBao                                        | Gestionnaire de secrets personnel de l'opérateur                                                                      | Reprise de l'accès administrateur à OpenBao                                       |
 | Clé de chiffrement PBS et sa paperkey                                       | OpenBao ; une copie hors ligne de la paperkey est demandée, sans emplacement                                          | Toute restauration depuis PBS                                                     |
 | Clé GPG d'Omni (`/persistent/omni/omni.asc`)                                | Volume `mp0` du LXC ; une copie « dans un endroit sûr séparé » est demandée                                           | Relire l'état d'Omni                                                              |
@@ -140,8 +140,8 @@ qui la décrit.
 
 Avant toute commande, vérifier la présence de chaque élément du tableau
 [Ce qui vit hors du dépôt](#ce-qui-vit-hors-du-dépôt) sur le poste de reprise, avec un clone du dépôt et `mise install`.
-La clé age vient en premier : elle déchiffre les passphrases Pulumi
-(`projects/*/src/infrastructure/pulumi/.mise/env.yaml`) et tous les secrets des étapes suivantes.
+La clé age vient en premier : elle déchiffre les passphrases Pulumi (`fleet/**/pulumi/.mise/env.yaml`) et tous les
+secrets des étapes suivantes.
 
 ### 1. Rétablir le réseau
 
@@ -214,9 +214,8 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 
 ### 6. Restaurer les LXC de plateforme
 
-- **Exige** : `pve-01` ; les secrets de chaque LXC, déjà chiffrés avec SOPS dans `fleet/hosts/core.*/nix/secrets/` et
-  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/` (deux destinataires age) ; pour Omni, son
-  volume `/persistent` ou la clé `omni.asc`.
+- **Exige** : `pve-01` ; les secrets de chaque LXC, déjà chiffrés avec SOPS dans `fleet/hosts/core.*/nix/secrets/` ;
+  pour Omni, son volume `/persistent` ou la clé `omni.asc`.
 - **Ordre** : `talosnet-dns` (DNS de talosnet), `oci-registry` (Zot, source de toutes les images des clusters), `omni`
   puis `omni-infra-provider-proxmox`, et enfin `observability`, qui ne bloque rien.
 - **Référence** : restauration depuis PBS (« Restore a guest from backup » dans
@@ -228,7 +227,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 
 ### 7. Reconstruire `rhodes.akn`
 
-- **Exige** : Omni et son fournisseur d'infrastructure ; Zot ; le Secret Proxmox écrit par `chezmoi-sh-infra` ; Garage
+- **Exige** : Omni et son fournisseur d'infrastructure ; Zot ; le Secret Proxmox écrit par `pve-01-core` ; Garage
   (sauvegardes CNPG d'OpenBao et de Pocket-Id) ; la clé age ; le root token d'OpenBao.
 - **Référence** : [Restaurer Rhodes](Restaurer-Rhodes.md) en entier. Il enchaîne la
   [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md),
@@ -239,14 +238,14 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 ### 8. Repasser la stack `chezmoi-sh-infra`
 
 - **Exige** : OpenBao descellé et Pocket-Id en service (étape 7).
-- Relancer `mise run pulumi:apply` dans `projects/chezmoi.sh/src/infrastructure/pulumi` pour écrire les mots de passe
-  SMB dans OpenBao et réconcilier les groupes Pocket-Id. Cette seconde passe n'est décrite dans aucun guide ; elle
-  découle des dépendances de l'étape 5.
+- Relancer `mise run pulumi:apply` dans `fleet/hosts/core.nas/pulumi` pour écrire les mots de passe SMB dans OpenBao, et
+  dans `fleet/base/pulumi` pour réconcilier les groupes Pocket-Id. Cette seconde passe n'est décrite dans aucun guide ;
+  elle découle des dépendances de l'étape 5.
 
 ### 9. Reconstruire `lungmen.akn`
 
-- **Exige** : `rhodes.akn` complet (OpenBao, Pocket-Id, ArgoCD) ; le Secret Proxmox écrit par `chezmoi-sh-infra` ; les
-  mots de passe SMB dans OpenBao (étape 8).
+- **Exige** : `rhodes.akn` complet (OpenBao, Pocket-Id, ArgoCD) ; le Secret Proxmox écrit par `pve-01-core` ; les mots
+  de passe SMB dans OpenBao (étape 8).
 - **Référence** : [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md). L'enregistrement comme spoke dans ArgoCD
   est manuel (`argocd cluster add`, issue #1282).
 
@@ -286,9 +285,9 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 1. L'état Pulumi vit sur ce que Pulumi provisionne
 
-- **Constat** : les six projets Pulumi déclarent `s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1`, et
+- **Constat** : les douze projets Pulumi déclarent `s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1`, et
   `nas-core` provisionne l'application Garage (`core.nas/pulumi/apps.ts`) et le NAS qui la porte, `pbs-core` PBS qui
-  sauvegarde le NAS, et `chezmoi-sh-infra` la configuration de `pve-01`.
+  sauvegarde le NAS, et `pve-01-core` la configuration de `pve-01`.
 - **Ce qui a changé** : la
   [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   ne cite plus de projet disparu (historique du 2026-10-11) et documente la création d'une clé Garage (étape 1). L'issue
@@ -335,13 +334,13 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 4. Les sauvegardes d'OpenBao sont sur le Garage du NAS
 
-- **Constat** : `projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml` envoie les sauvegardes CNPG d'OpenBao vers
-  `s3://cnpg-rhodes-akn/openbao` sur `https://s3.chezmoi.sh`, comme celles de Pocket-Id et de Grafana. La copie hors
-  site passe par la synchronisation B2 du dataset de Garage (circularités 2 et 3).
+- **Constat** : `fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.objectstore.yaml` envoie les sauvegardes CNPG
+  d'OpenBao vers `s3://cnpg-rhodes-akn/openbao` sur `https://s3.chezmoi.sh`, comme celles de Pocket-Id et de Grafana. La
+  copie hors site passe par la synchronisation B2 du dataset de Garage (circularités 2 et 3).
 - **Ce qui a changé** : l'emplacement de la clé age est établi. `softhsm-tokens.secret.yaml` est chiffré pour un seul
-  destinataire, la même clé publique age que `projects/rhodes.akn/.sops.yaml` utilise partout. La clé privée vit dans
-  `.mise/age/key.txt` sur le poste de l'opérateur (`SOPS_AGE_KEY_FILE` du `.mise.toml` racine, chemin ignoré par Git) et
-  dans le Secret `argocd-sops-age-key` de `rhodes.akn`, lui-même chiffré pour la même clé
+  destinataire, la même clé publique age que `fleet/clusters/akn.rhodes/.sops.yaml` utilise partout. La clé privée vit
+  dans `.mise/age/key.txt` sur le poste de l'opérateur (`SOPS_AGE_KEY_FILE` du `.mise.toml` racine, chemin ignoré par
+  Git) et dans le Secret `argocd-sops-age-key` de `rhodes.akn`, lui-même chiffré pour la même clé
   (`src/argocd/sops/age-key.secret.yaml`). Aucune copie indépendante du poste et du cluster n'est documentée.
 - **État** : atténuée. L'unseal ne dépend pas d'OpenBao (le jeton SoftHSM est dans Git) et l'accès administrateur passe
   par le root token hors dépôt ([Restaurer OpenBao](Restaurer-OpenBao.md)). Restent ouverts : les données d'OpenBao

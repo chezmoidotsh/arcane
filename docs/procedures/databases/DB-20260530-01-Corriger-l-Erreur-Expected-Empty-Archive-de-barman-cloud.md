@@ -12,8 +12,9 @@ plein, rétablir d'abord le cluster avec [DB-20260530-00](DB-20260530-00-Retabli
 
 > [!NOTE]\
 > Les clusters CNPG de `lungmen.akn` déclarent aujourd'hui `isWALArchiver: false`
-> (`projects/lungmen.akn/src/apps/databases/postgres-apps*.helmvalues.yaml`) : l'archivage WAL y est désactivé, et cette
-> erreur ne les concerne plus. La procédure reste valable pour tout cluster qui archive ses WAL vers un stockage objet.
+> (`fleet/clusters/akn.lungmen/kubernetes/src/apps/databases/postgres-apps*.helmvalues.yaml`) : l'archivage WAL y est
+> désactivé, et cette erreur ne les concerne plus. La procédure reste valable pour tout cluster qui archive ses WAL vers
+> un stockage objet.
 
 ## Cadre technique et conventions
 
@@ -219,8 +220,8 @@ configuration suivante est retenue :
 - **`ScheduledBackup` quotidien** avec `immediate: true` : fournit un point de reprise par jour sans streaming des WAL.
 
 Cette configuration est en place sur `lungmen.akn`
-(`projects/lungmen.akn/src/apps/databases/postgres-apps-secured.helmvalues.yaml`, `apps-secured.scheduledbackup.yaml`).
-Le raisonnement complet est dans
+(`fleet/clusters/akn.lungmen/kubernetes/src/apps/databases/postgres-apps-secured.helmvalues.yaml`,
+`apps-secured.scheduledbackup.yaml`). Le raisonnement complet est dans
 [l'incident d'origine](../../incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md).
 
 ## Historique

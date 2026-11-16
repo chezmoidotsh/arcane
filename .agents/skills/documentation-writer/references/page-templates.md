@@ -13,7 +13,7 @@ page lives and how it is named is in the [style guide](style-guide.md#naming-and
 | Post-mortem      | [postmortem.md](../templates/postmortem.md) or [postmortem-lite.md](../templates/postmortem-lite.md), rules in [postmortem.md](postmortem.md) | Tells what happened and why.                                                                               |
 | Experiment       | [experiment-template.md](experiment-template.md)                                                                                              | Records a question, what was tried and what was concluded. The code stays in the repository.               |
 | Archive          | [archive-template.md](archive-template.md)                                                                                                    | Keeps the trace of a finished or obsolete document: what it covered, why it is archived, what replaced it. |
-| Project overview | [project-template.md](project-template.md)                                                                                                    | One per project under `projects/`. The project `README.md` stays next to the code and links here.          |
+| Project overview | [project-template.md](project-template.md)                                                                                                    | One per element under `fleet/`. The element `README.md` stays next to the code and links here.             |
 
 All the templates (procedure, ADR, post-mortem) are in French. The post-mortem front matter keys and values, and the
 action syntax (`[due:: …]`), are not translated: the `.github/scripts/postmortem-*.py` scripts read them.

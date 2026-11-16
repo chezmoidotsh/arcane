@@ -100,27 +100,27 @@ def self_test() -> None:
         root = Path(d)
         (root / "docs" / "guides").mkdir(parents=True)
         (root / "docs" / "old").mkdir()
-        (root / "projects").mkdir()
-        (root / "projects" / "x.md").write_text("x")
+        (root / "fleet").mkdir()
+        (root / "fleet" / "x.md").write_text("x")
         (root / "docs" / "old" / "a.md").write_text("legacy")
         (root / "docs" / ".wiki-legacy").write_text("old/*\n")
-        (root / "docs" / "Home.md").write_text("[g](guides/Page.md#top) [p](../projects/x.md) [o](old/a.md) [e](https://e.org)\n")
-        (root / "projects" / "i.svg").write_text("<svg/>")
+        (root / "docs" / "Home.md").write_text("[g](guides/Page.md#top) [p](../fleet/x.md) [o](old/a.md) [e](https://e.org)\n")
+        (root / "fleet" / "i.svg").write_text("<svg/>")
         (root / "docs" / "guides" / "Page.md").write_text(
             "[h](../Home.md)\n```\n[h](../Home.md)\n```\n"
-            "![img](../../projects/i.svg) [t](../Home.md 'title') [a](<../Home.md>) `[c](../Home.md)`\n"
-            "[ref]: ../Home.md#x\n[d](../../projects)\n")
+            "![img](../../fleet/i.svg) [t](../Home.md 'title') [a](<../Home.md>) `[c](../Home.md)`\n"
+            "[ref]: ../Home.md#x\n[d](../../fleet)\n")
         n = publish(root / "docs", root / "out", "o/r", root)
         assert n == 2, n
         home = (root / "out" / "Home.md").read_text()
         assert "(/o/r/wiki/Page#top)" in home, home
-        assert "(https://github.com/o/r/blob/main/projects/x.md)" in home, home
+        assert "(https://github.com/o/r/blob/main/fleet/x.md)" in home, home
         assert "(https://github.com/o/r/blob/main/docs/old/a.md)" in home, home
         assert "(https://e.org)" in home, home
         page = (root / "out" / "guides" / "Page.md").read_text()
         assert page.startswith("[h](/o/r/wiki/Home)") and "```\n[h](../Home.md)\n```" in page, page
-        assert "![img](https://github.com/o/r/raw/main/projects/i.svg)" in page, page  # images need raw/, not blob/
-        assert "[d](https://github.com/o/r/tree/main/projects)" in page, page  # a directory is a tree/ link
+        assert "![img](https://github.com/o/r/raw/main/fleet/i.svg)" in page, page  # images need raw/, not blob/
+        assert "[d](https://github.com/o/r/tree/main/fleet)" in page, page  # a directory is a tree/ link
         assert "[t](/o/r/wiki/Home 'title')" in page and "[a](</o/r/wiki/Home>)" in page, page
         assert "`[c](../Home.md)`" in page, page  # inline code untouched
         assert "[ref]: /o/r/wiki/Home#x" in page, page

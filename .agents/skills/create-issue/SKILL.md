@@ -62,14 +62,14 @@ title.
 
 ### Good vs bad
 
-| Bad                                                   | Why it's bad                               | Better                                                                 |
-| ----------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
-| `+[gh]: Set up observability`                         | Commit format, no outcome                  | `Set up cluster observability stack (metrics, logs, alerting)`         |
-| `Fix immich`                                          | No symptom, no scope clarity               | `WAL volume full on apps-secured cluster — immich and paperless down`  |
-| `Improve performance`                                 | Vague — what improves, by how much, where? | `Reduce ArgoCD reconciliation interval from 3min to 30s on small apps` |
-| `Replace X with Y`                                    | No motivation in the title                 | `Replace Envoy Gateway with Cilium built-in Gateway API`               |
-| `Observability`                                       | Single-word, useless in a list             | `Set up cluster observability stack (metrics, logs, alerting)`         |
-| `🔧(project:lungmen.akn): Set up observability stack` | Gitmoji + parens, looks like a commit      | `Set up cluster observability stack (metrics, logs, alerting)`         |
+| Bad                                                 | Why it's bad                               | Better                                                                 |
+| --------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------- |
+| `+[gh]: Set up observability`                       | Commit format, no outcome                  | `Set up cluster observability stack (metrics, logs, alerting)`         |
+| `Fix immich`                                        | No symptom, no scope clarity               | `WAL volume full on apps-secured cluster — immich and paperless down`  |
+| `Improve performance`                               | Vague — what improves, by how much, where? | `Reduce ArgoCD reconciliation interval from 3min to 30s on small apps` |
+| `Replace X with Y`                                  | No motivation in the title                 | `Replace Envoy Gateway with Cilium built-in Gateway API`               |
+| `Observability`                                     | Single-word, useless in a list             | `Set up cluster observability stack (metrics, logs, alerting)`         |
+| `🔧(fleet:lungmen.akn): Set up observability stack` | Gitmoji + parens, looks like a commit      | `Set up cluster observability stack (metrics, logs, alerting)`         |
 
 When in doubt: read the title cold without the body. If it doesn't answer _what would change_, rewrite it.
 
@@ -81,7 +81,7 @@ each mandatory group:
 | Field / Group | Mandatory            | Apply                                                                                                                                                                          |
 | ------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Issue Type    | **yes**              | One of `Bug`, `Feature`, `Improvement`, `Task`, `Docs`, `Security`, `Question` — set with `--type <Name>`                                                                      |
-| scope         | **yes**              | The repository area as a label (`project`, `fleet`, `catalog`, `gh`, `deps`, …) — name the specific cluster/area in the issue body                                             |
+| scope         | **yes**              | The repository area as a label (`fleet`, `catalog`, `gh`, `deps`, …) — name the specific cluster/area in the issue body                                                        |
 | `size::*`     | yes when known       | `size::XS`, `size::S`, `size::M`, `size::L`, `size::XL`. If you cannot estimate, leave it off rather than guessing.                                                            |
 | `priority::*` | yes when non-default | `priority::critical` (outage / data loss / active security), `priority::high` (this week), `priority::medium` (default — omit unless explicit), `priority::low` (nice-to-have) |
 
@@ -114,16 +114,15 @@ Breaking variants of any change add the `breaking-change` label.
 
 Which area of the repo does this touch?
 
-| Where the work lands                             | Label                                    |
-| ------------------------------------------------ | ---------------------------------------- |
-| `projects/<cluster>/`                            | `project` (name the cluster in the body) |
-| `fleet/<dir>/`                                   | `fleet` (name the machine in the body)   |
-| `catalog/<area>/`                                | `catalog` (name the area in the body)    |
-| `.github/`, root configs, cross-cutting concerns | `gh`                                     |
-| Dependency updates                               | `deps`                                   |
+| Where the work lands                             | Label                                          |
+| ------------------------------------------------ | ---------------------------------------------- |
+| `fleet/<dir>/`                                   | `fleet` (name the cluster or host in the body) |
+| `catalog/<area>/`                                | `catalog` (name the area in the body)          |
+| `.github/`, root configs, cross-cutting concerns | `gh`                                           |
+| Dependency updates                               | `deps`                                         |
 
 **Cross-cutting test:** if the issue body would say "this affects all clusters" or "this is a systemic concern", the
-scope is `gh`, not one of the projects. Don't pick a single project just because it's where you'll deploy first — that's
+scope is `gh`, not one of the clusters. Don't pick a single cluster just because it's where you'll deploy first — that's
 a phase, not a scope.
 
 Multi-scope is fine when the work genuinely splits across components — apply multiple scope labels.
@@ -309,7 +308,7 @@ Recommend VictoriaMetrics for the first deploy; revisit ClickHouse once operatio
 
 **Title:** `WAL volume full on apps-secured cluster — immich and paperless unavailable`
 
-**Type:** `Bug` — **Labels:** `project`, `priority::critical`, `size::M`
+**Type:** `Bug` — **Labels:** `fleet`, `priority::critical`, `size::M`
 
 **Body (excerpt):**
 
@@ -341,10 +340,10 @@ Recommend VictoriaMetrics for the first deploy; revisit ClickHouse once operatio
 
 ### Bad — title says nothing, body is a ceremony
 
-**Title:** `🔧(project:lungmen.akn): Set up observability stack (metrics, logs, alerting)`
+**Title:** `🔧(fleet:lungmen.akn): Set up observability stack (metrics, logs, alerting)`
 
 - Gitmoji + parens — looks like a commit, not a title
-- Repeats `project:lungmen.akn` (which the body says is just the first deploy target — scope is actually cross-cutting)
+- Repeats `fleet:lungmen.akn` (which the body says is just the first deploy target — scope is actually cross-cutting)
 - Body has 12 sections, 250 lines, "Pain Points / Motivation / Background" repeating themselves, an empty Risk table, an
   empty "AI Analysis Placeholder" — none of which a reader can act on
 - No `--type`, no scope label, no `size::*`

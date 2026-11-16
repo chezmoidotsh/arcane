@@ -138,9 +138,9 @@ The board also carries an `AKN Project` single-select field (`amiya.akn`, `chezm
 `lungmen.akn`, `rhodes.akn`, `shodan.akn`, `Global`) — set it alongside `size::*`/`priority::*` as part of the same
 triage pass, using the issue body (not just the title):
 
-- **One cluster clearly is the subject** (a `projects/<cluster>/` file path is the actual change location, or the title
-  names it) → that cluster, even if other clusters get an incidental mention (used-by context, "found while testing on
-  X").
+- **One cluster clearly is the subject** (a `fleet/clusters/<family>.<name>/` file path is the actual change location,
+  or the title names it) → that cluster, even if other clusters get an incidental mention (used-by context, "found while
+  testing on X").
 - **Catalog-level or reusable work** (a Pulumi provider, a shared component, a skill, repo-wide tooling) → `Global`,
   regardless of which cluster happens to consume it first.
 - **Genuinely spans 3+ clusters as the actual scope of the work** (a fleet-wide template, a cross-cluster

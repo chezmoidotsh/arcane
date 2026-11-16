@@ -32,11 +32,12 @@ application est perdu ou corrompu ; la durée dépend surtout du volume à recop
   que Velero n'intervienne, ce qui reproduit le `PodVolumeRestore` bloqué. Une `Application` n'a pas de mode maintenance
   distinct ; désactiver sa politique de synchronisation (`argocd app set <app> --sync-policy none`) en tient lieu, pour
   toute procédure qui supprime ou modifie à la main une ressource réconciliée par ArgoCD. L'`ApplicationSet` ignore les
-  écarts sur `.spec.syncPolicy.automated` (`projects/rhodes.akn/src/argocd/shoot.apps/applications.applicationset.yaml`)
-  : la désactivation manuelle n'est donc pas écrasée. L'étape 3 la désactive, l'étape 7 la rétablit.
+  écarts sur `.spec.syncPolicy.automated`
+  (`fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/applications.applicationset.yaml`) : la désactivation
+  manuelle n'est donc pas écrasée. L'étape 3 la désactive, l'étape 7 la rétablit.
 - **Les Schedules versionnés ne sauvegardent que `pods`, `persistentvolumeclaims` et `persistentvolumes`.** C'est le cas
-  de `jellyfin`, `actual-budget` et `paperless-ngx` dans `projects/lungmen.akn/src/infrastructure/kubernetes/velero/`.
-  Un Backup issu de ces Schedules ne contient donc pas le StatefulSet. La validation du 2026-08-05 portait sur un Backup
+  de `jellyfin`, `actual-budget` et `paperless-ngx` dans `fleet/clusters/akn.lungmen/kubernetes/src/system/velero/`. Un
+  Backup issu de ces Schedules ne contient donc pas le StatefulSet. La validation du 2026-08-05 portait sur un Backup
   qui le contenait (11 éléments restaurés) ; le comportement avec un Backup « PVC seul » n'a pas été vérifié.
 
 > [!WARNING]\
@@ -231,8 +232,8 @@ Les valeurs ci-dessous sont celles de la validation du 2026-08-05.
 
 > [!NOTE]\
 > Depuis, le `volumeClaimTemplates` de `jellyfin` utilise la `StorageClass` `proxmox-lvmthin-ext4-retain`
-> (`projects/lungmen.akn/src/apps/jellyfin/jellyfin.statefulset.yaml`) : un PVC provisionné aujourd'hui aurait une
-> politique `Retain`, alors que le PV de la validation était en `Delete`.
+> (`fleet/clusters/akn.lungmen/kubernetes/src/apps/jellyfin/jellyfin.statefulset.yaml`) : un PVC provisionné aujourd'hui
+> aurait une politique `Retain`, alors que le PV de la validation était en `Delete`.
 
 ```sh
 export VELERO_NAMESPACE=velero-system

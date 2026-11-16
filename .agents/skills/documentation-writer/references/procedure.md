@@ -247,7 +247,7 @@ Vérifier l'usage des PVC et les agrandir si besoin avec kubectl patch.
 
 ### 1. Générer le JSON du client OIDC
 
-​`bash APP_DIR="projects/amiya.akn/src/apps/home-dashboard" CLUSTER="amiya.akn" APP="home-dashboard" HOSTNAME="home.chezmoi.sh" ​`
+​`bash APP_DIR="fleet/clusters/akn.lungmen/kubernetes/src/apps/home-dashboard" CLUSTER="lungmen.akn" APP="home-dashboard" HOSTNAME="home.chezmoi.sh" ​`
 ```
 
 ## References

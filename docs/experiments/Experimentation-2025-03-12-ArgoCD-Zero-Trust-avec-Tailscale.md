@@ -279,22 +279,22 @@ en œuvre.
   distants joints par Tailscale : ses `ApplicationSets`
   ([`system.applicationset.yaml`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/system.applicationset.yaml))
   lisent l'annotation `device.tailscale.com/hostname` pour trouver le chemin
-  `projects/<hostname>/src/infrastructure/kubernetes/*` de chaque cluster, et le réglage de
+  `fleet/clusters/<famille>.<nom>/kubernetes/src/system/*` de chaque cluster, et le réglage de
   [`helmvalues/default.yaml`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/helmvalues/default.yaml) traite les
   clusters servis par Tailscale (timeouts TLS).
 - Le dépôt Helm Tailscale (`https://pkgs.tailscale.com/helmcharts`) est autorisé dans
   [`appprojects.yaml`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/appprojects.yaml) pour tous les clusters ;
-  `lungmen.akn` embarque l'opérateur dans `projects/lungmen.akn/src/infrastructure/kubernetes/tailscale/`, avec un
-  secret OAuth fourni par External Secrets (`operator-oauth.externalsecret.yaml`).
+  `lungmen.akn` embarque l'opérateur dans `fleet/clusters/akn.lungmen/kubernetes/src/system/tailscale/`, avec un secret
+  OAuth fourni par External Secrets (`operator-oauth.externalsecret.yaml`).
 
 > [!NOTE]\
 > Constat du 2026-10-11 : le montage de cette expérience (sidecar ArgoCD, `ApplicationSet` de démonstration, clusters
 > `k3d`) n'est pas repris tel quel par le dépôt. Les clusters réels sont des clusters Talos, et les secrets OAuth
 > passent par OpenBao et External Secrets au lieu d'une saisie en ligne de commande. Preuve :
-> `ls projects/lungmen.akn/src/infrastructure/kubernetes/tailscale` (`operator-oauth.externalsecret.yaml`,
+> `ls fleet/clusters/akn.lungmen/kubernetes/src/system/tailscale` (`operator-oauth.externalsecret.yaml`,
 > `restricted.proxyclass.yaml`, `tailscale.helmvalues`) ;
-> `grep -rn -i "sidecar\|TS_AUTHKEY" projects/rhodes.akn/src/argocd` ne renvoie rien (aucun sidecar Tailscale dans
-> l'ArgoCD de `rhodes.akn`).
+> `grep -rn -i "sidecar\|TS_AUTHKEY" fleet/clusters/akn.rhodes/kubernetes/src/argocd` ne renvoie rien (aucun sidecar
+> Tailscale dans l'ArgoCD de `rhodes.akn`).
 
 ## Pour aller plus loin
 

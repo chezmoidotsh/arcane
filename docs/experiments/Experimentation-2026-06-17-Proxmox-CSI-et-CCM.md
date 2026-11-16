@@ -13,9 +13,9 @@ Versions testées : CSI v0.18.1 (chart 0.5.7), CCM v0.13.1 (chart 0.2.28).
 > chacun un répertoire `proxmox/` sous `src/infrastructure/kubernetes/` qui déploie le CSI et le CCM. Sur `lungmen.akn`,
 > `kustomization.yaml` épingle les charts `proxmox-csi-plugin` 0.5.9 et `proxmox-cloud-controller-manager` 0.2.29, et
 > `dist/infrastructure/kubernetes/proxmox/` contient les `StorageClass` `proxmox-lvmthin-ext4`,
-> `proxmox-lvmthin-ext4-retain` et `proxmox-lvmthin-xfs`. Aucun déploiement Longhorn n'existe dans `projects/` (la
+> `proxmox-lvmthin-ext4-retain` et `proxmox-lvmthin-xfs`. Aucun déploiement Longhorn n'existe dans `fleet/` (la
 > correspondance `longhorn: proxmox-lvmthin-ext4` de
-> `projects/lungmen.akn/src/infrastructure/kubernetes/velero/change-storage-class.configmap.yaml` en reste la trace).
+> `fleet/clusters/akn.lungmen/kubernetes/src/system/velero/change-storage-class.configmap.yaml` en reste la trace).
 
 ## Question
 

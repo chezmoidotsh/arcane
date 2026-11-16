@@ -51,7 +51,7 @@ Les accès suivants sont également nécessaires :
 Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
 
 ```sh
-export {VAR_1}=<{Ce que c'est}>   # ex. projects/<cluster>/src/apps/<app>
+export {VAR_1}=<{Ce que c'est}>   # ex. fleet/clusters/<famille>.<nom>/kubernetes/src/apps/<app>
 export {VAR_2}=<{Ce que c'est}>   # ex. {valeur d'exemple}
 ```
 

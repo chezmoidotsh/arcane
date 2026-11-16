@@ -27,10 +27,10 @@
 #
 # Plus a small set of bare meta labels (`stale`, `breaking-change`, …).
 #
-# Scope labels use a single colon (e.g. `project`, `catalog`, `gh`, `deps`) — the
+# Scope labels use a single colon (e.g. `fleet`, `catalog`, `gh`, `deps`) — the
 # `::` separator is reserved for the orthogonal classification groups above.
-# `project` and `catalog` are deliberately coarse: which project/catalog area is
-# visible from the PR/issue body, not duplicated as a label.
+# `fleet` and `catalog` are deliberately coarse: which cluster/host or catalog area
+# is visible from the PR/issue body, not duplicated as a label.
 #
 # When adding or renaming a label, prefer `gh label edit <old> --name <new>` first
 # to preserve issue associations, then update this file to match. The sync workflow
@@ -75,9 +75,6 @@
 # ----------------------------------------------------------------------------
 # Scope
 # ----------------------------------------------------------------------------
-- name: project
-  description: Anything under projects/ — which cluster/app is named in the body
-  color: 1D76DB
 - name: fleet
   description: Anything under fleet/ — which cluster/host is named in the body
   color: 1D76DB

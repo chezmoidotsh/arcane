@@ -18,12 +18,12 @@ body:
         - `type::security` — security hardening
         - `type::chore` — tooling, CI, deps
 
-        Also add a scope label: `project:<cluster>`, `catalog:<area>`, `gh` for cross-cutting, `deps` for dependency work.
+        Also add a scope label: `fleet` (name the cluster or host in the body), `catalog`, `gh` for cross-cutting, `deps` for dependency work.
 
         Examples:
         - `Set up cluster observability stack (metrics, logs, alerting)` + `type::feature` + `gh`
-        - `Reduce ArgoCD sync churn by tuning reconciliation interval` + `type::improve` + `project:amiya.akn`
-        - `Extract shared CNPG backup overlay for cross-cluster reuse` + `type::refactor` + `catalog:kustomize`
+        - `Reduce ArgoCD sync churn by tuning reconciliation interval` + `type::improve` + `fleet`
+        - `Extract shared CNPG backup overlay for cross-cluster reuse` + `type::refactor` + `catalog`
 
   - type: textarea
     id: tldr

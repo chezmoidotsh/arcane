@@ -19,7 +19,7 @@ Distilled from incident post-mortems. Each bullet stands alone.
   that cluster's API server (port 6443) via FQDN. Default-hardened NetworkPolicies in the `vault` namespace will block
   this unless explicitly allowed.
 - Pattern: `CiliumNetworkPolicy` with `toFQDNs: kubernetes.<cluster>.chezmoi.sh:6443` in
-  `projects/amiya.akn/src/apps/vault/security/`.
+  `fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/security/`.
 
 ## Rotation (manual)
 

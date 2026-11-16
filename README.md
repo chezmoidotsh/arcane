@@ -65,10 +65,11 @@ mise install
 ├── .github
 │   └── assets                      # Repository assets (images, video, etc.) used in the documentation.
 ├── catalog                         # Catalog of reusable components
-│   ├── pulumi                      # Pulumi components and stacks
-│   ├── flakes                      # Nix flakes for OCI images
-│   ├── kustomize                   # Kustomize bases
-│   └── talos                       # Talos configuration patches
+│   ├── helm                        # Shared Helm charts
+│   ├── kubernetes                  # Shared Kustomize bases of the system components
+│   ├── nix                         # Nix flake: OCI images, modules and packages
+│   ├── omni                        # Omni cluster template, machine classes, Talos bootstrap manifests
+│   └── pulumi                      # Pulumi components, library and SDKs
 ├── docs                            # Documentation
 │   ├── archives                    # Finished or obsolete documents
 │   ├── assets                      # Diagrams and icons used by the pages and READMEs
@@ -78,12 +79,12 @@ mise install
 │   ├── incidents                   # Post-mortems
 │   ├── procedures                  # Operational procedures
 │   └── reference                   # Network, IPAM and configuration reference
-├── projects                        # Infrastructure projects
-│   ├── hass                        # Home Assistant configuration
-│   ├── kazimierz.akn               # Kazimierz cluster configuration
-│   ├── lungmen.akn                 # Lungmen cluster configuration
-│   ├── rhodes.akn                  # Rhodes cluster configuration
-│   └── rimbilliton.akn             # Rimbilliton Minecraft host (OCI VPS, NixOS)
+├── fleet                           # Everything deployed, one directory per element (<family>.<name>)
+│   ├── base                        # Resources tied to no machine (Cloudflare, Tailscale, B2, …)
+│   ├── clusters                    # Kubernetes clusters (akn.lungmen, akn.rhodes)
+│   └── hosts                       # Machines configured one by one (akn.horn, akn.exusiai, core.pve-01, …)
+├── policies
+│   └── opa                         # OPA policies run by the CI on the rendered manifests
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration
 ├── CHANGELOG.md                    # Project history and evolution
