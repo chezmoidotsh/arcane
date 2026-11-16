@@ -12,10 +12,10 @@ metadata:
       deletion when an issue on ApplicationSet occurs.
 
     # Source reference for argocd-extension-application-map
-    source-ref.argocd.argoproj.io/0.path: projects/rhodes.akn/dist/argocd
+    source-ref.argocd.argoproj.io/0.path: fleet/clusters/akn.rhodes/kubernetes/dist/argocd
     source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
     source-ref.argocd.argoproj.io/0.target-revision: main
-    source-ref.argocd.argoproj.io/1.path: projects/rhodes.akn/src/argocd/sops
+    source-ref.argocd.argoproj.io/1.path: fleet/clusters/akn.rhodes/kubernetes/src/argocd/sops
     source-ref.argocd.argoproj.io/1.repository-url: https://github.com/chezmoidotsh/arcane.git
     source-ref.argocd.argoproj.io/1.target-revision: main
   name: argocd
@@ -27,10 +27,10 @@ spec:
   sources:
     - repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
-      path: projects/rhodes.akn/dist/argocd
+      path: fleet/clusters/akn.rhodes/kubernetes/dist/argocd
     - repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
-      path: projects/rhodes.akn/src/argocd/sops
+      path: fleet/clusters/akn.rhodes/kubernetes/src/argocd/sops
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
@@ -51,7 +51,7 @@ metadata:
       deletion when an issue on ApplicationSet occurs.
 
     # Source reference for argocd-extension-application-map
-    source-ref.argocd.argoproj.io/0.path: projects/rhodes.akn/src/argocd/seed.apps
+    source-ref.argocd.argoproj.io/0.path: fleet/clusters/akn.rhodes/kubernetes/src/argocd/seed.apps
     source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
     source-ref.argocd.argoproj.io/0.target-revision: main
   name: seed
@@ -63,7 +63,7 @@ spec:
   sources:
     - repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
-      path: projects/rhodes.akn/src/argocd/seed.apps
+      path: fleet/clusters/akn.rhodes/kubernetes/src/argocd/seed.apps
   syncPolicy:
     syncOptions:
       - Delete=confirm
