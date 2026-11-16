@@ -369,4 +369,4 @@ pooling as first-class features rather than something bolted on with LVM/RAID.
 - [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   — the Pulumi state hosted on Garage
 - [`PROXMOX-VE.md`](./PROXMOX-VE.md) — the hypervisor this VM runs on
-- [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up
+- [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up

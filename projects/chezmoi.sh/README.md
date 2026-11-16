@@ -38,11 +38,11 @@ and applying it regenerates the reference documents below, so they never drift f
 
 Start here — one auto-generated reference per managed system, each with its own quick-reference table and procedures:
 
-| Document                                                         | System                                                                               |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [`docs/PROXMOX-VE.md`](docs/PROXMOX-VE.md)                       | `pve-01.pve.chezmoi.sh` — the hypervisor: access control, SDN, pools, ACME, firewall |
-| [`docs/PROXMOX_BACKUP_SERVER.md`](docs/PROXMOX_BACKUP_SERVER.md) | `pbs.pve.chezmoi.sh` — offsite VM/LXC backups (S3-backed datastore on Backblaze B2)  |
-| [`docs/TRUENAS.md`](docs/TRUENAS.md)                             | `nas.chezmoi.sh` — datasets, shares, permissions, snapshots, offsite sync, Garage    |
+| Document                                                                          | System                                                                               |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [`docs/PROXMOX-VE.md`](docs/PROXMOX-VE.md)                                        | `pve-01.pve.chezmoi.sh` — the hypervisor: access control, SDN, pools, ACME, firewall |
+| [`PROXMOX_BACKUP_SERVER.md`](../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) | `pbs.pve.chezmoi.sh` — offsite VM/LXC backups (S3-backed datastore on Backblaze B2)  |
+| [`docs/TRUENAS.md`](docs/TRUENAS.md)                                              | `nas.chezmoi.sh` — datasets, shares, permissions, snapshots, offsite sync, Garage    |
 
 These three files are **generated from the live Pulumi state** (`toolbox/*-docs/` in the stack) — never edit them by
 hand; `mise run pulumi:apply` regenerates them automatically.
@@ -53,8 +53,8 @@ For the code behind them:
   tasks
 - [`src/infrastructure/pulumi/stack/proxmox/README.md`](src/infrastructure/pulumi/stack/proxmox/README.md) — Proxmox VE
   scope, access model, bootstrapping (incl. the `root@pam` Keychain setup)
-- [`src/infrastructure/pulumi/stack/proxmox-backup-server/README.md`](src/infrastructure/pulumi/stack/proxmox-backup-server/README.md)
-  — PBS scope, datastore architecture, bootstrapping (incl. the client-side encryption key)
+- [`fleet/hosts/core.pbs/README.md`](../../fleet/hosts/core.pbs/README.md) (project `pbs-core`) — PBS scope, datastore
+  architecture, bootstrapping (incl. the client-side encryption key)
 - [`src/infrastructure/pulumi/stack/truenas/README.md`](src/infrastructure/pulumi/stack/truenas/README.md) — TrueNAS
   scope and conventions
 
