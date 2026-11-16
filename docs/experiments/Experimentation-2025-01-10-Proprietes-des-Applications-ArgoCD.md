@@ -289,10 +289,10 @@ ApplicationSets de production.
 
 > [!NOTE]\
 > **État au 2026-10-11 : la solution est en production.** Les ApplicationSets
-> [`system`](../../projects/rhodes.akn/src/argocd/shoot.apps/system.applicationset.yaml) et
-> [`applications`](../../projects/rhodes.akn/src/argocd/shoot.apps/applications.applicationset.yaml) de `rhodes.akn`
-> fusionnent un générateur Git Directory et un générateur Git Files sur `*/.application.patch`, chacun dans un Matrix
-> avec un List, et appliquent un `templatePatch`. Leur chemin se construit à partir de l'annotation
+> [`system`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/system.applicationset.yaml) et
+> [`applications`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/applications.applicationset.yaml) de
+> `rhodes.akn` fusionnent un générateur Git Directory et un générateur Git Files sur `*/.application.patch`, chacun dans
+> un Matrix avec un List, et appliquent un `templatePatch`. Leur chemin se construit à partir de l'annotation
 > `device.tailscale.com/hostname` ou du nom du cluster ; `projects/lungmen.akn/src/` n'a pas de dossier `argocd/`. Le
 > dépôt contient 9 fichiers `.application.patch` sous `projects/rhodes.akn/src/` et 13 sous `projects/lungmen.akn/src/`.
 > La clé de fusion est `.key` (le `basename` du chemin) au lieu de `app_name` et `app_path`. Plus aucun dossier

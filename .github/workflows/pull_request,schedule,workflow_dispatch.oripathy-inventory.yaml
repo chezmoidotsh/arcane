@@ -23,9 +23,6 @@ on:
   pull_request:
     paths:
       - .github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml
-      - projects/*/dist/**
-      - projects/*/src/**/kustomization.yaml
-      - projects/*/src/**/.application.patch
       - projects/**/*.nix
       - projects/**/flake.lock
       - fleet/clusters/*/kubernetes/dist/**

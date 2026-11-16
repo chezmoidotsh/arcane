@@ -17,14 +17,12 @@ on:
     paths:
       - ".github/workflows/push,pull_request.omni-template-lint.yaml"
       - "scripts/omni:template:lint"
-      - "projects/*/src/infrastructure/omni/**"
       - "fleet/clusters/*/omni/**"
 
   pull_request:
     paths:
       - ".github/workflows/push,pull_request.omni-template-lint.yaml"
       - "scripts/omni:template:lint"
-      - "projects/*/src/infrastructure/omni/**"
       - "fleet/clusters/*/omni/**"
 
 concurrency:

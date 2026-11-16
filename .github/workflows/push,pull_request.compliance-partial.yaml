@@ -21,7 +21,6 @@ on:
       - ".github/workflows/push,pull_request.compliance-partial.yaml"
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
-      - "projects/*/dist/**"
       - "fleet/clusters/*/kubernetes/dist/**"
 
   pull_request:
@@ -29,7 +28,6 @@ on:
       - ".github/workflows/push,pull_request.compliance-partial.yaml"
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
-      - "projects/*/dist/**"
       - "fleet/clusters/*/kubernetes/dist/**"
 
 concurrency:
@@ -66,7 +64,7 @@ jobs:
 
       - name: 🔍 Fail if any dist/ file is stale
         run: |
-          if ! git diff --exit-code -- 'projects/*/dist/**' 'fleet/clusters/*/kubernetes/dist/**'; then
+          if ! git diff --exit-code -- 'fleet/clusters/*/kubernetes/dist/**'; then
             echo ""
             echo "::error ::One or more dist/ directories are out of sync with their src/ sources."
             echo "::error ::Run 'scripts/dist:render --all' locally and commit the result."
@@ -90,7 +88,6 @@ jobs:
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
-            projects/**/dist/**
             fleet/clusters/*/kubernetes/dist/**
           dir_names: true
           matrix: true

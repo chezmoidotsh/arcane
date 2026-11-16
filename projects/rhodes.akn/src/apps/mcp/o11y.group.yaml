@@ -1,7 +1,0 @@
----
-apiVersion: toolhive.stacklok.dev/v1beta1
-kind: MCPGroup
-metadata:
-  name: o11y
-spec:
-  description: Observability tools (Grafana, VictoriaMetrics, VictoriaLogs, VictoriaTraces)
