@@ -43,4 +43,8 @@ jobs:
       - name: 🧹 Run rtunk check
         uses: axnic/rtunk@f6b1c69721d83631620791e82d1bdab9a50ecea6 # v0.16.0
         with:
+          # Build rtunk from the pinned action's own checkout (v0.16.0, as in mise) instead of
+          # downloading a release: `latest` pulled v0.16.1, whose attestation fails verification,
+          # and the release download with the workflow token answers "release not found".
+          version: source
           check-mode: changed-since-base
