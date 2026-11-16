@@ -1,0 +1,9 @@
+# `pulumi stack init` adds `encryptionsalt`. The secret keys
+# `nas-core:cloudflare_account_id`, `nas-core:cloudflare_zone_id`,
+# `nas-core:garage_admin_token`, `nas-core:garage_rpc_secret`,
+# `nas-core:garage_web_ui_password` and `nas-core:garage_web_ui_username` are
+# set with `pulumi config set --secret` (same values as the chezmoi_sh.live
+# stack).
+config:
+  truenas:destroyProtection: "true"
+  truenas:url: https://nas.chezmoi.sh

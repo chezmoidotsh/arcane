@@ -1,0 +1,53 @@
+# =============================================================================
+# nas.core Pulumi stack - Mise configuration
+# =============================================================================
+# TrueNAS SCALE (nas.chezmoi.sh), managed as a Pulumi stack (nas_core.live,
+# state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `.mise/env.yaml` (SOPS-encrypted PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE,
+# loaded via `[env] _.file` below) lets these tasks run without prompting.
+# This project has its own passphrase (ADR-017).
+#
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version.
+#
+# pulumi:diff / pulumi:apply go through scripts/pulumi:stack, which refreshes
+# only when the last refresh is older than PULUMI_REFRESH_MAX_AGE hours
+# (default 24). Force or skip it: `mise run pulumi:apply -- --refresh` /
+# `-- --no-refresh`.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+_.file = "{{ config_root }}/.mise/env.yaml"
+
+[tasks."pulumi:diff"]
+description = "Preview pending changes for the current Pulumi stack"
+dir = "{{ config_root }}"
+run = "pulumi:stack preview"
+
+[tasks."pulumi:apply"]
+depends_post = ["truenas:docs:generate"]
+description = "Apply pending changes to the current Pulumi stack"
+dir = "{{ config_root }}"
+interactive = true
+run = "pulumi:stack up"
+
+[tasks."truenas:docs:generate"]
+description = "Regenerate fleet/hosts/core.nas/TRUENAS.md from the live nas_core Pulumi stack state"
+dir = "{{ config_root }}"
+run = "pnpm run truenas:docs"
+
+# The immich/jellyfin/paperless-ngx SMB service-account passwords are
+# provisioned here (users/*.ts) and pushed to OpenBao (lungmen.akn/<app>/storage/smb)
+# by their vault.kv.SecretV2 — see scripts/bao:smb:drift-check for the full
+# rationale and issue #1212. This task hash-compares the two sides; it never
+# reads or prints an actual password value.
+[tasks."bao:smb:drift-check"]
+description = "Compare Pulumi's TrueNAS SMB password state against Vault (hash-only, never prints secret values)"
+run = "bao:smb:drift-check"

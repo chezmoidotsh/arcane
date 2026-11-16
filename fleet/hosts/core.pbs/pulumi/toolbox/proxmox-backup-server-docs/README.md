@@ -4,9 +4,9 @@
 
 This module auto-generates `fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md` — an up-to-date, human-readable reference
 document for `pbs.pve.chezmoi.sh` that captures operational details without hand-maintenance burden. It mirrors
-[`truenas-docs/`](../../../../../../projects/chezmoi.sh/src/infrastructure/pulumi/toolbox/truenas-docs/) — same
-architecture, same safety properties — scaled down to what the `pbs-core` stack actually manages: no live
-topology/dataset-tree fetch, since Proxmox Backup Server has no ZFS-pool equivalent to walk.
+[`truenas-docs/`](../../../../core.nas/pulumi/toolbox/truenas-docs/) — same architecture, same safety properties —
+scaled down to what the `pbs-core` stack actually manages: no live topology/dataset-tree fetch, since Proxmox Backup
+Server has no ZFS-pool equivalent to walk.
 
 The core idea: the doc is **derived from the deployed Pulumi stack's own state**, not from hand-picked imports across
 sibling modules. Adding a new resource (a `pbs.PruneJob`, a notification target, an ACL binding, …) anywhere under
@@ -29,7 +29,7 @@ reflects what's actually deployed, not what's about to change.
    `templates/root.hbs`/`templates/partials.*.hbs` expect.
 
 3. **Render**: `render.ts` compiles `templates/root.hbs` (with every `templates/partials.*.hbs`) via Handlebars —
-   byte-identical logic to `truenas-docs/render.ts` (chezmoi.sh).
+   byte-identical logic to `truenas-docs/render.ts` (nas-core).
 
 4. **Write**: `index.ts` writes the rendered Markdown straight to `fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md` via
    `fs.writeFileSync` — no Pulumi resource involved.

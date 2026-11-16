@@ -30,8 +30,8 @@ backend:
 ```
 
 - **Backend** : le bucket `pulumi-states` de [Garage](https://garagehq.deuxfleurs.fr/), le stockage objet compatible S3
-  qui tourne sur `nas.chezmoi.sh` (voir [TrueNAS](../../../projects/chezmoi.sh/docs/TRUENAS.md)). Pulumi Cloud
-  n'intervient pas : l'état, l'historique et les secrets vivent tous dans ce bucket.
+  qui tourne sur `nas.chezmoi.sh` (voir [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md)). Pulumi Cloud n'intervient
+  pas : l'état, l'historique et les secrets vivent tous dans ce bucket.
 - **Fournisseur de secrets** : le fournisseur par passphrase, par défaut. Chaque projet garde sa passphrase dans
   `src/infrastructure/pulumi/.mise/env.yaml`, chiffré avec SOPS (`PULUMI_CONFIG_PASSPHRASE`, plus `PULUMI_STACK` pour
   choisir la stack), déchiffré de façon transparente par `mise` quand les commandes s'exécutent depuis ce répertoire :
@@ -51,9 +51,9 @@ backend:
 > - **Hôte perdu** : suivre « Rebuild the host » dans [Proxmox VE](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md). La
 >   VM du NAS (et Garage avec elle) doit être restaurée **avant** tout `pulumi up`.
 > - **Stockage du NAS perdu aussi** : le dataset Garage fait partie de la synchronisation quotidienne hors site de
->   `/mnt/zp1hs01/applications/truenas` vers Backblaze B2 (voir [TrueNAS](../../../projects/chezmoi.sh/docs/TRUENAS.md),
->   « Backups », couche 3). L'état survit donc à la perte du site, avec au plus un jour de décalage. Restaurer le
->   dataset depuis B2, relancer Garage, puis `pulumi login`.
+>   `/mnt/zp1hs01/applications/truenas` vers Backblaze B2 (voir [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md), «
+>   Backups », couche 3). L'état survit donc à la perte du site, avec au plus un jour de décalage. Restaurer le dataset
+>   depuis B2, relancer Garage, puis `pulumi login`.
 
 ## Prérequis
 
@@ -250,7 +250,7 @@ pulumi state delete $URN
 - [Pulumi du projet `chezmoi.sh`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/README.md) : la stack
   `chezmoi-sh-infra` et ses tâches `mise`.
 - [Proxmox VE](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) : « Import an existing object » et « Rebuild the host ».
-- [TrueNAS](../../../projects/chezmoi.sh/docs/TRUENAS.md) : l'emplacement physique de Garage, et donc de l'état.
+- [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md) : l'emplacement physique de Garage, et donc de l'état.
 - [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : autre procédure appliquée par la stack
   `chezmoi-sh-infra`.
 - [Documentation Pulumi sur l'import de ressources](https://www.pulumi.com/docs/iac/adopting-pulumi/import/) : référence

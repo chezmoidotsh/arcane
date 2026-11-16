@@ -157,7 +157,7 @@ export interface AclAssignmentDoc {
 	template: string;
 }
 
-/** Reads the `nfs4AclAssignments` stack output (see `../truenas/index.ts`) -- the one doc section with no infrastructure resource of its own. */
+/** Reads the `nfs4AclAssignments` stack output (see `../../index.ts`) -- the one doc section with no infrastructure resource of its own. */
 export function extractAclAssignments(
 	stackOutputs: Record<string, unknown>,
 ): AclAssignmentDoc[] {
@@ -306,7 +306,7 @@ export interface BucketDoc {
 	 * lock enabled but no default retention configured. For this stack's
 	 * buckets that absence is deliberate (a retention hold would block the
 	 * SYNC jobs from pruning superseded versions — see
-	 * `stack/truenas/cloudsync.ts`), so render it, don't fail on it.
+	 * `fleet/hosts/core.nas/pulumi/cloudsync.ts`), so render it, don't fail on it.
 	 */
 	retentionDays?: number;
 	lifecycleDeleteDays: number;
@@ -314,11 +314,11 @@ export interface BucketDoc {
 
 /**
  * Logical (Pulumi resource) names of the B2 buckets that actually back
- * TrueNAS, i.e. the ones defined in `stack/truenas/cloudsync.ts`. The `b2`
- * provider is shared across the whole chezmoi.sh stack -- other consumers
- * (e.g. the pbs-core project, fleet/hosts/core.pbs/) create their own `b2:index/bucket:Bucket` resources
- * with no file-lock retention, which this TrueNAS-specific doc generator
- * doesn't know how to describe. Buckets aren't parented under a TrueNAS
+ * TrueNAS, i.e. the ones defined in `fleet/hosts/core.nas/pulumi/cloudsync.ts`. Kept as a
+ * guard from when this lived in the shared chezmoi-sh-infra stack, where
+ * other `b2:index/bucket:Bucket` resources (e.g. the PBS bucket, now in the
+ * pbs-core project) had no file-lock retention, which this TrueNAS-specific
+ * doc generator doesn't know how to describe. Buckets aren't parented under a TrueNAS
  * ancestor resource, so `hasAncestorType` can't scope this the way it does
  * for CloudSync jobs -- filter by logical name instead.
  */

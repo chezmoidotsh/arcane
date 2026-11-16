@@ -26,11 +26,11 @@ import type { ExportedResource } from "./stack-export";
 /**
  * A small, hand-trimmed fixture shaped like a real `pulumi stack export`
  * (URNs, type tokens and output field names copied verbatim from an actual
- * export of the `chezmoi_sh.live` stack) -- not the live stack itself, so
+ * export of the `nas_core.live` stack) -- not the live stack itself, so
  * these tests never touch the network or `child_process`.
  */
 const STACK_URN =
-	"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pulumi:pulumi:Stack::chezmoi-sh-infra-chezmoi_sh.live";
+	"urn:pulumi:nas_core.live::nas-core::pulumi:pulumi:Stack::nas-core-nas_core.live";
 
 const resources: ExportedResource[] = [
 	{
@@ -47,22 +47,22 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool::zp1cs01",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool::zp1cs01",
 		type: "chezmoi:truenas:Pool",
 		parent: STACK_URN,
 		outputs: {},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool::zp1hs01",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool::zp1hs01",
 		type: "chezmoi:truenas:Pool",
 		parent: STACK_URN,
 		outputs: {},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/shareNfs:ShareNfs::nfs-share-movies",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/shareNfs:ShareNfs::nfs-share-movies",
 		type: "truenas:index/shareNfs:ShareNfs",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1cs01-media-movies",
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1cs01-media-movies",
 		outputs: {
 			comment: "Films (Jellyfin)",
 			enabled: true,
@@ -73,10 +73,10 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/shareSmb:ShareSmb::smb-share-mes-documents",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/shareSmb:ShareSmb::smb-share-mes-documents",
 		type: "truenas:index/shareSmb:ShareSmb",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset::zp1hs01-userspace",
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset::zp1hs01-userspace",
 		outputs: {
 			// TrueNAS-side share name -- deliberately different from the
 			// resource's own logical name, to prove extractSmbShares uses it.
@@ -88,10 +88,10 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::random:index/randomPassword:RandomPassword$truenas:index/user:User::user-home-assistant",
+		urn: "urn:pulumi:nas_core.live::nas-core::random:index/randomPassword:RandomPassword$truenas:index/user:User::user-home-assistant",
 		type: "truenas:index/user:User",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::random:index/randomPassword:RandomPassword::password-home-assistant",
+			"urn:pulumi:nas_core.live::nas-core::random:index/randomPassword:RandomPassword::password-home-assistant",
 		outputs: {
 			username: "home-assistant",
 			uid: 30001,
@@ -106,7 +106,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/filesystemAclTemplate:FilesystemAclTemplate::acl-template-nfs4-smb-all",
+		urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/filesystemAclTemplate:FilesystemAclTemplate::acl-template-nfs4-smb-all",
 		type: "truenas:index/filesystemAclTemplate:FilesystemAclTemplate",
 		parent: STACK_URN,
 		outputs: {
@@ -116,7 +116,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/cloudSync:CloudSync::nas-backup-cloudsync",
+		urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/cloudSync:CloudSync::nas-backup-cloudsync",
 		type: "truenas:index/cloudSync:CloudSync",
 		parent: STACK_URN,
 		outputs: {
@@ -133,10 +133,10 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/cloudSync:CloudSync::cs-b2-zp1hs01-zp1hs01-applications/truenas",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/cloudSync:CloudSync::cs-b2-zp1hs01-zp1hs01-applications/truenas",
 		type: "truenas:index/cloudSync:CloudSync",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1hs01-applications-truenas",
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1hs01-applications-truenas",
 		outputs: {
 			description: "B2 — Weekly sync of TrueNAS applications",
 			direction: "PUSH",
@@ -151,7 +151,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::b2:index/bucket:Bucket::nas-backup",
+		urn: "urn:pulumi:nas_core.live::nas-core::b2:index/bucket:Bucket::nas-backup",
 		type: "b2:index/bucket:Bucket",
 		parent: STACK_URN,
 		outputs: {
@@ -163,10 +163,10 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/scrubTask:ScrubTask::zp1hs01-scrub",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/scrubTask:ScrubTask::zp1hs01-scrub",
 		type: "truenas:index/scrubTask:ScrubTask",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool::zp1hs01",
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool::zp1hs01",
 		outputs: {
 			poolName: "zp1hs01",
 			threshold: 35,
@@ -179,10 +179,10 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/snapshotTask:SnapshotTask::zp1hs01-snapshot",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/snapshotTask:SnapshotTask::zp1hs01-snapshot",
 		type: "truenas:index/snapshotTask:SnapshotTask",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool::zp1hs01",
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool::zp1hs01",
 		outputs: {
 			dataset: "zp1hs01",
 			recursive: true,
@@ -197,10 +197,10 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/snapshotTask:SnapshotTask::zp1hs01-snapshot-app-immich",
+		urn: "urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/snapshotTask:SnapshotTask::zp1hs01-snapshot-app-immich",
 		type: "truenas:index/snapshotTask:SnapshotTask",
 		parent:
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1hs01-applications-managed-app.immich",
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1hs01-applications-managed-app.immich",
 		outputs: {
 			dataset: "zp1hs01/applications/managed/app.immich",
 			recursive: false,
@@ -215,7 +215,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/networkConfig:NetworkConfig::network-config",
+		urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/networkConfig:NetworkConfig::network-config",
 		type: "truenas:index/networkConfig:NetworkConfig",
 		parent: STACK_URN,
 		outputs: {
@@ -227,7 +227,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/networkInterface:NetworkInterface::network-interface-ens18",
+		urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/networkInterface:NetworkInterface::network-interface-ens18",
 		type: "truenas:index/networkInterface:NetworkInterface",
 		parent: STACK_URN,
 		outputs: {
@@ -240,13 +240,13 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/service:Service::service-nfs",
+		urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/service:Service::service-nfs",
 		type: "truenas:index/service:Service",
 		parent: STACK_URN,
 		outputs: { service: "nfs", enable: true, state: "RUNNING" },
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/service:Service::service-snmp",
+		urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/service:Service::service-snmp",
 		type: "truenas:index/service:Service",
 		parent: STACK_URN,
 		outputs: { service: "snmp", enable: false, state: "STOPPED" },
@@ -257,16 +257,16 @@ describe("URN helpers", () => {
 	it("logicalName() reads the last ::-segment regardless of parenting depth", () => {
 		expect(
 			logicalName(
-				"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/shareSmb:ShareSmb::smb-share-mes-documents",
+				"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/shareSmb:ShareSmb::smb-share-mes-documents",
 			),
 		).to.equal("smb-share-mes-documents");
-		expect(logicalName(STACK_URN)).to.equal("chezmoi-sh-infra-chezmoi_sh.live");
+		expect(logicalName(STACK_URN)).to.equal("nas-core-nas_core.live");
 	});
 
 	it("typeChain() splits the $-separated ancestor-to-self chain", () => {
 		expect(
 			typeChain(
-				"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/shareNfs:ShareNfs::nfs-share-movies",
+				"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/shareNfs:ShareNfs::nfs-share-movies",
 			),
 		).to.deep.equal([
 			"chezmoi:truenas:Pool",
@@ -277,7 +277,7 @@ describe("URN helpers", () => {
 
 	it("hasAncestorType() is true when the type is a strict ancestor, false for the resource's own type or an unrelated one", () => {
 		const urn =
-			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/cloudSync:CloudSync::cs-b2-zp1hs01-zp1hs01-applications/truenas";
+			"urn:pulumi:nas_core.live::nas-core::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/cloudSync:CloudSync::cs-b2-zp1hs01-zp1hs01-applications/truenas";
 		expect(hasAncestorType(urn, "chezmoi:truenas:Pool")).to.be.true;
 		expect(hasAncestorType(urn, "truenas:index/cloudSync:CloudSync")).to.be
 			.false;
@@ -319,7 +319,7 @@ describe("extractSmbShares()", () => {
 	it("falls back on the resource's logical name when the state has no outputs.name", () => {
 		const [share] = extractSmbShares([
 			{
-				urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/shareSmb:ShareSmb::smb-share-sans-nom",
+				urn: "urn:pulumi:nas_core.live::nas-core::truenas:index/shareSmb:ShareSmb::smb-share-sans-nom",
 				type: "truenas:index/shareSmb:ShareSmb",
 				outputs: { purpose: "DEFAULT_SHARE", enabled: true },
 			},
@@ -394,7 +394,7 @@ describe("extractCloudSyncJobs() / extractLegacyGlobalSync()", () => {
 				resources.filter(
 					(r) =>
 						r.urn !==
-						"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/cloudSync:CloudSync::nas-backup-cloudsync",
+						"urn:pulumi:nas_core.live::nas-core::truenas:index/cloudSync:CloudSync::nas-backup-cloudsync",
 				),
 			),
 		).to.throw("No legacy global CloudSync task found in stack state");

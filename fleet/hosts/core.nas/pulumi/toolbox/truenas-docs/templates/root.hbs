@@ -1,6 +1,6 @@
 <h1 align="center">
   <picture>
-    <img alt="TrueNAS SCALE logo" src="assets/icons/hardware/truenas-scale.svg" width="201">
+    <img alt="TrueNAS SCALE logo" src="../../../projects/chezmoi.sh/docs/assets/icons/hardware/truenas-scale.svg" width="201">
   </picture>
 </h1>
 
@@ -9,7 +9,7 @@
 ---
 
 > [!NOTE]
-> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's
+> This document is **auto-generated** from the `nas-core` Pulumi stack's
 > own live state — do not edit it by hand. Regenerate it with
 > `mise run truenas:docs:generate` (already chained onto `mise run pulumi:apply`).
 
@@ -31,7 +31,7 @@
 ## How it's managed
 
 `nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the
-[`chezmoi-sh-infra`](../src/infrastructure/pulumi/) Pulumi stack.
+[`nas-core`](./pulumi/) Pulumi stack (see [`README.md`](./README.md)).
 
 ```sh
 mise run pulumi:diff              # preview pending changes
@@ -49,7 +49,7 @@ this document — there is normally no reason to run the generator by hand.
 
 ## Applications (Garage & Nginx Proxy Manager)
 
-The stack ([`stack/truenas/apps.ts`](../src/infrastructure/pulumi/stack/truenas/apps.ts))
+The stack ([`pulumi/apps.ts`](./pulumi/apps.ts))
 manages the TrueNAS App catalog itself plus two _Apps_:
 
 - **[Garage](https://garagehq.deuxfleurs.fr/)** — the homelab's S3-compatible
@@ -80,13 +80,13 @@ is not managed here.
 
 ### Add a dataset or a share
 
-Declare the dataset in [`stack/truenas/zpools/`](../src/infrastructure/pulumi/stack/truenas/zpools/)
+Declare the dataset in [`pulumi/zpools/`](./pulumi/zpools/)
 (quota, encryption, comment — the comment is what fills the dataset trees
 above) and, if it must be reachable over the network, the share in
-[`stack/truenas/shares.ts`](../src/infrastructure/pulumi/stack/truenas/shares.ts),
+[`pulumi/shares.ts`](./pulumi/shares.ts),
 then `mise run pulumi:apply`. If the dataset needs specific permissions, add
 its row to the assignment table (see
-[`stack/truenas/acls.ts`](../src/infrastructure/pulumi/stack/truenas/acls.ts))
+[`pulumi/acls.ts`](./pulumi/acls.ts))
 and apply the template **by hand** in the TrueNAS UI — Pulumi cannot do that
 part; see [Permissions](#permissions).
 
@@ -111,7 +111,7 @@ The NAS VM's system disk is backed up to PBS, but the ZFS pools live on
 survive independently of the VM.
 
 1. **VM lost, disks intact** — restore the VM from its PBS backup
-   ([`PROXMOX-VE.md`, "Restore a guest from backup"](./PROXMOX-VE.md#restore-a-guest-from-backup)),
+   ([`PROXMOX-VE.md`, "Restore a guest from backup"](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md#restore-a-guest-from-backup)),
    re-create the PCI passthrough mappings if the host changed, and the pools
    re-import with all data — Garage (and the Pulumi state) come back with
    `zp1hs01`.
@@ -129,8 +129,8 @@ survive independently of the VM.
 
 ### References
 
-- [`stack/truenas/README.md`](../src/infrastructure/pulumi/stack/truenas/README.md) — the stack managing this NAS
+- [`README.md`](./README.md) — the stack managing this NAS
 - [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   — the Pulumi state hosted on Garage
-- [`PROXMOX-VE.md`](./PROXMOX-VE.md) — the hypervisor this VM runs on
+- [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) — the hypervisor this VM runs on
 - [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up

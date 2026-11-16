@@ -37,7 +37,7 @@ chaque élément ayant son README.
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                          |
 | 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                               |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 à 4 code prêt, état Pulumi à déplacer |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | `core.pbs` code prêt, état Pulumi à déplacer ; `core.nas`, `core.pve-01` et `base` à faire                                 |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | `core.pbs` et `core.nas` code prêt, états Pulumi à déplacer ; `core.pve-01` et `base` à faire                              |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                    |
 | 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                    |
 
@@ -860,16 +860,15 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
      `PULUMI_CONFIG_PASSPHRASE`) ;
   2. `pulumi stack init pbs_core.live` ;
   3. `pulumi config set --secret` de `pbs-core:cloudflare_account_id`, `pbs-core:cloudflare_zone_id` et
-     `pbs-core:notificationsSlackWebhookUrl` (mêmes valeurs que dans `chezmoi_sh`) ; l'authentification des
-     fournisseurs `pbs` et `b2` vient de l'environnement, comme avant ;
+     `pbs-core:notificationsSlackWebhookUrl` (mêmes valeurs que dans `chezmoi_sh`) ; l'authentification des fournisseurs
+     `pbs` et `b2` vient de l'environnement, comme avant ;
   4. dans `chezmoi_sh`, `pulumi config set --secret pveBackupTokenSecret` avec la sortie actuelle, par un pipe ;
   5. exporter les deux états ;
   6. `pulumi state move` des 5 racines de `organization/chezmoi-sh-infra/chezmoi_sh.live` vers
      `organization/pbs-core/pbs_core.live` ;
   7. `pulumi preview` vide dans la destination, et dans la source seulement la suppression des 3 sorties.
 
-  Après : retirer de `chezmoi_sh` les clés orphelines `pbs:endpoint`, `pbs:insecure` et
-  `notificationsSlackWebhookUrl`.
+  Après : retirer de `chezmoi_sh` les clés orphelines `pbs:endpoint`, `pbs:insecure` et `notificationsSlackWebhookUrl`.
 
 - **Risque** : aucun `pulumi up` dans `chezmoi_sh` depuis cette branche avant le `state move` : le code ne déclare plus
   les ressources PBS, un `up` détruirait le jeton, les ACL, le datastore et la clé B2 (seul le bucket est retenu).
@@ -880,6 +879,45 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
   identifiant dans la configuration Pulumi »), déjà enfreinte par `garage_*` et le webhook ; l'autre option, une
   variable d'environnement avec `ignoreChanges`, ne propagerait plus une rotation. L'emplacement de
   `PROXMOX_BACKUP_SERVER.md` à la racine de l'hôte n'a pas de précédent.
+- **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
+
+### Détail de l'étape 9 : `core.nas`
+
+- **Constaté** : `stack/truenas/` (avec `users/` et `zpools/`) devient le projet `nas-core` (pile `nas_core.live`) sous
+  `fleet/hosts/core.nas/pulumi/`, sur le modèle de `core.pbs`. Le générateur `toolbox/truenas-docs/` suit, `TRUENAS.md`
+  va à la racine de l'hôte (`.rtunk/rtunk.yaml` suit), le README du composant devient celui de l'hôte. 91 ressources
+  déplacées (40 racines) : jeux de données, partages SMB, services, utilisateurs et leurs mots de passe `random`,
+  gabarits d'ACL, tâches, certificats, applications (`retainOnDelete`), les deux pools (`chezmoi:truenas:Pool`), le
+  jeton DNS-01 `acme-dns-truenas`, les buckets B2 `nas-backup` et `truenas-backup` (`protect`, `retainOnDelete`), la clé
+  `truenas-replication` et les trois `vault:kv/secretV2` `smb-secret-{jellyfin,immich,paperless}`. Noms logiques, types
+  et parents inchangés : pas d'alias. Rien ne traverse la frontière : aucune ressource restante ne lit TrueNAS et aucune
+  autre pile ne lit ses sorties.
+- **Constaté** : les secrets SMB continuent d'aller dans le montage `lungmen.akn/` d'OpenBao, désormais depuis
+  `nas-core`. `scripts/bao:smb:drift-check` lit `fleet/hosts/core.nas/pulumi` (sa tâche `mise` y est déplacée) et gagne
+  `--help`. `chezmoi.sh` perd les dépendances `@pulumi/truenas`, `@pulumi/b2`, `@pulumi/random`, `@pulumi/vault` et le
+  composant `truenas-pool`.
+- **Manuel avant la fusion** :
+  1. créer `fleet/hosts/core.nas/pulumi/.mise/env.yaml` (SOPS, `PULUMI_STACK=nas_core.live`, nouvelle
+     `PULUMI_CONFIG_PASSPHRASE`) puis `mise trust` ;
+  2. `pulumi stack init nas_core.live` ;
+  3. `pulumi config set --secret` de `nas-core:cloudflare_account_id`, `nas-core:cloudflare_zone_id`,
+     `nas-core:garage_admin_token`, `nas-core:garage_rpc_secret`, `nas-core:garage_web_ui_password` et
+     `nas-core:garage_web_ui_username` (mêmes valeurs que dans `chezmoi_sh`) ; les fournisseurs `truenas`, `b2` et
+     `vault` lisent l'environnement comme avant ;
+  4. exporter les deux états et vérifier dans l'export les 91 URN ;
+  5. `pulumi state move` des 40 racines vers `organization/nas-core/nas_core.live` ;
+  6. `pulumi preview` vide dans la destination, et dans la source seulement la suppression des 6 sorties (mots de passe
+     SMB, `nfs4AclAssignments`) et peut-être de fournisseurs par défaut devenus inutiles ;
+  7. `bao:smb:drift-check` sans dérive.
+
+  Après : retirer de `chezmoi_sh` `truenas:url`, `truenas:destroyProtection` et les quatre clés `garage_*`.
+
+- **Risque** : aucun `pulumi up` dans `chezmoi_sh` depuis cette branche avant le `state move`.
+  `truenas:destroyProtection` refuse les suppressions côté TrueNAS mais ne couvre ni la clé B2, ni les secrets OpenBao,
+  ni les mots de passe, ni le jeton Cloudflare. Des mots de passe recréés casseraient les montages SMB de `lungmen.akn`.
+  L'état source peut garder des fournisseurs qui demandent les greffons `truenas` ou `b2`, retirés du `package.json` : à
+  vérifier dans l'aperçu.
+- **À confirmer** : mêmes points que pour `core.pbs` (phrases secrètes différentes, buckets protégés).
 - **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
 
 ### 10. Séquencer `core.o11y-datastore` avec l'ADR-022

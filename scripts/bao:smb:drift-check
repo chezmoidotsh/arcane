@@ -5,29 +5,29 @@
 # hash-compare only -- the raw password is never printed, logged, or written
 # to disk anywhere in this script.
 #
-# Background: projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/
-# users/{immich,jellyfin,paperless-ngx}.ts each provision an SMB service
-# account with a random.RandomPassword exported as a stack output. Nothing
-# in the repo syncs that output into OpenBao (lungmen.akn/<app>/storage/smb,
-# read by the ExternalSecrets backing each app's SMB CSI mount) -- it was set
-# there by hand. If Pulumi's state and Vault ever disagree and a `pulumi up`
-# (or `--target-replace`) forces recreation of one of these
+# Background: fleet/hosts/core.nas/pulumi/users/
+# {immich,jellyfin,paperless-ngx}.ts (Pulumi project `nas-core`, stack
+# `nas_core.live`) each provision an SMB service account with a
+# random.RandomPassword exported as a stack output, and push it into OpenBao
+# (lungmen.akn/<app>/storage/smb, read by the ExternalSecrets backing each
+# app's SMB CSI mount) with a vault.kv.SecretV2. Before that push existed the
+# Vault copy was set by hand. If Pulumi's state and Vault ever disagree and a
+# `pulumi up` (or `--target-replace`) forces recreation of one of these
 # random.RandomPassword resources, Pulumi pushes its own stale password to
 # TrueNAS and silently breaks that app's SMB auth. See issue #1212.
 #
 # Usage:
-#   scripts/bao:smb:drift-check
+#   scripts/bao:smb:drift-check [-h|--help]
 #
 # Requires:
-#   - `pulumi` with a stack selected for
-#     projects/chezmoi.sh/src/infrastructure/pulumi (PULUMI_STACK env, see
-#     that project's .mise/env.yaml)
+#   - `pulumi` with a stack selected for fleet/hosts/core.nas/pulumi
+#     (PULUMI_STACK env, see that project's .mise/env.yaml)
 #   - `bao` on PATH with a session that can read lungmen.akn/<app>/storage/smb
 #     (`mise run bao:login`)
 #
 # When to run:
 #   - Before any `pulumi up`/`pulumi preview --target-replace` touching the
-#     truenas stack's `users/*` resources -- confirms a forced replacement
+#     nas-core stack's `users/*` resources -- confirms a forced replacement
 #     won't push a stale password.
 #   - After rotating one of these SMB passwords by hand on TrueNAS/Vault, to
 #     confirm Pulumi's state was brought back in sync.
@@ -53,8 +53,13 @@
 
 set -euo pipefail
 
+if [[ ${1-} == "-h" || ${1-} == "--help" ]]; then
+  sed -n '2,/^$/s/^# \{0,1\}//p' "$0"
+  exit 0
+fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-PULUMI_DIR="${REPO_ROOT}/projects/chezmoi.sh/src/infrastructure/pulumi"
+PULUMI_DIR="${REPO_ROOT}/fleet/hosts/core.nas/pulumi"
 
 APPS=(immich jellyfin paperless-ngx)
 
