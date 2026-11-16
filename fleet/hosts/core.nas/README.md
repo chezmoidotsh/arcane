@@ -1,11 +1,12 @@
 # TrueNAS SCALE (nas.chezmoi.sh) as Code
 
-This folder contains the Pulumi TypeScript stack that manages `nas.chezmoi.sh`, a TrueNAS SCALE server, as declarative
-code. The generated human-facing documentation is published at [`docs/TRUENAS.md`](../../../../../docs/TRUENAS.md).
+The [`pulumi/`](pulumi/) folder of this host holds the Pulumi TypeScript project (`nas-core`, stack `nas_core.live`)
+that manages `nas.chezmoi.sh`, a TrueNAS SCALE server, as declarative code. The generated human-facing documentation is
+published at [`TRUENAS.md`](TRUENAS.md) (see [`pulumi/toolbox/truenas-docs/`](pulumi/toolbox/truenas-docs/README.md)).
 
 ## What's managed here
 
-| File/Folder       | Responsibility                                                                                                                |
+| File (`pulumi/`)  | Responsibility                                                                                                                |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `acls.ts`         | NFS4 ACL templates and dataset-to-template assignments for datasets with no single owning account (see `zpools/README.md`)    |
 | `alerts.ts`       | Alert notifications (e-mail destinations, per-class alert policies)                                                           |
@@ -31,9 +32,9 @@ code. The generated human-facing documentation is published at [`docs/TRUENAS.md
 ## Adding or editing a dataset
 
 Datasets are declared as a flat, path-keyed record in the zpools files (`zpools/zp1cs01.ts`, `zpools/zp1hs01.ts`) using
-the `TrueNASPoolComponent` type from `@chezmoi.sh/pulumi-truenas-pool`. Each key is the dataset's full pool-relative path
-(leading `/`); nesting is inferred from the path itself, not from object nesting, so every ancestor must be declared as
-its own entry too.
+the `TrueNASPoolComponent` type from `@chezmoi.sh/pulumi-truenas-pool`. Each key is the dataset's full pool-relative
+path (leading `/`); nesting is inferred from the path itself, not from object nesting, so every ancestor must be
+declared as its own entry too.
 
 ### Example structure
 
@@ -70,7 +71,7 @@ export const zp1hs01 = new TrueNASPoolComponent("zp1hs01", {
 4. **Test the changes**:
 
    ```bash
-   cd projects/chezmoi.sh/src/infrastructure/pulumi
+   cd fleet/hosts/core.nas/pulumi
    pulumi preview
    ```
 
@@ -83,8 +84,8 @@ export const zp1hs01 = new TrueNASPoolComponent("zp1hs01", {
 ## Adding or editing a share
 
 Shares are declared as standalone `new truenas.ShareNfs(...)`/`new truenas.ShareSmb(...)` calls directly in `shares.ts`,
-not collected into a hand-maintained plain-data summary. The documentation generator (`toolbox/truenas-docs`) doesn't
-import this file at all — it reads share state back out of `pulumi stack export` (see that project's own README).
+not collected into a hand-maintained plain-data summary. The documentation generator (`pulumi/toolbox/truenas-docs`)
+doesn't import this file at all — it reads share state back out of `pulumi stack export` (see its own README).
 
 ### Adding an NFS share
 
@@ -129,10 +130,17 @@ new truenas.ShareSmb(
 ## Running Pulumi commands
 
 ```bash
-cd projects/chezmoi.sh/src/infrastructure/pulumi
-mise run pulumi:preview    # Preview pending changes
+cd fleet/hosts/core.nas/pulumi
+mise run pulumi:diff       # Preview pending changes
 mise run pulumi:apply      # Apply changes (requires confirmation)
 pulumi stack               # Show current stack state
 ```
+
+The stack config holds the TrueNAS endpoint (`truenas:url`, `truenas:destroyProtection`) and six secret keys:
+`cloudflare_account_id`, `cloudflare_zone_id` (ACME DNS-01 token, `certificates.ts`) and `garage_admin_token`,
+`garage_rpc_secret`, `garage_web_ui_password`, `garage_web_ui_username` (Garage app, `apps.ts`). The TrueNAS, Backblaze
+B2 and OpenBao providers authenticate from the environment (`TRUENAS_API_KEY`, `B2_APPLICATION_KEY_ID`/
+`B2_APPLICATION_KEY`, `VAULT_ADDR` and a `mise run bao:login` session). The `users/*.ts` SMB passwords are pushed to the
+`lungmen.akn/` OpenBao mount; `mise run bao:smb:drift-check` (from `pulumi/`) checks that both sides agree.
 
 See `.agents/skills/` and `AGENTS.md` for commit and PR workflows.

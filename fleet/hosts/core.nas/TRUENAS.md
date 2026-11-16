@@ -1,6 +1,6 @@
 <h1 align="center">
   <picture>
-    <img alt="TrueNAS SCALE logo" src="assets/icons/hardware/truenas-scale.svg" width="201">
+    <img alt="TrueNAS SCALE logo" src="../../../projects/chezmoi.sh/docs/assets/icons/hardware/truenas-scale.svg" width="201">
   </picture>
 </h1>
 
@@ -9,7 +9,7 @@
 ---
 
 > [!NOTE]\
-> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's own live state — do not edit it by
+> This document is **auto-generated** from the `nas-core` Pulumi stack's own live state — do not edit it by
 > hand. Regenerate it with `mise run truenas:docs:generate` (already chained onto `mise run pulumi:apply`).
 
 `nas.chezmoi.sh` is the household NAS. Its sole role is **data storage**: the media library (films, series, anime,
@@ -38,8 +38,8 @@ copy of the data pushed to Backblaze B2.
 
 ## How it's managed
 
-`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the [`chezmoi-sh-infra`](../src/infrastructure/pulumi/) Pulumi
-stack.
+`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the [`nas-core`](./pulumi/) Pulumi stack
+(see [`README.md`](./README.md)).
 
 ```sh
 mise run pulumi:diff              # preview pending changes
@@ -138,7 +138,7 @@ zp1hs01
 
 ## Applications (Garage & Nginx Proxy Manager)
 
-The stack ([`stack/truenas/apps.ts`](../src/infrastructure/pulumi/stack/truenas/apps.ts)) manages the TrueNAS App
+The stack ([`pulumi/apps.ts`](./pulumi/apps.ts)) manages the TrueNAS App
 catalog itself plus two _Apps_:
 
 - **[Garage](https://garagehq.deuxfleurs.fr/)** — the homelab's S3-compatible object store (`s3.chezmoi.sh`), backed by
@@ -265,10 +265,10 @@ each bucket's lifecycle window):
 #### Where are the backups stored
 
 - `nas-backup-4e6b1351` -- file lock **deliberately neutralized** (enabled with no default retention -- a retention hold
-  would block the SYNC jobs below from pruning superseded versions; see `stack/truenas/cloudsync.ts`), 60-day lifecycle
+  would block the SYNC jobs below from pruning superseded versions; see `pulumi/cloudsync.ts`), 60-day lifecycle
   prune.
 - `nas-backup-50a30f2b` -- file lock **deliberately neutralized** (enabled with no default retention -- a retention hold
-  would block the SYNC jobs below from pruning superseded versions; see `stack/truenas/cloudsync.ts`), 60-day lifecycle
+  would block the SYNC jobs below from pruning superseded versions; see `pulumi/cloudsync.ts`), 60-day lifecycle
   prune.
 
 #### What is backed up and when
@@ -307,11 +307,11 @@ A few things worth knowing about what this configuration does and doesn't protec
 
 ### Add a dataset or a share
 
-Declare the dataset in [`stack/truenas/zpools/`](../src/infrastructure/pulumi/stack/truenas/zpools/) (quota, encryption,
+Declare the dataset in [`pulumi/zpools/`](./pulumi/zpools/) (quota, encryption,
 comment — the comment is what fills the dataset trees above) and, if it must be reachable over the network, the share in
-[`stack/truenas/shares.ts`](../src/infrastructure/pulumi/stack/truenas/shares.ts), then `mise run pulumi:apply`. If the
+[`pulumi/shares.ts`](./pulumi/shares.ts), then `mise run pulumi:apply`. If the
 dataset needs specific permissions, add its row to the assignment table (see
-[`stack/truenas/acls.ts`](../src/infrastructure/pulumi/stack/truenas/acls.ts)) and apply the template **by hand** in the
+[`pulumi/acls.ts`](./pulumi/acls.ts)) and apply the template **by hand** in the
 TrueNAS UI — Pulumi cannot do that part; see [Permissions](#permissions).
 
 ### Recover a file from a snapshot
@@ -332,7 +332,7 @@ The NAS VM's system disk is backed up to PBS, but the ZFS pools live on **passth
 part of the VM backup and survive independently of the VM.
 
 1. **VM lost, disks intact** — restore the VM from its PBS backup
-   ([`PROXMOX-VE.md`, "Restore a guest from backup"](./PROXMOX-VE.md#restore-a-guest-from-backup)), re-create the PCI
+   ([`PROXMOX-VE.md`, "Restore a guest from backup"](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md#restore-a-guest-from-backup)), re-create the PCI
    passthrough mappings if the host changed, and the pools re-import with all data — Garage (and the Pulumi state) come
    back with `zp1hs01`.
 2. **Disks lost too** — reinstall or restore the VM, create fresh pools, then pull data back from Backblaze B2
@@ -365,8 +365,8 @@ pooling as first-class features rather than something bolted on with LVM/RAID.
 
 ### References
 
-- [`stack/truenas/README.md`](../src/infrastructure/pulumi/stack/truenas/README.md) — the stack managing this NAS
+- [`README.md`](./README.md) — the stack managing this NAS
 - [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   — the Pulumi state hosted on Garage
-- [`PROXMOX-VE.md`](./PROXMOX-VE.md) — the hypervisor this VM runs on
+- [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) — the hypervisor this VM runs on
 - [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up

@@ -5,29 +5,30 @@
 # hash-compare only -- the raw password is never printed, logged, or written
 # to disk anywhere in this script.
 #
-# Background: projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/
-# users/{immich,jellyfin,paperless-ngx}.ts each provision an SMB service
-# account with a random.RandomPassword exported as a stack output. Nothing
-# in the repo syncs that output into OpenBao (lungmen.akn/<app>/storage/smb,
-# read by the ExternalSecrets backing each app's SMB CSI mount) -- it was set
-# there by hand. If Pulumi's state and Vault ever disagree and a `pulumi up`
-# (or `--target-replace`) forces recreation of one of these
+# Background: fleet/hosts/core.nas/pulumi/users/
+# {immich,jellyfin,paperless-ngx}.ts (Pulumi project `nas-core`, stack
+# `nas_core.live`) each provision an SMB service account with a
+# random.RandomPassword exported as a stack output, and push it into OpenBao
+# (lungmen.akn/<app>/storage/smb, read by the ExternalSecrets backing each
+# app's SMB CSI mount) with a vault.kv.SecretV2. Before that push existed the
+# Vault copy was set by hand. If Pulumi's state and Vault ever disagree and a
+# `pulumi up` (or `--target-replace`) forces recreation of one of these
 # random.RandomPassword resources, Pulumi pushes its own stale password to
 # TrueNAS and silently breaks that app's SMB auth. See issue #1212.
 #
 # Usage:
-#   scripts/bao:smb:drift-check
+#   scripts/bao:smb:drift-check [-h|--help]
 #
 # Requires:
-#   - `pulumi` with a stack selected for
-#     projects/chezmoi.sh/src/infrastructure/pulumi (PULUMI_STACK env, see
-#     that project's .mise/env.yaml)
+#   - `pulumi` with a stack selected for fleet/hosts/core.nas/pulumi
+#     (PULUMI_STACK from that project's .mise.toml; the passphrase and the state
+#     backend credentials come from fnox, see fleet/.fnox.toml)
 #   - `bao` on PATH with a session that can read lungmen.akn/<app>/storage/smb
 #     (`mise run bao:login`)
 #
 # When to run:
 #   - Before any `pulumi up`/`pulumi preview --target-replace` touching the
-#     truenas stack's `users/*` resources -- confirms a forced replacement
+#     nas-core stack's `users/*` resources -- confirms a forced replacement
 #     won't push a stale password.
 #   - After rotating one of these SMB passwords by hand on TrueNAS/Vault, to
 #     confirm Pulumi's state was brought back in sync.
@@ -53,8 +54,13 @@
 
 set -euo pipefail
 
+if [[ ${1-} == "-h" || ${1-} == "--help" ]]; then
+  sed -n '2,/^$/s/^# \{0,1\}//p' "$0"
+  exit 0
+fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-PULUMI_DIR="${REPO_ROOT}/projects/chezmoi.sh/src/infrastructure/pulumi"
+PULUMI_DIR="${REPO_ROOT}/fleet/hosts/core.nas/pulumi"
 
 APPS=(immich jellyfin paperless-ngx)
 
@@ -87,12 +93,11 @@ hash_stdin() {
 # value only ever lives in this function's local scope, never echoed.
 pulumi_password_hash() {
   local output_name="$1" raw hash
-  # `mise exec` resolves PULUMI_CONFIG_PASSPHRASE from PULUMI_DIR's own
-  # .mise/env.yaml based on the actual process cwd -- `pulumi --cwd` alone
-  # only redirects pulumi itself, it doesn't make mise load that directory's
-  # env, so this has to `cd` there first rather than pass `--cwd` from
-  # wherever the caller happens to be.
-  if ! raw="$(cd "${PULUMI_DIR}" && mise exec -- pulumi stack output "${output_name}" --show-secrets 2>&1)"; then
+  # `mise exec` loads PULUMI_STACK from PULUMI_DIR's .mise.toml based on the actual process cwd, and `fnox exec`
+  # resolves the passphrase and the Garage credentials (fleet/.fnox.toml) from Bitwarden for that one process --
+  # `pulumi --cwd` alone does neither, so this has to `cd` there first rather than pass `--cwd` from wherever the
+  # caller happens to be.
+  if ! raw="$(cd "${PULUMI_DIR}" && mise exec -- fnox exec -- pulumi stack output "${output_name}" --show-secrets 2>&1)"; then
     error "Pulumi output '${output_name}' failed: ${raw}"
     exit 1
   fi

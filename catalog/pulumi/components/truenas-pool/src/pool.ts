@@ -51,7 +51,7 @@ export type DatasetTree = Record<string, DatasetArgs>;
  * source object.
  *
  * Exported (not just used by `TrueNASPoolComponent`'s own constructor) so
- * `../../../../projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas-docs/generate.ts`
+ * `../../../../fleet/hosts/core.nas/pulumi/toolbox/truenas-docs/index.ts`
  * can build the same tree shape from a set of Pulumi-managed dataset paths
  * read back out of a `pulumi stack export`, to render `datasetsTree()`-style
  * output without a running `TrueNASPoolComponent` instance.

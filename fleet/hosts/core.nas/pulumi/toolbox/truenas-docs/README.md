@@ -2,16 +2,16 @@
 
 ## Purpose
 
-This module auto-generates `projects/chezmoi.sh/docs/TRUENAS.md` — an up-to-date, human-readable reference document for
+This module auto-generates `fleet/hosts/core.nas/TRUENAS.md` — an up-to-date, human-readable reference document for
 `nas.chezmoi.sh` that captures operational details without hand-maintenance burden.
 
 The core idea: the doc is **derived from the deployed Pulumi stack's own state**, not from hand-picked imports across
-sibling modules. Adding a new resource (a `truenas.User`, an NFS share, a CloudSync job, …) anywhere under
-`../../stack/truenas/` is enough — the next regeneration picks it up automatically, grouped by its Pulumi type token,
-with no import list to maintain here. The one exception is the NFS4-ACL-template-to-dataset assignment guide
-(`../../stack/truenas/acls.ts`): this provider can't apply NFS4 ACLs itself, so that pairing has no infrastructure
-resource of its own and travels as a **Pulumi stack output** (`nfs4AclAssignments`, see `../../stack/truenas/index.ts`)
-instead — read the same generic way as every other section, still with no import of `acls.ts`.
+sibling modules. Adding a new resource (a `truenas.User`, an NFS share, a CloudSync job, …) anywhere under `../../` (the
+`nas-core` project) is enough — the next regeneration picks it up automatically, grouped by its Pulumi type token, with
+no import list to maintain here. The one exception is the NFS4-ACL-template-to-dataset assignment guide
+(`../../acls.ts`): this provider can't apply NFS4 ACLs itself, so that pairing has no infrastructure resource of its own
+and travels as a **Pulumi stack output** (`nfs4AclAssignments`, see `../../index.ts`) instead — read the same generic
+way as every other section, still with no import of `acls.ts`.
 
 Generation runs standalone (`mise run truenas:docs:generate`, chained onto `pulumi:apply`), **not** as part of
 `pulumi up`/`preview` itself — it reads the stack's last-applied state via `pulumi stack export`, so it always reflects
@@ -31,15 +31,15 @@ what's actually deployed, not what's about to change.
    `nfs4AclAssignments` stack output directly.
 
 3. **Fetch live topology/dataset state**: `index.ts` calls `fetchTopology()`/`fetchDatasets()` from
-   `@chezmoi.sh/pulumi-truenas-pool` directly (the same live, read-only JSON-RPC fetch `TrueNASPoolComponent.topology()`/
-   `datasetsTree()` always used — never round-tripped through managed resource state), filtered to just the datasets
-   this stack manages (`truenas:index/dataset:Dataset` resources' own `mountPoint` output), matching what the doc
-   already showed before this rewrite.
+   `@chezmoi.sh/pulumi-truenas-pool` directly (the same live, read-only JSON-RPC fetch
+   `TrueNASPoolComponent.topology()`/ `datasetsTree()` always used — never round-tripped through managed resource
+   state), filtered to just the datasets this stack manages (`truenas:index/dataset:Dataset` resources' own `mountPoint`
+   output), matching what the doc already showed before this rewrite.
 
 4. **Render**: `render.ts` compiles `templates/root.hbs` (with every `templates/partials.*.hbs`) via Handlebars, exactly
    as before. Helpers (`helpers.ts`) are unchanged.
 
-5. **Write**: `index.ts` writes the rendered Markdown straight to `projects/chezmoi.sh/docs/TRUENAS.md` via
+5. **Write**: `index.ts` writes the rendered Markdown straight to `fleet/hosts/core.nas/TRUENAS.md` via
    `fs.writeFileSync` — no Pulumi resource involved.
 
 Every list-returning `extract*` function sorts its output (alphabetically, by name/username/source) —
@@ -81,9 +81,9 @@ Run it standalone after any out-of-band state change (e.g. a manual `pulumi refr
 
 ### Adding a new resource (e.g. a `truenas.User`, a share, a CloudSync job)
 
-Nothing to do here — declare it under `../../stack/truenas/` as usual, apply, then regenerate. `extract.ts` picks it up
-by type token automatically. The one exception: a new NFS4-ACL-template-to-dataset assignment needs a new entry in the
-`allAclAssignments` array in `../../stack/truenas/index.ts` (see there), since that pairing has no infrastructure
+Nothing to do here — declare it under `../../` (the `nas-core` project) as usual, apply, then regenerate. `extract.ts`
+picks it up by type token automatically. The one exception: a new NFS4-ACL-template-to-dataset assignment needs a new
+entry in the `allAclAssignments` array in `../../index.ts` (see there), since that pairing has no infrastructure
 resource of its own to derive from.
 
 ### Adding a new doc section backed by a new resource type
@@ -117,4 +117,4 @@ is deliberately thin (exec + `JSON.parse`) and untested directly; everything it 
 
 ## Generated output
 
-See `projects/chezmoi.sh/docs/TRUENAS.md` for the rendered documentation.
+See `fleet/hosts/core.nas/TRUENAS.md` for the rendered documentation.

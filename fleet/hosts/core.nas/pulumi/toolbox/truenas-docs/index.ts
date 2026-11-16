@@ -37,11 +37,11 @@ import {
 } from "./stack-export";
 
 // -----------------------------------------------------------------------------
-// Regenerates `projects/chezmoi.sh/docs/TRUENAS.md` from the *deployed*
-// `chezmoi_sh.live` stack state -- run standalone (`mise run
+// Regenerates `fleet/hosts/core.nas/TRUENAS.md` from the *deployed*
+// `nas_core.live` stack state -- run standalone (`mise run
 // truenas:docs:generate`, chained onto `pulumi:apply`), not as part of
 // `pulumi up`/`preview` itself. See `./extract.ts` for how resource state
-// becomes plain data, and `../../stack/truenas/index.ts` for the one section
+// becomes plain data, and `../../index.ts` for the one section
 // (NFS4 ACL assignments) that has no infrastructure resource of its own and
 // so travels as a stack output instead.
 // -----------------------------------------------------------------------------
@@ -174,7 +174,7 @@ async function main(): Promise<void> {
 		aclAssignments: extractAclAssignments(stackOutputs),
 	};
 
-	const docPath = path.resolve(projectRoot, "../../../docs/TRUENAS.md");
+	const docPath = path.resolve(projectRoot, "../TRUENAS.md");
 	fs.writeFileSync(docPath, render(context));
 	console.log(`Wrote ${docPath}`);
 }

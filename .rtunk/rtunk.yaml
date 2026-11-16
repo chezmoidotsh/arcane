@@ -99,7 +99,7 @@ lint:
       # them would just be reverted on the next regeneration.
       linters: [prettier]
       paths:
-        - projects/chezmoi.sh/docs/TRUENAS.md
+        - fleet/hosts/core.nas/TRUENAS.md
         - fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md
         - projects/chezmoi.sh/docs/PROXMOX-VE.md
     - # Prettier should not lint/format templated YAML files

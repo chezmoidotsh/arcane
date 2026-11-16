@@ -1,0 +1,31 @@
+{
+	"name": "nas-core",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"scripts": {
+		"test": "mocha",
+		"truenas:docs": "ts-node toolbox/truenas-docs/index.ts",
+		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
+	},
+	"dependencies": {
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@chezmoi.sh/pulumi-truenas-pool": "workspace:*",
+		"@pulumi/b2": "workspace:*",
+		"@pulumi/pulumi": "catalog:",
+		"@pulumi/random": "catalog:",
+		"@pulumi/truenas": "workspace:*",
+		"@pulumi/vault": "catalog:",
+		"handlebars": "catalog:"
+	},
+	"devDependencies": {
+		"@types/chai": "catalog:",
+		"@types/mocha": "catalog:",
+		"@types/node": "catalog:",
+		"chai": "catalog:",
+		"mocha": "catalog:",
+		"ts-node": "catalog:",
+		"typescript": "catalog:"
+	}
+}

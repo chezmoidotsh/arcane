@@ -1,0 +1,16 @@
+encryptionsalt: v1:bZjZsTEwqIg=:v1:v7LTdlrP/Kzq5gtY:3wwP3cijDr0DReFq8q0FjhmRcuZidA==
+config:
+  truenas:url: https://nas.chezmoi.sh
+  truenas:destroyProtection: "true"
+  nas-core:cloudflare_account_id:
+    secure: v1:Uc4hlm0jTTjWUpcj:sLu5mHJAwoaisX9boS8W5q0pDh9dKrv3Ttg5Ah17JPeR6KvyYlQXANLaJA9ZUOi9
+  nas-core:cloudflare_zone_id:
+    secure: v1:L3R3pH3d9+may9X/:GqAd9FM3V/hk6tVZ1FAIsK20fcYPnC+swuGjeX5IcUZsPHbWCeUC3Wjo3oObK/uL
+  nas-core:garage_admin_token:
+    secure: v1:cRhqQ+VODzb+mZcs:YIIgqrJYAs8KODYw6+4hREwotPgB/W+w72kTvx3sk/QU34hLttkRuoKOlNfbvLHx
+  nas-core:garage_rpc_secret:
+    secure: v1:YIHvYt1yDc3bDoxj:v3HuxxPaNbKaQsnlXoO7l9acsflJ7H93gFuaBC/WgUnq7/qHPDxbkdTIDdB943XJRlWjmgtEJzMmT8pHoOiF7xg0yr7lrvcie208rk/RP04=
+  nas-core:garage_web_ui_password:
+    secure: v1:zEeEez1dXTey6a0x:n0xrH7y4Vcq8zJcfEy8mX4r4hWNMsgEaQYFV+qrs
+  nas-core:garage_web_ui_username:
+    secure: v1:HBHgA4K3TCiKPVjQ:Y4FtkRkCtJ+8nfnRrI2dHbRv+UE8zUN+U2CSuCpAjp8=

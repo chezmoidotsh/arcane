@@ -1,0 +1,16 @@
+# core.nas Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+#
+# VAULT_ADDR is not a secret and the OpenBao session comes from `mise run bao:login`, neither lives here.
+
+[secrets]
+# TrueNAS provider (https://nas.chezmoi.sh, Pulumi.nas_core.live.yaml `truenas:url`).
+TRUENAS_API_KEY = { provider = "bws", value = "pulumi-truenas-api-key" }
+
+# Backblaze B2 provider (cloud-sync target of the snapshot jobs).
+B2_APPLICATION_KEY_ID = { provider = "bws", value = "pulumi-b2-application-key-id" }
+B2_APPLICATION_KEY = { provider = "bws", value = "pulumi-b2-application-key" }
+
+# Cloudflare provider of the Dns01TokenComponent: email + global API key, which can create account tokens.
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }
