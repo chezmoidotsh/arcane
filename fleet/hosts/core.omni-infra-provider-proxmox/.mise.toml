@@ -11,7 +11,7 @@
 #     mise run lxc:secrets:proxmox        # Proxmox password → nix/secrets/proxmox.sops.env
 #     mise run lxc:build
 #     mise run lxc:push -- <pve-host>
-#     # Create the LXC manually (see README § Proxmox LXC creation)
+#     # Create the LXC manually (see README, Première installation)
 #     # Provider starts but cannot connect to Omni yet.
 #
 #   Phase 2 — Omni registration:
@@ -39,6 +39,14 @@
 
 [tools]
 sops = "latest"
+
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of omni-infra-provider-proxmox.core"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
 
 # -----------------------------------------------------------------------------
 # Secret Management — Proxmox API password
