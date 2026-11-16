@@ -58,3 +58,15 @@ run = '''
   echo "client_secret: ${CLIENT_SECRET}"
   echo "discovery URL: https://auth.chezmoi.sh/.well-known/openid-configuration"
 '''
+
+# -----------------------------------------------------------------------------
+# Architecture diagram
+# -----------------------------------------------------------------------------
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of closure.akn"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]

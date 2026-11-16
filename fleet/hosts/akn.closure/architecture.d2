@@ -1,0 +1,79 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What closure.akn talks to: the identity provider, the dashboards that    │
+# │   read its database and the DNS provider that solves its certificate       │
+# │   challenges.                                                              │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  pocket-id: {
+    class: hardware
+    label: "Pocket-Id\n(rhodes.akn)"
+    icon: assets/icons/apps/pocket-id.blueprint.svg
+  }
+
+  grafana: {
+    class: hardware
+    label: "Grafana\n(rhodes.akn)"
+    icon: assets/icons/system/grafana.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                closure.akn                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Home Assistant and the PostgreSQL database of its recorder.              │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+closure·akn: {
+  class: project
+  label: closure.akn
+
+  home-assistant: {
+    class: application
+    label: "Home Assistant\n(hass.chezmoi.sh)"
+    icon: assets/icons/apps/home-assistant.blueprint.svg
+  }
+
+  postgresql: {
+    class: application-datastore
+    label: "PostgreSQL\n(recorder)"
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+closure·akn.home-assistant -> closure·akn.postgresql: "Record states (PostgreSQL)" {target-arrowhead: 5432; class: [connect-app]}
+localnet.grafana -> closure·akn.postgresql: "Read states (PostgreSQL)" {target-arrowhead: 5432; class: [connect-local]}
+closure·akn.home-assistant -> localnet.pocket-id: "Authenticate users (OIDC)" {target-arrowhead: 443; class: [connect-local]}
+closure·akn.home-assistant -> internet.cloudflare: "Solve DNS-01 challenges (HTTPS API)" {target-arrowhead: 443; class: [connect-management-to-internet]}
