@@ -12,7 +12,7 @@ const config = new pulumi.Config();
 // observability.sops.env) instead of standing up a second channel. That
 // webhook URL lives in a SOPS-encrypted file outside this stack's reach --
 // this stack runs upstream of any Kubernetes cluster (see ./acme.ts) -- so
-// it's copied in by hand as a Pulumi secret; see ./README.md, "Bootstrapping".
+// it's copied in by hand as a Pulumi secret; see ../README.md, "Bootstrapping".
 //
 // `body` is a Slack Block Kit payload, templated with PBS's own notification
 // template engine (Handlebars-like -- `severity`, `fields.*`, `timestamp`

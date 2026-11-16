@@ -67,19 +67,19 @@ flowchart TD
   LUNGMEN -.->|"enregistré comme spoke"| ARGO
 ```
 
-| Couche                        | Exige des couches au-dessus                                                                                                                   | Source                                                                                                                                                                                                                            |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                | [ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md), [IPAM](../../reference/IPAM-Reference.md)                                                                                               |
-| `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `chezmoi-sh-infra`, donc Garage                                                | [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md), [`stack/proxmox/`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md)                                                            |
-| PBS                           | `pve-01` ; clé d'application B2 et datastore créés par Pulumi ; clé de chiffrement côté client conservée dans OpenBao                         | [`PROXMOX_BACKUP_SERVER.md`](../../../projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md), [`stack/proxmox-backup-server/README.md`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox-backup-server/README.md) |
-| NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                       | [`TRUENAS.md`](../../../projects/chezmoi.sh/docs/TRUENAS.md)                                                                                                                                                                      |
-| Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                       | [`stack/truenas/apps.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/apps.ts)                                                                                                                           |
-| Stack `chezmoi-sh-infra`      | Garage (backend `s3://pulumi-states`) ; passphrase SOPS ; mot de passe `root@pam` ; OpenBao, Pocket-Id et clusters joignables (voir plus bas) | [`Pulumi.yaml`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/Pulumi.yaml), [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)               |
-| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                              | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                                                                  |
-| Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                              | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                                                                 |
-| VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`              | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)                                                       |
-| Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `chezmoi-sh-infra` ; Garage pour les sauvegardes              | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/rhodes-akn-bootstrap.ts)                        |
-| ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                              | [`kubernetes/src/argocd/README.md`](../../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/README.md)                                                                                                                           |
+| Couche                        | Exige des couches au-dessus                                                                                                                   | Source                                                                                                                                                                                                              |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                | [ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md), [IPAM](../../reference/IPAM-Reference.md)                                                                                 |
+| `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `chezmoi-sh-infra`, donc Garage                                                | [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md), [`stack/proxmox/`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md)                                              |
+| PBS                           | `pve-01` ; clé d'application B2 et datastore créés par Pulumi ; clé de chiffrement côté client conservée dans OpenBao                         | [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md), [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md)                                                               |
+| NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                       | [`TRUENAS.md`](../../../projects/chezmoi.sh/docs/TRUENAS.md)                                                                                                                                                        |
+| Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                       | [`stack/truenas/apps.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/apps.ts)                                                                                                             |
+| Stack `chezmoi-sh-infra`      | Garage (backend `s3://pulumi-states`) ; passphrase SOPS ; mot de passe `root@pam` ; OpenBao, Pocket-Id et clusters joignables (voir plus bas) | [`Pulumi.yaml`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/Pulumi.yaml), [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) |
+| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                              | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                                                    |
+| Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                              | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                                                   |
+| VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`              | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)                                         |
+| Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `chezmoi-sh-infra` ; Garage pour les sauvegardes              | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/rhodes-akn-bootstrap.ts)          |
+| ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                              | [`kubernetes/src/argocd/README.md`](../../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/README.md)                                                                                                             |
 
 ### Chaîne des projets
 
@@ -170,15 +170,14 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 - **Exige** : une VM PBS installée depuis l'ISO ; un disque de cache monté sur `/mnt/datastore/cache` ; le datastore
   `Backblaze-B2` et son point d'accès S3, donc une clé d'application B2 sur le bucket `pbs-vm-backup-<suffixe>` ; la clé
   de chiffrement côté client.
-- **D'où cela vient** : la clé B2 et le datastore sont créés par `stack/proxmox-backup-server/datastore.ts` ; la clé B2
-  n'existe que dans l'état Pulumi (elle n'est pas exportée en sortie de stack) et dans la configuration de la VM PBS
-  perdue ; l'état est sur Garage, que l'étape 4 restaure depuis PBS. C'est une boucle, voir
+- **D'où cela vient** : la clé B2 et le datastore sont créés par `core.pbs/pulumi/datastore.ts` ; la clé B2 n'existe que
+  dans l'état Pulumi (elle n'est pas exportée en sortie de stack) et dans la configuration de la VM PBS perdue ; l'état
+  est sur Garage, que l'étape 4 restaure depuis PBS. C'est une boucle, voir
   [Circularité 1](#1-létat-pulumi-vit-sur-ce-que-pulumi-provisionne).
 - **Référence** : « Rebuild the server » dans
-  [`PROXMOX_BACKUP_SERVER.md`](../../../projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md) et « Bootstrapping » dans
-  [`stack/proxmox-backup-server/README.md`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox-backup-server/README.md).
-  Configurer le datastore sans Pulumi (clé B2 créée à la main depuis le compte Backblaze, datastore déclaré dans
-  l'interface PBS) est non documenté.
+  [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) et « Bootstrapping » dans
+  [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md). Configurer le datastore sans Pulumi (clé B2 créée à
+  la main depuis le compte Backblaze, datastore déclaré dans l'interface PBS) est non documenté.
 - Si l'hôte est intact et que seul un invité est perdu, passer directement à « Restore a guest from backup » dans
   [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md).
 
@@ -305,8 +304,8 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 2. Les identifiants B2 n'existent que dans Pulumi
 
-- **Constat** : `stack/truenas/cloudsync.ts` crée la clé `truenas-replication` et
-  `stack/proxmox-backup-server/datastore.ts` la clé `pbs-vm-backup`.
+- **Constat** : `stack/truenas/cloudsync.ts` crée la clé `truenas-replication` et `core.pbs/pulumi/datastore.ts` la clé
+  `pbs-vm-backup`.
 - **Ce qui a changé** : l'issue dit que la clé `truenas-replication` est exportée en sortie de stack. Ce n'est plus le
   cas : `cloudsync.ts` l'exporte au niveau du module, mais `index.ts` ne la réexporte pas (« Only what is read from
   outside is exported »). Les deux clés B2 ne vivent donc que dans l'état Pulumi et dans la configuration du NAS ou de
@@ -314,14 +313,13 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
   `stack/observability.ts`, `fleet/hosts/core.oci-registry/pulumi/`) ont une copie chiffrée avec SOPS dans
   `secrets/caddy.sops.env` de leur LXC, écrite par la tâche `lxc:secrets:sync` des hôtes `core.omni` et
   `core.oci-registry` et par les tâches `pulumi:*` de [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml) pour
-  observability. Le jeton ACME de PBS (`proxmox-backup-server/acme.ts`) n'a aucune copie dans le dépôt : il est injecté
-  à la main dans PBS.
+  observability. Le jeton ACME de PBS (`core.pbs/pulumi/acme.ts`) n'a aucune copie dans le dépôt : il est injecté à la
+  main dans PBS.
 - **État** : atténuée pour les LXC (leur reconstruction n'a pas besoin de l'état Pulumi) ; ouverte pour les deux clés B2
   et le jeton ACME de PBS. Une nouvelle clé peut sans doute être créée depuis le compte Backblaze, mais le dépôt ne le
   documente pas.
-- **Renvoi** : « Bootstrapping » de
-  [`stack/proxmox-backup-server/README.md`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox-backup-server/README.md),
-  « Backups » de [`TRUENAS.md`](../../../projects/chezmoi.sh/docs/TRUENAS.md).
+- **Renvoi** : « Bootstrapping » de [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md), « Backups » de
+  [`TRUENAS.md`](../../../projects/chezmoi.sh/docs/TRUENAS.md).
 
 ### 3. La copie hors site de Garage ne relance pas Garage
 

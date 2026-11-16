@@ -3,23 +3,24 @@ import * as pulumi from "@pulumi/pulumi";
 import * as fs from "fs";
 import * as os from "os";
 
-import {
-	pveBackupTokenId,
-	pveBackupTokenSecret,
-} from "../proxmox-backup-server/access";
+const config = new pulumi.Config();
 
 // -----------------------------------------------------------------------------
 // pbs.pve.chezmoi.sh -- registers Proxmox VE's `pbs`-type storage entry
-// against the datastore stack/proxmox-backup-server/ already manages
+// against the datastore the pbs-core project (fleet/hosts/core.pbs/) manages
 // -----------------------------------------------------------------------------
-// Authenticates as `pve-backup@pbs`'s token, exported by
-// ../proxmox-backup-server/access.ts -- same Pulumi program, same `pulumi up`
-// run, so no manual copy-paste between stacks is needed (unlike the
-// bootstrap-time manual step ../proxmox-backup-server/README.md's
-// "Configuring Proxmox VE" section describes, which predates this stack).
-//
+// Authenticates as `pve-backup@pbs`'s `pve-storage` token, which lives in the
+// pbs-core project (fleet/hosts/core.pbs/pulumi/access.ts). The token ID is
+// fixed (`<userid>!<tokenName>`); the one-time secret is copied by hand from
+// pbs-core's `pveBackupTokenSecret` output into this stack's own secret config
+// (`pulumi config set --secret pveBackupTokenSecret`) -- no StackReference,
+// each project keeps its own passphrase (ADR-017). Rotating the token in
+// pbs-core means updating this config value and applying this stack too.
+const pveBackupTokenId = "pve-backup@pbs!pve-storage";
+const pveBackupTokenSecret = config.requireSecret("pveBackupTokenSecret");
+
 // `encryptionKey` is the datastore's client-side encryption key -- the same
-// key material described in ../proxmox-backup-server/README.md,
+// key material described in fleet/hosts/core.pbs/README.md,
 // "Bootstrapping" step 6 (generated once via `proxmox-backup-client key
 // create` on the PBS VM, with no Pulumi-managed origin). Sourced *only* from
 // PVE_PBS_STORE_ENCRYPTION_KEY, a path to a local keyfile -- deliberately no
@@ -60,8 +61,8 @@ export const pbsStorage = new proxmox.StoragePbs(
 		encryptionKey: readStoragePbsEncryptionKey(),
 		contents: ["backup"],
 		// Retention is handled centrally by the datastore's own PruneJob
-		// (../proxmox-backup-server/jobs.ts), not per-job on the Proxmox VE
-		// side -- see ../proxmox-backup-server/README.md, "Access model",
+		// (fleet/hosts/core.pbs/pulumi/jobs.ts), not per-job on the Proxmox VE
+		// side -- see fleet/hosts/core.pbs/README.md, "Access model",
 		// "No Datastore.Prune on this token, on purpose". `keepAll` here
 		// mirrors that: this storage entry itself applies no retention.
 		backups: {

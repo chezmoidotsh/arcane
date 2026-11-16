@@ -2,10 +2,10 @@
 
 This folder contains the Pulumi TypeScript stack that manages a narrow, deliberately scoped slice of
 `pve-01.pve.chezmoi.sh` — the Proxmox VE host every cluster in this homelab runs on — as declarative code. It follows
-the same bridged-provider pattern already established for [`../proxmox-backup-server/`](../proxmox-backup-server/) and
-[`../truenas/`](../truenas/): [`@pulumi/proxmox`](../../../../../../../catalog/pulumi/sdks/proxmox/), a Pulumi provider
-dynamically bridged from the [`bpg/terraform-provider-proxmox`](https://github.com/bpg/terraform-provider-proxmox)
-Terraform provider.
+the same bridged-provider pattern already established for
+[`fleet/hosts/core.pbs/`](../../../../../../../fleet/hosts/core.pbs/) and [`../truenas/`](../truenas/):
+[`@pulumi/proxmox`](../../../../../../../catalog/pulumi/sdks/proxmox/), a Pulumi provider dynamically bridged from the
+[`bpg/terraform-provider-proxmox`](https://github.com/bpg/terraform-provider-proxmox) Terraform provider.
 
 See
 [docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md](../../../../../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md),
@@ -20,7 +20,7 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 | `access.ts`   | Custom roles (`OmniProvider`, `OmniProviderNode`), the `rhodes-akn-bootstrap@pve`, `omni@pve` service accounts, their API tokens, and every ACL binding |
 | `sdn.ts`      | The `pvenet` SDN zone, `talosnet` VNet + subnet (shared node-traffic network for all Talos/Omni clusters), and the SDN apply step                       |
 | `pools.ts`    | The `core` and `talos` resource pools, and `talos`'s storage-level pool membership (`local`, `nvme-lvm`)                                                |
-| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`../proxmox-backup-server/`](../proxmox-backup-server/) manages                  |
+| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`fleet/hosts/core.pbs/`](../../../../../../../fleet/hosts/core.pbs/) manages     |
 | `acme.ts`     | The node's ACME account (`default`) and Cloudflare DNS-01 plugin, plus the scoped Cloudflare token that plugin uses                                     |
 | `firewall.ts` | The `talos` cluster Security Group — a baseline firewall policy every Omni-managed Talos VM can opt into                                                |
 
@@ -87,16 +87,17 @@ One-time setup before the first `pulumi up` against this stack:
 > belong in Pulumi config, matching the existing `pbs:endpoint`/`pbs:insecure`/`truenas:url` convention.
 
 1. **Authenticate as `root@pam` with a username/password, not an API token — mandatory, not optional.** Every other
-   stack in this project (`../proxmox-backup-server/`, `../truenas/`) authenticates via a scoped API token, and that
-   remains the default posture to aim for. This stack is the deliberate exception: `acme.ts`'s `AcmeAccount` resource
-   manages Proxmox VE's `/cluster/acme/account` endpoint, which **hard-rejects API token authentication entirely** —
-   confirmed live, `pulumi import`/`preview` fail with `Permission check failed (user != root@pam)` no matter how the
-   token is scoped, even with `privsep` disabled (a token still authenticates as `root@pam!<tokenname>`, a different
-   identity string than a real `root@pam` ticket/password session, which is what this endpoint specifically checks for).
-   There is no ACL grant, role, or token configuration that works around this — a genuine password-based login is the
-   only way any tool can manage this resource, Pulumi included. If ACME weren't in scope, a scoped token would be
-   preferable and this whole requirement would go away; it's in scope because managing the Cloudflare DNS-01 plugin
-   without also managing the account it authenticates against doesn't accomplish anything (see `acme.ts`'s comment).
+   stack in this project (`../truenas/`) or next to it (`fleet/hosts/core.pbs/`) authenticates via a scoped API token,
+   and that remains the default posture to aim for. This stack is the deliberate exception: `acme.ts`'s `AcmeAccount`
+   resource manages Proxmox VE's `/cluster/acme/account` endpoint, which **hard-rejects API token authentication
+   entirely** — confirmed live, `pulumi import`/`preview` fail with `Permission check failed (user != root@pam)` no
+   matter how the token is scoped, even with `privsep` disabled (a token still authenticates as `root@pam!<tokenname>`,
+   a different identity string than a real `root@pam` ticket/password session, which is what this endpoint specifically
+   checks for). There is no ACL grant, role, or token configuration that works around this — a genuine password-based
+   login is the only way any tool can manage this resource, Pulumi included. If ACME weren't in scope, a scoped token
+   would be preferable and this whole requirement would go away; it's in scope because managing the Cloudflare DNS-01
+   plugin without also managing the account it authenticates against doesn't accomplish anything (see `acme.ts`'s
+   comment).
 
    > [!CAUTION]\
    > The `root@pam!pulumi-import` token on this host is **not** the read-only credential its name suggests: it holds
@@ -133,8 +134,8 @@ One-time setup before the first `pulumi up` against this stack:
    token, no config file touched) — but `PROXMOX_VE_USERNAME`/`PROXMOX_VE_PASSWORD` are the two that matter here, since
    they're what makes `AcmeAccount` reachable at all.
 
-   `../proxmox-backup-server/`'s provider accepts the same kind of username/password env-var pair as an alternative to
-   an API token — nothing in that stack's current scope requires it (PBS has no equivalent root-only endpoint), but the
+   `fleet/hosts/core.pbs/`'s provider accepts the same kind of username/password env-var pair as an alternative to an
+   API token — nothing in that stack's current scope requires it (PBS has no equivalent root-only endpoint), but the
    option is deliberately kept available there too, documented in that stack's own README, for whenever a future
    PBS-side resource needs it. **That stack's current bootstrapping doc still shows
    `pulumi config set --secret pbs:apiToken` — a pre-existing pattern from before this credentials-never-in-git rule was
@@ -177,12 +178,19 @@ One-time setup before the first `pulumi up` against this stack:
    not the specific keychain tool.
 
 2. **Copy the shared Slack webhook URL and Cloudflare account/zone IDs** — already configured as project-level secret
-   config (`cloudflare_account_id`, `cloudflare_zone_id`), reused as-is by `acme.ts`. Nothing to do here if
-   `../proxmox-backup-server/`'s bootstrapping already ran.
+   config (`cloudflare_account_id`, `cloudflare_zone_id`), reused as-is by `acme.ts`. The `pbs-core` project
+   (`fleet/hosts/core.pbs/`) keeps its own copy in its own stack config.
+
+   Also copy the `pveBackupTokenSecret` output of the `pbs-core` stack into this stack's secret config, read by
+   `storage.ts` (no `StackReference` between the two projects, ADR-017):
+
+   ```sh
+   pulumi config set --secret pveBackupTokenSecret <secret>
+   ```
 
 3. **Provide the PBS datastore's client-side encryption key** for `storage.ts`'s `StoragePbs` resource — the same key
-   material documented in `../proxmox-backup-server/README.md`, "Bootstrapping" step 6. Point
-   `PVE_PBS_STORE_ENCRYPTION_KEY` at a local copy of the keyfile for the one apply that needs it:
+   material documented in `fleet/hosts/core.pbs/README.md`, "Bootstrapping" step 6. Point `PVE_PBS_STORE_ENCRYPTION_KEY`
+   at a local copy of the keyfile for the one apply that needs it:
 
    ```sh
    PVE_PBS_STORE_ENCRYPTION_KEY=/path/to/key pulumi up

@@ -1,0 +1,7 @@
+# `pulumi stack init` adds `encryptionsalt`. The secret keys
+# `pbs-core:cloudflare_account_id`, `pbs-core:cloudflare_zone_id` and
+# `pbs-core:notificationsSlackWebhookUrl` are set with
+# `pulumi config set --secret` (same values as the chezmoi_sh.live stack).
+config:
+  pbs:endpoint: https://pbs.pve.chezmoi.sh:8007
+  pbs:insecure: "true"
