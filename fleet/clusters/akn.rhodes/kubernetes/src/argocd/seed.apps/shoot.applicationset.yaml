@@ -71,7 +71,7 @@ spec:
               - patch: |
                   {{- $host := index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
                   {{- $dist := printf "projects/%s/dist/infrastructure/kubernetes" $host }}
-                  {{- if has $host (list "lungmen.akn") }}
+                  {{- if has $host (list "lungmen.akn" "rhodes.akn") }}
                   {{- $dist = printf "fleet/clusters/%s/kubernetes/dist/system" ($host | splitList "." | reverse | join ".") }}
                   {{- end }}
                   - op: add
@@ -86,7 +86,7 @@ spec:
               - patch: |
                   {{- $host := index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
                   {{- $dist := printf "projects/%s/dist/apps" $host }}
-                  {{- if has $host (list "lungmen.akn") }}
+                  {{- if has $host (list "lungmen.akn" "rhodes.akn") }}
                   {{- $dist = printf "fleet/clusters/%s/kubernetes/dist/apps" ($host | splitList "." | reverse | join ".") }}
                   {{- end }}
                   - op: add
