@@ -1,0 +1,15 @@
+# core.pbs Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+
+[secrets]
+# Cloudflare provider (scoped DNS-01 token for the ACME plugin): email + global API key.
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }
+
+# Backblaze B2 provider (bucket and application key of the datastore).
+B2_APPLICATION_KEY_ID = { provider = "bws", value = "pulumi-b2-application-key-id" }
+B2_APPLICATION_KEY = { provider = "bws", value = "pulumi-b2-application-key" }
+
+# Proxmox Backup Server provider: API token in the exact form `user@realm!name:secret` (sent as-is in the
+# `Authorization: PBSAPIToken=` header). The provider reads it from PBS_API_TOKEN when `pbs:apiToken` is not set.
+PBS_API_TOKEN = { provider = "bws", value = "pulumi-pbs-api-token" }

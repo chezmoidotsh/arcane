@@ -83,7 +83,7 @@ const backupsS3Endpoint = new pbs.S3Endpoint(
 // *local* chunk cache directory on the VM's own disk before upload, sized
 // for cache headroom only, not for the full backup set. This directory must
 // already exist (on its own dedicated disk, not the OS disk -- see
-// ../README.md, "Bootstrapping") before the first `pulumi up`; the provider
+// ../README.md, "Première installation") before the first `pulumi up`; the provider
 // doesn't create it, and Datastore creation fails if it's missing.
 //
 // Retention (`keepDaily`/`keepWeekly`/`keepMonthly`) is enforced by a
@@ -97,7 +97,7 @@ export const backupsDatastore = new pbs.Datastore(
 	{
 		name: "Backblaze-B2",
 		comment: "Primary S3-backed datastore (Backblaze B2)",
-		path: "/mnt/datastore/cache", // local chunk cache on its own dedicated disk, not the full backup set -- see ../README.md, "Bootstrapping"
+		path: "/mnt/datastore/cache", // local chunk cache on its own dedicated disk, not the full backup set -- see ../README.md, "Première installation"
 		s3Client: backupsS3Endpoint.s3EndpointId,
 		s3Bucket: pbsBackupBucket.bucketName,
 		gcSchedule: "Sun 04:00", // off-peak, after the Sunday prune (03:00) + verify (03:30) window -- see ./jobs.ts

@@ -1,234 +1,254 @@
-# Proxmox Backup Server (pbs.pve.chezmoi.sh) as Code
+<p align="center">
+  <img alt="Proxmox" src="../../../docs/assets/icons/platform/proxmox.svg" height="150">
+</p>
 
-The [`pulumi/`](pulumi/) folder of this host holds the Pulumi TypeScript project (`pbs-core`, stack `pbs_core.live`)
-that manages `pbs.pve.chezmoi.sh`, a Proxmox Backup Server instance, as declarative code. It follows the same
-config-as-code pattern already established for TrueNAS SCALE
-([`stack/truenas/`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/), `@pulumi/truenas`): the
-appliance's **operating system is installed manually** (see "Deployment target" below), and **everything above the OS
-layer is managed here** through [`@pulumi/proxmox-backup-server`](../../../catalog/pulumi/sdks/proxmox-backup-server/),
-a Pulumi provider dynamically bridged from the [`yavasura/pbs`](https://registry.terraform.io/providers/yavasura/pbs)
-Terraform provider.
+<h1 align="center">「pbs.core」</h1>
 
-The generated human-facing documentation (including step-by-step Proxmox VE integration instructions) is published at
-[`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md) (see
-[`pulumi/toolbox/proxmox-backup-server-docs/`](pulumi/toolbox/proxmox-backup-server-docs/README.md)).
+<p align="center"><strong>Proxmox Backup Server — les sauvegardes des VM et des LXC, stockées chez Backblaze B2</strong></p>
 
-## Deployment target
+<p align="center">
+  <img alt="host: Proxmox Backup Server" src="https://img.shields.io/badge/host-Proxmox_Backup_Server-E57000?logo=proxmox&logoColor=white">
+  <img alt="os: Debian" src="https://img.shields.io/badge/os-Debian-A81D33?logo=debian&logoColor=white">
+  <img alt="config: Pulumi" src="https://img.shields.io/badge/config-Pulumi-8A3391?logo=pulumi&logoColor=white">
+  <img alt="deploy: mise" src="https://img.shields.io/badge/deploy-mise_%2B_pulumi-orange">
+</p>
 
-Proxmox Backup Server ships its own official Debian-based ISO installer and works well as-is — unlike the Nix/LXC
-appliance pattern used elsewhere in `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` (`pve-exporter`,
-`observability`, `oci-registry`, `omni`), there is no reason to fight PBS into that mold, and PBS is not officially
-supported inside an LXC container (its storage stack expects a full VM or bare metal). The VM itself — disk layout,
-network, initial `root@pam` setup — is a manual, one-time install, the same way any vendor-image install is handled in
-this repo (see `docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md`, "Non-Goals": Proxmox itself stays outside
-Pulumi/GitOps). Everything from that point on — datastore, notifications, users/ACLs, prune/verify jobs — is this
-stack's job.
+<p align="center">
+  <a href="#services">Services</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#accès">Accès</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#déploiement">Déploiement</a> ·
+  <a href="#contribuer">Contribuer</a> ·
+  <a href="#pour-aller-plus-loin">Pour aller plus loin</a>
+</p>
 
-## What's managed here
+`pbs.pve.chezmoi.sh` reçoit les sauvegardes des VM et des LXC de Proxmox VE : dédupliquées, incrémentales et vérifiées
+par somme de contrôle. C'est une VM Proxmox VE installée à la main depuis l'ISO officielle (PBS n'est pas supporté dans
+un LXC, et n'a pas de raison d'entrer dans le moule des appliances Nix des autres hôtes `core.*`) ; tout ce qui se
+trouve au-dessus du système est géré par le projet Pulumi `pbs-core` (pile `pbs_core.live`, dans `pulumi/`), via le
+fournisseur [`proxmox-backup-server`](../../../catalog/pulumi/sdks/proxmox-backup-server/), un pont vers le fournisseur
+Terraform [`yavasura/pbs`](https://registry.terraform.io/providers/yavasura/pbs). Le même découpage que pour le NAS
+([`core.nas`](../core.nas/README.md)) : l'OS à la main, le reste en code.
 
-| File (`pulumi/`)   | Responsibility                                                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `acme.ts`          | Cloudflare DNS-01 ACME token for `pbs.pve.chezmoi.sh`'s own TLS certificate (PBS's built-in ACME client consumes it directly, no Caddy involved) |
-| `datastore.ts`     | Backblaze B2 bucket + application key, the S3 endpoint, and the S3-backed datastore itself                                                       |
-| `jobs.ts`          | Prune job (retention policy) and verify job (weekly checksum verification) on the datastore                                                      |
-| `notifications.ts` | Webhook notification target routing datastore events to the shared Slack `#notifications` channel                                                |
-| `access.ts`        | The `pve-backup@pbs` service account, its API token, and the least-privilege ACL binding Proxmox VE's storage integration uses to push backups   |
+## Services
 
-### Intentionally not managed via Pulumi
+<img src="../../../docs/assets/icons/platform/proxmox.svg" alt="Proxmox Backup Server" width="96" align="left" />
 
-- **The PBS VM/OS itself** (installation, `root@pam` bootstrap, network configuration at the OS level) — see "Deployment
-  target" above.
-- **The local cache directory's dedicated disk** (attaching, partitioning, formatting, mounting): a Proxmox VE
-  virtual-disk/OS operation, out of this provider's reach entirely — see "Bootstrapping" below.
-- **Datastore client-side encryption key and paperkey** (`proxmox-backup-client key create`): the `yavasura/pbs`
-  provider exposes no resource for this — it is a CLI operation run against the PBS VM itself, with no Pulumi-managed
-  input (earlier revisions of this stack generated a passphrase via `random.RandomPassword` to seed it; that added a
-  Pulumi-managed secret for no real benefit, since the key material still has to be generated, backed up, and uploaded
-  to Proxmox VE by hand regardless — dropped). Same category as TrueNAS's ACME certificates
-  (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/README.md`, "Intentionally not managed via Pulumi").
-- **Backup jobs themselves** (which VMs/LXCs get backed up, on what schedule): these are Proxmox VE resources (a
-  `vzdump`/PBS storage job configured in Proxmox VE, not in Proxmox Backup Server), and Proxmox VE configuration stays
-  manual for the same reason the VM/OS layer does. This stack only prepares the _destination_ PBS is ready to receive
-  backups at — `access.ts`'s `pve-backup@pbs` token is what Proxmox VE's `pbs`-type storage entry authenticates with;
-  see `PROXMOX_BACKUP_SERVER.md`, "Configuring Proxmox VE to use this datastore", for the exact setup steps.
-- **The Slack webhook URL itself**: it already exists (shared with observability's Alertmanager) but lives in a
-  SOPS-encrypted file outside this stack's reach (this stack runs upstream of any Kubernetes cluster — same constraint
-  documented in `projects/chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts`). Copied in by hand as a Pulumi
-  secret; see "Bootstrapping".
+### [Proxmox Backup Server](https://www.proxmox.com/en/products/proxmox-backup-server/overview)
 
-## Datastore architecture
+Reçoit les sauvegardes que Proxmox VE pousse dans le datastore `Backblaze-B2`, un datastore S3 dont le bucket est chez
+Backblaze. La rétention est appliquée côté serveur (4 jours, 2 semaines, 3 mois, chaque nuit à 03:00), la vérification
+des sommes de contrôle tourne le dimanche à 03:30 et le ramasse-miettes à 04:00. Les événements de ces tâches partent
+sur le canal Slack `#notifications`. _Le datastore est directement sur S3, pas une copie d'un datastore local : la VM ne
+porte aucune donnée à protéger._
 
-A single **S3-backed datastore** (on the pre-provisioned Backblaze B2 bucket) is the _primary_ datastore, rather than a
-local bulk datastore synced to B2 by a separate sync job — Proxmox Backup Server ≥3.x supports S3 natively as a
-datastore backend, not just as a sync target.
+<br clear="all" />
 
-This removes the "does PBS itself need its own backup" question entirely: there is no large local chunk store to
-protect. The PBS VM only holds OS state + PBS configuration, both trivially reproducible from the documented ISO install
-steps plus a `pulumi up`. The trade-off: restore speed depends on B2 throughput/latency instead of local disk —
-acceptable for a homelab RPO/RTO; revisit if a restore drill proves too slow.
+## Architecture
 
-`path` is still set on the `Datastore` resource even though the backend is S3 — PBS uses it as the _local chunk cache_
-directory on the VM's own disk before upload. It must live on its own dedicated disk, not the OS disk (see
-"Bootstrapping" below), and must already exist and be mounted before the first `pulumi up`: the provider doesn't create
-it, and `Datastore` creation fails if the path is missing.
+![Architecture de pbs.core](./assets/architecture.png)
 
-The S3 endpoint uses `pathStyle: true` (address the bucket as `endpoint/bucket`, not `bucket.endpoint`) so it doesn't
-depend on wildcard DNS/TLS for a bucket subdomain, plus `providerQuirks: ["skip-if-none-match-header"]` to work around a
-Backblaze B2 incompatibility with the standard S3 `If-None-Match` header PBS sends on chunk upload — without it, every
-chunk write fails.
+Seul Proxmox VE pousse des sauvegardes, sur le port 8007. Le serveur parle ensuite à Backblaze pour stocker les blocs, à
+Slack pour notifier, et à Let's Encrypt et Cloudflare pour son certificat (défi DNS-01, l'interface n'étant pas
+joignable depuis Internet).
 
-## Retention policy
+## Accès
 
-`keepDaily=4, keepWeekly=2, keepMonthly=3` (last 4 days, last 2 Sundays, last 3 months), applied by the `pbs.PruneJob`
-in `jobs.ts`. This assumes daily backups feeding PBS's chunk-level incremental dedup, which is what makes the monthly
-tier affordable — an opaque/compressed backup archive (e.g. a NAS backup blob) may not dedup as well, worth checking
-PBS's GC stats after the first few weeks of real backups before committing further.
+L'interface et l'API sont sur `https://pbs.pve.chezmoi.sh:8007`, avec un certificat ACME valide (le client ACME intégré
+à PBS utilise directement le jeton Cloudflare, sans Caddy). Aucune identité n'utilise `root@pam` en régime normal :
+Proxmox VE se connecte avec le compte `pve-backup@pbs` et son jeton `pve-storage`, qui n'ont que deux rôles sur le
+datastore, `DatastoreBackup` (pousser et restaurer ses sauvegardes) et `DatastoreReader` (lister, ce que demande
+`pvesm add pbs` pour ses contrôles). Chaque rôle est accordé deux fois, à l'utilisateur et au jeton : accordé à un seul
+des deux, `proxmox-backup-client` échouait avec `missing permissions`.
 
-Verification runs weekly (`pbs.VerifyJob`), deep enough to catch bitrot before the oldest kept daily snapshot is pruned
-away. Garbage collection runs off the `Datastore` resource itself (`gcSchedule`, in `datastore.ts`) — there is no
-separate GC job resource in this provider.
+Le jeton n'a volontairement pas `Datastore.Prune`. La rétention est faite par le serveur, et ce droit sur l'identifiant
+que `vzdump` utilise à chaque sauvegarde permettrait à un hôte Proxmox VE compromis de supprimer les sauvegardes
+distantes. Il ne faut donc pas non plus régler de rétention (« Prune Backups ») sur l'entrée de stockage ni sur la tâche
+de sauvegarde côté Proxmox VE.
 
-**Scheduling note:** the three jobs are staggered (prune nightly at 03:00, verify Sundays at 03:30, GC Sundays at 04:00)
-to avoid overlapping runs on the same datastore. These times are a reasonable off-peak default, not a measurement of the
-actual ad-hoc weekly Proxmox LXC job this stack replaces — confirm that job's current schedule in the Proxmox VE UI and
-adjust here if it would otherwise contend with Longhorn/CSI I/O windows on other clusters.
+## Configuration
 
-## Access model
+Les sauvegardes sont chiffrées côté client par Proxmox VE avant d'arriver : sans la clé, rien dans le datastore n'est
+restaurable. La clé et son paperkey sont dans OpenBao.
 
-`pve-backup@pbs` (`access.ts`) is the only identity Proxmox VE's own `pbs`-type storage integration authenticates as,
-via its `pve-storage` API token. It receives two roles on the datastore root, nothing broader — `DatastoreBackup`
-(push/restore its own backups) and `DatastoreReader` (list/audit the datastore, needed by `pvesm add pbs`'s own
-connectivity check when it fetches the datastore list before creating the storage entry) — mirroring the CCM/CSI
-dual-token least-privilege pattern used elsewhere in this repo. No credential in steady-state operation uses `root@pam`.
+Chaque fichier de `pulumi/` a une responsabilité :
 
-Each role is granted **twice** — once to the user (`pveBackupUser.userid`), once to the token (`pveBackupTokenId`), four
-ACL resources total. Confirmed live: granting a role to only the user, or only the token, both left
-`proxmox-backup-client` failing with `missing permissions '...'` even though the "missing" role was correctly scoped to
-whichever one it was granted to. Granting the same role to both is what actually works.
+| Fichier            | Contenu                                                                                                                                      |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `acme.ts`          | Jeton Cloudflare DNS-01 du certificat de `pbs.pve.chezmoi.sh`                                                                                |
+| `datastore.ts`     | Bucket Backblaze B2, clé d'application, point d'accès S3 et datastore                                                                        |
+| `jobs.ts`          | Tâche de rétention (`prune`) et tâche de vérification hebdomadaire                                                                           |
+| `notifications.ts` | Cible webhook Slack et règle qui lui envoie tous les événements du datastore                                                                 |
+| `access.ts`        | Compte `pve-backup@pbs`, son jeton d'API et les droits sur le datastore                                                                      |
+| `toolbox/`         | Générateur de [`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md), voir son [README](pulumi/toolbox/proxmox-backup-server-docs/README.md) |
 
-**No `Datastore.Prune` on this token, on purpose.** `DatastorePowerUser` would cover both the listing requirement above
-and let Proxmox VE's own per-job "keep" retention prune old backups directly — but that permission would live on the
-credential `vzdump` uses on every automated backup run. Retention is already handled without it, centrally, by this
-datastore's own scheduled `PruneJob` (see "Retention policy" above), which runs server-side and never touches
-`pve-backup@pbs`. Granting Prune here would only matter for a Proxmox VE-side retention setting that isn't configured
-(see `PROXMOX_BACKUP_SERVER.md`, "Configuring Proxmox VE to use this datastore" — don't set one), and would mean a
-compromised Proxmox VE host could delete existing offsite backups, defeating their purpose.
+Le bucket n'a pas de verrou de fichier, contrairement à ceux du NAS : le ramasse-miettes de PBS supprime des blocs par
+de simples `DeleteObject`, et une rétention en mode gouvernance les bloquerait en silence, ce qui ferait grossir le
+stockage sans fin. La clé d'application est limitée à ce bucket. Le point d'accès S3 est en `pathStyle: true` (le
+certificat du point d'accès ne couvre pas les sous-domaines de bucket) avec
+`providerQuirks: ["skip-if-none-match-header"]`, sans quoi chaque écriture de bloc échoue sur Backblaze, qui ne gère pas
+l'en-tête `If-None-Match` envoyé par PBS.
 
-The bootstrap credential this stack's own Pulumi provider authenticates as (`pbs:apiToken`, see "Bootstrapping" below)
-is a **separate**, pre-existing credential, created once by hand during the manual VM setup — the same chicken-and-egg
-reasoning as `truenas:apiKey` in `projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/README.md`: Pulumi cannot
-create the credential it needs in order to run.
+Le `path` du datastore (`/mnt/datastore/cache`) reste obligatoire pour un datastore S3 : PBS s'en sert comme cache local
+de blocs avant l'envoi, il ne contient pas toutes les sauvegardes. Il doit être sur son propre disque (écrit en continu
+pendant les sauvegardes), monté avant le premier `pulumi up`, car le fournisseur ne le crée pas et la création du
+datastore échoue s'il manque. Restaurer depuis B2 est plus lent que depuis un disque local : acceptable pour un homelab,
+à revoir si un test de restauration est trop long. La rétention suppose des sauvegardes quotidiennes qui profitent de la
+déduplication ; un fichier d'archive opaque (une sauvegarde de NAS, par exemple) déduplique moins bien, ce qu'il faut
+regarder dans les statistiques du ramasse-miettes après quelques semaines. Les horaires (03:00, 03:30, 04:00) sont des
+heures creuses choisies pour ne pas se chevaucher, pas une mesure : à confirmer face à la tâche hebdomadaire de Proxmox
+VE.
 
-## Bootstrapping
+Ne sont pas gérés par Pulumi :
 
-Already done for the current `pbs.pve.chezmoi.sh` instance — kept here as the reference procedure for a fresh install or
-disaster recovery. One-time setup, after the PBS VM is installed and reachable:
+- la VM et son système (installation, compte `root@pam`, réseau), le disque de cache (une opération Proxmox VE) et la
+  clé de chiffrement du datastore et son paperkey (le fournisseur n'a pas de ressource pour cela, c'est la CLI de PBS) ;
+- les tâches de sauvegarde elles-mêmes (quelles VM, quand) : ce sont des ressources Proxmox VE, pas PBS. Seule l'entrée
+  de stockage `pve-storage-pbs` est déclarée, dans la pile `pve-01-core` (`fleet/hosts/core.pve-01/pulumi/storage.ts`) ;
+- l'URL du webhook Slack, copiée à la main : elle vit dans un fichier SOPS (`slack-webhook-url` de
+  `fleet/hosts/akn.ptilopsis/nix/secrets/o11y.sops.yaml`) que cette pile, qui s'exécute en amont de tout cluster, ne
+  peut pas lire.
 
-1. **Attach and mount a dedicated disk for the local chunk cache.** Add a second virtual disk to the PBS VM in Proxmox
-   VE (separate from the OS disk — the cache is written to constantly during backups, and isolating that I/O keeps it
-   from wearing out or contending with the OS disk), then on the VM:
+Le jeton d'API que Pulumi utilise (`pulumi@pbs!pulumi`) est un identifiant distinct, créé une fois à la main : Pulumi ne
+peut pas créer lui-même l'identifiant dont il a besoin pour tourner. Il vit dans Bitwarden Secrets Manager
+(`pulumi-pbs-api-token`) et n'entre pas dans la configuration de la pile. Le fournisseur
+(`yavasura/terraform-provider-pbs`, un fournisseur Terraform passé par le pont Pulumi) envoie la valeur telle quelle
+dans l'en-tête `Authorization: PBSAPIToken=`, donc elle doit être exactement `utilisateur@domaine!nom:secret`
+(`!` puis `:`), par exemple `pulumi@pbs!pulumi:<secret>`. La description du fournisseur
+(`user@realm:token_name=token_value`) est fausse sur ce point. Il accepte aussi `username` et `password`.
+
+Les secrets viennent de Bitwarden Secrets Manager par fnox, comme pour toutes les piles de la flotte : `fleet/.fnox.toml`
+(backend S3 Garage et phrase secrète Pulumi, `PULUMI_CONFIG_PASSPHRASE`, partagée par toutes les piles de la flotte) et
+`.fnox.toml` à la racine de l'hôte (Cloudflare et Backblaze B2, entrées `pulumi-cloudflare-*` et `pulumi-b2-*`). Le
+jeton et l'identifiant du projet Bitwarden sont dans le trousseau macOS (`mise run bws:setup`). `pulumi` passe par fnox
+(alias de `fleet/.mise.toml`) : les secrets n'existent que dans ce processus.
+
+> [!IMPORTANT]\
+> Le jeton d'API ne se range pas dans `pulumi config set` : Pulumi enregistre la configuration du fournisseur dans l'état
+> et un `refresh` réutilise cette copie, qui prime sur l'environnement. Un jeton périmé s'y figerait (401 à chaque
+> lecture) ; avec `PBS_API_TOKEN` (fnox), une rotation dans Bitwarden suffit. Le fournisseur lit `PBS_ENDPOINT`,
+> `PBS_INSECURE`, `PBS_API_TOKEN`, `PBS_USERNAME` et `PBS_PASSWORD` ; la configuration de la pile (`pbs:apiToken`, etc.),
+> quand elle existe, l'emporte sur ces variables. Ce fichier (`pulumi/Pulumi.pbs_core.live.yaml`) est suivi dans un
+> dépôt public : les valeurs chiffrées n'y sont protégées que par la phrase secrète partagée.
+
+## Déploiement
+
+### Première installation
+
+À faire à la main, une seule fois, sur la VM PBS installée depuis l'ISO et joignable. C'est aussi la procédure de
+reconstruction : perdre la VM ne fait perdre aucune sauvegarde (elles sont sur S3), il suffit de réinstaller puis de
+repasser ces étapes.
+
+1. Ajouter un second disque virtuel à la VM dans Proxmox VE, puis le monter sur `/mnt/datastore/cache` (à faire avant
+   l'étape 4) :
 
    ```sh
-   mkfs.ext4 /dev/sdb                       # or whichever device the new disk shows up as
+   mkfs.ext4 /dev/sdb                       # ou le périphérique du nouveau disque
    mkdir -p /mnt/datastore/cache
    echo '/dev/sdb  /mnt/datastore/cache  ext4  defaults  0  2' >> /etc/fstab
    mount -a
    ```
 
-   This must exist and be mounted **before** step 4 — `pulumi up` fails to create the `Datastore` resource if
-   `/mnt/datastore/cache` (the `path` in `datastore.ts`) doesn't exist yet.
+2. Vérifier que les secrets Bitwarden de `.fnox.toml` existent, puis créer la pile (depuis `pulumi/`) :
 
-2. **Create a scoped Pulumi-management credential** on the PBS VM (not `root@pam` — e.g. an `admin@pbs` user with an API
-   token scoped to what this stack needs to manage: datastores, jobs, notifications, users, ACLs). Set it as Pulumi
-   secret config:
+   ```sh
+   pulumi stack init pbs_core.live
+   ```
+
+3. Sur la VM, créer l'utilisateur `pulumi@pbs` et son jeton `pulumi` (pas `root@pam`), puis leur donner le rôle `Admin`
+   sur `/` avec propagation, **à l'utilisateur et au jeton** : un jeton n'a que l'intersection de ses droits et de ceux
+   de son utilisateur. Ranger la valeur `pulumi@pbs!pulumi:<secret>` dans le secret Bitwarden `pulumi-pbs-api-token`
+   (déclaré comme `PBS_API_TOKEN` dans `.fnox.toml`), puis déclarer la configuration. Les valeurs secrètes se passent sur
+   l'entrée standard, pas en argument :
 
    ```sh
    pulumi config set pbs:endpoint https://pbs.pve.chezmoi.sh:8007
-   pulumi config set --secret pbs:apiToken 'admin@pbs!pulumi=<token-value>'
+   pbpaste | pulumi config set --secret pbs-core:cloudflare_account_id
+   pbpaste | pulumi config set --secret pbs-core:cloudflare_zone_id
+   pbpaste | pulumi config set --secret pbs-core:notificationsSlackWebhookUrl
    ```
 
-   The provider also accepts a `username`/`password` pair as an alternative to `pbs:apiToken`. Nothing this stack
-   currently manages requires it — unlike `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/`, where Proxmox
-   VE's `/cluster/acme/account` endpoint hard-rejects API token auth and username/password is mandatory (see
-   `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md`, "Bootstrapping", for why and for a macOS
-   Keychain-based tutorial on retrieving the password securely). Kept documented here too, deliberately, so a future
-   PBS-side resource with the same kind of root-only restriction doesn't require rediscovering that the option exists.
+   L'URL du webhook Slack se copie depuis `fleet/hosts/akn.ptilopsis/nix/secrets/o11y.sops.yaml`. `pbpaste` lit le
+   presse-papiers : copier chaque valeur avant sa commande.
 
-   > [!IMPORTANT]\
-   > If ever needed, supply it as an **environment variable scoped to the single command that needs it — never via
-   > `pulumi config set`, not even `--secret`.** That still writes an encrypted blob into the git-tracked
-   > `pulumi/Pulumi.pbs_core.live.yaml`; encrypted-at-rest is not the same as safe to commit. See
-   > `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md`, "Bootstrapping" step 1, for the
-   > env-var-only pattern this stack would follow if it ever needs password auth (`PBS_USERNAME`/`PBS_PASSWORD` or
-   > whatever the provider's actual env var names turn out to be — verify against the provider before relying on them,
-   > they haven't been exercised for this stack yet).
-
-3. **Copy the shared Slack webhook URL** from observability's Alertmanager config
-   (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/observability.sops.env`) into this
-   stack's own secret config:
-
-   ```sh
-   pulumi config set --secret notificationsSlackWebhookUrl <url>
-   ```
-
-4. **Run `pulumi up`** (see "Running Pulumi commands" below) to create the datastore, jobs, notification target, and the
-   `pve-backup@pbs` access token.
-
-5. **Retrieve the one-time token secret** this run produces and store it in OpenBao (this stack cannot push to Vault
-   itself — see `acme.ts`: it runs upstream of any cluster):
+4. Lancer `mise run pulumi:apply` depuis `pulumi/` : il crée le datastore, les tâches, la cible de notification et le
+   jeton `pve-backup@pbs`.
+5. Récupérer le secret du jeton, que PBS ne renvoie plus jamais, et le ranger dans OpenBao (la pile ne peut pas écrire
+   dans Vault, elle tourne en amont des clusters) :
 
    ```sh
    pulumi stack output pveBackupTokenSecret --show-secrets
    ```
 
-6. **Generate the datastore's client-side encryption key** on the PBS VM itself, and record the offline paperkey:
+6. Générer sur la VM la clé de chiffrement du datastore et imprimer son paperkey :
 
    ```sh
    proxmox-backup-client key create /root/.config/proxmox-backup/backups.key
    proxmox-backup-client key paperkey /root/.config/proxmox-backup/backups.key
    ```
 
-   Choose a strong passphrase when prompted (or `--kdf none` plus tight filesystem permissions if the key file itself is
-   already protected at rest — e.g. only readable by root on a disk that's itself encrypted). Store both the keyfile and
-   the paperkey printout in OpenBao — losing them makes every backup in the datastore unrecoverable. This key gets
-   uploaded once when configuring Proxmox VE's storage entry in the next step; every backup pushed through that entry is
-   then encrypted with it automatically.
+   Choisir une phrase secrète solide (ou `--kdf none` avec des droits stricts si le fichier est déjà protégé au repos).
+   Ranger le fichier et le paperkey dans OpenBao : les perdre rend toutes les sauvegardes irrécupérables. La clé est
+   envoyée une fois à Proxmox VE à l'étape suivante, et chaque sauvegarde poussée par cette entrée est ensuite chiffrée.
 
-7. **Configure Proxmox VE's `pbs`-type storage** using the `pveBackupTokenId`/`pveBackupTokenSecret` outputs from step 5
-   and the encryption key from step 6 — see [`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md), "Configuring Proxmox
-   VE to use this datastore", for the exact UI/CLI steps, generated per-datastore from this stack's own state. The
-   `pve-storage-pbs` entry itself is a resource of the `chezmoi-sh-infra` stack
-   (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/storage.ts`): it reads the token secret from that
-   stack's own `pveBackupTokenSecret` secret config (no `StackReference`, ADR-017), so copy the `pveBackupTokenSecret`
-   output of this stack there with `pulumi config set --secret pveBackupTokenSecret`.
+7. Configurer le stockage `pbs` de Proxmox VE avec `pveBackupTokenId` et `pveBackupTokenSecret`, et la clé de l'étape 6.
+   L'entrée `pve-storage-pbs` est une ressource de la pile `pve-01-core` : copier le secret dedans avec
+   `pulumi config set --secret pveBackupTokenSecret` (pas de `StackReference`, ADR-017). Les champs de l'interface et la
+   commande `pvesm add pbs` sont dans [`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md) (« Configuring Proxmox VE
+   to use this datastore ») ; le port `8007` doit y être renseigné explicitement, sinon certaines versions de Proxmox VE
+   répondent `401 Unauthorized` malgré de bons identifiants.
 
-## Adding or editing a prune/verify job
+### Mises à jour
 
-Both live in `jobs.ts` as standalone `new pbs.PruneJob(...)`/`new pbs.VerifyJob(...)` declarations, each keyed by an
-explicit `pruneJobId`/`verifyJobId` and scoped to a `store` (currently the whole datastore). PBS namespaces (path
-prefixes within a datastore) aren't used in this stack today — see the PBS provider's own resource docs
-(`catalog/pulumi/sdks/proxmox-backup-server/pruneJob.ts` / `verifyJob.ts`, `namespace.ts`) if a future workload needs
-scoped retention or per-namespace access control.
+Depuis `pulumi/` : `mise run pulumi:diff` prévisualise, `mise run pulumi:apply` applique après confirmation puis
+régénère [`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md) (`mise run proxmox-backup-server:docs:generate` le
+régénère seul).
 
-## Adding a new notification target or route
+Pour tourner le jeton de Proxmox VE, le marquer `taint`, appliquer, puis relire le nouveau secret :
 
-`notifications.ts` follows the `WebhookNotification` + `NotificationMatcher` pattern: the target defines _where_ (the
-webhook URL, HTTP method, body template), the matcher defines _what gets routed there_ (severities, match mode). PBS's
-`notifications.cfg` is a line-oriented config file, so any multi-line `body` value must be base64-encoded before being
-handed to the resource — see `notifications.ts`'s own comment on `slackWebhookBody` for why a raw multi-line string gets
-rejected with "detected unexpected control character".
-
-To add a second target (e.g. Gotify, SMTP), declare it with the corresponding `pbs.*Notification` resource
-(`gotifyNotification.ts`, `smtpNotification.ts`, `sendmailNotification.ts` in the SDK), then either extend the existing
-matcher's `targets` array or add a new matcher scoped to different `matchSeverities`/`matchFields`.
-
-## Running Pulumi commands
-
-```bash
+```sh
 cd fleet/hosts/core.pbs/pulumi
-mise run pulumi:diff     # Preview pending changes
-mise run pulumi:apply    # Apply changes (requires confirmation)
-pulumi stack             # Show current stack state
+urn=$(pulumi stack export | jq -re '.deployment.resources[] | select(.urn | endswith("::pbs-token-pve-backup")) | .urn')
+pulumi state taint "$urn" --yes
+pulumi up --refresh
+pulumi stack output pveBackupTokenSecret --show-secrets
 ```
 
-See `.agents/skills/` and `AGENTS.md` for commit and PR workflows.
+Il faut ensuite poser la nouvelle valeur dans la configuration de la pile `pve-01-core` et l'appliquer ; tant que ce
+n'est pas fait, chaque sauvegarde planifiée échoue à l'authentification.
+
+### Vérifier un déploiement
+
+- `pulumi stack` : la pile `pbs_core.live` est sélectionnée et `mise run pulumi:diff` ne montre aucun changement.
+- Dans PBS, le datastore `Backblaze-B2` est présent, avec les tâches `backups-retention` et `backups-weekly-verify`.
+- Depuis Proxmox VE, l'entrée de stockage liste le datastore sans erreur `401`.
+
+## Contribuer
+
+Les tâches de rétention et de vérification sont dans `pulumi/jobs.ts` (`pbs.PruneJob` et `pbs.VerifyJob`, chacune avec
+son identifiant explicite et un `store`). Les espaces de noms PBS ne sont pas utilisés ; s'il en faut pour une rétention
+ou des droits par charge, voir `catalog/pulumi/sdks/proxmox-backup-server/` (`pruneJob.ts`, `verifyJob.ts`,
+`namespace.ts`).
+
+Les notifications (`pulumi/notifications.ts`) combinent une cible (où : URL, méthode, gabarit) et une règle (quoi :
+sévérités, mode). Le fichier `notifications.cfg` de PBS est orienté ligne : un `body` multiligne doit être encodé en
+base64, sinon l'API répond « detected unexpected control character » (voir le commentaire de `slackWebhookBody`). Pour
+une seconde cible (Gotify, SMTP), déclarer la ressource `pbs.*Notification` correspondante puis étendre `targets` ou
+ajouter une règle avec d'autres `matchSeverities` ou `matchFields`.
+
+Le schéma d'architecture se modifie dans `architecture.d2`, puis `mise run diagram:generate` régénère
+`assets/architecture.png`, à commiter avec. Lancer `mise run lint` avant de pousser.
+
+## Pour aller plus loin
+
+- [PROXMOX_BACKUP_SERVER.md](PROXMOX_BACKUP_SERVER.md) : l'état courant du serveur (datastore, tâches, accès), généré,
+  avec la procédure de restauration.
+- [Proxmox VE](../core.pve-01/PROXMOX-VE.md) : l'hyperviseur qui pousse les sauvegardes, et où se pilotent les
+  restaurations.
+- [ADR-015](../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md) : pourquoi Proxmox reste hors de Pulumi.
+- [ADR-017](../../../docs/decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md)
+  : pas de `StackReference` entre piles (la phrase secrète, elle, est désormais partagée par les piles de la flotte).
+- [Plan de reprise](../../../docs/plan-de-reprise/brouillon/Plan-de-Reprise-apres-Sinistre.md) : la remise en service de
+  PBS dans la reprise après sinistre.
+- [Nommage des machines](../../../docs/reference/Nommage-des-Machines-Reference.md) : d'où vient le nom `pbs.core`.

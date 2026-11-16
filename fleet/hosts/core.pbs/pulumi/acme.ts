@@ -15,7 +15,7 @@ const config = new pulumi.Config();
 // lives inside rhodes.akn and can't be a dependency of something that has to
 // exist before it. Exported as a Pulumi stack output for manual injection into
 // Proxmox Backup Server's ACME DNS plugin configuration (see ../README.md,
-// "Bootstrapping").
+// "Première installation").
 const acmeDns01Token = new Dns01TokenComponent("acme-dns-pbs", {
 	owner: "chezmoi.sh",
 	application: "Proxmox Backup Server ACME (pbs.pve.chezmoi.sh)",

@@ -4,9 +4,10 @@
 # Proxmox Backup Server (pbs.pve.chezmoi.sh), managed as a Pulumi stack
 # (pbs_core.live, state in the Garage S3 backend, see Pulumi.yaml).
 #
-# `.mise/env.yaml` (SOPS-encrypted PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE,
-# loaded via `[env] _.file` below) lets these tasks run without prompting.
-# This project has its own passphrase (ADR-017).
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the shared secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) come from fleet/.fnox.toml and
+# the provider credentials come from ../.fnox.toml, all resolved from Bitwarden Secrets Manager
+# and only present inside that process (see `mise run bws:setup`).
 #
 # `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
 # exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
@@ -24,7 +25,7 @@
 node = "24"
 
 [env]
-_.file = "{{ config_root }}/.mise/env.yaml"
+PULUMI_STACK = "pbs_core.live"
 
 [tasks."pulumi:diff"]
 description = "Preview pending changes for the current Pulumi stack"
