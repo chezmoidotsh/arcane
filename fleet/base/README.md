@@ -16,13 +16,11 @@ and [`core.pbs`](../hosts/core.pbs/README.md) (`pbs-core`).
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `index.ts`                           | Entry point — imports the modules and re-exports the outputs read from outside (no logic)                                                                           |
 | `stack/config.ts`                    | Every input of the program (Pulumi config and `process.env`), read once                                                                                             |
-| `stack/observability/credentials.ts` | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth); leaves with the appliance at step 10 of the [fleet migration][migr]                       |
 | `stack/cloud/oci.ts`                 | Parent OCI compartment `chezmoi.sh`; its id (`chezmoiShCompartmentId`) is read by the `horn.akn` and `exusiai.akn` stacks                                           |
 | `stack/identity/pocket-id.ts`        | The Pocket-Id groups; their ids are read by the `pocket-id` stacks of the clusters and hosts (`StackReference` to `organization/base/base.live`, output names kept) |
 
-The observability LXC itself stays under [`projects/chezmoi.sh/`](../../projects/chezmoi.sh/README.md) until step 10;
-its `pulumi:cloudflare-token:observability` and `pulumi:tailscale-oauth:observability` tasks read the outputs of this
-stack.
+The Cloudflare DNS-01 token of the observability stack moved to [`akn.ptilopsis`](../hosts/akn.ptilopsis/README.md)
+(`ptilopsis-akn`); its Tailscale OAuth client is gone with the CT 103.
 
 ## Tasks
 
@@ -36,5 +34,3 @@ Defined in `pulumi/.mise.toml`, run from `pulumi/` (after `mise trust`):
 The stack secrets come from Bitwarden Secrets Manager through fnox: [`.fnox.toml`](.fnox.toml) lists the `TF_VAR_*` OCI,
 Cloudflare, Pocket-Id and Tailscale credentials; the state backend credentials and the passphrase come from
 `fleet/.fnox.toml`. `PULUMI_STACK` is set in `pulumi/.mise.toml`.
-
-[migr]: ../../docs/migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md

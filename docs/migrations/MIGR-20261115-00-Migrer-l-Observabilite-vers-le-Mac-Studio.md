@@ -28,7 +28,7 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 | 1     | Créer la configuration nix-darwin du Mac           | faite                                                                                                |
 | 2     | Porter les modules et régler la machine            | code prêt, non déployé                                                                               |
 | 3     | Basculer `data.o11y.chezmoi.sh` vers le Mac Studio | code prêt, bascule manuelle à faire (ne pas fusionner avant que le Mac serve `data.o11y.chezmoi.sh`) |
-| 4     | Retirer le CT 103                                  | à faire                                                                                              |
+| 4     | Retirer le CT 103                                  | code prêt, bloqué (CT 103 à arrêter puis détruire après la bascule)                                  |
 
 ## Avant de commencer
 
@@ -147,13 +147,18 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 ### 4. Retirer le CT 103
 
 - **Ce qui change** : le CT 103 est arrêté, puis détruit après une fenêtre de rétention (durée **à fixer**).
-- **Manuel (Pulumi)** : le LXC et sa pile (`observability.ts`) passent de `chezmoi_sh` à `akn.ptilopsis` par un seul
-  `pulumi state move` (**à confirmer**, voir
-  [MIGR-20261114-00 Migrer vers la flotte](MIGR-20261114-00-Migrer-vers-la-Flotte.md)), avec un `pulumi preview` vide
-  dans les deux piles.
-- **Vérification** : plus aucune ressource `o11y-datastore` dans `chezmoi_sh`.
-- **Retour arrière** : avant la destruction, redémarrer le CT 103 ; après, restaurer depuis la sauvegarde définie dans «
-  Avant de commencer » (**à confirmer**).
+- **Constaté** : le code du CT 103 est supprimé et `observability.ts` quitte `base` : seul le jeton Cloudflare DNS-01
+  `caddy-dns01-observability` passe dans le projet `ptilopsis-akn` (`fleet/hosts/akn.ptilopsis/pulumi/`) ; le LXC n'est
+  plus dans Pulumi (`pve-01-core` ne déclare aucun conteneur 103) et le client OAuth Tailscale est supprimé. Détail dans
+  [MIGR-20261114-00, détail de l'étape 10](MIGR-20261114-00-Migrer-vers-la-Flotte.md#détail-de-létape-10).
+- **Manuel (Pulumi)** : un seul `pulumi state move` (le jeton, de `base` vers `ptilopsis-akn`) avec un `pulumi preview`
+  vide pour `ptilopsis-akn` et, pour `base`, seulement la suppression du client OAuth et de deux sorties ; puis
+  `pulumi up` sur `base`, `mise run secrets:sync` dans `akn.ptilopsis` et `pct destroy 103` après la rétention (**à
+  confirmer** : `state move` entre phrases secrètes différentes). Étapes complètes dans la migration de la flotte.
+- **Risque** : aucun `pulumi up` sur `base` avant le `state move` (il supprimerait le jeton du Caddy du Mac).
+- **Vérification** : plus aucune ressource `o11y-datastore` dans `base`.
+- **Retour arrière** : avant la destruction, redémarrer le CT 103 et rebasculer le DNS (étape 3) ; après, restaurer
+  depuis la sauvegarde définie dans « Avant de commencer » (**à confirmer**).
 
 ## Critère de fin
 

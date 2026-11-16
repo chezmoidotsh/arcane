@@ -3,7 +3,7 @@
 # =============================================================================
 # Resources tied to no machine (project `base`, stack `base.live`, state in
 # the Garage S3 backend, see Pulumi.yaml), formerly the chezmoi-sh-infra
-# project of projects/chezmoi.sh.
+# project (retired `projects/chezmoi.sh`).
 #
 # `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the state backend credentials come from
 # fleet/.fnox.toml, the passphrase included, and the provider credentials

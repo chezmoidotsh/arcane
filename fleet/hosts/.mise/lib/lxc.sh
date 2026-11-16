@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Common library for Proxmox LXC build / push / upgrade operations.
 #
-# Each LXC appliance sources this file from its .mise/tasks/lxc/ scripts.
-# mise sets CWD to the .mise.toml directory (the LXC appliance dir), so:
+# Each LXC host (fleet/hosts/core.<name>/) sources this file from its
+# .mise/tasks/lxc/ scripts. mise sets CWD to the host's .mise.toml directory, so:
 #
 #   CONFIG_ROOT="$PWD"
 #   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
-#   lxc_init "oci-registry" "${CONFIG_ROOT}" _oci_registry
+#   lxc_init "oci-registry" "${CONFIG_ROOT}/nix" _oci_registry
 #   lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN
 #   lxc_build
 #
@@ -20,7 +20,7 @@ readonly _LXC_LIB_LOADED=1
 # Source shared nix library (logging + Docker helpers).
 _LXC_REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -z ${_LXC_REPO_ROOT} ]]; then
-	_LXC_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../../../../../../.. && pwd)"
+	_LXC_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../.. && pwd)"
 fi
 # shellcheck source=/dev/null
 [[ -f "${_LXC_REPO_ROOT}/scripts/nix:_lib" ]] && source "${_LXC_REPO_ROOT}/scripts/nix:_lib"

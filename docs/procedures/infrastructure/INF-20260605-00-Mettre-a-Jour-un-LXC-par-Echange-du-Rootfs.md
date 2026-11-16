@@ -1,9 +1,9 @@
 # INF-20260605-00 Mettre à jour un LXC par échange du rootfs
 
-Cette procédure déploie une nouvelle version d'un LXC NixOS de `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` sur
-Proxmox : construction du template, envoi vers le nœud, puis remplacement du volume rootfs du conteneur. Les volumes de
-données persistants (`mp0`, `mp1`, …) ne sont jamais copiés : seules leurs références changent, ou elles ne bougent pas
-du tout, donc le risque de perte de données est nul.
+Cette procédure déploie une nouvelle version d'un LXC NixOS de `fleet/hosts/core.*/nix/` sur Proxmox : construction du
+template, envoi vers le nœud, puis remplacement du volume rootfs du conteneur. Les volumes de données persistants
+(`mp0`, `mp1`, …) ne sont jamais copiés : seules leurs références changent, ou elles ne bougent pas du tout, donc le
+risque de perte de données est nul.
 
 Le script `mise run lxc:upgrade` met à jour le conteneur en place (même VMID) avec un snapshot comme filet de sécurité.
 L'indisponibilité cible est de 2 minutes au plus (arrêt du CT, échange du rootfs, démarrage, services actifs).
@@ -17,7 +17,7 @@ L'indisponibilité cible est de 2 minutes au plus (arrêt du CT, échange du roo
 
 - **Une procédure pour cinq conteneurs** : `observability`, `oci-registry`, `omni`, `omni-infra-provider-proxmox` et
   `talosnet-dns`. Chaque dossier porte ses tâches `mise` (`lxc:build`, `lxc:push`, `lxc:upgrade`) qui s'appuient sur la
-  bibliothèque commune `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`.
+  bibliothèque commune `fleet/hosts/.mise/lib/lxc.sh`.
 - **Stockage** : LVM-thin. Les volumes ont la forme `<STORAGE>:vm-<VMID>-disk-N`. Dans les exemples, `STORAGE` vaut
   `nvme-lvm` (pool déclaré dans `fleet/hosts/core.pve-01/pulumi/stack/storage/pools.ts`). Le renommage du volume rootfs par le script
   ne vaut que pour LVM-thin ; sur un autre type de stockage, le volume garde le nom du CT temporaire.
@@ -49,8 +49,8 @@ retour arrière et sont relevées au moment où il faut les utiliser.
 
 ```sh
 export PVE_HOST=<nom d'hôte du nœud Proxmox>   # ex. pve-01.pve.chezmoi.sh
-export LXC_NAME=<dossier du conteneur>         # ex. o11y-datastore ; ls projects/chezmoi.sh/src/infrastructure/proxmox/lxc/
-export BUILD_PATH=projects/chezmoi.sh/src/infrastructure/proxmox/lxc/${LXC_NAME}
+export LXC_NAME=<dossier du conteneur>         # ex. oci-registry ; ls -d fleet/hosts/core.*/nix
+export BUILD_PATH=fleet/hosts/core.${LXC_NAME}/nix
 export VMID=<VMID du CT>                       # ex. 101 ; visible dans « ssh root@${PVE_HOST} pct list » ou dans le récapitulatif du script
 ```
 
@@ -180,7 +180,7 @@ Exemple de forme, non rejoué. L'hôte, le nom du conteneur et la version vienne
 export PVE_HOST=pve-01.pve.chezmoi.sh
 export LXC_NAME=observability
 export VERSION=2026.10.09
-export BUILD_PATH=projects/chezmoi.sh/src/infrastructure/proxmox/lxc/${LXC_NAME}
+export BUILD_PATH=fleet/hosts/core.${LXC_NAME}/nix
 export VMID=101
 
 cd ${BUILD_PATH}
@@ -284,7 +284,7 @@ volumes non référencés.
 
 - [Skill : lxc-maintenance](../../../.agents/skills/lxc-maintenance/SKILL.md) : points d'entrée `mise` et bibliothèque
   `lxc.sh` utilisés par cette procédure.
-- [README du conteneur observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md)
+- [README du conteneur observability](https://github.com/chezmoidotsh/arcane/blob/53c37daf4e1db440c1b1ba53a06167dbf975c380/projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md)
   : création initiale du conteneur et configuration du conteneur.
 - [ADR-013 Observabilité centralisée](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) :
   décision à l'origine du conteneur `observability`.

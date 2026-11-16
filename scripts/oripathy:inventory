@@ -67,7 +67,7 @@ import threading
 from pathlib import Path
 
 MIRROR = "oci.chezmoi.sh/"  # pull-through registry: oci.chezmoi.sh/<registry>/<repository>:<tag>
-NIX_FALLBACK = "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability"  # lock used by the shared modules (catalog/nix)
+NIX_FALLBACK = "fleet/hosts/core.oci-registry/nix"  # lock used by the shared modules (catalog/nix), imported by the core.* LXCs
 IMAGE_RE = re.compile(r"""^\s*(?:-\s*)?image:\s*["']?([^\s"']+)""", re.M)
 NIX_IMAGE_RE = re.compile(r'\b\w*[iI]mage\s*=\s*"([a-z0-9.-]+(?::\d+)?/[^"\s]+)"')
 PKG_RE = re.compile(r"\bpkgs\.([A-Za-z0-9_-]+)")

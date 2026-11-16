@@ -6,7 +6,7 @@ central `o11y` appliance as **OTLP/HTTP**. One
 [OpenTelemetry Collector contrib](https://opentelemetry.io/docs/collector/) process (`otelcol-contrib`) runs as the
 `o11y-agent` systemd unit (user `o11y-agent`, state in `/var/lib/o11y-agent`). The appliance accepts nothing else than
 OTLP on `:4318` (see
-[`o11y-datastore`](../../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) and
+[`ptilopsis.akn`](../../../../fleet/hosts/akn.ptilopsis/README.md) and
 [ADR-018](../../../../docs/decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md)).
 
 ## Pipelines
@@ -231,7 +231,7 @@ the image build, not the service.
 
 ## Further reading
 
-- [`o11y-datastore`](../../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md): the
+- [`ptilopsis.akn`](../../../../fleet/hosts/akn.ptilopsis/README.md): the
   appliance that receives the data.
 - [ADR-018](../../../../docs/decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md):
   why OTLP is the single ingest protocol.
