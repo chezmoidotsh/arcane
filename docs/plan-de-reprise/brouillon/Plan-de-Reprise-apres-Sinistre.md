@@ -175,7 +175,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   est sur Garage, que l'étape 4 restaure depuis PBS. C'est une boucle, voir
   [Circularité 1](#1-létat-pulumi-vit-sur-ce-que-pulumi-provisionne).
 - **Référence** : « Rebuild the server » dans
-  [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) et « Bootstrapping » dans
+  [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) et « Première installation » dans
   [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md). Configurer le datastore sans Pulumi (clé B2 créée à
   la main depuis le compte Backblaze, datastore déclaré dans l'interface PBS) est non documenté.
 - Si l'hôte est intact et que seul un invité est perdu, passer directement à « Restore a guest from backup » dans
@@ -318,8 +318,8 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 - **État** : atténuée pour les LXC (leur reconstruction n'a pas besoin de l'état Pulumi) ; ouverte pour les deux clés B2
   et le jeton ACME de PBS. Une nouvelle clé peut sans doute être créée depuis le compte Backblaze, mais le dépôt ne le
   documente pas.
-- **Renvoi** : « Bootstrapping » de [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md), « Backups » de
-  [`TRUENAS.md`](../../../projects/chezmoi.sh/docs/TRUENAS.md).
+- **Renvoi** : « Première installation » de [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md), « Backups » de
+  [`TRUENAS.md`](../../../fleet/hosts/core.nas/TRUENAS.md).
 
 ### 3. La copie hors site de Garage ne relance pas Garage
 
