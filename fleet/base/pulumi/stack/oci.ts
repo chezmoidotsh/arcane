@@ -21,7 +21,7 @@ import * as oci from "@pulumi/oci";
 // Default @pulumi/oci provider, authenticated by TF_VAR_tenancy_ocid,
 // TF_VAR_user_ocid, TF_VAR_fingerprint, TF_VAR_private_key and TF_VAR_region
 // from `.mise/env.yaml` (SOPS), like horn.akn and exusiai.akn; the
-// region also comes from `oci:region` in Pulumi.chezmoi_sh.live.yaml. Never
+// region also comes from `oci:region` in Pulumi.base.live.yaml. Never
 // pulumi config for the credentials, even `--secret`.
 const tenancyOcid = process.env.TF_VAR_tenancy_ocid;
 if (!tenancyOcid) {

@@ -1,10 +1,9 @@
 # =============================================================================
-# chezmoi.sh Pulumi stack - Mise configuration
+# Fleet base Pulumi stack - Mise configuration
 # =============================================================================
-# Shared cloud infrastructure for chezmoi.sh, managed as a Pulumi stack (state
-# in the Garage S3 backend, see Pulumi.yaml). Proxmox VE moved to the
-# pve-01-core project (fleet/hosts/core.pve-01/pulumi/), with its docs
-# generator and its proxmox:acme:rotate task.
+# Resources tied to no machine (project `base`, stack `base.live`, state in
+# the Garage S3 backend, see Pulumi.yaml), formerly the chezmoi-sh-infra
+# project of projects/chezmoi.sh.
 #
 # `.mise/env.yaml` (SOPS-encrypted PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE,
 # loaded via `[env] _.file` below) lets these tasks run without prompting.
