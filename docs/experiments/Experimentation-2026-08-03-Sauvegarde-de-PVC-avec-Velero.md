@@ -205,12 +205,12 @@ cluster. Le MinIO du POC est jetable : le déploiement réel exige un bucket ext
 
 > [!NOTE]\
 > **Mise à jour du 2026-10-11.** Velero est déployé sur `lungmen.akn`, sous
-> `projects/lungmen.akn/src/infrastructure/kubernetes/velero/` : un overlay `velero.helmvalues/default.yaml` et des
+> `fleet/clusters/akn.lungmen/kubernetes/src/system/velero/` : un overlay `velero.helmvalues/default.yaml` et des
 > Schedules `jellyfin`, `actual-budget` et `paperless-ngx` (`*.pvc-backup.schedule.yaml`) qui ne sauvegardent que
 > `pods`, `persistentvolumeclaims` et `persistentvolumes`. Le commentaire de `velero.helmvalues/default.yaml` reprend la
 > conclusion de l'expérience (annotation `backup.velero.io/backup-volumes` plutôt que `defaultVolumesToFsBackup`). La
 > restauration sous GitOps, que l'expérience ne couvrait pas, est décrite dans la procédure ci-dessous. Aucun Velero
-> n'est présent dans `projects/rhodes.akn/src/infrastructure/kubernetes/`.
+> n'est présent dans `fleet/clusters/akn.rhodes/kubernetes/src/system/`.
 
 Références amont : [documentation fs-backup de Velero](https://velero.io/docs/main/file-system-backup/), et la limite
 `hostPath` dans `pkg/podvolume/backupper.go` (vmware-tanzu/velero, tag v1.18.1). Issues liées :

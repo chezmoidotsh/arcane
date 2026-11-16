@@ -121,16 +121,15 @@ Le projet `hass` lit lui aussi les groupes Pocket-Id de `chezmoi.sh` ; ce plan n
 Ces éléments ne sont dans aucun fichier du dépôt, ou seulement chiffrés pour une clé qui n'y est pas. Sans eux, une
 partie de la reprise est impossible.
 
-| Élément                                                             | Où le dépôt dit qu'il vit                                                                                             | Nécessaire pour                                                                   |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Clé privée age (`SOPS_AGE_KEY_FILE`)                                | `.mise/age/key.txt` sur le poste de l'opérateur (ignoré par Git), et le Secret `argocd-sops-age-key` sur `rhodes.akn` | Tout fichier SOPS : passphrases Pulumi, secrets des LXC, unseal d'OpenBao, ArgoCD |
-| Clé d'application Garage sur `pulumi-states`                        | Variables `AWS_ACCESS_KEY_ID` et `AWS_SECRET_ACCESS_KEY` de l'opérateur                                               | Toute commande `pulumi`                                                           |
-| Mot de passe `root@pam` de `pve-01`                                 | Coffre de l'opérateur                                                                                                 | `pulumi up` de `pve-01-core` (ressources ACME)                                    |
-| Root token et parts Shamir d'OpenBao                                | Gestionnaire de secrets personnel de l'opérateur                                                                      | Reprise de l'accès administrateur à OpenBao                                       |
-| Clé de chiffrement PBS et sa paperkey                               | OpenBao ; une copie hors ligne de la paperkey est demandée, sans emplacement                                          | Toute restauration depuis PBS                                                     |
-| Clé GPG d'Omni (`/persistent/omni/omni.asc`)                        | Volume `mp0` du LXC ; une copie « dans un endroit sûr séparé » est demandée                                           | Relire l'état d'Omni                                                              |
-| Identifiants des fournisseurs B2, Cloudflare (certificats), TrueNAS | Non documenté                                                                                                         | `pulumi up` de `nas-core` (`fleet/hosts/core.nas/pulumi/`)                        |
-| Identifiants des fournisseurs Cloudflare, Tailscale, Pocket-Id      | Non documenté                                                                                                         | `pulumi up` de `base`                                                             |
+| Élément                                                                     | Où le dépôt dit qu'il vit                                                                                             | Nécessaire pour                                                                   |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Clé privée age (`SOPS_AGE_KEY_FILE`)                                        | `.mise/age/key.txt` sur le poste de l'opérateur (ignoré par Git), et le Secret `argocd-sops-age-key` sur `rhodes.akn` | Tout fichier SOPS : passphrases Pulumi, secrets des LXC, unseal d'OpenBao, ArgoCD |
+| Clé d'application Garage sur `pulumi-states`                                | Variables `AWS_ACCESS_KEY_ID` et `AWS_SECRET_ACCESS_KEY` de l'opérateur                                               | Toute commande `pulumi`                                                           |
+| Mot de passe `root@pam` de `pve-01`                                         | Coffre de l'opérateur                                                                                                 | `pulumi up` de `pve-01-core` (ressources ACME)                                    |
+| Root token et parts Shamir d'OpenBao                                        | Gestionnaire de secrets personnel de l'opérateur                                                                      | Reprise de l'accès administrateur à OpenBao                                       |
+| Clé de chiffrement PBS et sa paperkey                                       | OpenBao ; une copie hors ligne de la paperkey est demandée, sans emplacement                                          | Toute restauration depuis PBS                                                     |
+| Clé GPG d'Omni (`/persistent/omni/omni.asc`)                                | Volume `mp0` du LXC ; une copie « dans un endroit sûr séparé » est demandée                                           | Relire l'état d'Omni                                                              |
+| Identifiants des fournisseurs B2, Cloudflare, Tailscale, TrueNAS, Pocket-Id | Non documenté                                                                                                         | `pulumi up` de `chezmoi-sh-infra`                                                 |
 
 ## Ordre de reconstruction
 
@@ -141,8 +140,8 @@ qui la décrit.
 
 Avant toute commande, vérifier la présence de chaque élément du tableau
 [Ce qui vit hors du dépôt](#ce-qui-vit-hors-du-dépôt) sur le poste de reprise, avec un clone du dépôt et `mise install`.
-La clé age vient en premier : elle déchiffre les secrets SOPS des étapes suivantes. La passphrase Pulumi et les
-identifiants des fournisseurs vivent dans Bitwarden Secrets Manager (fnox, `fleet/.fnox.toml`).
+La clé age vient en premier : elle déchiffre les passphrases Pulumi (`fleet/**/pulumi/.mise/env.yaml`) et tous les
+secrets des étapes suivantes.
 
 ### 1. Rétablir le réseau
 
@@ -241,9 +240,9 @@ identifiants des fournisseurs vivent dans Bitwarden Secrets Manager (fnox, `flee
 ### 8. Repasser la stack `base`
 
 - **Exige** : OpenBao descellé et Pocket-Id en service (étape 7).
-- Relancer `mise run pulumi:apply` dans `fleet/hosts/core.nas/pulumi` pour écrire les mots de passe SMB dans OpenBao,
-  puis dans `fleet/base/pulumi` pour réconcilier les groupes Pocket-Id. Cette seconde passe n'est décrite dans aucun
-  guide ; elle découle des dépendances de l'étape 5.
+- Relancer `mise run pulumi:apply` dans `fleet/hosts/core.nas/pulumi` pour écrire les mots de passe SMB dans OpenBao, et
+  dans `fleet/base/pulumi` pour réconcilier les groupes Pocket-Id. Cette seconde passe n'est décrite dans aucun guide ;
+  elle découle des dépendances de l'étape 5.
 
 ### 9. Reconstruire `lungmen.akn`
 
@@ -288,9 +287,9 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 1. L'état Pulumi vit sur ce que Pulumi provisionne
 
-- **Constat** : les six projets Pulumi déclarent `s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1`, et
-  `nas-core` provisionne l'application Garage (`core.nas/pulumi/stack/apps.ts`) et le NAS qui la porte, `pbs-core` PBS
-  qui sauvegarde le NAS, et `pve-01-core` la configuration de `pve-01`.
+- **Constat** : les douze projets Pulumi déclarent `s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1`, et
+  `nas-core` provisionne l'application Garage (`core.nas/pulumi/apps.ts`) et le NAS qui la porte, `pbs-core` PBS qui
+  sauvegarde le NAS, et `pve-01-core` la configuration de `pve-01`.
 - **Ce qui a changé** : la
   [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   ne cite plus de projet disparu (historique du 2026-10-11) et documente la création d'une clé Garage (étape 1). L'issue

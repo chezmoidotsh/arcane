@@ -84,7 +84,6 @@ lint:
     - # Architecture SVG diagram cannot be linted by svgo
       linters: [svgo]
       paths:
-        - projects/*/docs/assets/architecture.svg
         - fleet/clusters/*/assets/architecture.svg
     - # SOPS-encrypted dotenv files must not be reformatted — linters corrupt
       # the lowercase sops_* metadata keys that SOPS requires for decryption.
@@ -158,20 +157,20 @@ lint:
 
 actions:
   definitions:
-    # Re-render dist/ for any project whose src/ was touched in this commit.
+    # Re-render dist/ for any cluster whose src/ was touched in this commit.
     # Stages the updated dist/ files automatically so the commit is self-consistent.
     - id: dist-render-pre-commit
-      description: Re-render dist/ for projects with staged src/ changes
+      description: Re-render dist/ for clusters with staged src/ changes
       run: scripts/dist:render --staged-only
       triggers:
         - files:
             - fleet/clusters/*/kubernetes/src/**
             - catalog/helm/**
     # Catch a stale dist/ before it reaches CI (commit made with --no-verify, or drift from a
-    # change outside the pre-commit triggers). Only the projects changed against the parent
+    # change outside the pre-commit triggers). Only the clusters changed against the parent
     # branch are checked, and nothing is written or staged.
     - id: dist-render-pre-push
-      description: Fail the push when dist/ is stale for the projects changed on this branch
+      description: Fail the push when dist/ is stale for the clusters changed on this branch
       run: scripts/dist:render --branch --check
       triggers:
         - git_hooks: [pre-push]

@@ -8,7 +8,7 @@ body:
       value: |
         ## Title
 
-        Sentence-form: `Add <application> on <cluster>` (or a richer sentence that says what it brings). Type is `type::feature`; scope label is `project:<cluster>`.
+        Sentence-form: `Add <application> on <cluster>` (or a richer sentence that says what it brings). Type is `type::feature`; scope label is `fleet` (name the cluster in the body).
 
         Examples:
         - `Add Forgejo as a self-hosted Git forge on lungmen`

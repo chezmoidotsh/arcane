@@ -16,18 +16,18 @@ guides propres aux composants, [Restaurer OpenBao](Restaurer-OpenBao.md) et
 ## Avant de commencer
 
 Outils : `omnictl`, `kubectl`, `s3cmd`, `kustomize`, `ksops`, `cilium` et `pulumi`. `mise install`, lancé dans
-`fleet/clusters/akn.rhodes/`, installe ceux que `mise` gère. Les tâches `dr:openbao:*` et `dr:pocket-id:*` utilisées par les
-deux guides de composants sont définies dans [`.mise.toml`](../../../fleet/clusters/akn.rhodes/.mise.toml) de
+`fleet/clusters/akn.rhodes/`, installe ceux que `mise` gère. Les tâches `dr:openbao:*` et `dr:pocket-id:*` utilisées par
+les deux guides de composants sont définies dans [`.mise.toml`](../../../fleet/clusters/akn.rhodes/.mise.toml) de
 `fleet/clusters/akn.rhodes/` : elles ne sont disponibles que depuis ce dossier.
 
 Accès et états requis :
 
-| Prérequis                                    | Utilisé pour                                                                                                                                          |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Accès à Omni (`omnictl config new` ou `add`) | Provisionner le cluster à l'étape 1.                                                                                                                  |
-| `SOPS_AGE_KEY_FILE` valide                   | Déchiffrer chaque secret `sops/` appliqué dans la chaîne (`external-dns/sops`, `vault/sops`, `pocket-id/sops`, `argocd/sops`).                        |
-| Accès à la stack Pulumi `rhodes-akn`         | `pulumi login` fait et stack sélectionnée, pour les `pulumi up` des étapes 3 et 7. Il faut aussi l'accès à la stack Pulumi de `chezmoi.sh` (étape 3). |
-| Token root d'OpenBao                         | Récupéré à l'avance dans le gestionnaire de secrets personnel : il sert aux étapes 5 et 7. Il n'est consigné nulle part dans le dépôt.                |
+| Prérequis                                    | Utilisé pour                                                                                                                                           |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Accès à Omni (`omnictl config new` ou `add`) | Provisionner le cluster à l'étape 1.                                                                                                                   |
+| `SOPS_AGE_KEY_FILE` valide                   | Déchiffrer chaque secret `sops/` appliqué dans la chaîne (`external-dns/sops`, `vault/sops`, `pocket-id/sops`, `argocd/sops`).                         |
+| Accès à la stack Pulumi `rhodes-akn`         | `pulumi login` fait et stack sélectionnée, pour les `pulumi up` des étapes 3 et 7. Il faut aussi l'accès à la stack Pulumi de `pve-01.core` (étape 3). |
+| Token root d'OpenBao                         | Récupéré à l'avance dans le gestionnaire de secrets personnel : il sert aux étapes 5 et 7. Il n'est consigné nulle part dans le dépôt.                 |
 
 Exporter le contexte `kubectl` du nouveau cluster une fois ; les commandes suivantes se copient ensuite telles quelles :
 
@@ -108,11 +108,11 @@ Notes sur ce bloc :
   a échoué la première fois. Les `Gateway` et le `Certificate` wildcard vivent dans ce même dossier (la Gateway API de
   Cilium n'a pas de Pod dédié par Gateway : le plan de données est l'Envoy embarqué dans `cilium-agent`, bloqué dans le
   namespace `kube-system` de cette release Helm sans valeur de chart pour le déplacer ; voir
-  `fleet/clusters/akn.rhodes/kubernetes/src/system/README.md`). Or le `Certificate` a besoin de la CRD de
-  cert-manager, absente à la première passe. La seconde passe ne change rien à ce qui est déjà réconcilié (même field
-  manager, contenu inchangé). Avec `--server-side --force-conflicts`, elle ne répète pas la micro-coupure de mise à jour
-  progressive de la première passe : celle-ci était un transfert unique de propriété de field manager depuis les
-  `extraManifests` d'amorçage de Talos, déjà réglé.
+  `fleet/clusters/akn.rhodes/kubernetes/src/system/README.md`). Or le `Certificate` a besoin de la CRD de cert-manager,
+  absente à la première passe. La seconde passe ne change rien à ce qui est déjà réconcilié (même field manager, contenu
+  inchangé). Avec `--server-side --force-conflicts`, elle ne répète pas la micro-coupure de mise à jour progressive de
+  la première passe : celle-ci était un transfert unique de propriété de field manager depuis les `extraManifests`
+  d'amorçage de Talos, déjà réglé.
 - **Une application à la fois.** Confirmer le succès de chaque commande avant la suivante : la liste n'enchaîne pas avec
   `&&`, donc coller le bloc entier ne s'arrête pas sur un échec. `cert-manager` doit précéder `cloudnative-pg` (son
   `Issuer` et ses `Certificate` ont besoin des CRD de cert-manager déjà enregistrées) et la seconde application de
@@ -169,19 +169,19 @@ workers où tourne external-dns : Cilium résout ce trafic avec l'identité `rem
 > réconcilier ces ressources avec un OpenBao qui n'existe pas encore sur le nouveau cluster, et échouerait avant même la
 > restauration d'OpenBao.
 
-Lancer le `pulumi up` de `chezmoi.sh` **avant** celui de `rhodes.akn`, au moins une fois. `stack/proxmox.ts` de
+Lancer le `pulumi up` de `pve-01.core` **avant** celui de `rhodes.akn`, au moins une fois. `stack/proxmox.ts` de
 `rhodes.akn` authentifie son provider Proxmox avec l'identifiant `rhodes-akn-bootstrap@pve`, que la stack de
-`chezmoi.sh` (`fleet/hosts/core.pve-01/pulumi/stack/access/rhodes-akn-bootstrap.ts`) livre dans ce cluster sous la forme d'un `Secret`
-Kubernetes direct (`kube-system/rhodes-akn-bootstrap-pve`), volontairement pas par un `StackReference` Pulumi : une
-lecture inter-projets d'une sortie secrète exige la passphrase de la stack _exportatrice_, que ce dépôt ne partage pas
-entre projets (voir les commentaires de ce fichier). Si ce `Secret` n'existe pas, le `pulumi up` de `rhodes.akn` échoue
-dès qu'il tente de le lire.
+`pve-01.core` (`fleet/hosts/core.pve-01/pulumi/access/rhodes-akn-bootstrap.ts`) livre dans ce cluster sous la forme d'un
+`Secret` Kubernetes direct (`kube-system/rhodes-akn-bootstrap-pve`), volontairement pas par un `StackReference` Pulumi :
+une lecture inter-projets d'une sortie secrète exige la passphrase de la stack _exportatrice_, que ce dépôt ne partage
+pas entre projets (voir les commentaires de ce fichier). Si ce `Secret` n'existe pas, le `pulumi up` de `rhodes.akn`
+échoue dès qu'il tente de le lire.
 
 Le `pulumi up` de `rhodes.akn` écrit aussi `cnpg-backup-credentials` dans trois namespaces (`vault`, `pocket-id` et
 `o11y`) et ne crée pas ces namespaces : il faut les créer avant.
 
 ```sh
-cd fleet/clusters/akn.rhodes/pulumi
+cd fleet/hosts/core.pve-01/pulumi
 pulumi up --refresh --parallel 15
 
 kubectl --context ${CLUSTER_CONTEXT} create namespace vault --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
@@ -324,9 +324,9 @@ lieu d'en être une dépendance, et son propre `ExternalSecret` OIDC a besoin qu
 
 Une fois l'`Application` `seed` en `Synced`/`Healthy`, les ApplicationSets `applications` et `system` d'ArgoCD prennent
 le relais : `applications` découvre chaque dossier de `dist/apps/*`, `system` chaque dossier de
-`src/infrastructure/kubernetes/*` (voir `fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/`), y compris tout ce qui vient
-d'être appliqué à la main, et les réconcilient par GitOps à partir de là. Aucun `kubectl apply` manuel supplémentaire ne
-devrait être nécessaire.
+`src/infrastructure/kubernetes/*` (voir `fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/`), y compris tout
+ce qui vient d'être appliqué à la main, et les réconcilient par GitOps à partir de là. Aucun `kubectl apply` manuel
+supplémentaire ne devrait être nécessaire.
 
 ## Vérifications rapides
 

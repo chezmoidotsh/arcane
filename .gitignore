@@ -670,11 +670,16 @@ fleet/clusters/*/kubernetes/src/**/charts/
 # Local git worktrees (never tracked)
 .worktrees/
 
-# mise: ignore generated state but keep file-based tasks under .mise/tasks/,
-# static config files under .mise/omni/, and SOPS-encrypted env files
+# mise: ignore generated state but keep file-based tasks under .mise/tasks/
+# and static config files under .mise/omni/
 .mise/*
 !.mise/tasks
 !.mise/omni
+
+# projects/ is gone since the fleet migration (everything lives under fleet/).
+# Local leftovers of the old layout (untracked, with plaintext Talos secrets)
+# must never be added by accident.
+/projects/
 
 # Nix build artefacts under catalog/* (overrides project-level result/)
 catalog/**/result

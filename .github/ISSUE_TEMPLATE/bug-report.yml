@@ -8,7 +8,7 @@ body:
       value: |
         ## Title
 
-        A sentence — not a commit format. Lead with the symptom, then where it appears, then user impact. The `type::bug` label and the scope label (`project:lungmen.akn`, `gh`, …) carry classification.
+        A sentence — not a commit format. Lead with the symptom, then where it appears, then user impact. The `type::bug` label and the scope label (`fleet`, `gh`, …) carry classification.
 
         Examples:
         - `WAL volume full on apps-secured cluster — immich and paperless unavailable`

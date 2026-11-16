@@ -101,5 +101,5 @@ mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 mise exec opa -- opa test policies/opa/ -v
 ```
 
-CI enforcement is **blocking** (no `continue-on-error`). All manifests in `projects/*/dist/` must be compliant before
-merging.
+CI enforcement is **blocking** (no `continue-on-error`). All manifests in `fleet/clusters/*/kubernetes/dist/` must be
+compliant before merging.

@@ -12,8 +12,8 @@ the three PR templates in `.github/PULL_REQUEST_TEMPLATE/`.
 
 ## PR #973 — `feature.md` template
 
-**Title:** `Add Forgejo as a self-hosted Git forge on lungmen` **Labels:** `type::feature`, `project:lungmen.akn`,
-`size::M` **Branch:** `feature/forgejo-lungmen`
+**Title:** `Add Forgejo as a self-hosted Git forge on lungmen` **Labels:** `type::feature`, `fleet`, `size::M`
+**Branch:** `feature/forgejo-lungmen`
 
 ```sh
 gh pr view 973
@@ -81,7 +81,7 @@ policy with protocol inspection.
 ## PR #939 — `refactoring.md` template (consolidation)
 
 **Title:** `Consolidate PostgreSQL databases into shared CNPG clusters on lungmen` **Labels:** `type::refactor`,
-`project:lungmen.akn`, `size::L` **Branch:** `issue-661/centralise-db`
+`fleet`, `size::L` **Branch:** `issue-661/centralise-db`
 
 ```sh
 gh pr view 939
@@ -156,8 +156,8 @@ namespace-to-namespace Cilium allowlisting.
 
 ## PR #667 — `refactoring.md` template (migration)
 
-**Title:** `Complete Phase 1 migration to centralized OpenBao on amiya` **Labels:** `type::refactor`,
-`project:amiya.akn`, `size::L` **Branch:** `issue-401/deprecate-kubevault`
+**Title:** `Complete Phase 1 migration to centralized OpenBao on amiya` **Labels:** `type::refactor`, `fleet`, `size::L`
+**Branch:** `issue-401/deprecate-kubevault`
 
 ```sh
 gh pr view 667

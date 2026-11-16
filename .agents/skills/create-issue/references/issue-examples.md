@@ -9,7 +9,7 @@ every example is perfect, but the patterns are worth copying.
 
 **Labels:** `type::feature`, `gh`, `size::XL`, `priority::high`
 
-Why the scope label is `gh`, not `project:lungmen.akn`:
+Why the scope label is `gh`, not `fleet`:
 
 - The body explicitly says it affects amiya, lungmen, kazimierz and any future cluster
 - lungmen is the first deployment target, not the scope of the work
@@ -54,7 +54,7 @@ What this avoided:
 
 Example: `WAL volume full on apps-secured cluster — immich and paperless unavailable`
 
-**Labels:** `type::bug`, `project:lungmen.akn`, `priority::critical`, `size::M`
+**Labels:** `type::bug`, `fleet`, `priority::critical`, `size::M`
 
 The title carries three things a triager needs at a glance:
 
@@ -123,7 +123,7 @@ Don't open one to say "should upgrade soonish". Renovate already does that.
 
 Example: `OpenBao seal keys not rotated since 2024-12 — full vault unsealing on key leak`
 
-**Labels:** `type::security`, `project:amiya.akn`, `priority::high`
+**Labels:** `type::security`, `fleet`, `priority::high`
 
 Treat these like bugs but with extra discipline:
 

@@ -38,7 +38,7 @@ Match the intent to one row, then read the files in the last column **in that or
 | Know what was tried, what was concluded, and where the code lives  | Experiment       | [experiment-template.md](references/experiment-template.md)                                                                                              |
 | Carry out a one-off change from one state to another, step by step | Migration        | [migration-template.md](references/migration-template.md)                                                                                                |
 | Keep the trace of a finished or obsolete document                  | Archive          | [archive-template.md](references/archive-template.md)                                                                                                    |
-| Get the overview of a project under `projects/`                    | Project overview | [project-template.md](references/project-template.md)                                                                                                    |
+| Get the overview of a cluster or host under `fleet/`               | Project overview | [project-template.md](references/project-template.md)                                                                                                    |
 
 Tell-apart rules when two rows seem to fit:
 
