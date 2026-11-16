@@ -1,6 +1,7 @@
 # Observability agent for the OCI registry LXC: journald logs, Zot and node
 # metrics, shipped as OTLP to data.o11y.chezmoi.sh. hostsOverride resolves the
-# appliance to its Proxmox bridge IP (10.0.0.22) to avoid hairpin NAT.
+# appliance to the Mac Studio akn.ptilopsis on VLAN 5 (10.0.0.32) to avoid
+# hairpin NAT.
 { ... }: {
   catalog.o11yAgent = {
     enable = true;
@@ -15,7 +16,7 @@
     };
 
     hostsOverride = {
-      "10.0.0.22" = [ "data.o11y.chezmoi.sh" ];
+      "10.0.0.32" = [ "data.o11y.chezmoi.sh" ];
     };
   };
 }
