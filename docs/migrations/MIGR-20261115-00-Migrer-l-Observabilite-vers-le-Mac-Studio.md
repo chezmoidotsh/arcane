@@ -4,9 +4,9 @@ Faire passer l'appliance d'observabilité du LXC `observability` (CT 103) de `pv
 quatre étapes : configuration nix-darwin, portage des modules, bascule DNS, retrait du CT.
 
 > [!NOTE]\
-> **État au 2026-11-15 : non commencée.** Cette page n'a pas été rejouée : l'ADR-022 est `proposed` et rien n'est
-> déployé. Les étapes reprennent le plan de haut niveau de l'ADR ; toute commande ou valeur absente est **à confirmer**
-> et à fixer avant l'étape concernée.
+> **État au 2026-11-15 : en cours** (voir le tableau « Avancement »). Cette page n'a pas été rejouée : l'ADR-022 est
+> `proposed` et rien n'est déployé. Les étapes reprennent le plan de haut niveau de l'ADR ; toute commande ou valeur
+> absente est **à confirmer** et à fixer avant l'étape concernée.
 
 ## Contexte
 
@@ -25,7 +25,7 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 
 | Étape | Contenu                                            | État    |
 | ----- | -------------------------------------------------- | ------- |
-| 1     | Créer la configuration nix-darwin du Mac           | à faire |
+| 1     | Créer la configuration nix-darwin du Mac           | faite   |
 | 2     | Porter les modules et régler la machine            | à faire |
 | 3     | Basculer `data.o11y.chezmoi.sh` vers le Mac Studio | à faire |
 | 4     | Retirer le CT 103                                  | à faire |
@@ -46,8 +46,15 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 
 - **Ce qui change** : le Mac devient l'hôte `akn.ptilopsis` : configuration nix-darwin sous
   `fleet/hosts/akn.ptilopsis/nix/`, Pulumi sous `pulumi/` (organisation décidée par l'ADR-021).
-- **Vérification** : la configuration est évaluée sans erreur (commande **à confirmer**).
+- **Vérification** : la configuration est évaluée sans erreur, avec
+  `nix eval .#darwinConfigurations.ptilopsis.system.drvPath` depuis `fleet/hosts/akn.ptilopsis/nix/`
+  (`mise run nix:eval`).
 - **Retour arrière** : sans effet sur la production, le LXC n'est pas touché.
+- **Constaté** : `fleet/hosts/akn.ptilopsis/` contient `nix/flake.nix`, `nix/flake.lock`, `nix/configuration.nix`,
+  `README.md` et `.mise.toml` (tâche `nix:eval`), avec nix-darwin `nix-darwin-26.05` et `nixpkgs` `nixos-26.05`. Aucun
+  service, aucun secret. L'évaluation passe sans erreur ; rien n'a été construit ni activé. Pas encore fait : le dossier
+  `pulumi/` (il arrive à l'étape 4) et l'entrée `arcane` (`catalog/nix`), non branchée parce que le catalogue n'exporte
+  pour l'instant que des modules NixOS (elle vient avec l'étape 2).
 
 ### 2. Porter les modules et régler la machine
 
