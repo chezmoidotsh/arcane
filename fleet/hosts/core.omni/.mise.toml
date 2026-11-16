@@ -113,3 +113,13 @@ run = '''
 # lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with secrets baked in)
 # lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
 # lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)
+
+# -----------------------------------------------------------------------------
+# Architecture diagram
+# -----------------------------------------------------------------------------
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of omni.core"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
