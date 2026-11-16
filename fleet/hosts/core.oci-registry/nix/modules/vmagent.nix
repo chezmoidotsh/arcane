@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=victoriametrics upstream=github.com/VictoriaMetrics/VictoriaMetrics tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # vmagent — push Zot metrics to the o11y appliance
 # ─────────────────────────────────────────────────────────────────────────────
