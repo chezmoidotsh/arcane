@@ -2,11 +2,7 @@
 # Lungmen.akn Cluster - Mise Configuration
 # =============================================================================
 # Mise configuration for the lungmen.akn cluster (fleet/clusters/akn.lungmen).
-# This cluster is the migration target for home applications, replacing
-# the legacy maison cluster with Talos Linux and ArgoCD architecture.
-#
-# Services: Home Applications (migrated from maison)
-# Architecture: Talos Linux + ArgoCD
+# Home applications cluster: Talos Linux + ArgoCD (spoke of the rhodes.akn hub).
 # =============================================================================
 
 # =============================================================================
@@ -20,13 +16,13 @@
 # Tasks definition
 # =============================================================================
 
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
 [tasks."diagram:generate"]
-description = "Generate the architecture diagram for lungmen.akn cluster"
-# Converts the D2 diagram source to SVG format for documentation
-# Input: architecture.d2 (diagram-as-code source)
-# Output: assets/architecture.svg (embedded in the README)
-run = "d2 --theme 0 architecture.d2 assets/architecture.svg"
+description = "Generate the architecture diagram of lungmen.akn"
 dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
 
 [tasks."app:build"]
 description = "Build all apps manifests to verify Kustomize configuration"

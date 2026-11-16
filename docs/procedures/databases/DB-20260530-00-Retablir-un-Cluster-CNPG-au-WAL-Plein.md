@@ -103,7 +103,8 @@ redimensionnement `kubectl patch` vers `2Gi`).
 > L'agrandissement d'un PVC est irréversible : un PVC ne se réduit pas. Choisir une taille qui laisse assez de marge (au
 > minimum de quoi vider les WAL existants, plus 2 à 3 jours de génération). Pour le cluster `apps-secured` de
 > l'incident, 10 Gi ont suffi. La taille déclarée dans Git (`walStorage.size` dans
-> `projects/lungmen.akn/src/apps/databases/postgres-apps-secured.helmvalues.yaml`) n'est pas modifiée par ce `patch`.
+> `fleet/clusters/akn.lungmen/kubernetes/src/apps/databases/postgres-apps-secured.helmvalues.yaml`) n'est pas modifiée
+> par ce `patch`.
 
 ```sh
 # Agrandir les deux PVC WAL

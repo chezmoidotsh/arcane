@@ -374,10 +374,10 @@ capabilities for personal infrastructure development.
 
 ### New Application: Forgejo
 
-- **[`forgejo.deployment.yaml`](projects/lungmen.akn/src/apps/forgejo/forgejo.deployment.yaml)** — Deploys Forgejo 10.0 from Codeberg official image
-- **[`forgejo.httproute.yaml`](projects/lungmen.akn/src/apps/forgejo/forgejo.httproute.yaml)** — External access via Envoy Gateway on forgejo.chezmoi.sh
-- **[`forgejo.database.externalsecret.yaml`](projects/lungmen.akn/src/apps/forgejo/forgejo.database.externalsecret.yaml)** — PostgreSQL credentials from OpenBao
-- **[`security/network-policy.default-hardened.yaml`](projects/lungmen.akn/src/apps/forgejo/security/network-policy.default-hardened.yaml)** — Default-deny baseline for the forgejo namespace
+- **`fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/forgejo.deployment.yaml`** — Deploys Forgejo 10.0 from Codeberg official image
+- **`fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/forgejo.httproute.yaml`** — External access via Envoy Gateway on forgejo.chezmoi.sh
+- **`fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/forgejo.database.externalsecret.yaml`** — PostgreSQL credentials from OpenBao
+- **`fleet/clusters/akn.lungmen/kubernetes/src/apps/forgejo/security/network-policy.default-hardened.yaml`** — Default-deny baseline for the forgejo namespace
 
 ## Technical Impact
 
