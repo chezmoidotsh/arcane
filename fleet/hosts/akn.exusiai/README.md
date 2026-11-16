@@ -1,225 +1,178 @@
-<h1 align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
-      <img alt="Stylized letter 'R' with a futuristic font and a subscript 11, representing Rimbilliton·AKN branding" src="./assets/logo.light.svg" width="200">
-  </picture>
-</h1>
+<p align="center">
+  <img alt="Exusiai, logo animé" src="./assets/logo.webp" height="150">
+</p>
 
-<h4 align="center">Exusiai·AKN (formerly Rimbilliton·AKN) - Minecraft Server with Pelican</h4>
+<h1 align="center">「exusiai.akn」</h1>
 
-<div align="center">
+<p align="center"><strong>Serveur Minecraft géré avec Pelican, sur une instance OCI Always Free</strong></p>
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../../LICENSE)
+<p align="center">
+  <img alt="host: OCI Always Free A1" src="https://img.shields.io/badge/host-OCI_Always_Free_A1-F80000?logo=oracle&logoColor=white">
+  <img alt="os: NixOS" src="https://img.shields.io/badge/os-NixOS-5277C3?logo=nixos&logoColor=white">
+  <img alt="arch: aarch64-linux" src="https://img.shields.io/badge/arch-aarch64--linux-blue">
+  <img alt="config: NixOS" src="https://img.shields.io/badge/config-NixOS_%2B_Pulumi-5277C3?logo=nixos&logoColor=white">
+  <img alt="deploy: mise" src="https://img.shields.io/badge/deploy-mise_%2B_nixos--rebuild-orange">
+</p>
 
-<a href="#about">About</a> · <a href="#services-overview">Services Overview</a> ·
-<a href="#current-project-structure">Project Structure</a> · <a href="#security-considerations">Security
-Considerations</a> · <a href="#license">License</a>
+<p align="center">
+  <a href="#services">Services</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#accès">Accès</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#déploiement">Déploiement</a> ·
+  <a href="#contribuer">Contribuer</a> ·
+  <a href="#pour-aller-plus-loin">Pour aller plus loin</a>
+</p>
 
-</div>
+Exusiai héberge les serveurs Minecraft Java du homelab sur une seule instance NixOS, hors Kubernetes : Pelican les crée
+et les pilote, chaque personne autorisée par Pocket-Id se connecte au panel avec son propre compte et peut recevoir son
+serveur, sans rien voir du reste de l'infrastructure. L'instance tient dans le quota Always Free d'OCI (1 OCPU et 6 Go,
+l'autre moitié étant prise par `horn.akn`), et les sauvegardes partent chez Backblaze B2 pour qu'une VM perdue ne coûte
+jamais un monde. Pulumi crée tout ce qui entoure la machine, NixOS ce qui tourne dedans.
 
----
+## Services
 
-## About
-
-Rimbilliton·AKN is a **Minecraft Java server** declared entirely as code and running on a single OCI Always Free ARM
-instance. Named after Rim Billiton, the mining city from Arknights, this project documents the setup of a NixOS host
-that runs [Pelican](https://pelican.dev/) as its management interface, with Pocket-ID SSO and daily off-site backups to
-Backblaze B2.
-
-### Architecture Overview
-
-The solution is a **single VM** (no Kubernetes) provisioned by Pulumi and configured by NixOS:
-
-**VM Layer (Oracle Cloud Infrastructure - eu-paris-1, Always Free ARM)**:
-
-- **NixOS**: Installed over a bootstrap Ubuntu image with `nixos-anywhere`, fully declarative
-- **Pelican (Panel + Wings)**: Web UI to create, run and back up Minecraft servers, each one in its own Docker container
-- **Caddy**: TLS in front of the Panel and Wings
-- **restic**: Daily encrypted backups of Pelican's archives and panel data to Backblaze B2
-- **Tailscale**: Mesh VPN for SSH access and deployments
-- **Pulumi**: Provisions the OCI compartment, dedicated VCN/subnet/NSG, the instance, DNS records and the B2 bucket (the
-  Pocket-ID group and OIDC client are created by hand, the Pulumi provider being no longer functional)
-
-This architecture provides:
-
-- **Declarative setup** from the cloud resources down to the OS, rebuildable from this repository
-- **Delegated administration**: anyone allowed by the Pocket-ID client signs in to Pelican with their own account and
-  can be given their own server, without access to the rest of the infrastructure
-- **Free hosting** within the Always Free quota (1 OCPU / 6 GB, shared with kazimierz.akn)
-- **Resilient data** with backups outside OCI, so losing the VM never loses the world
-
-## Services Overview
-
-![Architecture diagram](./assets/architecture-dark.svg#gh-dark-mode-only)
-![Architecture diagram](./assets/architecture-light.svg#gh-light-mode-only)
-
----
-
-### VM Components
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
+<img src="../../../docs/assets/icons/apps/pelican-panel.svg" alt="Pelican" width="96" align="left" />
 
 ### [Pelican](https://pelican.dev/)
 
-Game server manager made of a **Panel** (web UI and API: users, server creation, console, file manager, schedules and
-backups) and **Wings** (the daemon that starts each game server in a Docker container). Both run as Docker containers
-pinned to a beta release, the Panel on loopback and Wings behind its own hostname, since browsers talk to Wings directly
-for the console and the file manager.
+Gestionnaire de serveurs de jeu, en deux conteneurs Docker : le Panel (interface web et API : utilisateurs, création des
+serveurs, console, gestionnaire de fichiers, plannings et sauvegardes) et Wings, le démon qui lance chaque serveur de
+jeu dans son propre conteneur. Le Panel authentifie les utilisateurs auprès de Pocket-Id, grâce au plugin communautaire
+« Pocket ID Provider », et le plugin officiel `user-creatable-servers` laisse chacun créer ses serveurs dans les limites
+fixées par un administrateur. Panel et Wings sont des versions bêta épinglées. _Choisi pour son multi-utilisateur natif,
+son OAuth et son pool de ports que Wings attribue aux serveurs._
 
-**\*Why this choice**: Multi-user by design (each user can own servers), native OAuth sign-in with Pocket-ID through a
-community plugin, and a pool of game ports that Wings allocates to servers on demand.\*
+<br clear="all" />
 
-</div>
-</div>
+### Serveurs Minecraft
 
-<br/><br/>
+Chaque serveur (Paper, Fabric…) est créé depuis le Panel et tourne dans un conteneur lancé par Wings, sur un port du
+pool de 16 ports TCP `25565-25580` (un port par serveur). Les joueurs s'y connectent par `minecraft.chezmoi.sh`. Avec
+environ 4 Go de heap Java pour toute la machine, l'instance convient à quelques joueurs, pas à de gros modpacks.
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/apps/caddy.svg" alt="Caddy Logo" width="120" align="right" style="margin-left: 16px;">
+<br clear="all" />
 
-### [Caddy](https://caddyserver.com/)
+## Architecture
 
-HTTP reverse proxy with automatic Let's Encrypt certificates (HTTP-01), exposing the Panel on `minecraft.chezmoi.sh` and
-Wings on `main.minecraft.chezmoi.sh`.
+![Architecture de exusiai.akn](./assets/architecture.png)
 
-**\*Why this choice**: Native NixOS module and zero-config TLS.\*
+Caddy est la porte d'entrée web : il sert le Panel et Wings, que les navigateurs appellent directement pour la console
+et les fichiers. Les joueurs, eux, atteignent les serveurs de jeu sans passer par lui. Seule l'administration de la
+machine passe par le tailnet.
 
-</div>
-</div>
+## Accès
 
-<br/><br/>
+Le Panel est sur `https://minecraft.chezmoi.sh` et Wings sur `https://main.minecraft.chezmoi.sh` (les navigateurs
+l'appellent pour la console et les fichiers). Les deux noms résolvent vers l'IP publique de l'instance (enregistrements
+DNS Cloudflare non proxifiés, le proxy ne portant pas le TCP de Minecraft, le wildcard `*.minecraft` couvrant Wings et
+les noms par serveur). Les joueurs se connectent à `minecraft.chezmoi.sh` sur un port entre 25565 et 25580. Seuls les
+ports 80, 443 et ceux de ce pool sont ouverts, en IPv4 comme en IPv6, dans le pare-feu de l'hôte et dans le groupe de
+sécurité réseau (NSG) d'OCI.
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
+Pour se connecter au Panel, il faut être dans le groupe `admin` ou `minecraft` de Pocket-Id : le client OIDC y est
+restreint, et le compte Pelican est créé à la première connexion (jamais rattaché automatiquement à un compte existant
+par e-mail). Pour donner un serveur à quelqu'un, ajouter la personne au groupe `minecraft`, la laisser se connecter une
+fois, puis lui donner un rôle qui permet de créer des serveurs.
 
-### [restic](https://restic.net/)
+La machine s'administre en SSH par Tailscale (`root@exusiai-akn`, tag `tag:svc-minecraft`). Le port 22 est ouvert dans
+le pare-feu de l'hôte, mais fermé dans le NSG : il ne s'ouvre que le temps d'une installation, avec la configuration
+Pulumi `unsecure`.
 
-Encrypted, deduplicated backups of Pelican's backup archives and the Panel data (database, keys, plugins) to Backblaze
-B2 every day (7 daily, 4 weekly, 6 monthly snapshots kept).
+## Configuration
 
-**\*Why this choice**: Native S3 support (B2 compatible), and it ships the consistent archives Pelican produces rather
-than snapshotting a live world.\*
+Pulumi (`pulumi/`, projet `exusiai-akn`, pile `exusiai_akn.live`) provisionne le compartiment OCI, un VCN et un
+sous-réseau dédiés (distincts de ceux de `horn.akn`), l'instance A1.Flex (1 OCPU, 6 Go, démarrée sur une image Ubuntu
+qui sert seulement d'amorce, que NixOS remplace), le NSG, les enregistrements DNS, le bucket B2 et sa clé limitée à ce
+bucket, ainsi que la clé Tailscale du premier démarrage. Le groupe `minecraft` et le client OIDC de Pocket-Id sont
+déclarés dans `stack/pocket-id.ts`, qui les importe (ils existaient avant la pile). Le secret du client est un secret de
+pile : le régénérer remplace l'ancien côté Pocket-Id et casse la connexion tant que `oauth_pocketid_client_secret` n'est
+pas mis à jour.
 
-</div>
-</div>
+NixOS (`nix/`) expose deux sorties de flake, `exusiai-akn-aarch64` (OCI A1, UEFI, production) et `exusiai-akn-x86_64`
+(VM de test en BIOS legacy), car `nixos-anywhere` ne devine pas l'architecture de la cible. `configuration.nix` porte la
+base (réseau, pare-feu, SSH, Tailscale, sops-nix, swap compressé) et chaque module un sujet : `pelican.nix` pour les
+deux conteneurs, les plugins, les rôles et les allocations de ports (appliqués par des unités systemd qui attendent que
+l'installeur web du Panel ait tourné), `caddy.nix` pour les certificats Let's Encrypt (HTTP-01) et les deux reverse
+proxies, `backup.nix` pour restic. Il n'y a pas de mise à jour automatique : l'hôte n'est pas supervisé et un retour
+arrière propre est difficile.
 
-<br/><br/>
+Les sauvegardes fonctionnent en deux couches. Wings écrit des archives cohérentes des mondes dans
+`/var/lib/pelican/backups` (à planifier dans le Panel, par exemple toutes les 6 heures en en gardant 3), puis restic
+envoie chaque jour vers B2, vers 04:30, ce répertoire et les données du Panel (base SQLite, `APP_KEY`, plugins), en
+gardant 7 snapshots quotidiens, 4 hebdomadaires et 6 mensuels. Les volumes des serveurs en cours d'exécution ne sont pas
+sauvegardés : sans archive Wings planifiée, un monde n'existe pas hors site.
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/platform/tailscale.svg" alt="Tailscale Logo" width="120" align="left" style="margin-right: 16px;">
+Les secrets sont dans `nix/secrets/rimbilliton.sops.yaml` (le fichier garde l'ancien nom de l'hôte), chiffrés avec sops
+et déchiffrés par sops-nix grâce à la clé SSH d'hôte : clé Tailscale à usage unique (valable 7 jours), mot de passe
+restic (à garder aussi dans OpenBao : le perdre revient à perdre les sauvegardes), identifiants B2, client Pocket-Id et
+identifiants du nœud Wings. Le modèle est `nix/secrets/rimbilliton.example.yaml`. Le `config.yml` de Wings est rendu par
+sops-nix à partir de ces secrets et n'est jamais écrit en clair sur le disque.
 
-### [Tailscale](https://tailscale.com/)
-
-Mesh VPN providing SSH access and `nixos-rebuild` deployments. SSH is closed on the OCI network security group.
-
-**\*Why this choice**: Already used across the homelab, and keeps the VM free of any public management surface.\*
-
-</div>
-</div>
-
-<br/><br/>
-
----
-
-### External Services
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/apps/pocket-id.svg" alt="Pocket-ID Logo" width="120" align="right" style="margin-left: 16px;">
-
-### [Pocket-ID](https://pocket-id.org/) (auth.chezmoi.sh)
-
-OIDC/OAuth2 provider serving as the SSO solution for the Pelican panel, through the "Pocket ID Provider" Pelican plugin.
-
-**\*Why this choice**: This is the single identity provider of the homelab.\*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-
-### Backblaze B2
-
-S3-compatible object storage holding the restic repository, in a private bucket with a key scoped to that bucket only.
-
-**\*Why this choice**: Cheap, already used for the Proxmox Backup Server datastore, and independent from OCI.\*
-
-</div>
-</div>
-
-<br/><br/>
-
----
-
-## Current Project Structure
-
-This project contains documentation and infrastructure-as-code (Pulumi and NixOS) for the Minecraft server:
-
-```txt
-akn.exusiai/
-├── README.md                                   # This documentation
-├── architecture.d2                             # Architecture diagram source (D2 format)
-├── assets/                                     # Generated diagrams and assets
-│   ├── architecture-dark.svg                   # Dark theme architecture diagram
-│   ├── architecture-light.svg                  # Light theme architecture diagram
-│   ├── logo.dark.svg                           # Dark theme logo
-│   └── logo.light.svg                          # Light theme logo
-├── nix/                                        # NixOS flake (infrastructure-as-code)
-│   ├── flake.nix                               # Inputs and host definition
-│   ├── platforms/                              # Boot + disk layout: oci.a1.nix (prod, aarch64), proxmox.kvm.nix (test VM)
-│   ├── configuration.nix                       # Base system (boot, network, SSH, Tailscale, sops)
-│   ├── modules/
-│   │   ├── pelican.nix                         # Pelican Panel and Wings containers (Docker)
-│   │   ├── caddy.nix                           # Caddy: TLS for the Panel and Wings
-│   │   └── backup.nix                          # restic to Backblaze B2
-│   └── secrets/                                # SOPS secrets (template only)
-└── pulumi/                                     # Provisions the OCI VM, network, DNS, B2 and SSO client
-    └── stack/
-        ├── oci/                                # Compartment, VCN/NSG, instance
-        ├── backblaze.ts                        # Backup bucket and scoped key
-        ├── dns.ts                              # Cloudflare DNS records
-        ├── pocket-id.ts                        # OIDC client for the admin panel (disabled, provider broken)
-        └── tailscale.ts                        # First-boot auth key
+```text
+nix/
+├── flake.nix              nixpkgs, disko, sops-nix, deux sorties (aarch64, x86_64)
+├── configuration.nix      base du système, Tailscale, secrets
+├── platforms/             boot et disque : oci.a1.nix (production), proxmox.kvm.nix (test)
+├── modules/               pelican.nix, caddy.nix, backup.nix
+├── secrets/               fichier sops et modèle
+└── extra/                 clé d'hôte copiée à l'installation (ignorée par Git)
 ```
 
-## Installation and Setup
+## Déploiement
 
-The OCI resources are provisioned first via the Pulumi stack in `pulumi/`. NixOS is then installed
-over the bootstrap image and managed with `nixos-rebuild` from then on:
+### Première installation
 
-```bash
-mise run nixos:oci:install ubuntu@<public-ip>   # then: mise run nixos:oci:update
-```
+L'installation est manuelle et se fait une fois. Le détail (configuration Pulumi, clé d'hôte, installation du nœud,
+dépannage de `nixos-anywhere`, encadré macOS pour l'agent SSH) est dans le
+[guide d'initialisation](../../../docs/guides/Initialiser-Rimbilliton.md) ; en résumé :
 
-See [Initialiser Rimbilliton](../../../docs/guides/Initialiser-Rimbilliton.md) for the complete bootstrap procedure.
+1. Provisionner l'infrastructure depuis `pulumi/` (`mise run pulumi:diff`, puis `mise run pulumi:apply`), avec
+   `unsecure` à `true` pour ouvrir SSH le temps de l'installation.
+2. Générer la clé d'hôte dans `nix/extra/etc/ssh/`, créer `nix/secrets/rimbilliton.sops.yaml` depuis le modèle avec les
+   sorties de la pile, renseigner `bucket` dans `nix/modules/backup.nix` avec la sortie `backupsBucketName`, et
+   installer l'hôte dans les 7 jours de la clé Tailscale.
+3. Installer NixOS par-dessus l'image Ubuntu, avec `mise run nixos:oci:install ubuntu@<ip-publique>`. La tâche
+   **repartitionne le volume de démarrage**. Remettre ensuite `unsecure` à `false`.
+4. Terminer l'installeur web du Panel sur `https://minecraft.chezmoi.sh/installer`, démarrer les unités qui en dépendent
+   (`systemctl restart pelican-plugins pelican-roles`), créer le nœud (FQDN `main.minecraft.chezmoi.sh`, tag
+   `user_creatable_servers`), copier son `uuid`, `token_id` et `token` dans le fichier sops, redéployer, puis appliquer
+   les allocations (`systemctl restart pelican-allocations`).
 
-## Security Considerations
+### Mises à jour
 
-> \[!NOTE] Pelican is a beta release (Panel and Wings are pinned), and sign-in relies on a community plugin ("Pocket ID
-> Provider" by Ebnater). Pelican keeps its own accounts and permissions behind it.
+`mise run nixos:oci:update` lance `nixos-rebuild switch` sur l'hôte à travers le tailnet (`root@exusiai-akn` par défaut,
+une autre cible se passe en argument). `mise run pulumi:apply`, depuis `pulumi/`, applique les changements de
+l'infrastructure. Pour rejouer l'installation sur une VM de test Proxmox, `mise run nixos:e2e <utilisateur@hôte>` (cible
+obligatoire, destructive pour elle).
 
-### Authentication & Access Control
+### Vérifier un déploiement
 
-- **SSO Integration**: Users sign in to Pelican with Pocket-ID (auth.chezmoi.sh); the OIDC client is restricted to the
-  `admin` and `minecraft` groups, and Pelican accounts and server ownership are managed in the Panel
-- **SSH Access**: VM management via Tailscale only, SSH never exposed to the public internet
-- **Exposed ports**: 25565-25580 (pool of 16 game ports), 80 and 443 (Caddy) only (IPv4: the subnet is not dual-stack)
+- `tailscale status | grep exusiai-akn` : l'hôte est dans le tailnet.
+- `ssh root@exusiai-akn systemctl status docker-pelican-panel docker-pelican-wings caddy` : les trois services tournent.
+- `journalctl -u pelican-plugins -n 20` sur l'hôte : `Plugin installed and enabled.` la première fois, puis
+  `Plugin is already installed!`.
+- Le Panel répond sur `https://minecraft.chezmoi.sh`, la connexion Pocket-Id fonctionne et le nœud est au vert.
+- `systemctl start restic-backups-minecraft`, puis `restic snapshots` sur le dépôt B2 : un snapshot apparaît.
 
-### Data & Secrets Protection
+## Contribuer
 
-- **Secrets**: SOPS + age (sops-nix), nothing in plaintext in Git
-- **Backups**: Encrypted client-side by restic, stored in a private B2 bucket with a bucket-scoped key
-- **Isolation**: Dedicated OCI compartment and VCN, separate from kazimierz.akn
+Les deux sorties du flake permettent de tester avant de toucher à la production : `.#exusiai-akn-x86_64` s'installe sur
+une VM de test (`mise run nixos:e2e`). Nix n'étant pas installé en local, toute commande Nix passe par `nonix`
+(`scripts/nonix`). Un flake ne voit que les fichiers connus de Git : `git add -N` sur un fichier neuf avant de
+construire. Les versions épinglées (images Pelican, plugins, paquets) sont suivies par Oripathy grâce aux commentaires
+`# oripathy:` du code, et le Panel et Wings se mettent à jour ensemble. Le schéma se modifie dans `architecture.d2`,
+puis `mise run diagram:generate` régénère `assets/architecture.png`, à commiter avec. Lancer `mise run lint` avant de
+pousser.
 
-## License
+## Pour aller plus loin
 
-This repository is licensed under the [Apache-2.0](../../../LICENSE).
-
-> \[!CAUTION] This is a personal project intended for my own use. Feel free to explore and use the code, but please note
-> that it comes with no warranties or guarantees. Use it at your own risk.
+- [Initialiser Rimbilliton](../../../docs/guides/Initialiser-Rimbilliton.md) : la procédure d'amorçage complète et le
+  dépannage de l'installation.
+- [Restaurer Minecraft depuis restic](../../../docs/procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)
+  : restaurer un monde ou reconstruire l'hôte depuis B2.
+- [ADR-021](../../../docs/decisions/ADR-021-Passer-d-une-Vue-Projet-a-une-Vue-Flotte.md) : l'organisation de `fleet/`.
+- [Migration vers la flotte](../../../docs/migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md) : le renommage de
+  l'hôte.
+- [ADR-016](../../../docs/decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : pourquoi NixOS pour les VPS.
+- [Nommage des machines](../../../docs/reference/Nommage-des-Machines-Reference.md) : d'où vient le nom `exusiai`.
