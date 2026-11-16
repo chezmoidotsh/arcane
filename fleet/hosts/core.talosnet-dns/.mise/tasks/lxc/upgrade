@@ -9,9 +9,9 @@
 set -euo pipefail
 
 CONFIG_ROOT="$(pwd)"
-# Shared library, left next to the o11y-datastore LXC that still uses it.
+# Shared library of the LXC hosts (fleet/hosts/.mise/lib/).
 # shellcheck source=/dev/null
-source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "talosnet-dns" "${CONFIG_ROOT}/nix" _talosnet_dns
 lxc_services "bind" "o11y-agent"

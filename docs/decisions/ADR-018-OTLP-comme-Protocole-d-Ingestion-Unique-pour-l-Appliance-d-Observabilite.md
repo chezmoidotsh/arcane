@@ -287,7 +287,7 @@ flowchart LR
 
 - [ADR-013 Observabilité centralisée VictoriaMetrics sur LXC](./ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md)
   : la décision d'origine, dont cet ADR remplace la partie ingestion.
-- [README du LXC d'observabilité](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) :
+- [README du LXC d'observabilité](https://github.com/chezmoidotsh/arcane/blob/53c37daf4e1db440c1b1ba53a06167dbf975c380/projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) :
   l'implémentation de l'appliance et la surface en lecture seule.
 - [README du module `o11y-agent`](../../catalog/nix/modules/o11y-agent/README.md) : l'agent OpenTelemetry Collector et
   ses options.

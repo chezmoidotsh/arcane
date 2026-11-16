@@ -40,13 +40,11 @@ docs/           Documentation, source of the GitHub Wiki: guides/, reference/, p
                 plan-de-reprise/ (draft, being reworked) (see "Documentation" below)
 
 projects/       One subdirectory per cluster or standalone app
-├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
 ├── hass/           Home Assistant app project (not a cluster)
 ├── kazimierz.akn/  VPS public-access gateway — NixOS (flake), deliberately not Kubernetes (ADR-008, ADR-016)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
 ├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
-├── rimbilliton.akn/ Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS, not Kubernetes
-└── shodan.akn/     Future AI stack cluster (planning only — README + architecture diagram, no manifests yet)
+└── rimbilliton.akn/ Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS, not Kubernetes
 
 scripts/        Operational scripts (added to PATH by mise)
 .agents/skills/ Reusable skill definitions — one directory per skill, each with its own SKILL.md
@@ -57,32 +55,32 @@ scripts/        Operational scripts (added to PATH by mise)
 
 Grouped by concern rather than alphabetically, since agents usually need "what handles X" more than an inventory.
 
-| Concern               | Current choice                                                                                                                                                                                       |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Kubernetes distro     | Talos Linux, on every cluster                                                                                                                                                                        |
-| Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos machine config patches (`catalog/talos/`)                                                                                |
-| GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                |
-| Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                            |
-| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                           |
-| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                            |
-| CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                      |
-| Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use; Envoy Gateway is gone from `projects/*/src` (an unused base remains in `catalog/kubernetes/envoy-gateway/`)   |
-| Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                    |
-| TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                  |
-| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                              |
-| Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                         |
-| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`)                                 |
-| Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                              |
-| Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Shared CNPG clusters (`postgres-apps`, `postgres-apps-secured`) exist on `lungmen.akn`; consolidation of the rest is partial (ADR-009)        |
-| Other databases       | None currently deployed                                                                                                                                                                              |
-| Container registry    | Zot (`fleet/hosts/core.oci-registry/`)                                                                                                                                                               |
-| Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)                                       |
-| Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                          |
-| Observability         | VictoriaMetrics + VictoriaLogs + VictoriaTraces + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed over OTLP/HTTP only (ADR-018) by the `o11y-agent` of each LXC; Grafana on `rhodes.akn` |
-| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                          |
-| Network topology      | Dual-NIC Talos VMs + Proxmox SDN zone of type `simple` (`vxlan` deferred, ADR-014, `docs/reference/`)                                                                                                |
-| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                                   |
-| Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                                   |
+| Concern               | Current choice                                                                                                                                                                                                   |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kubernetes distro     | Talos Linux, on every cluster                                                                                                                                                                                    |
+| Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos machine config patches (`catalog/talos/`)                                                                                            |
+| GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                            |
+| Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                                        |
+| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                                       |
+| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                                        |
+| CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                                  |
+| Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use; Envoy Gateway is gone from `projects/*/src` (an unused base remains in `catalog/kubernetes/envoy-gateway/`)               |
+| Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                                |
+| TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                              |
+| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                                          |
+| Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                                     |
+| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`)                                             |
+| Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                                          |
+| Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Shared CNPG clusters (`postgres-apps`, `postgres-apps-secured`) exist on `lungmen.akn`; consolidation of the rest is partial (ADR-009)                    |
+| Other databases       | None currently deployed                                                                                                                                                                                          |
+| Container registry    | Zot (`fleet/hosts/core.oci-registry/`)                                                                                                                                                                           |
+| Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)                                                   |
+| Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                                      |
+| Observability         | VictoriaMetrics + VictoriaLogs + VictoriaTraces + vmalert + Alertmanager on the `ptilopsis.akn` Mac Studio (ADR-022), fed over OTLP/HTTP only (ADR-018) by the `o11y-agent` of each LXC; Grafana on `rhodes.akn` |
+| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                                      |
+| Network topology      | Dual-NIC Talos VMs + Proxmox SDN zone of type `simple` (`vxlan` deferred, ADR-014, `docs/reference/`)                                                                                                            |
+| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                                               |
+| Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                                               |
 
 ## Development environment
 
@@ -153,9 +151,8 @@ clusters.
 `lungmen.akn` is the home applications cluster and is under active development — apps are added and bumped frequently.
 See `fleet/clusters/akn.lungmen/kubernetes/src/apps/` for the current app inventory; do not enumerate it here.
 
-`kazimierz.akn` and `shodan.akn` are **not** part of the ArgoCD fleet: `kazimierz.akn` is a NixOS VPS (Pangolin stack as
-containers) by deliberate choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016), and
-`shodan.akn` has no manifests yet (planning stage only).
+`kazimierz.akn` is **not** part of the ArgoCD fleet: it is a NixOS VPS (Pangolin stack as containers) by deliberate
+choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016).
 
 ### Rendered manifests pattern (ADR-011)
 
@@ -210,20 +207,20 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 
 ### Observability
 
-- **VictoriaMetrics + VictoriaLogs + VictoriaTraces + vmalert + Alertmanager** run centrally on a single NixOS LXC on
-  the Proxmox host (ADR-013, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/`), fronted by Caddy.
-  The only write path is OTLP/HTTP on `:4318` (ADR-018), through an OTLP gateway (an OpenTelemetry Collector that turns
-  OTLP/JSON into protobuf); `:443` is read-only. It is fed by the shared `catalog/nix/modules/o11y-agent/`
-  (`catalog.o11yAgent`) of each LXC, by the Proxmox VE metric server, and on `lungmen.akn` and `rhodes.akn` by the
-  OpenTelemetry Collectors of `catalog/kubernetes/o11y-agent/` (namespace `o11y-agent-system`, OpenTelemetry Operator):
-  a hostNetwork node agent (node metrics, kubelet stats, pod and Talos logs, ServiceMonitor/PodMonitor and
-  `prometheus.io/*` scrapes through the Target Allocator) and a cluster agent (cluster state, events, CRD snapshots). No
-  `VMAgent`: OTLP only. Per-flow Hubble export is not done yet (#1516).
+- **VictoriaMetrics + VictoriaLogs + VictoriaTraces + vmalert + Alertmanager** run centrally on a dedicated Mac Studio,
+  `ptilopsis.akn` (nix-darwin, ADR-022, `fleet/hosts/akn.ptilopsis/`), fronted by Caddy. The only write path is
+  OTLP/HTTP on `:4318` (ADR-018), through an OTLP gateway (an OpenTelemetry Collector that turns OTLP/JSON into
+  protobuf); `:443` is read-only. It is fed by the shared `catalog/nix/modules/o11y-agent/` (`catalog.o11yAgent`) of
+  each LXC, by the Proxmox VE metric server, and on `lungmen.akn` and `rhodes.akn` by the OpenTelemetry Collectors of
+  `catalog/kubernetes/o11y-agent/` (namespace `o11y-agent-system`, OpenTelemetry Operator): a hostNetwork node agent
+  (node metrics, kubelet stats, pod and Talos logs, ServiceMonitor/PodMonitor and `prometheus.io/*` scrapes through the
+  Target Allocator) and a cluster agent (cluster state, events, CRD snapshots). No `VMAgent`: OTLP only. Per-flow Hubble
+  export is not done yet (#1516).
 - `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
-  database (`fleet/clusters/akn.rhodes/kubernetes/src/apps/o11y/`). It reads the LXC's Victoria stack as datasources and
+  database (`fleet/clusters/akn.rhodes/kubernetes/src/apps/o11y/`). It reads the Mac's Victoria stack as datasources and
   authenticates via Pocket-Id OIDC. The Grafana Operator itself runs in `o11y-agent-system` on every cluster: on
   `rhodes.akn` it manages that instance, elsewhere it points at it in external mode to import the cluster's dashboards.
-  Don't assume Grafana is just a dashboard the LXC serves — check the actual cluster before changing anything
+  Don't assume Grafana is just a dashboard the appliance serves — check the actual cluster before changing anything
   observability-related.
 - Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
   (`fleet/clusters/akn.rhodes/pulumi/stack/pangolin/`, `sso: false` at the Pangolin layer — by design, each app
@@ -456,7 +453,7 @@ kubectl get pvc -A -o wide
 ### Observability checks
 
 ```sh
-# Metrics/logs live on the central NixOS LXC, fed by the in-cluster OTel agents. The o11y namespace holds Grafana (rhodes.akn)
+# Metrics/logs live on the central appliance (ptilopsis.akn), fed by the in-cluster OTel agents. The o11y namespace holds Grafana (rhodes.akn)
 kubectl get pods -n o11y-agent-system
 kubectl get pods -n o11y
 ```

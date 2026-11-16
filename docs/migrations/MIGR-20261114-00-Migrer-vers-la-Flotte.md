@@ -38,7 +38,7 @@ chaque élément ayant son README.
 | 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                               |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 à 4 code prêt, état Pulumi à déplacer |
 | 9     | Scinder les piles lourdes de `chezmoi_sh`                           | code prêt (`core.pbs`, `core.nas`, `core.pve-01`, `base`), états Pulumi à déplacer                                         |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                    |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | code prêt, bloqué par la bascule de l'observabilité (ne pas fusionner avant)                                               |
 | 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                    |
 
 ## Avant de commencer
@@ -1009,17 +1009,62 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
 
 ### 10. Séquencer `core.o11y-datastore` avec l'ADR-022
 
-Le LXC `o11y-datastore` et sa pile (`observability.ts`) ne sont pas déplacés dans `fleet/` : ils restent dans
-`projects/chezmoi.sh` jusqu'à ce que
-l'[ADR-022](../decisions/ADR-022-Heberger-l-Appliance-d-Observabilite-sur-un-Mac-Studio-Dedie.md) déplace l'appliance
-sur `akn.ptilopsis`. Il y a alors un seul `pulumi state move`, directement vers `ptilopsis-akn`. Tant que l'ADR-022
-n'est pas réalisé et le LXC retiré, `projects/` ne peut pas être supprimé : la fin de la migration en dépend. Les étapes
-de cette migration sont dans
+`observability.ts` a suivi le reste de la pile dans `base` à l'étape 9. Il ne part pas vers un hôte `core.*` :
+l'appliance passe sur `akn.ptilopsis`
+([ADR-022](../decisions/ADR-022-Heberger-l-Appliance-d-Observabilite-sur-un-Mac-Studio-Dedie.md)). Seul le jeton
+Cloudflare DNS-01 du Caddy du Mac rejoint le projet `ptilopsis-akn` par un `pulumi state move` ; le client OAuth
+Tailscale est supprimé (le Mac n'a pas de nœud tsnet) et le LXC (CT 103) est retiré. Cette étape est bloquée jusqu'à la
+bascule de l'observabilité ; ensuite plus aucun fichier ne reste sous `projects/`. Les étapes de l'opération sont dans
 [Migrer l'observabilité vers le Mac Studio](MIGR-20261115-00-Migrer-l-Observabilite-vers-le-Mac-Studio.md).
 
-- **Nature** : migration manuelle (un seul `pulumi state move`, voir l'étape 4 de l'autre migration).
-- **Vérification** : `pulumi preview` vide dans les deux piles.
-- **Retour arrière** : celui de l'étape 4 de l'autre migration.
+- **Nature** : migration manuelle (un seul `pulumi state move`, voir le détail ci-dessous).
+- **Vérification** : `pulumi preview` vide pour `ptilopsis-akn`, et pour `base` seulement la suppression du client OAuth
+  et de deux sorties.
+- **Retour arrière** : celui du détail ci-dessous.
+
+### Détail de l'étape 10
+
+- **Constaté** : `observability.ts` quitte `base` : le jeton Cloudflare DNS-01 `caddy-dns01-observability` (et son
+  `AccountToken`) passe dans un nouveau projet `ptilopsis-akn` (pile `ptilopsis_akn.live`,
+  `fleet/hosts/akn.ptilopsis/pulumi/`, sur le modèle de `core.omni`), car le Caddy du Mac fait de l'ACME DNS-01 chez
+  Cloudflare (`Caddyfile`, `caddy.nix`, `secrets.nix`). Le client OAuth Tailscale `observability-tailscale-oauth-client`
+  est retiré du code (le Mac n'a pas de nœud tsnet) : un `pulumi up` sur `base` le supprimera après la bascule. La tâche
+  `secrets:sync` d'`akn.ptilopsis` écrit la sortie `observabilityDns01Token` dans `nix/secrets/o11y.sops.yaml`
+  (`cloudflare-api-token`). `base` garde 5 ressources (compartiment OCI, trois groupes et `admin-claims` de Pocket-Id).
+- **Constaté** : le code du CT 103 (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/`, 22 fichiers
+  suivis, dont ses secrets SOPS) est supprimé ; `pve-01-core` ne déclare aucun conteneur 103. La bibliothèque commune
+  des LXC va dans `fleet/hosts/.mise/lib/lxc.sh` (les 12 tâches `lxc/{build,push,upgrade}` des hôtes `core.*` la
+  chargent par `${CONFIG_ROOT}/../.mise/lib/lxc.sh`). Le reste de `projects/chezmoi.sh/` et tout `projects/shodan.akn/`
+  (décision du propriétaire : supprimé sans remplacement) disparaissent : plus aucun fichier suivi sous `projects/`.
+  `oripathy:inventory`, `AGENTS.md`, le README racine, les skills `lxc-maintenance` et `component-update` suivent ; les
+  liens vers l'ancien README du LXC (ADR-013, ADR-018, ADR-022, INF-20260605) deviennent des permaliens GitHub.
+- **Manuel, après la bascule de l'étape 3**
+  ([MIGR-20261115-00](MIGR-20261115-00-Migrer-l-Observabilite-vers-le-Mac-Studio.md)) :
+  1. arrêter le CT 103 (`pct stop 103`), le garder pendant une fenêtre de rétention (durée **à fixer**), sauvegarder
+     (vzdump/PBS) et exporter les deux états ;
+  2. créer `fleet/hosts/akn.ptilopsis/pulumi/.mise/env.yaml` (SOPS, `PULUMI_STACK=ptilopsis_akn.live`, nouvelle phrase
+     secrète) ;
+  3. `pulumi stack init ptilopsis_akn.live` ;
+  4. `pulumi config set --secret` de `ptilopsis-akn:cloudflare_account_id` et `ptilopsis-akn:cloudflare_zone_id` ;
+  5. `pulumi state move` de `caddy-dns01-observability` de `organization/base/base.live` vers
+     `organization/ptilopsis-akn/ptilopsis_akn.live` ;
+  6. aperçus : vide pour `ptilopsis-akn`, pour `base` seulement la suppression du client OAuth et de deux sorties ;
+  7. `pulumi up` sur `base` ;
+  8. retirer de `base` `tailscale:tailnet`, `base:cloudflare_account_id`, `base:cloudflare_zone_id` ;
+  9. `mise run secrets:sync` dans `akn.ptilopsis` ;
+  10. `pct destroy 103` après la rétention.
+- **Risque** : aucun `pulumi up` sur `base` avant le `state move` (il supprimerait le jeton qu'utilise le Caddy du Mac,
+  le renouvellement des certificats échouerait). Les greffons `tailscale` et `cloudflare` ne sont plus dans le
+  `package.json` de `base` (à installer si l'aperçu les demande). `secrets:sync` échoue tant que `o11y.sops.yaml`
+  n'existe pas.
+- **À confirmer** : `state move` entre phrases secrètes différentes (comme aux étapes précédentes).
+- **À trancher** : l'emplacement `fleet/hosts/.mise/lib/` pour la bibliothèque des LXC (la page de référence de
+  l'architecture n'en prévoit pas) ; le nom de la sortie `observabilityDns01Token` ; une ligne dédiée à `akn.ptilopsis`
+  (nix-darwin) dans le skill `component-update`. Restent sur disque, non suivis : 21 images
+  `observability.*-amd64.tar.xz` du CT 103 (environ 7,1 Go), utiles pour un retour arrière, à supprimer après la
+  rétention.
+- **Retour arrière** : avant la destruction, redémarrer le CT 103 et rebasculer le DNS (étape 3) ; `state move` inverse
+  ou `stack import` ; `git revert`.
 
 ### 11. Documentation, suppression des scopes `project:*` et de `projects/`
 

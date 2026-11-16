@@ -1,7 +1,6 @@
 name: base
 description: >-
-  Fleet base: resources tied to no machine. Parent OCI compartment, Pocket-Id groups, and
-  (until step 10 of MIGR-20261114-00) the observability LXC's Cloudflare and Tailscale tokens.
+  Fleet base: resources tied to no machine. Parent OCI compartment and Pocket-Id groups.
 runtime:
   name: nodejs
   options:

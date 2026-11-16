@@ -1,9 +1,8 @@
 ---
 name: lxc-maintenance
 description: >
-  Build, push, and upgrade the Proxmox LXC appliances (fleet/hosts/core.*, plus o11y-datastore in chezmoi.sh). Use when
-  asked to build an LXC image, upload it to Proxmox, upgrade a running container, or add a new LXC appliance using the
-  shared library.
+  Build, push, and upgrade the Proxmox LXC appliances (fleet/hosts/core.*). Use when asked to build an LXC image, upload
+  it to Proxmox, upgrade a running container, or add a new LXC appliance using the shared library.
 compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 ---
 
@@ -11,24 +10,22 @@ compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 
 ## Overview
 
-Five NixOS-based LXC appliances live in the repository, each built as an immutable tarball and upgraded in place: the
+Four NixOS-based LXC appliances live in the repository, each built as an immutable tarball and upgraded in place: the
 running container keeps its VMID (and therefore its static IP and PBS backup identity) while its rootfs volume is
 swapped for a freshly built one, with a Proxmox snapshot as the rollback path.
 
 ```text
 fleet/hosts/
+├── .mise/
+│   └── lib/lxc.sh              ← shared build/push/upgrade library (single source of truth)
 ├── core.oci-registry/          ← Zot OCI registry
 ├── core.omni/                  ← Omni cluster manager
 ├── core.omni-infra-provider-proxmox/
 └── core.talosnet-dns/          ← BIND for the talosnet subnet
-projects/chezmoi.sh/src/infrastructure/proxmox/lxc/
-├── .mise/
-│   └── lib/lxc.sh              ← shared build/push/upgrade library (single source of truth)
-└── o11y-datastore/             ← VictoriaMetrics + VictoriaLogs + VictoriaTraces + OTLP gateway + Alertmanager
 ```
 
-`o11y-datastore` keeps the old flat layout (flake, `modules/`, `secrets/`, `.mise.toml` in one directory) until its own
-migration. The `fleet/hosts/core.<name>/` appliances use the host layout of the fleet:
+The observability appliance is no longer an LXC: it runs on the `akn.ptilopsis` Mac Studio (nix-darwin, ADR-022). The
+`fleet/hosts/core.<name>/` appliances use the host layout of the fleet:
 
 ```text
 core.<name>/
@@ -56,7 +53,7 @@ so rebuilding under an unchanged version ships an artifact that looks identical 
 ```sh
 # from the repository root, bump every date-versioned appliance at once
 perl -pi -e 's/^(\s*(?:version|imageVersion) = ")20\d\d\.\d\d\.\d\d(?:-\d+)?";/${1}'"$(date +%Y.%m.%d)"'";/' \
-  fleet/hosts/core.*/nix/flake.nix projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/flake.nix
+  fleet/hosts/core.*/nix/flake.nix
 ```
 
 `oci-registry` is the exception: its `version` is the upstream Zot release (`vX.Y.Z`, managed by Renovate) and is left
@@ -66,7 +63,7 @@ alone — only its `imageVersion` is a date. Note that the shared library takes 
 ### Build a template
 
 ```sh
-cd fleet/hosts/core.<name>   # or projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore
+cd fleet/hosts/core.<name>
 mise run lxc:build
 ```
 
@@ -128,23 +125,23 @@ runs the same rollback before exiting.
 
 ## Shared library reference
 
-All appliance scripts source the shared library, which stays next to `o11y-datastore`:
+All appliance scripts source the shared library, `fleet/hosts/.mise/lib/lxc.sh`:
 
 ```bash
 CONFIG_ROOT="$(pwd)"
 # shellcheck source=/dev/null
-source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 ```
 
-(`o11y-datastore` uses `${CONFIG_ROOT}/../.mise/lib/lxc.sh`.) Functions:
+Functions:
 
 ### `lxc_init <name> <config_root> [tag ...]`
 
 Must be called first. Sets all globals used by subsequent functions.
 
-- `<name>` — LXC appliance name (e.g. `observability`)
+- `<name>` — LXC appliance name (e.g. `omni`)
 - `<config_root>` — absolute path to the directory of `flake.nix` and `secrets/` (`$CONFIG_ROOT/nix` in `fleet/hosts`)
-- `[tag ...]` — extra PVE tag names for auto-detection (e.g. `_o11y`)
+- `[tag ...]` — extra PVE tag names for auto-detection (e.g. `_omni`)
 
 Sets: `LXC_NAME`, `LXC_VERSION`, `LXC_TAGS`, `LXC_TEMPLATE`, `LXC_ARTIFACT`, `LXC_REMOTE_PATH`
 
@@ -154,7 +151,7 @@ Register required secrets from a SOPS-encrypted `.env` file. Secrets are extract
 present (non-empty) or the build fails.
 
 ```bash
-lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN TAILSCALE_OAUTH_KEY
+lxc_secret "secrets/omni.sops.env" DEX_ADMIN_PASSWORD_HASH
 ```
 
 ### `lxc_secret_optional <sops-file> <KEY> [KEY ...]`
@@ -240,7 +237,7 @@ Run the full upgrade flow. Flags:
 
    CONFIG_ROOT="$(pwd)"
    # shellcheck source=/dev/null
-   source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
    lxc_init "<name>" "${CONFIG_ROOT}/nix" _<tag>
    lxc_secret "secrets/<file>.sops.env" KEY1 KEY2
@@ -260,7 +257,7 @@ Run the full upgrade flow. Flags:
 
    CONFIG_ROOT="$(pwd)"
    # shellcheck source=/dev/null
-   source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
    lxc_init "<name>" "${CONFIG_ROOT}/nix" _<tag>
    lxc_push "${usage_pve_host}"
@@ -281,7 +278,7 @@ Run the full upgrade flow. Flags:
 
    CONFIG_ROOT="$(pwd)"
    # shellcheck source=/dev/null
-   source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+   source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
    lxc_init "<name>" "${CONFIG_ROOT}/nix" _<tag>
    lxc_services "service1" "service2" "o11y-agent"
@@ -314,7 +311,5 @@ Run the full upgrade flow. Flags:
 
 ## References
 
-- Shared library: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`
-- Existing appliances: `fleet/hosts/core.*/` and `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/`
-- Observability README (full deploy procedure):
-  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md`
+- Shared library: `fleet/hosts/.mise/lib/lxc.sh`
+- Existing appliances: `fleet/hosts/core.*/` (each README has its deploy procedure)

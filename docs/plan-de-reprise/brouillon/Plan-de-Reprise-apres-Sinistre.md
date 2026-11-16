@@ -75,7 +75,7 @@ flowchart TD
 | NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                       | [`TRUENAS.md`](../../../fleet/hosts/core.nas/TRUENAS.md)                                                                                                                                |
 | Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                       | [`core.nas/pulumi/apps.ts`](../../../fleet/hosts/core.nas/pulumi/apps.ts)                                                                                                               |
 | Stack `chezmoi-sh-infra`      | Garage (backend `s3://pulumi-states`) ; passphrase SOPS ; mot de passe `root@pam` ; OpenBao, Pocket-Id et clusters joignables (voir plus bas) | [`Pulumi.yaml`](../../../fleet/base/pulumi/Pulumi.yaml), [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) |
-| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                              | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                        |
+| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                              | [`.mise.toml` de `core.omni`](../../../fleet/hosts/core.omni/.mise.toml), [`.sops.yaml`](../../../fleet/hosts/core.omni/.sops.yaml)                                                     |
 | Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                              | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                       |
 | VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`              | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)             |
 | Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `pve-01-core` ; Garage pour les sauvegardes                   | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../fleet/hosts/core.pve-01/pulumi/access/rhodes-akn-bootstrap.ts)           |
@@ -312,9 +312,9 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
   PBS. À l'inverse, les jetons Cloudflare et Tailscale des LXC (`fleet/hosts/core.omni/pulumi/`,
   `stack/observability.ts`, `fleet/hosts/core.oci-registry/pulumi/`) ont une copie chiffrée avec SOPS dans
   `secrets/caddy.sops.env` de leur LXC, écrite par la tâche `lxc:secrets:sync` des hôtes `core.omni` et
-  `core.oci-registry` et par les tâches `pulumi:*` de [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml) pour
-  observability. Le jeton ACME de PBS (`core.pbs/pulumi/acme.ts`) n'a aucune copie dans le dépôt : il est injecté à la
-  main dans PBS.
+  `core.oci-registry` et par la tâche `secrets:sync` de [`.mise.toml`](../../../fleet/hosts/akn.ptilopsis/.mise.toml)
+  pour observability. Le jeton ACME de PBS (`core.pbs/pulumi/acme.ts`) n'a aucune copie dans le dépôt : il est injecté à
+  la main dans PBS.
 - **État** : atténuée pour les LXC (leur reconstruction n'a pas besoin de l'état Pulumi) ; ouverte pour les deux clés B2
   et le jeton ACME de PBS. Une nouvelle clé peut sans doute être créée depuis le compte Backblaze, mais le dépôt ne le
   documente pas.

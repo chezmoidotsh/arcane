@@ -284,7 +284,7 @@ volumes non référencés.
 
 - [Skill : lxc-maintenance](../../../.agents/skills/lxc-maintenance/SKILL.md) : points d'entrée `mise` et bibliothèque
   `lxc.sh` utilisés par cette procédure.
-- [README du conteneur observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md)
+- [README du conteneur observability](https://github.com/chezmoidotsh/arcane/blob/53c37daf4e1db440c1b1ba53a06167dbf975c380/projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md)
   : création initiale du conteneur et configuration du conteneur.
 - [ADR-013 Observabilité centralisée](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) :
   décision à l'origine du conteneur `observability`.

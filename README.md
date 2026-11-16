@@ -79,13 +79,11 @@ mise install
 │   ├── procedures                  # Operational procedures
 │   └── reference                   # Network, IPAM and configuration reference
 ├── projects                        # Infrastructure projects
-│   ├── chezmoi.sh                  # Shared resources
 │   ├── hass                        # Home Assistant configuration
 │   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
 │   ├── rhodes.akn                  # Rhodes cluster configuration
-│   ├── rimbilliton.akn             # Rimbilliton Minecraft host (OCI VPS, NixOS)
-│   └── shodan.akn                  # Shodan cluster configuration
+│   └── rimbilliton.akn             # Rimbilliton Minecraft host (OCI VPS, NixOS)
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration
 ├── CHANGELOG.md                    # Project history and evolution
