@@ -33,10 +33,10 @@ contrôles après et le retour arrière.
   le pool `workers` : un seul worker redémarre à la fois, et son voisin doit porter toute la charge pendant ce temps
   (voir l'en-tête des templates).
 
-| Cluster       | Template                                                                    | Control plane | Workers (`w1.large`) |
-| ------------- | --------------------------------------------------------------------------- | ------------- | -------------------- |
-| `rhodes.akn`  | `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml`   | 1             | 2                    |
-| `lungmen.akn` | `projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml` | 1             | 3                    |
+| Cluster       | Template                                                                  | Control plane | Workers (`w1.large`) |
+| ------------- | ------------------------------------------------------------------------- | ------------- | -------------------- |
+| `rhodes.akn`  | `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml` | 1             | 2                    |
+| `lungmen.akn` | `fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml`            | 1             | 3                    |
 
 ## Prérequis
 
@@ -125,8 +125,8 @@ omnictl cluster template validate -f $TEMPLATE_FILE
 # → pas d'erreur
 ```
 
-La tâche `mise run omni:clustertemplate:validate`, lancée depuis `projects/lungmen.akn/` ou `projects/rhodes.akn/`,
-exécute cette validation sur le template du cluster.
+La tâche `mise run omni:clustertemplate:validate`, lancée depuis `fleet/clusters/akn.lungmen/` ou
+`projects/rhodes.akn/`, exécute cette validation sur le template du cluster.
 
 Contrôler que le diff Git ne contient que la ligne `version` attendue :
 

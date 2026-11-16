@@ -229,7 +229,7 @@ omnictl cluster template validate -f $TEMPLATE_FILE
 ```
 
 Chaque projet de cluster encapsule cette commande dans une tâche `mise` de son propre `.mise.toml`
-(`projects/rhodes.akn/` et `projects/lungmen.akn/` en définissent une) :
+(`projects/rhodes.akn/` et `fleet/clusters/akn.lungmen/` en définissent une) :
 
 ```sh
 mise run omni:clustertemplate:validate
@@ -326,10 +326,10 @@ Le Proxmox CCM et le plugin Proxmox CSI (étape 10) partagent une identité Prox
 même stack écrit la configuration obtenue dans le cluster sous le Secret `proxmox-system/proxmox-cloud-provider` (clé
 `config.yaml`), que les deux charts référencent par `existingConfigSecret` :
 
-| Cluster       | Programme Pulumi                                                  |
-| ------------- | ----------------------------------------------------------------- |
-| `rhodes.akn`  | `projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts`  |
-| `lungmen.akn` | `projects/lungmen.akn/src/infrastructure/pulumi/stack/proxmox.ts` |
+| Cluster       | Programme Pulumi                                                 |
+| ------------- | ---------------------------------------------------------------- |
+| `rhodes.akn`  | `projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts` |
+| `lungmen.akn` | `fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts`      |
 
 Le composant sous-jacent est `catalog/pulumi/components/proxmox-cluster-identity` (voir son README). Le programme lit le
 Secret d'amorçage dans `kube-system` : le kubeconfig de l'étape 8 doit donc être utilisable par le provider Kubernetes

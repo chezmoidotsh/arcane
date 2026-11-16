@@ -98,7 +98,7 @@ The scope is enclosed in square brackets and identifies which part of the reposi
 | `project:amiya.akn`                      | `projects/amiya.akn/`                          |
 | `project:chezmoi.sh`                     | `projects/chezmoi.sh/`                         |
 | `project:kazimierz.akn`                  | `projects/kazimierz.akn/`                      |
-| `project:lungmen.akn`                    | `projects/lungmen.akn/`                        |
+| `project:lungmen.akn`                    | `projects/lungmen.akn/` (removed)              |
 | `project:rhodes.akn`                     | `projects/rhodes.akn/`                         |
 | `project:shodan.akn`                     | `projects/shodan.akn/`                         |
 | `fleet:rhodes.akn`                       | `fleet/clusters/akn.rhodes`                    |
@@ -369,8 +369,8 @@ git --no-pager log --oneline --no-merges -10
 ### 2. Check for commit splitting
 
 If staged changes span multiple scopes and are not a single atomic change, suggest splitting into separate commits. For
-example, files from both `projects/lungmen.akn/` and `catalog/pulumi/` staged together should usually become two commits
-with different scopes and types. Ask the user if unsure.
+example, files from both `fleet/clusters/akn.lungmen/` and `catalog/pulumi/` staged together should usually become two
+commits with different scopes and types. Ask the user if unsure.
 
 ### 3. Select the type
 
