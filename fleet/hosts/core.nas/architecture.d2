@@ -1,0 +1,83 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  backblaze: {
+    class: platform
+    label: Backblaze B2
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  clusters: {
+    class: hardware
+    label: Kubernetes clusters
+    icon: assets/icons/system/kubernetes.blueprint.svg
+  }
+
+  clients: {
+    class: hardware
+    label: "Postes, Fire TV,\nHome Assistant"
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                   nas.core                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+nas·core: {
+  class: project
+  label: nas.core
+
+  smb: {
+    class: application
+    label: Partages SMB
+    icon: assets/icons/hardware/truenas-scale.blueprint.svg
+  }
+
+  npm: {
+    class: application-system
+    label: Nginx Proxy Manager
+  }
+
+  garage: {
+    class: application
+    label: Garage (S3)
+    icon: assets/icons/apps/garage.blueprint.svg
+  }
+
+  zfs: {
+    class: application-datastore
+    label: "Pools ZFS\nzp1cs01, zp1hs01"
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+localnet.clusters -> nas·core.smb: "Mount application storage (SMB)" {target-arrowhead: 445; class: [connect-app]}
+localnet.clients -> nas·core.smb: "Read and write files (SMB)" {target-arrowhead: 445; class: [connect-app]}
+localnet.clusters -> nas·core.npm: "Store backups and state (S3 over HTTPS)" {target-arrowhead: 443; class: [connect-app]}
+nas·core.npm -> nas·core.garage: "Proxy S3 API" {target-arrowhead: 3900; class: [connect-network]}
+nas·core.smb -> nas·core.zfs: "Read and write datasets" {class: [connect-app]}
+nas·core.garage -> nas·core.zfs: "Store objects" {class: [connect-app]}
+nas·core.zfs -> internet.backblaze: "Sync datasets (CloudSync)" {class: [connect-to-internet]}

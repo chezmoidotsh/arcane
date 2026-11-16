@@ -1,0 +1,13 @@
+# =============================================================================
+# nas.core - Mise configuration
+# =============================================================================
+# The Pulumi tasks (diff, apply, docs) live in pulumi/.mise.toml.
+# =============================================================================
+
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of nas.core"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
