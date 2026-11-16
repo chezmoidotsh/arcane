@@ -149,7 +149,7 @@ is a poor place to hold that permission.
 
 Restores are driven from Proxmox VE, not from this server — the `pbs`-type storage entry there lists every snapshot
 this datastore holds. Follow
-[`PROXMOX-VE.md`, "Restore a guest from backup"](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md#restore-a-guest-from-backup). Restores need the
+[`PROXMOX-VE.md`, "Restore a guest from backup"](../core.pve-01/PROXMOX-VE.md#restore-a-guest-from-backup). Restores need the
 client-side encryption key configured on the Proxmox VE host; if it is missing (fresh host), restore it from OpenBao
 first — see [How it's managed](#how-its-managed).
 
@@ -170,7 +170,7 @@ pulumi up --refresh
 pulumi stack output pveBackupTokenSecret --show-secrets   # the new one-time secret
 ```
 
-The storage entry itself (`pve-storage-pbs`) is managed by the `chezmoi-sh-infra` stack, which reads the secret from its
+The storage entry itself (`pve-storage-pbs`) is managed by the `pve-01-core` stack, which reads the secret from its
 own `pveBackupTokenSecret` secret config: set the new value there (`pulumi config set --secret pveBackupTokenSecret`)
 and apply that stack. Then update Proxmox VE's storage entry with the new secret — the same API-token field used in
 [Configuring Proxmox VE to use this datastore](#configuring-proxmox-ve-to-use-this-datastore). Until that is done,
@@ -209,6 +209,6 @@ files, so a nightly full backup of mostly-unchanged data costs close to nothing 
 
 - [`README.md`](./README.md) — the
   stack managing this server, its datastore architecture, and the bootstrapping / DR procedure
-- [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) — the hypervisor pushing backups here (and where restores are driven from)
+- [`PROXMOX-VE.md`](../core.pve-01/PROXMOX-VE.md) — the hypervisor pushing backups here (and where restores are driven from)
 - [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   — where the Pulumi state itself lives

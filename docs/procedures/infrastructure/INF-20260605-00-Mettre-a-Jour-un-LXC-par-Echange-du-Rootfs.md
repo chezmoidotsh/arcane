@@ -19,9 +19,8 @@ L'indisponibilité cible est de 2 minutes au plus (arrêt du CT, échange du roo
   `talosnet-dns`. Chaque dossier porte ses tâches `mise` (`lxc:build`, `lxc:push`, `lxc:upgrade`) qui s'appuient sur la
   bibliothèque commune `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`.
 - **Stockage** : LVM-thin. Les volumes ont la forme `<STORAGE>:vm-<VMID>-disk-N`. Dans les exemples, `STORAGE` vaut
-  `nvme-lvm` (pool déclaré dans `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/pools.ts`). Le renommage du
-  volume rootfs par le script ne vaut que pour LVM-thin ; sur un autre type de stockage, le volume garde le nom du CT
-  temporaire.
+  `nvme-lvm` (pool déclaré dans `fleet/hosts/core.pve-01/pulumi/pools.ts`). Le renommage du volume rootfs par le script
+  ne vaut que pour LVM-thin ; sur un autre type de stockage, le volume garde le nom du CT temporaire.
 - **Mapping des uid** : dans un conteneur non privilégié, l'uid N du conteneur correspond à l'uid `100000 + N` sur
   l'hôte.
 - **Nom du template** : `<LXC_NAME>.<VERSION>-amd64.tar.xz`, avec `VERSION` lu dans `flake.nix` (première occurrence de

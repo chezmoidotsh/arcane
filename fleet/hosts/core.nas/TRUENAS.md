@@ -332,7 +332,7 @@ The NAS VM's system disk is backed up to PBS, but the ZFS pools live on **passth
 part of the VM backup and survive independently of the VM.
 
 1. **VM lost, disks intact** — restore the VM from its PBS backup
-   ([`PROXMOX-VE.md`, "Restore a guest from backup"](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md#restore-a-guest-from-backup)), re-create the PCI
+   ([`PROXMOX-VE.md`, "Restore a guest from backup"](../core.pve-01/PROXMOX-VE.md#restore-a-guest-from-backup)), re-create the PCI
    passthrough mappings if the host changed, and the pools re-import with all data — Garage (and the Pulumi state) come
    back with `zp1hs01`.
 2. **Disks lost too** — reinstall or restore the VM, create fresh pools, then pull data back from Backblaze B2
@@ -368,5 +368,5 @@ pooling as first-class features rather than something bolted on with LVM/RAID.
 - [`README.md`](./README.md) — the stack managing this NAS
 - [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   — the Pulumi state hosted on Garage
-- [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) — the hypervisor this VM runs on
+- [`PROXMOX-VE.md`](../core.pve-01/PROXMOX-VE.md) — the hypervisor this VM runs on
 - [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up

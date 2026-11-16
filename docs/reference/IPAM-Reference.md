@@ -130,8 +130,8 @@ Pour désactiver le suivi de connexion (conntrack) sur ces pools, voir
 ## SDN Proxmox : VNet talosnet
 
 Réseau interne de nœud à nœud pour les clusters Talos, provisionné dans la zone SDN `pvenet`, non routé sur les VLAN
-physiques. Codifié dans Pulumi : `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts` (`pvenetZone`,
-`talosnetVnet`, `talosnetSubnet`). La procédure
+physiques. Codifié dans Pulumi : `fleet/hosts/core.pve-01/pulumi/sdn.ts` (`pvenetZone`, `talosnetVnet`,
+`talosnetSubnet`). La procédure
 [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) garde la
 justification de conception et le chemin de migration vers `vxlan`.
 
@@ -331,9 +331,8 @@ de refuser le reste en entrée.
 
 ### Groupe de sécurité Proxmox `talos`
 
-Référence de base des VM Talos gérées par Omni, déclarée dans
-`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/firewall.ts`. Une VM l'utilise en déclarant `GROUP talos`
-dans son `.fw` (étape manuelle).
+Référence de base des VM Talos gérées par Omni, déclarée dans `fleet/hosts/core.pve-01/pulumi/firewall.ts`. Une VM
+l'utilise en déclarant `GROUP talos` dans son `.fw` (étape manuelle).
 
 | Règle (entrant) | Protocole | Port  | Source     | Usage                                      |
 | --------------- | --------- | ----- | ---------- | ------------------------------------------ |

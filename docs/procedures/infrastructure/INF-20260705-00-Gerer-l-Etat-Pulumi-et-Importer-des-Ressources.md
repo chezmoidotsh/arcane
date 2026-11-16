@@ -48,7 +48,7 @@ backend:
 >
 > - **NAS arrêté, hôte intact** : restaurer d'abord la VM du NAS depuis sa sauvegarde PBS ; l'état Pulumi revient avec
 >   elle.
-> - **Hôte perdu** : suivre « Rebuild the host » dans [Proxmox VE](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md). La
+> - **Hôte perdu** : suivre « Rebuild the host » dans [Proxmox VE](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md). La
 >   VM du NAS (et Garage avec elle) doit être restaurée **avant** tout `pulumi up`.
 > - **Stockage du NAS perdu aussi** : le dataset Garage fait partie de la synchronisation quotidienne hors site de
 >   `/mnt/zp1hs01/applications/truenas` vers Backblaze B2 (voir [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md), «
@@ -67,7 +67,7 @@ Les accès suivants sont également nécessaires :
 - pour `projects/chezmoi.sh` en particulier, des identifiants de fournisseur au-delà des valeurs par défaut : toute
   ressource **ACME** de Proxmox VE exige une vraie session `root@pam` (nom d'utilisateur et mot de passe), car ces
   points d'accès rejettent les jetons d'API. Le stockage du mot de passe dans le Keychain macOS est décrit dans
-  [`stack/proxmox/README.md`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md), section «
+  [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md), section «
   Bootstrapping ».
 
 ## Entrées requises
@@ -144,7 +144,7 @@ Déclarer d'abord la ressource, avec des paramètres aussi proches que possible 
 renseigner l'option de ressource `parent`. Un import fait sans `--parent` correspondant produit un URN différent de
 celui d'une ressource déclarée avec `parent`, ce qui apparaît ensuite comme un delete+create parasite (cas rencontré sur
 la stack Proxmox VE ; voir
-[`stack/proxmox/README.md`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md), « Adding a
+[`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md), « Adding a
 new identity or ACL binding »).
 
 ### Importer dans l'état
@@ -192,7 +192,7 @@ mise run pulumi:apply
 
 ## Exemple complet : importer le rôle `OmniProvider` de Proxmox VE
 
-Le rôle `OmniProvider` est déclaré dans `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/omni.ts`
+Le rôle `OmniProvider` est déclaré dans `fleet/hosts/core.pve-01/pulumi/access/omni.ts`
 sous le nom logique `pve-role-omni-provider`. Exemple de forme, non rejoué.
 
 ```sh
@@ -249,7 +249,7 @@ pulumi state delete $URN
 
 - [Pulumi du projet `chezmoi.sh`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/README.md) : la stack
   `chezmoi-sh-infra` et ses tâches `mise`.
-- [Proxmox VE](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) : « Import an existing object » et « Rebuild the host ».
+- [Proxmox VE](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md) : « Import an existing object » et « Rebuild the host ».
 - [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md) : l'emplacement physique de Garage, et donc de l'état.
 - [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : autre procédure appliquée par la stack
   `chezmoi-sh-infra`.

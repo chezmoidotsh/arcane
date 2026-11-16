@@ -27,7 +27,7 @@ commencer et les cinq circularités de bootstrap encore présentes sont connus.
 ## Carte des interdépendances
 
 `pve-01` est l'unique hyperviseur : chaque nœud Kubernetes, chaque LXC de plateforme, le NAS et le serveur de sauvegarde
-sont ses invités ([`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md)). Perdre l'hôte, c'est tout perdre
+sont ses invités ([`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md)). Perdre l'hôte, c'est tout perdre
 sauf ce qui vit hors site : Backblaze B2, Cloudflare, Tailscale, les deux VPS OCI et le poste de l'opérateur.
 
 ### Chaîne de démarrage des services
@@ -70,7 +70,7 @@ flowchart TD
 | Couche                        | Exige des couches au-dessus                                                                                                                   | Source                                                                                                                                                                                                              |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                | [ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md), [IPAM](../../reference/IPAM-Reference.md)                                                                                 |
-| `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `chezmoi-sh-infra`, donc Garage                                                | [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md), [`stack/proxmox/`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md)                                              |
+| `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `pve-01-core`, donc Garage                                                     | [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md), [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md)                                                                            |
 | PBS                           | `pve-01` ; clé d'application B2 et datastore créés par Pulumi ; clé de chiffrement côté client conservée dans OpenBao                         | [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md), [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md)                                                               |
 | NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                       | [`TRUENAS.md`](../../../fleet/hosts/core.nas/TRUENAS.md)                                                                                                                                                            |
 | Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                       | [`core.nas/pulumi/apps.ts`](../../../fleet/hosts/core.nas/pulumi/apps.ts)                                                                                                                                           |
@@ -78,7 +78,7 @@ flowchart TD
 | LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                              | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                                                    |
 | Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                              | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                                                   |
 | VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`              | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)                                         |
-| Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `chezmoi-sh-infra` ; Garage pour les sauvegardes              | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/rhodes-akn-bootstrap.ts)          |
+| Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `pve-01-core` ; Garage pour les sauvegardes                   | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../fleet/hosts/core.pve-01/pulumi/access/rhodes-akn-bootstrap.ts)                                       |
 | ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                              | [`kubernetes/src/argocd/README.md`](../../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/README.md)                                                                                                             |
 
 ### Chaîne des projets
@@ -153,7 +153,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 ### 2. Reconstruire l'hôte `pve-01`
 
 - **Exige** : le réseau ; la paperkey PBS hors ligne pour la suite.
-- **Référence** : « Rebuild the host » dans [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) (étapes 1
+- **Référence** : « Rebuild the host » dans [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md) (étapes 1
   et 2 : installer Proxmox VE, recréer l'adresse de gestion et les ponts `vmbr0` et `vmbr1`, restaurer la clé de
   chiffrement PBS). L'installation de Proxmox VE elle-même est non documentée au-delà de cette liste.
 - Réinstaller le hook conntrack de l'hôte avec le playbook `pve.yaml`
@@ -179,7 +179,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md). Configurer le datastore sans Pulumi (clé B2 créée à
   la main depuis le compte Backblaze, datastore déclaré dans l'interface PBS) est non documenté.
 - Si l'hôte est intact et que seul un invité est perdu, passer directement à « Restore a guest from backup » dans
-  [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md).
+  [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md).
 
 ### 4. Restaurer le NAS
 
@@ -202,7 +202,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 - **Référence** : l'accès à l'état et la création d'une nouvelle clé Garage sont à l'étape 1 de la
   [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   ; l'application avec `root@pam` est dans « Deploy a change » de
-  [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) ; le SDN dans la
+  [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md) ; le SDN dans la
   [Procédure INF-20260627-00](../../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md). Relancer
   l'application Garage sans état Pulumi est non documenté (les valeurs sont dans `core.nas/pulumi/apps.ts`).
 - Ce premier `pulumi up` intervient avant OpenBao, Pocket-Id et les clusters. Les ressources qui en dépendent
@@ -220,7 +220,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 - **Ordre** : `talosnet-dns` (DNS de talosnet), `oci-registry` (Zot, source de toutes les images des clusters), `omni`
   puis `omni-infra-provider-proxmox`, et enfin `observability`, qui ne bloque rien.
 - **Référence** : restauration depuis PBS (« Restore a guest from backup » dans
-  [`PROXMOX-VE.md`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md)), ou reconstruction de l'image et remplacement du
+  [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md)), ou reconstruction de l'image et remplacement du
   rootfs
   ([Procédure INF-20260605-00](../../procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md),
   [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)). Les machine classes d'Omni sont perdues si Omni
@@ -412,7 +412,7 @@ Aucune issue n'est ouverte à ce jour pour ces points :
 - [Restaurer Rhodes](Restaurer-Rhodes.md) : la chaîne de reprise du cluster de plateforme, étape 7 de ce plan.
 - [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   : l'emplacement de l'état Pulumi et l'accès au backend.
-- [Proxmox VE](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md) : l'hôte, ses sauvegardes et sa reconstruction.
+- [Proxmox VE](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md) : l'hôte, ses sauvegardes et sa reconstruction.
 - [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md) : le NAS, Garage et la synchronisation vers B2.
 - [ADR-015](../../decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md) : pourquoi le cycle de vie des VM et des LXC reste
   manuel.
