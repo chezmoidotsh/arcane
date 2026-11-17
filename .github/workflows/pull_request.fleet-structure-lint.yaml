@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Fleet structure lint — catalog bases and family prefixes
+# =============================================================================
+# Checks that every system component shared by two clusters or more has a catalog base, and that the folders of
+# `fleet/hosts` and `fleet/clusters` carry a family (`scripts/fleet:structure:lint`).
+#
+# Events:      pull_request, on projects, fleet, the Kubernetes catalog and the script only
+# Permissions: contents: read
+# =============================================================================
+
+name: 🧪 Fleet Structure Lint
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/pull_request.fleet-structure-lint.yaml"
+      - "scripts/fleet:structure:lint"
+      - "projects/**"
+      - "fleet/**"
+      - "catalog/kubernetes/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  lint:
+    name: 🔍 Check the fleet structure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🔍 Lint the fleet structure
+        run: scripts/fleet:structure:lint

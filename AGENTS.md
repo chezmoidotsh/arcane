@@ -109,6 +109,7 @@ Operational scripts in `scripts/` (already on PATH after `mise install`):
 | `bao:smb:drift-check`                                             | Detect drift between Pulumi-managed SMB service-account passwords and OpenBao (hash-only) |
 | `cnpg:db:migrate`                                                 | Migrate data between CloudNative-PG clusters                                              |
 | `dist:render [--all\|--staged-only\|--changed\|--branch\|<path>]` | Regenerate `dist/` files from `src/` — always use instead of editing dist files manually  |
+| `fleet:structure:lint`                                            | Check shared system components have a catalog base and fleet folders carry a family       |
 | `nix:build:image`                                                 | Build a Nix-based OCI image                                                               |
 | `nix:build:lxc`                                                   | Build a Nix-based Proxmox LXC image                                                       |
 | `nix:hash:update`                                                 | Refresh Nix package hashes                                                                |
