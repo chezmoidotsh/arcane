@@ -1,0 +1,11 @@
+# =============================================================================
+# Fleet — shared mise configuration
+# =============================================================================
+# Applies to every element under fleet/. Shared Pulumi passphrase
+# (PULUMI_CONFIG_PASSPHRASE), SOPS-encrypted JSON: mise decrypts it on cd.
+# An element with its own passphrase overrides it in its own .mise.toml
+# (closer config wins).
+# =============================================================================
+
+[env]
+_.file = "{{ config_root }}/.mise/pulumi/key.sops.json"

@@ -1,0 +1,15 @@
+{
+	"PULUMI_CONFIG_PASSPHRASE": "ENC[AES256_GCM,data:aRJ0odngnhEAd1BRocLqE3kEgKT38hu6PIkw8k4S49sNuCdkaA9h/TRKPFpvOBv94Rpt+3gfaa1ZF/3f/5Ildw==,iv:sEZjK54tJEvXRL3CZAJ1xSfZ7n3JUGLXjzTDmCAz8mU=,tag:m5j4Lg7oQ52COX0JQm5dcg==,type:str]",
+	"sops": {
+		"age": [
+			{
+				"enc": "-----BEGIN AGE ENCRYPTED FILE-----\nYWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA4cnRPaTI0SGw5eENJTTNO\nUlFhVS8yOVlXaE1odnVlMWsxMk9qVUhnQjAwCnhOS2RUOWdzNHdvbDMvTWVLWXVp\nWVY5UEhydWhubGdzanNIYW1BdWJ4eVUKLS0tIGJwaERnUUJtd2hvZEtYbzB2anRK\nVDR0bENYM202eXVKSVZsZ3FaUkpFVzgKPy+gyLImuOhEIzgYGsuJ/8EjoU/LDs43\n+j70jsQaVoTA41wbpSbQN2Y/VzD6vQUyNv+pJrvgtqNNWEEM5t3Kdw==\n-----END AGE ENCRYPTED FILE-----\n",
+				"recipient": "age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9"
+			}
+		],
+		"lastmodified": "2026-11-17T21:12:32Z",
+		"mac": "ENC[AES256_GCM,data:z3MFUJvz4zDsOVcLSi9thPANi+b6H7f4qssma/7bZNssrAaMx+ZAn9pyLZdwKbZek5ZN0S19a5XosG5OrJZLrEbaEDhvt4fYo/yUgXLLKajxS4O8UovkWUzU8Bs4NJaAigFkRTUSoqh9NfjQUWdH1MXRBVVkqCkI/2AFc66DcMk=,iv:PjEQ/NGA5zy/QZePz6mZsc9iOib8giPjY3tN7QHjV9c=,tag:vJm6Ek7nZH4sCJF8vCRc5g==,type:str]",
+		"unencrypted_suffix": "_unencrypted",
+		"version": "3.13.3"
+	}
+}
