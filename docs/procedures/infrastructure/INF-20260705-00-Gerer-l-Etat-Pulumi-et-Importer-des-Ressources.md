@@ -189,8 +189,8 @@ mise run pulumi:apply
 
 ## Exemple complet : importer le rôle `OmniProvider` de Proxmox VE
 
-Le rôle `OmniProvider` est déclaré dans `fleet/hosts/core.pve-01/pulumi/access/omni.ts`
-sous le nom logique `pve-role-omni-provider`. Exemple de forme, non rejoué.
+Le rôle `OmniProvider` est déclaré dans `fleet/hosts/core.pve-01/pulumi/access/omni.ts` sous le nom logique
+`pve-role-omni-provider`. Exemple de forme, non rejoué.
 
 ```sh
 export PROJECT_DIR=projects/chezmoi.sh/src/infrastructure/pulumi
@@ -244,8 +244,8 @@ pulumi state delete $URN
 
 ## Pour aller plus loin
 
-- [Pulumi du projet `chezmoi.sh`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/README.md) : la stack
-  `chezmoi-sh-infra` et ses tâches `mise`.
+- [Pulumi de `fleet/base`](../../../fleet/base/README.md) : le projet `base` (anciennement `chezmoi-sh-infra`) et ses
+  tâches `mise`.
 - [Proxmox VE](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md) : « Import an existing object » et « Rebuild the host ».
 - [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md) : l'emplacement physique de Garage, et donc de l'état.
 - [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : autre procédure appliquée par la stack

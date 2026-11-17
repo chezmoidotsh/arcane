@@ -5,10 +5,10 @@ import * as pulumi from "@pulumi/pulumi";
 // the client registrations ../vault.ts and ArgoCD's oidc-credentials
 // ExternalSecret both consume by ID.
 //
-// Group membership (admin/maison/famille) is managed in chezmoi.sh, not
+// Group membership (admin/maison/famille) is managed in the base stack, not
 // here -- read across via StackReference rather than duplicating it.
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
-	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
+	name: "organization/base/base.live",
 });
 
 export const adminGroupId = chezmoiSh.getOutput(

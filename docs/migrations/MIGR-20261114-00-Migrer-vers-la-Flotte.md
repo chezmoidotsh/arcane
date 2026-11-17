@@ -37,7 +37,7 @@ chaque élément ayant son README.
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                          |
 | 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                               |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 à 4 code prêt, état Pulumi à déplacer |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | `core.pbs`, `core.nas` et `core.pve-01` code prêt, états Pulumi à déplacer ; `base` à faire                                |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | code prêt (`core.pbs`, `core.nas`, `core.pve-01`, `base`), états Pulumi à déplacer                                         |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                    |
 | 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                    |
 
@@ -970,6 +970,42 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
   d'`otelcol-contrib` passe de `chezmoi.sh/…` à `pve-01.core/…` (issues existantes dupliquées) ; la suppression complète
   de la configuration de test de `chezmoi.sh`.
 - **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
+
+### Détail de l'étape 9 : `base`
+
+- **Constaté** : ce qui reste de `projects/chezmoi.sh/src/infrastructure/pulumi/` va dans `fleet/base/pulumi/`
+  (`index.ts`, `stack/{observability,oci,pocket-id}.ts`, `.mise/env.yaml` déplacé tel quel, chiffré). Le projet
+  `chezmoi-sh-infra` devient `base` et la pile `chezmoi_sh.live` devient `base.live` (`Pulumi.base.live.yaml`, préfixe
+  `base:` des 9 clés, `encryptionsalt` inchangé). `fleet/base/README.md` fusionne les deux README et
+  `fleet/base/.sops.yaml` reprend la règle de `pulumi/.mise/env.yaml` (même destinataire age). `observability.ts` suit
+  `base` (décision du propriétaire) et partira à l'étape 10. 8 ressources : jeton DNS-01 et `AccountToken`, client OAuth
+  Tailscale de l'observabilité, compartiment OCI `chezmoiSh`, trois groupes et `admin-claims` de Pocket-Id ; les 6
+  sorties sont inchangées.
+- **Constaté** : les 5 `StackReference` vers `organization/chezmoi-sh-infra/chezmoi_sh.live` (`akn.closure`, `akn.horn`,
+  `akn.exusiai`, `akn.rhodes`, `akn.lungmen`) lisent `organization/base/base.live` ; le nom logique `"chezmoi.sh"` et
+  les noms de sorties sont gardés. `pnpm-workspace.yaml` et `bao:secret:audit` lisent `fleet/base/pulumi`. Sous
+  `projects/chezmoi.sh/` ne restent que le README, un `.mise.toml` (deux tâches d'observabilité qui visent
+  `fleet/base/pulumi`), `.sops.yaml` (règle des secrets des LXC) et `src/infrastructure/proxmox/lxc/`, toujours utilisé
+  par les tâches `lxc` des hôtes `core.*` : il part à l'étape 10.
+- **Manuel avant la fusion** :
+  1. geler Pulumi sur `base` et les 5 lecteurs ;
+  2. sur `main`, depuis l'ancien dossier, `pulumi stack export` ;
+  3. `pulumi stack rename organization/base/base.live` (repli : `stack init`, `sed` des URN de l'export, `stack import`)
+     ;
+  4. `sops set .mise/env.yaml '["PULUMI_STACK"]' '"base.live"'` dans `fleet/base/pulumi`, puis `mise trust` ;
+  5. `pulumi stack --show-name` donne `base.live`, la configuration se déchiffre, `pulumi preview` vide ;
+  6. `pulumi preview` sur chacun des 5 lecteurs : aucun changement (sur `horn` et `exusiai`, `chezmoiShCompartmentId`
+     doit se résoudre) ;
+  7. fusionner dans la même fenêtre.
+- **Risque** : entre le renommage et la fusion, `main` lit une pile qui n'existe plus ; `rhodes.akn` est la production,
+  un aperçu non vide arrête tout. Les tâches d'observabilité lancées depuis le dossier du LXC avec `dir` vers
+  `fleet/base/pulumi` : chargement de `.mise/env.yaml` non vérifié (même situation qu'avant).
+- **À trancher** : les clés orphelines des étapes 9 précédentes (`pbs:*`, `truenas:*`, `proxmox:*`, `base:garage_*`,
+  `base:notificationsSlackWebhookUrl`, les deux contextes Kubernetes) gardées jusqu'aux `state move`, à retirer ensuite
+  ; la ligne `!projects/**/.mise/env.yaml` de `.gitignore` ne correspond plus à rien (étape 11). Restent pour l'étape 11
+  : 37 mentions de `chezmoi-sh-infra`, `chezmoi_sh.live` ou de l'ancien chemin dans 10 pages.
+- **Retour arrière** : avant la fusion, renommer la pile vers `organization/chezmoi-sh-infra/chezmoi_sh.live` ou
+  importer l'export ; après, `git revert` puis le même renommage.
 
 ### 10. Séquencer `core.o11y-datastore` avec l'ADR-022
 

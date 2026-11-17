@@ -3,7 +3,7 @@ import type * as pulumi from "@pulumi/pulumi";
 
 import { chezmoiSh } from "../pocket-id";
 
-// The parent `chezmoi.sh` compartment is owned by the chezmoi.sh stack
+// The parent `chezmoi.sh` compartment is owned by the base stack
 // (stack/oci.ts there) -- read its id across through the same StackReference
 // as the Pocket-Id groups instead of declaring a duplicate. `requireOutput`,
 // not `getOutput`: a missing output must fail the run, because `compartmentId`

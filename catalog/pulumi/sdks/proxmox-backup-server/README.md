@@ -6,6 +6,6 @@
 > This folder and the npm package (`@pulumi/proxmox-backup-server`) were renamed for consistency with
 > `catalog/pulumi/sdks/proxmox/`. `package.json`'s `pulumi.parameterization.name` intentionally stays `"pbs"` — it is
 > not a display name, it is what determines every resource's Pulumi type token (`pbs:index/datastore:Datastore`, …)
-> and Pulumi config namespace (`pbs:endpoint`, `pbs:apiToken`, …) for the live `chezmoi_sh.live` stack. Changing it
+> and Pulumi config namespace (`pbs:endpoint`, `pbs:apiToken`, …) for the live `pbs_core.live` stack. Changing it
 > would make Pulumi see every existing PBS resource as a brand-new resource type and try to replace them all. Don't
 > "fix" this divergence without a full state-migration plan.

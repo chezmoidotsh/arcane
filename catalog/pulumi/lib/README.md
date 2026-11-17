@@ -1,8 +1,8 @@
 # `@chezmoi.sh/pulumi-lib`
 
-A multi-helper shared library for the Pulumi stacks in `fleet/*/*/pulumi/` and `projects/*/src/infrastructure/pulumi/`. Each helper
-lives in its own module under [`src/`](./src/) and is re-exported from [`src/index.ts`](./src/index.ts), so consumers
-import everything from the package root:
+A multi-helper shared library for the Pulumi stacks in `fleet/*/*/pulumi/` and `fleet/base/pulumi/`. Each helper lives
+in its own module under [`src/`](./src/) and is re-exported from [`src/index.ts`](./src/index.ts), so consumers import
+everything from the package root:
 
 ```typescript
 import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";

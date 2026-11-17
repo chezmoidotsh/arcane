@@ -3,10 +3,10 @@ import * as pulumi from "@pulumi/pulumi";
 // The OIDC clients this cluster's apps authenticate against, one file per
 // application below.
 //
-// Group membership (admin/maison/famille) is managed in chezmoi.sh, not
+// Group membership (admin/maison/famille) is managed in the base stack, not
 // here -- read across via StackReference rather than duplicating it.
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
-	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
+	name: "organization/base/base.live",
 });
 
 export const adminGroupId = chezmoiSh.getOutput(
