@@ -157,8 +157,8 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
   confirmer** : `state move` entre phrases secrètes différentes). Étapes complètes dans la migration de la flotte.
 - **Risque** : aucun `pulumi up` sur `base` avant le `state move` (il supprimerait le jeton du Caddy du Mac).
 - **Vérification** : plus aucune ressource `o11y-datastore` dans `base`.
-- **Retour arrière** : avant la destruction, redémarrer le CT 103 et rebasculer le DNS (étape 3) ; après, restaurer
-  depuis la sauvegarde définie dans « Avant de commencer » (**à confirmer**).
+- **Retour arrière** : avant la destruction, redémarrer le CT 103 et rebasculer le DNS (étape 3) ; après, il n'y a
+  plus de retour arrière.
 
 ## Critère de fin
 
