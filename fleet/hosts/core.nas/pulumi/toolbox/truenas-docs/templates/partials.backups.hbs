@@ -43,7 +43,7 @@ lifecycle window):
 {{else}}
 - `{{name}}` -- file lock **deliberately neutralized** (enabled with no
   default retention -- a retention hold would block the SYNC jobs below from
-  pruning superseded versions; see `stack/truenas/cloudsync.ts`),
+  pruning superseded versions; see `pulumi/cloudsync.ts`),
   {{lifecycleDeleteDays}}-day lifecycle prune.
 {{/if}}
 {{/each}}

@@ -7,24 +7,18 @@
 		"proxmox:docs": "ts-node toolbox/proxmox-docs/index.ts",
 		"test": "mocha",
 		"test:watch": "mocha --watch",
-		"truenas:docs": "ts-node toolbox/truenas-docs/index.ts",
 		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
 	},
 	"dependencies": {
 		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
 		"@chezmoi.sh/pulumi-lib": "workspace:*",
-		"@chezmoi.sh/pulumi-truenas-pool": "workspace:*",
-		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/kubernetes": "catalog:",
 		"@pulumi/oci": "catalog:",
 		"@axnic/pulumi-pocket-id": "catalog:",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
-		"@pulumi/random": "catalog:",
 		"@pulumi/tailscale": "catalog:",
-		"@pulumi/truenas": "workspace:*",
-		"@pulumi/vault": "catalog:",
 		"handlebars": "catalog:"
 	},
 	"devDependencies": {

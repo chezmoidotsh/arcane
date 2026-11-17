@@ -206,7 +206,7 @@ statut courant. L'ordre n'est pas un tri.
 - [x] **6. Supprimer `catalog/fluxcd/`** : reliquat non référencé d'un moteur GitOps que le dépôt n'utilise plus. Preuve
       : recherche dans tout le dépôt ; `AGENTS.md`. Statut : fait dans #1301.
 - [ ] **7. Scripter l'application des ACL NFS4 de TrueNAS et ajouter un contrôle de dérive** : ré-appliquées à la main
-      après chaque reconstruction du NAS, sans détection de dérive. Preuve : `projects/chezmoi.sh/docs/TRUENAS.md`,
+      après chaque reconstruction du NAS, sans détection de dérive. Preuve : `fleet/hosts/core.nas/TRUENAS.md`,
       Permissions et Rebuild. Statut : issue #1284, pas encore de PR.
 - [ ] **8. Scripter, ou documenter dans une procédure dédiée, l'amorçage de la clé d'application Garage pour l'état
       Pulumi** : nécessaire avant tout `pulumi up` après un sinistre ; aujourd'hui un extrait dans une autre procédure.

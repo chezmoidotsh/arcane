@@ -42,7 +42,8 @@ new truenas.Certificate("csr-truenas", {
 });
 
 // --- ACME DNS-01 (Cloudflare) ------------------------------------------
-// Same pattern as ../observability.ts: a dedicated, narrowly-scoped
+// Same pattern as projects/chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts:
+// a dedicated, narrowly-scoped
 // Cloudflare API token (Zone Read + DNS Edit only) instead of the untracked
 // token that was there before, which had no rotation/audit trail at all.
 

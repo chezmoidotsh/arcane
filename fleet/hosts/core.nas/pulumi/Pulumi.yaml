@@ -1,0 +1,12 @@
+name: nas-core
+description: >-
+  TrueNAS SCALE (nas.chezmoi.sh) as code: pools and datasets, shares, users and their OpenBao SMB secrets, ACL
+  templates, snapshot/scrub/cloud-sync jobs to Backblaze B2, the Garage app and its Cloudflare DNS-01 ACME token.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"
