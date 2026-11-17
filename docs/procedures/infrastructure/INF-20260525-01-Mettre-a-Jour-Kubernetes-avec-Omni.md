@@ -5,8 +5,8 @@ modifiant `kubernetes.version` dans son cluster template, puis en synchronisant 
 avant la vérification préalable des feature gates et des flags retirés dans la version cible, à l'origine de l'incident
 Kubernetes 1.35, et la compatibilité avec la version de Talos.
 
-La version de Kubernetes est fixée dans le template (`projects/*/src/infrastructure/omni/*.clustertemplate.yaml`) et
-Omni réalise la mise à jour.
+La version de Kubernetes est fixée dans le template (`fleet/clusters/*/omni/*.clustertemplate.yaml`) et Omni réalise la
+mise à jour.
 
 > [!WARNING]\
 > Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur Omni ni sur
@@ -54,7 +54,7 @@ Exporter ces variables une fois ; toutes les commandes suivantes se copient ensu
 
 ```sh
 export CLUSTER_NAME=<nom du cluster dans Omni>               # ex. rhodes-akn
-export TEMPLATE_FILE=<chemin du template du cluster>         # ex. projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+export TEMPLATE_FILE=<chemin du template du cluster>         # ex. fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
 export TARGET_K8S_VERSION=<version cible de Kubernetes>      # ex. v1.37.2 (préfixe v obligatoire, format v1.XX.Y)
 ```
 
@@ -217,12 +217,12 @@ version `v1.37.2` est un exemple de patch dans le même minor, à remplacer par 
 omnictl cluster status rhodes-akn
 omnictl cluster kubernetes upgrade-pre-checks rhodes-akn --to v1.37.2
 
-# édition de projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml : kubernetes.version: v1.37.2
-omnictl cluster template validate -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
-omnictl cluster template diff -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+# édition de fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml : kubernetes.version: v1.37.2
+omnictl cluster template validate -f fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
+omnictl cluster template diff -f fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
 
-omnictl cluster template sync -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
-omnictl cluster template status -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml --wait 30m
+omnictl cluster template sync -f fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
+omnictl cluster template status -f fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml --wait 30m
 ```
 
 ## Vérifications rapides

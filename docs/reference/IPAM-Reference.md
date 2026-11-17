@@ -107,7 +107,7 @@ Chaque cluster exécute deux `CiliumLoadBalancerIPPool`, nommés `external` et `
 | `external` | Par défaut : tout Service ou Gateway qui n'opte pas pour `internal` | Exclut explicitement `internal` (`io.cilium/lb-ipam-pool NotIn [internal]`), sinon les deux pools se disputent les mêmes Services : l'arbitrage de Cilium LB-IPAM ne tient pas compte des labels |
 | `internal` | Opt-in via `io.cilium/lb-ipam-pool: internal`                       | Voir la section talosnet                                                                                                                                                                         |
 
-Implémentation de référence : `projects/rhodes.akn/src/infrastructure/kubernetes/cilium/external.ippool.yaml`.
+Implémentation de référence : `fleet/clusters/akn.rhodes/kubernetes/src/system/cilium/external.ippool.yaml`.
 
 Chaque cluster reçoit un bloc `/29` dont les 8 adresses sont utilisables : ce sont des pools L2 plats annoncés par
 Cilium, pas des sous-réseaux routés, donc les adresses réseau et broadcast du bloc ne sont pas réservées. Le `/26`

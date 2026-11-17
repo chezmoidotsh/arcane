@@ -1,11 +1,13 @@
 ---
 name: host-readme
 description: >
-  Writes or reworks the presentation README of a host or project directory (`fleet/hosts/<name>/`, `fleet/clusters/`,
-  `projects/<name>/`): the Arknights chibi header, badges, lore callout, then role, access, configuration, deployment
-  and contribution. Use it whenever a host or project README is created, rewritten or aligned on the others, when
-  someone asks for "the README with the chibi", "the presentation page of <host>", or to build the chibi animation from
-  the Arknights wiki with ffmpeg. The model README is `fleet/hosts/akn.ptilopsis/README.md`.
+  Writes or reworks the presentation README of a host or project directory (`fleet/hosts/<name>/`,
+  `fleet/clusters/<name>/`): the Arknights animated logo header, badges, then the role, the services (logo and
+  text alternating), a blueprint D2 diagram of their interactions, the internal flow when there is one, access,
+  configuration, deployment and contribution. Use it whenever a host or project README is created, rewritten or aligned
+  on the others, when someone asks for "the README with the logo", "the presentation page of <host>", or to build the
+  animated logo from the Arknights wiki with ffmpeg, or to draw the D2 architecture diagram of a host. The model README
+  is `fleet/hosts/akn.ptilopsis/README.md`.
 compatibility: Requires mise (ffmpeg, prettier through `mise x`) and network access to arknights.wiki.gg
 ---
 

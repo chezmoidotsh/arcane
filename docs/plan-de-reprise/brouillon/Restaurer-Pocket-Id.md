@@ -27,9 +27,9 @@ d'OpenBao.
 
 ## Avant de commencer
 
-Outils nécessaires : `kubectl`, `s3cmd`, `kustomize`, `ksops`. `mise install` exécuté depuis `projects/rhodes.akn/` les
-provisionne tous. Les tâches `dr:pocket-id:*` utilisées plus bas sont définies dans
-`projects/rhodes.akn/docs/disaster-recovery/.mise.toml` : `mise install` doit aussi avoir été exécuté depuis ce dossier.
+Outils nécessaires : `kubectl`, `s3cmd`, `kustomize`, `ksops`. `mise install` exécuté depuis
+`fleet/clusters/akn.rhodes/` les provisionne tous. Les tâches `dr:pocket-id:*` utilisées plus bas sont définies dans
+`fleet/clusters/akn.rhodes/.mise.toml` : `mise install` doit aussi avoir été exécuté depuis ce dossier.
 
 Accès et état requis :
 
@@ -57,18 +57,18 @@ export CLUSTER_CONTEXT=<contexte kubectl du nouveau cluster>   # ex. admin@rhode
 
 Le namespace `pocket-id` et le secret `cnpg-backup-credentials` existent déjà (étape 3 de
 [Restaurer Rhodes](Restaurer-Rhodes.md)) : `cnpg-backup-credentials` est un `Secret` créé par la stack Pulumi
-(`projects/rhodes.akn/src/infrastructure/pulumi/stack/cloudnative-pg.ts`). Il reste deux secrets, dont aucun ne vient de
-Vault (Pocket-Id n'a aucune dépendance à Vault, par conception) :
+(`fleet/clusters/akn.rhodes/pulumi/stack/cloudnative-pg.ts`). Il reste deux secrets, dont aucun ne vient de Vault
+(Pocket-Id n'a aucune dépendance à Vault, par conception) :
 
 ```sh
 # pocket-id-secrets : le seul secret qui reste chiffré avec SOPS dans le dépôt
 # (le secret de configuration de l'application, voir sops/config.secret.yaml)
-kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/pocket-id/sops \
+kustomize build --enable-alpha-plugins --enable-exec fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/sops \
   | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
 # pocket-id-database-pocket-id : généré localement par un Generator d'ESO, sans
 # Vault. ESO doit déjà être déployé (étape 2 de Restaurer Rhodes).
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f projects/rhodes.akn/src/apps/pocket-id/database.externalsecret.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/database.externalsecret.yaml
 ```
 
 Vérifier que les trois secrets sont présents :
@@ -85,19 +85,20 @@ Suivre en entier la procédure
 
 ```sh
 export NAMESPACE=pocket-id
-export CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml
-export OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.objectstore.yaml
-export SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.scheduledbackup.yaml
+export CLUSTER_MANIFEST=fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.cluster.yaml
+export OBJECTSTORE_MANIFEST=fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.objectstore.yaml
+export SCHEDULEDBACKUP_MANIFEST=fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.scheduledbackup.yaml
 ```
 
-Deux tâches `mise` (définies dans `projects/rhodes.akn/docs/disaster-recovery/.mise.toml`) allègent la procédure :
+Deux tâches `mise` (définies dans `fleet/clusters/akn.rhodes/.mise.toml`) allègent la procédure :
 `mise run dr:pocket-id:backup:latest -- ${CLUSTER_CONTEXT}` affiche le dernier `serverName`, et
 `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` l'écrit dans `cnpg.cluster.yaml`. Cette seconde tâche modifie le
 fichier uniquement et n'exécute aucun `kubectl apply`.
 
 Le nom du cluster (`pocket-id-20260530`) embarque un suffixe de génération qui change à chaque recréation du cluster,
 selon le même schéma que prend en compte le script de découverte du skill `cnpg-backup`. Confirmer le nom courant dans
-`projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml` au lieu de supposer que cette valeur s'applique encore.
+`fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.cluster.yaml` au lieu de supposer que cette valeur
+s'applique encore.
 
 > [!WARNING]\
 > Ce nom apparaît aussi dans l'`uri` de `database.externalsecret.yaml` (hôte `pocket-id-20260530-rw`) et dans
@@ -112,8 +113,8 @@ Les manifestes de `dist/` sont rendus depuis `src/`. Si l'étape 2 a modifié `s
 nouveau `serverName`), régénérer `dist/` avant de l'appliquer, sans quoi `dist/` réapplique l'ancien `Cluster` :
 
 ```sh
-dist:render projects/rhodes.akn/src/apps/pocket-id
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/apps/pocket-id/
+dist:render fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/apps/pocket-id/
 ```
 
 Suivre le démarrage :

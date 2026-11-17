@@ -25,26 +25,30 @@ already decided (and check the `status` field: `proposed` and `accepted` aren't 
 ## Project structure
 
 ```text
-catalog/        Reusable components (charts, compositions, OCI images, …)
-├── flakes/         Nix flakes producing OCI images
+catalog/        Shared, reusable components
 ├── helm/           Helm chart sources (e.g. mutualized-cnpg-databases)
-├── kubernetes/     Shared kustomize bases + reference Helm values for infra components
-├── nix/            Nix modules and packages (pkgs/by-name: Omni, … built from source)
-├── omni/           Shared Omni cluster-template base + Talos-on-Proxmox machine-class catalog
-├── opa/            OPA/Rego policies for CI-time manifest validation (policies/, rules/)
-├── pulumi/         Pulumi components and stacks
-└── talos/          Talos Linux bootstrap manifests + machine config patches
+├── kubernetes/     Shared kustomize bases + reference Helm values for system components on two clusters or more
+├── nix/            Nix flake: OCI images (images/), modules (modules/), packages (pkgs/by-name: Omni, …)
+├── omni/           Omni cluster-template base, Talos-on-Proxmox machine classes, Talos bootstrap manifests (manifests/)
+└── pulumi/         Pulumi components, library and SDKs
+
+fleet/          One directory per deployed element, named <family>.<name> (docs/reference/Nommage-des-Machines-Reference.md)
+├── base/           Resources tied to no machine (Cloudflare, Tailscale, B2, global Pocket-Id groups) — Pulumi project `base`
+├── clusters/       Talos + ArgoCD clusters: omni/, kubernetes/{src,dist}/{apps,system}/, pulumi/
+│   ├── akn.lungmen/    Home applications cluster (active dev, apps added/bumped frequently)
+│   └── akn.rhodes/     Core platform — OpenBao, Pocket-Id, the ArgoCD hub (kubernetes/{src,dist}/argocd/) (production)
+└── hosts/          Individually configured machines: nix/, pulumi/, fs/, mise/ depending on what they carry
+    ├── akn.closure/    Home Assistant (Pulumi only)
+    ├── akn.exusiai/    Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS
+    ├── akn.horn/       VPS public-access gateway (Pangolin) — NixOS, deliberately not Kubernetes (ADR-008, ADR-016)
+    ├── akn.ptilopsis/  Mac Studio observability appliance — nix-darwin (ADR-022)
+    └── core.*/         Proxmox host (pve-01), PBS, NAS and the LXC appliances (omni, oci-registry, talosnet-dns, …)
+
+policies/opa/   OPA/Rego policies for CI-time manifest validation (*.rego, rules/, README.md)
 
 docs/           Documentation, source of the GitHub Wiki: guides/, reference/, procedures/, decisions/ (ADRs),
                 migrations/ (plans of one-off migrations in progress), incidents/, experiments/, archives/,
                 plan-de-reprise/ (draft, being reworked) (see "Documentation" below)
-
-projects/       One subdirectory per cluster or standalone app
-├── hass/           Home Assistant app project (not a cluster)
-├── kazimierz.akn/  VPS public-access gateway — NixOS (flake), deliberately not Kubernetes (ADR-008, ADR-016)
-├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
-├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
-└── rimbilliton.akn/ Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS, not Kubernetes
 
 scripts/        Operational scripts (added to PATH by mise)
 .agents/skills/ Reusable skill definitions — one directory per skill, each with its own SKILL.md
@@ -55,32 +59,32 @@ scripts/        Operational scripts (added to PATH by mise)
 
 Grouped by concern rather than alphabetically, since agents usually need "what handles X" more than an inventory.
 
-| Concern               | Current choice                                                                                                                                                                                                   |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Kubernetes distro     | Talos Linux, on every cluster                                                                                                                                                                                    |
-| Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos machine config patches (`catalog/talos/`)                                                                                            |
-| GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                            |
-| Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                                        |
-| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                                       |
-| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                                        |
-| CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                                  |
-| Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use; Envoy Gateway is gone from `projects/*/src` (an unused base remains in `catalog/kubernetes/envoy-gateway/`)               |
-| Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                                |
-| TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                              |
-| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                                          |
-| Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                                     |
-| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`)                                             |
-| Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                                          |
-| Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Shared CNPG clusters (`postgres-apps`, `postgres-apps-secured`) exist on `lungmen.akn`; consolidation of the rest is partial (ADR-009)                    |
-| Other databases       | None currently deployed                                                                                                                                                                                          |
-| Container registry    | Zot (`fleet/hosts/core.oci-registry/`)                                                                                                                                                                           |
-| Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)                                                   |
-| Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                                      |
-| Observability         | VictoriaMetrics + VictoriaLogs + VictoriaTraces + vmalert + Alertmanager on the `ptilopsis.akn` Mac Studio (ADR-022), fed over OTLP/HTTP only (ADR-018) by the `o11y-agent` of each LXC; Grafana on `rhodes.akn` |
-| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                                      |
-| Network topology      | Dual-NIC Talos VMs + Proxmox SDN zone of type `simple` (`vxlan` deferred, ADR-014, `docs/reference/`)                                                                                                            |
-| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                                               |
-| Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                                               |
+| Concern               | Current choice                                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kubernetes distro     | Talos Linux, on every cluster                                                                                                                                                                                       |
+| Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos bootstrap manifests (`catalog/omni/manifests/`)                                                                                         |
+| GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                               |
+| Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                                           |
+| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                                          |
+| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`horn.akn`, `exusiai.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                                                    |
+| CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                                     |
+| Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use; Envoy Gateway is gone from `fleet/clusters/*/kubernetes/src` (an unused base remains in `catalog/kubernetes/envoy-gateway/`) |
+| Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                                   |
+| TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                                 |
+| Public access         | Pangolin + Gerbil + Traefik on `horn.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                                                  |
+| Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                                        |
+| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`)                                                |
+| Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                                             |
+| Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Shared CNPG clusters (`postgres-apps`, `postgres-apps-secured`) exist on `lungmen.akn`; consolidation of the rest is partial (ADR-009)                       |
+| Other databases       | None currently deployed                                                                                                                                                                                             |
+| Container registry    | Zot (`fleet/hosts/core.oci-registry/`)                                                                                                                                                                              |
+| Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)                                                      |
+| Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                                         |
+| Observability         | VictoriaMetrics + VictoriaLogs + VictoriaTraces + vmalert + Alertmanager on the `ptilopsis.akn` Mac Studio (ADR-022), fed over OTLP/HTTP only (ADR-018) by the `o11y-agent` of each LXC; Grafana on `rhodes.akn`    |
+| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                                         |
+| Network topology      | Dual-NIC Talos VMs + Proxmox SDN zone of type `simple` (`vxlan` deferred, ADR-014, `docs/reference/`)                                                                                                               |
+| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                                                  |
+| Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                                                  |
 
 ## Development environment
 
@@ -92,7 +96,7 @@ mise trust          # Trust .mise.toml (first run only)
 ```
 
 `mise` sets `KUBECONFIG`, `VAULT_ADDR`, `TALOSCONFIG`, `SOPS_AGE_KEY_FILE`, and adds `scripts/` to PATH.
-Project-specific tasks live in `projects/*/.mise.toml`.
+Element-specific tasks live in `fleet/*/*/.mise.toml` (and `fleet/*/*/pulumi/.mise.toml` for Pulumi).
 
 ### Common commands
 
@@ -100,7 +104,7 @@ Operational scripts in `scripts/` (already on PATH after `mise install`):
 
 | Script                                                            | Purpose                                                                                   |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `argocd:app:sync <path>`                                          | Sync an ArgoCD application from its project path                                          |
+| `argocd:app:sync <path>`                                          | Sync an ArgoCD application from its path in the repository                                |
 | `app:icon:generator`                                              | Generate app icons from source assets                                                     |
 | `bao:kv:copy`                                                     | Copy KV secrets between OpenBao paths/mounts                                              |
 | `bao:secret:audit`                                                | OpenBao hygiene audit — naming drift, dangling refs, orphaned secrets (metadata-only)     |
@@ -129,13 +133,18 @@ mise run omni:machineclass:diff         # Diff local machine-class definitions a
 
 ### ArgoCD (all Kubernetes clusters)
 
-- **App-of-Apps via ApplicationSets**, bootstrapped by `seed.application.yaml`.
-- **Apps**: `projects/<cluster>/src/apps/*<name>/` (leading `*` = ArgoCD-managed).
-- **Infrastructure (in-cluster)**: `projects/<cluster>/src/infrastructure/kubernetes/<name>/`. The ArgoCD ApplicationSet
-  automatically appends `-system` to the directory name to form the target namespace (e.g. `cert-manager/` → namespace
-  `cert-manager-system`). A manifest that sets its own `metadata.namespace` keeps it (the Gateways of `cilium/` live in
-  `kube-system`).
-- **Infrastructure (cloud/host)**: `projects/<cluster>/src/infrastructure/pulumi/<name>/`.
+- **App-of-Apps via ApplicationSets**, hosted on `rhodes.akn` (the ArgoCD hub) and bootstrapped by
+  `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml` (the `argocd` and `seed` Applications). The
+  ApplicationSets (`fleet/clusters/akn.rhodes/kubernetes/src/argocd/{seed,shoot}.apps/`) derive the directory of each
+  cluster from its Tailscale hostname (`rhodes.akn` → `fleet/clusters/akn.rhodes/`).
+- **Apps**: `fleet/clusters/<family>.<name>/kubernetes/src/apps/<app>/` — every directory of `dist/apps/` becomes an
+  `Application`, deployed in the namespace of the same name.
+- **System components (in-cluster)**: `fleet/clusters/<family>.<name>/kubernetes/src/system/<name>/`. The ArgoCD
+  ApplicationSet automatically appends `-system` to the directory name to form the target namespace (e.g.
+  `cert-manager/` → namespace `cert-manager-system`). A manifest that sets its own `metadata.namespace` keeps it (the
+  Gateways of `cilium/` live in `kube-system`).
+- **Cloud/host resources of a cluster**: `fleet/clusters/<family>.<name>/pulumi/` (Pulumi program, `stack/` modules).
+- **Omni cluster template**: `fleet/clusters/<family>.<name>/omni/`.
 - **Helm overlays**: per-chart `<chart>.helmvalues/` directory (e.g. `cert-manager.helmvalues/`, `openbao.helmvalues/`)
   holding `default.yaml`; cluster-specific overrides live in the same directory (e.g. `override.yaml`) and are wired in
   via the kustomization's `additionalValuesFiles`. Shared catalog defaults instead use
@@ -151,8 +160,8 @@ clusters.
 `lungmen.akn` is the home applications cluster and is under active development — apps are added and bumped frequently.
 See `fleet/clusters/akn.lungmen/kubernetes/src/apps/` for the current app inventory; do not enumerate it here.
 
-`kazimierz.akn` is **not** part of the ArgoCD fleet: it is a NixOS VPS (Pangolin stack as containers) by deliberate
-choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016).
+`horn.akn` (formerly `kazimierz.akn`) is **not** part of the ArgoCD fleet: it is a NixOS VPS (Pangolin stack as
+containers) by deliberate choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016).
 
 ### Rendered manifests pattern (ADR-011)
 
@@ -164,7 +173,9 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Pulumi
 
 - Shared components live in `catalog/pulumi/`.
-- Per-project stacks live in `projects/<cluster>/src/infrastructure/pulumi/`.
+- One Pulumi project per fleet element, in `fleet/clusters/<family>.<name>/pulumi/`,
+  `fleet/hosts/<family>.<name>/pulumi/` and `fleet/base/pulumi/` (project `base`). Projects are named `<name>-<family>`
+  (e.g. `rhodes-akn`, `pve-01-core`), stacks `<name>_<family>.live`.
 - Secrets are published as Pulumi stack outputs (not pushed to Vault for upstream stacks like LXC).
 - The `cluster-vault` component (`catalog/pulumi/components/cluster-vault/`) provisions OpenBao mounts, policies, and
   auth backends per cluster.
@@ -183,11 +194,11 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 - **Cilium NetworkPolicies** for microsegmentation — required for every app.
 - **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute), all on the `cilium` GatewayClass. Routes are not wrapped in
   an OIDC filter: apps that need authentication handle it themselves (Pocket-Id). The `internal` and `external` Gateways
-  live in the `kube-system` namespace (`projects/*/src/infrastructure/kubernetes/cilium/*.gateway.yaml`).
+  live in the `kube-system` namespace (`fleet/clusters/*/kubernetes/src/system/cilium/*.gateway.yaml`).
 - **cert-manager** with DNS-01 validation. **external-dns** manages internal-only DNS records via the UniFi and
   BIND/rfc2136 providers — there is no public/Cloudflare-managed DNS zone in this repo.
-- **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with Newt tunnel clients running in
-  both `lungmen.akn` and `rhodes.akn`. Pocket-Id and Grafana on `rhodes.akn` are deliberately exposed this way with
+- **Public access** to home services goes through Pangolin (`horn.akn` VPS) with Newt tunnel clients running in both
+  `lungmen.akn` and `rhodes.akn`. Pocket-Id and Grafana on `rhodes.akn` are deliberately exposed this way with
   `sso: false` at the Pangolin layer (each app gates its own login instead of a double auth check) — see the
   Observability section. **Tailscale** is mandatory for cluster-to-cluster connectivity outside the homelab.
 - **Network topology**: dual-NIC Talos VMs + a Proxmox SDN zone of type `simple` (`pvenet`, VNet `talosnet`), per
@@ -199,8 +210,8 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   from VM lifecycle — not Longhorn (see `docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`).
 - **SMB CSI driver** mounts NAS shares for bulk media (Immich, Jellyfin, Paperless-ngx).
 - **CloudNative-PG** for PostgreSQL clusters with automated S3 backups (backup resources live next to each cluster
-  definition under `projects/*/src/`). Consolidating into fewer shared clusters is partly done on `lungmen.akn`
-  (ADR-009).
+  definition under `fleet/clusters/*/kubernetes/src/`). Consolidating into fewer shared clusters is partly done on
+  `lungmen.akn` (ADR-009).
 - No MongoDB/Percona workloads currently exist in the tree — don't assume that stack is available.
 - Database migrations between CNPG clusters use `scripts/cnpg:db:migrate` (see `.agents/skills/cnpg-backup/SKILL.md` for
   the backup procedure, `.agents/skills/cnpg-troubleshoot/SKILL.md` for troubleshooting).
@@ -230,10 +241,11 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Important paths
 
 - Documentation: `docs/` — see "Documentation" below
-- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn`); disaster
-  recovery: `docs/plan-de-reprise/brouillon/Plan-de-Reprise-apres-Sinistre.md`, and for `rhodes.akn`
-  `docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`
-- Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
+- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `horn.akn` — formerly `kazimierz.akn`, `exusiai.akn`
+  — formerly `rimbilliton.akn`); disaster recovery: `docs/plan-de-reprise/brouillon/Plan-de-Reprise-apres-Sinistre.md`,
+  and for `rhodes.akn` `docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`
+- Architecture diagrams: `fleet/*/*/architecture.d2` → `fleet/*/*/assets/architecture*.svg` (`mise run` task of each
+  element)
 - Shared D2 styles: `docs/assets/d2/styles.architecture.d2`
 - ADRs: `docs/decisions/` — check `status` (proposed/accepted/implemented) before treating one as current behavior
 - Experiments: `docs/experiments/Experimentation-*.md` (write-ups); the code sits in the sub-directories next to them
@@ -260,7 +272,7 @@ lists the paths that are neither linted nor published: the README of the experim
   (ADRs, post-mortems, archives) keep the facts of their time; the last section of a page is `## Pour aller plus loin`.
 - Page names are unique across `docs/`, directories are lower-case, file names are `Title-Case-With-Hyphens.md` (ASCII,
   no accents).
-- READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in
+- READMEs that describe a directory stay next to the code. OPA policy documentation (`policies/opa/`) never goes in
   `docs/`.
 
 ## Commits and pull requests
@@ -268,8 +280,8 @@ lists the paths that are neither linted nor published: the README of the experim
 This repository uses a **symbol-based commit type convention** with mandatory square-bracket scopes, validated by
 `commitlint` (`.commitlintrc.js` is the authoritative source for allowed types and scopes).
 
-Format: `type[scope]: Subject` — e.g. `+[project:lungmen.akn]: Add Forgejo`, `^[deps]: cert-manager to v1.16.0`,
-`![project:rhodes.akn]: Fix OIDC redirect loop`. Breaking changes use `+!`, `~!`, or `-!` as the type.
+Format: `type[scope]: Subject` — e.g. `+[fleet:lungmen.akn]: Add Forgejo`, `^[deps]: cert-manager to v1.16.0`,
+`![fleet:rhodes.akn]: Fix OIDC redirect loop`. Breaking changes use `+!`, `~!`, or `-!` as the type.
 
 Detailed conventions, formats, and validation tooling live in skill definitions — read the relevant one **before**
 running `git commit` or opening a PR, they enforce project conventions and surface required pre-flight checks
@@ -422,7 +434,7 @@ Skip session docs for one-off questions, single-file edits, or trivial changes.
 
 ```sh
 argocd app get <namespace>/<name>
-./scripts/argocd:app:sync projects/<cluster>/src/apps/<name>
+./scripts/argocd:app:sync fleet/clusters/<family>.<name>/kubernetes/src/apps/<app>
 kubectl get externalsecrets -n <namespace>
 ```
 

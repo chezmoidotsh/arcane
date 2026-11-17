@@ -12,7 +12,7 @@ topologie dans [Réseau Reference](Reseau-Reference.md).
 
 `rhodes.akn` et `lungmen.akn` déclarent chacune deux Gateways Cilium (GatewayClass `cilium`), dans le namespace
 `kube-system`, et non dans `in-gateway-system` (voir [Historique](#historique)). Sources :
-`projects/<cluster>/src/infrastructure/kubernetes/cilium/{external,internal}.gateway.yaml`.
+`fleet/clusters/<famille>.<nom>/kubernetes/src/system/cilium/{external,internal}.gateway.yaml`.
 
 | Gateway    | Joignable depuis                             | Pool LB-IPAM (`CiliumLoadBalancerIPPool`)                                              | Label `external-dns.chezmoi.sh/zone` |
 | ---------- | -------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------ |
@@ -48,7 +48,7 @@ Les adresses de `talosnet-dns` et de l'UDM Pro sont dans [IPAM Reference](IPAM-R
 
 ### Paramètres des instances external-dns
 
-Sources : `projects/<cluster>/src/infrastructure/kubernetes/external-dns/{bind,unifi}.helmvalues/default.yaml`.
+Sources : `fleet/clusters/<famille>.<nom>/kubernetes/src/system/external-dns/{bind,unifi}.helmvalues/default.yaml`.
 
 | Paramètre              | `external-dns-bind`                                                 | `external-dns-unifi`                                                                      |
 | ---------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |

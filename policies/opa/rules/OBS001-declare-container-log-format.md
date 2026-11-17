@@ -37,7 +37,7 @@ family covers observability conventions.
 
 ### Custom resources that create pods
 
-Every CRD rendered in `projects/*/dist/` was checked for the pods its operator creates.
+Every CRD rendered in `fleet/clusters/*/kubernetes/dist/` was checked for the pods its operator creates.
 
 | Custom resource                             | Pods                                | Field checked                                                                     |
 | ------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
@@ -71,10 +71,10 @@ counting only their own `deny` messages.
 
 ```sh
 # CI (GitHub Actions)
-conftest test projects/*/dist --policy policies/opa/ --combine
+conftest test fleet/clusters/*/kubernetes/dist --policy policies/opa/ --combine
 
 # OPA unit tests
 mise exec opa -- opa test policies/opa/ -v
 ```
 
-CI enforcement is **blocking**. All manifests in `projects/*/dist/` must be compliant before merging.
+CI enforcement is **blocking**. All manifests in `fleet/clusters/*/kubernetes/dist/` must be compliant before merging.
