@@ -52,14 +52,14 @@ Rules:
 
 Decide from the path of the file that declares the version.
 
-| The version is declared in                                                                               | Case                                  |
-| -------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `fleet/clusters/*/kubernetes/src/**`                                                                     | 1. Kubernetes (ArgoCD)                |
-| `catalog/kubernetes/**`                                                                                  | 2. Catalog (shared Kubernetes bases)  |
-| `fleet/hosts/core.<name>/nix/**`, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/**` | 3. NixOS LXC appliance                |
-| `fleet/hosts/akn.horn/nix/**`, `fleet/hosts/akn.exusiai/nix/**`                                          | 4. NixOS host (OCI VPS)               |
-| a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules)                   | 5. Nix flake input or nixpkgs package |
-| no file in the repository (Home Assistant OS, a router firmware, a manual component)                     | 6. Outside the repository             |
+| The version is declared in                                                             | Case                                  |
+| -------------------------------------------------------------------------------------- | ------------------------------------- |
+| `fleet/clusters/*/kubernetes/src/**`                                                   | 1. Kubernetes (ArgoCD)                |
+| `catalog/kubernetes/**`                                                                | 2. Catalog (shared Kubernetes bases)  |
+| `fleet/hosts/core.<name>/nix/**`                                                       | 3. NixOS LXC appliance                |
+| `fleet/hosts/akn.horn/nix/**`, `fleet/hosts/akn.exusiai/nix/**`                        | 4. NixOS host (OCI VPS)               |
+| a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules) | 5. Nix flake input or nixpkgs package |
+| no file in the repository (Home Assistant OS, a router firmware, a manual component)   | 6. Outside the repository             |
 
 When none fits, say so in the issue or the PR. Do not guess a command.
 
@@ -108,9 +108,8 @@ each as case 1, or say that it is left on its own version on purpose. The CloudN
 
 ## 3. NixOS LXC appliance
 
-The appliances under `fleet/hosts/core.<name>/` (flake in `nix/`; `o11y-datastore` still under
-`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`) are immutable NixOS tarballs. The full procedure is in the
-[lxc-maintenance skill](../lxc-maintenance/SKILL.md); in short:
+The appliances under `fleet/hosts/core.<name>/` (flake in `nix/`) are immutable NixOS tarballs. The full procedure is in
+the [lxc-maintenance skill](../lxc-maintenance/SKILL.md); in short:
 
 1. In the appliance's `flake.nix`, change the upstream version when the component is packaged there (annotated line),
    then **bump the template version** (`imageVersion` or `version` = today `YYYY.MM.DD`, `-N` for a second build the

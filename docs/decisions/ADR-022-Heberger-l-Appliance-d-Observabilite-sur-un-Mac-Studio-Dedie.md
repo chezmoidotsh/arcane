@@ -18,7 +18,7 @@ VictoriaTraces, vmalert, Alertmanager, Caddy et la passerelle OTLP (un OpenTelem
 chemin d'écriture, OTLP/HTTP sur `:4318`, et `:443` en lecture seule. Le CT dispose de 4 cœurs, de 8 GiB de mémoire,
 sans swap, et d'un volume `/persistent` de 80 Go, dont 13 Go utilisés (17 %) le 2026-11-15 (mesuré sur `pve-01` :
 `pct config 103`, puis `df -h` dans le CT 103). Les limites mémoire figurent dans le
-[README du LXC](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md).
+[README du LXC](https://github.com/chezmoidotsh/arcane/blob/53c37daf4e1db440c1b1ba53a06167dbf975c380/projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md).
 
 Deux problèmes se cumulent.
 
@@ -220,7 +220,7 @@ principe de l'ADR-013 : le superviseur partagerait le domaine de panne des clust
   : le contrat d'ingestion, inchangé.
 - [Migrer l'observabilité vers le Mac Studio](../migrations/MIGR-20261115-00-Migrer-l-Observabilite-vers-le-Mac-Studio.md)
   : les étapes de la migration.
-- [README du LXC d'observabilité](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) :
+- [README du LXC d'observabilité](https://github.com/chezmoidotsh/arcane/blob/53c37daf4e1db440c1b1ba53a06167dbf975c380/projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) :
   l'implémentation actuelle, dont les limites mémoire et les modules à porter.
 - [nix-darwin](https://github.com/nix-darwin/nix-darwin) : la configuration déclarative de macOS.
 - [VictoriaLogs, limites de requêtes](https://docs.victoriametrics.com/victorialogs/) : `-memory.allowedBytes` et les

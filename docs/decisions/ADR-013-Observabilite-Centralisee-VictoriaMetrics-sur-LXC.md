@@ -485,7 +485,7 @@ Une liste de contrôle normative concise (le _pourquoi_ figure dans les décisio
   précédent pour quitter Kubernetes quand il ne sert pas la charge ; le modèle d'agent de `kazimierz` en découle.
 - [ADR-015 Migrer Crossplane vers Pulumi](./ADR-015-Migrer-Crossplane-vers-Pulumi.md) : le remplacement de Crossplane
   cité dans la décision initiale.
-- [README du LXC d'observabilité](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) et
+- [README du LXC d'observabilité](https://github.com/chezmoidotsh/arcane/blob/53c37daf4e1db440c1b1ba53a06167dbf975c380/projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) et
   [README du LXC `oci-registry`](../../fleet/hosts/core.oci-registry/README.md), sur
   lequel il est modelé : l'implémentation.
 - [Mettre à jour un LXC par échange du rootfs](../procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md)

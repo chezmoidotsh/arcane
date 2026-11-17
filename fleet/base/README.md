@@ -12,16 +12,14 @@ and [`core.pbs`](../hosts/core.pbs/README.md) (`pbs-core`).
 
 ## What's managed here
 
-| File (`pulumi/`)         | Responsibility                                                                                                                                                      |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`               | Entry point — re-exports the outputs read from outside (no logic)                                                                                                   |
-| `stack/observability.ts` | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth); leaves with the appliance at step 10 of the [fleet migration][migr]                       |
-| `stack/oci.ts`           | Parent OCI compartment `chezmoi.sh`; its id (`chezmoiShCompartmentId`) is read by the `horn.akn` and `exusiai.akn` stacks                                           |
-| `stack/pocket-id.ts`     | The Pocket-Id groups; their ids are read by the `pocket-id` stacks of the clusters and hosts (`StackReference` to `organization/base/base.live`, output names kept) |
+| File (`pulumi/`)     | Responsibility                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`           | Entry point — re-exports the outputs read from outside (no logic)                                                                                                   |
+| `stack/oci.ts`       | Parent OCI compartment `chezmoi.sh`; its id (`chezmoiShCompartmentId`) is read by the `horn.akn` and `exusiai.akn` stacks                                           |
+| `stack/pocket-id.ts` | The Pocket-Id groups; their ids are read by the `pocket-id` stacks of the clusters and hosts (`StackReference` to `organization/base/base.live`, output names kept) |
 
-The observability LXC itself stays under [`projects/chezmoi.sh/`](../../projects/chezmoi.sh/README.md) until step 10;
-its `pulumi:cloudflare-token:observability` and `pulumi:tailscale-oauth:observability` tasks read the outputs of this
-stack.
+The Cloudflare DNS-01 token of the observability stack moved to [`akn.ptilopsis`](../hosts/akn.ptilopsis/README.md)
+(`ptilopsis-akn`) at step 10 of the [fleet migration][migr]; its Tailscale OAuth client is gone with the CT 103.
 
 ## Tasks
 
