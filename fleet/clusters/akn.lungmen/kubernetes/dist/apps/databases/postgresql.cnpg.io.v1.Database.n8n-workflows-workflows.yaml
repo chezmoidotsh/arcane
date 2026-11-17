@@ -1,0 +1,18 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  labels:
+    app.kubernetes.io/instance: n8n-workflows-20261027
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: n8n-workflows-20261027
+    mutualized.cloudnative-pg.io/database: workflows
+    mutualized.cloudnative-pg.io/group: n8n-workflows
+  name: n8n-workflows-workflows
+spec:
+  cluster:
+    name: n8n-workflows-20261027
+  name: workflows
+  owner: n8n

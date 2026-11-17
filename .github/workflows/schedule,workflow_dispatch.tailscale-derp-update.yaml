@@ -67,6 +67,8 @@ jobs:
           add-paths: |
             projects/lungmen.akn/src/infrastructure/kubernetes/tailscale/**
             projects/lungmen.akn/dist/infrastructure/kubernetes/tailscale/**
+            fleet/clusters/akn.lungmen/kubernetes/src/system/tailscale/**
+            fleet/clusters/akn.lungmen/kubernetes/dist/system/tailscale/**
           commit-message: |
             ~[project:lungmen.akn]: Refresh the Tailscale DERP relay allow-list
 

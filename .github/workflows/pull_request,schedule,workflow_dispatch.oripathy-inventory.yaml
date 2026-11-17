@@ -28,6 +28,9 @@ on:
       - projects/*/src/**/.application.patch
       - projects/**/*.nix
       - projects/**/flake.lock
+      - fleet/clusters/*/kubernetes/dist/**
+      - fleet/clusters/*/kubernetes/src/**/kustomization.yaml
+      - fleet/clusters/*/kubernetes/src/**/.application.patch
       - fleet/**/*.nix
       - fleet/**/flake.lock
       - catalog/nix/**

@@ -1,0 +1,19 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api.n8n.io
+  namespace: cilium-secrets
+spec:
+  commonName: api.n8n.io
+  dnsNames:
+  - api.n8n.io
+  duration: 2160h
+  issuerRef:
+    kind: ClusterIssuer
+    name: egress-inspection-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  renewBefore: 720h
+  secretName: egress-inspection-api.n8n.io

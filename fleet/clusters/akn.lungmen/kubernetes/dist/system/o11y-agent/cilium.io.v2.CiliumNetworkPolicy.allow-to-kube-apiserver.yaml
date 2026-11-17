@@ -1,0 +1,17 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows every o11y-agent-system pod to reach the Kubernetes API server: the operator
+      reconciles OpenTelemetryCollector resources, the target allocator watches pods, services
+      and ServiceMonitor/PodMonitor resources, and the cluster agent watches the cluster state,
+      the events and a few CRDs.
+  name: allow-to-kube-apiserver
+  namespace: o11y-agent-system
+spec:
+  egress:
+  - toEntities:
+    - kube-apiserver
+  endpointSelector: {}

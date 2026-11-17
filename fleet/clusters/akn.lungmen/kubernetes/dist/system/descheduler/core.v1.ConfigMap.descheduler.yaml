@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+data:
+  policy.yaml: |
+    apiVersion: "descheduler/v1alpha2"
+    kind: "DeschedulerPolicy"
+    maxNoOfPodsToEvictPerNamespace: 2
+    maxNoOfPodsToEvictPerNode: 3
+    profiles:
+    - name: default
+      pluginConfig:
+      - args:
+          evictSystemCriticalPods: false
+          nodeFit: true
+          podProtections:
+            defaultDisabled: []
+            extraEnabled:
+            - PodsWithPVC
+        name: DefaultEvictor
+      - args:
+          evictableNamespaces:
+            exclude:
+            - databases
+            - cloudnative-pg-system
+            - velero-system
+            - smb-csi-driver-system
+            - proxmox-system
+            - kube-system
+          targetThresholds:
+            cpu: 60
+            memory: 60
+            pods: 50
+          thresholds:
+            cpu: 30
+            memory: 30
+            pods: 25
+        name: LowNodeUtilization
+      plugins:
+        balance:
+          enabled:
+          - LowNodeUtilization
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: descheduler
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: descheduler
+    app.kubernetes.io/version: 0.37.0
+    helm.sh/chart: descheduler-0.37.0
+  name: descheduler
+  namespace: descheduler-system

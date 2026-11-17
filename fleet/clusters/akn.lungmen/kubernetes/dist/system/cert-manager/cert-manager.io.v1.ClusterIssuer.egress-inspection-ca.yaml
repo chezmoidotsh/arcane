@@ -1,0 +1,9 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: egress-inspection-ca
+  namespace: cert-manager-system
+spec:
+  ca:
+    secretName: egress-inspection-ca

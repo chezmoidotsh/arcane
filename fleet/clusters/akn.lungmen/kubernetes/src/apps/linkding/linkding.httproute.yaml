@@ -1,0 +1,27 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://bookmarks.chezmoi.sh
+  name: linkding-websecure
+spec:
+  hostnames:
+    - bookmarks.chezmoi.sh
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: external
+      namespace: kube-system
+      sectionName: chezmoi.sh-websecure
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: linkding
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

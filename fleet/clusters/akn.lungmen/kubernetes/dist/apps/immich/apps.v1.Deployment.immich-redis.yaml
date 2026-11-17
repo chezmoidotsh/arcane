@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/name: immich
+  name: immich-redis
+  namespace: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: redis
+      app.kubernetes.io/instance: immich
+      app.kubernetes.io/name: immich
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        o11y.chezmoi.sh/log-format: redis
+      labels:
+        app.kubernetes.io/component: redis
+        app.kubernetes.io/instance: immich
+        app.kubernetes.io/name: immich
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - redis-server
+        - --save
+        - "300"
+        - "1"
+        image: oci.chezmoi.sh/docker.io/library/redis:8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: redis
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 52678
+          runAsNonRoot: true
+          runAsUser: 52678
+        startupProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 30
+          initialDelaySeconds: 0
+          periodSeconds: 2
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      securityContext:
+        fsGroup: 52678
+        runAsGroup: 52678
+        runAsUser: 52678
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: data

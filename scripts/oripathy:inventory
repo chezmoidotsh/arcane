@@ -213,10 +213,22 @@ def component(cluster, name, source, kind, version, path, **extra):
             "app": None, "appName": None, "locations": [], "digest": None, **extra}
 
 
+def kube_root(root, cluster):
+    """The Kubernetes tree of a cluster (it holds `src/` and `dist/`): `projects/<cluster>` while it exists, since it stays the
+    reference during step 8 of MIGR-20261114-00 and its copy under fleet/ is not scanned twice; then
+    `fleet/clusters/<family>.<name>/kubernetes`."""
+    if (root / "projects" / cluster).is_dir():
+        return f"projects/{cluster}"
+    name, _, family = cluster.rpartition(".")
+    return f"fleet/clusters/{family}.{name}/kubernetes"
+
+
 def product_dir(rel):
-    """projects/<cluster>/{dist,src}/apps/n8n/x.yaml -> ('apps/n8n', 'n8n'); infrastructure/kubernetes/<name> and top-level dirs likewise."""
-    parts = Path(rel).parts[3:-1]
-    depth = 2 if parts[:1] == ("apps",) else 3 if parts[:1] == ("infrastructure",) else 1
+    """projects/<cluster>/{dist,src}/apps/n8n/x.yaml -> ('apps/n8n', 'n8n'); infrastructure/kubernetes/<name> and top-level dirs likewise.
+    fleet/clusters/<family>.<name>/kubernetes/{dist,src}/{apps,system}/<name>/x.yaml -> ('apps/<name>' or 'system/<name>', '<name>')."""
+    parts = Path(rel).parts
+    parts = parts[5:-1] if parts[:2] == ("fleet", "clusters") else parts[3:-1]
+    depth = 2 if parts[:1] in (("apps",), ("system",)) else 3 if parts[:1] == ("infrastructure",) else 1
     parts = parts[:depth]
     return ("/".join(parts), parts[-1]) if parts else (None, None)
 
@@ -296,7 +308,7 @@ def scan_src(root, problems, unit):
     """Every annotation in src/: (cluster, product dir) -> list of entries with the chart or image they sit above. The annotation
     must be the line right above the one that sets the version, so the report can say which line to edit (`versionLine`)."""
     entries = {}
-    for path in sorted(root.glob(f"projects/{unit}/src/**/*.y*ml")):
+    for path in sorted(root.glob(f"{kube_root(root, unit)}/src/**/*.y*ml")):
         rel = path.relative_to(root).as_posix()
         if "/charts/" in rel or "node_modules" in rel:
             continue
@@ -355,7 +367,7 @@ WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "Cro
 def dist_facts(root, unit):
     """What is rendered per product: Helm charts (with the images they run, `workload` when a pod runs them) and standalone images."""
     facts = {}
-    for path in sorted(root.glob(f"projects/{unit}/dist/**/*.yaml")):
+    for path in sorted(root.glob(f"{kube_root(root, unit)}/dist/**/*.yaml")):
         rel = path.relative_to(root).as_posix()
         cluster, (sub, _) = cluster_of(rel), product_dir(rel)
         if not (cluster and sub):
@@ -386,12 +398,13 @@ def scan_dist(root, problems, unit):
     of its values) unless the chart pins it by digest, which an override would drop, or renders several tags of it."""
     entries, facts, out = scan_src(root, problems, unit), dist_facts(root, unit), []
     for (cluster, sub), f in sorted(facts.items()):
-        directory, src, app = sub.rsplit("/", 1)[-1], entries.get((cluster, sub), []), f"projects/{cluster}/src/{sub}"
+        base = kube_root(root, cluster)
+        directory, src, app = sub.rsplit("/", 1)[-1], entries.get((cluster, sub), []), f"{base}/src/{sub}"
 
         def declare(name, kind, matches, hint, repo=None):
             e = next((e for e in src if (e["info"]["kind"] == kind and matches(e["info"])) or (repo and e["ann"].get("image") == repo)), None)
             if not e:
-                problems.append({"where": f"projects/{cluster}/src/{sub}/", "product": f"{cluster}/{directory}/{name}", "message": hint})
+                problems.append({"where": f"{base}/src/{sub}/", "product": f"{cluster}/{directory}/{name}", "message": hint})
                 return None
             typ, up = e["ann"].get("type"), upstream_of(e["ann"])
             if e["ann"].get("ignore"):
@@ -407,15 +420,15 @@ def scan_dist(root, problems, unit):
 
         for cname, c in sorted(f["charts"].items()):
             e = declare(cname, "helm", lambda i, cname=cname: i["chart"]["name"] == cname,
-                        f"add `# oripathy: type=helm upstream=github.com/<owner>/<repo>` (or `ignore`) right above `version:` of the `{cname}` entry of `helmCharts:` in projects/{cluster}/src/{sub}/kustomization.yaml")
+                        f"add `# oripathy: type=helm upstream=github.com/<owner>/<repo>` (or `ignore`) right above `version:` of the `{cname}` entry of `helmCharts:` in {base}/src/{sub}/kustomization.yaml")
             if e:
                 name = e["ann"].get("name") or cname
                 chart = {"name": cname, "version": c["version"], "appVersion": c["appVersion"], "repo": e["info"]["chart"].get("repo")}
-                comp = component(cluster, name, "dist", "helm", c["appVersion"] or c["version"], f"projects/{cluster}/dist/{sub}/", chart=chart, images=sorted(({k: v for k, v in i.items() if k != "workload"} for i in c["images"].values()), key=lambda i: (i["repository"], i["tag"])),
+                comp = component(cluster, name, "dist", "helm", c["appVersion"] or c["version"], f"{base}/dist/{sub}/", chart=chart, images=sorted(({k: v for k, v in i.items() if k != "workload"} for i in c["images"].values()), key=lambda i: (i["repository"], i["tag"])),
                                  upstream=upstream_of(e["ann"]), app=app, appName=directory, locations=[{**location(e), "role": "chart"}])
                 comp["id"] = ident(name)
                 comp["deployedAt"] = deployed_at(root, e["rel"], e["needle"])
-                comp["paths"] = [f"projects/{cluster}/dist/{sub}/", e["rel"]]
+                comp["paths"] = [f"{base}/dist/{sub}/", e["rel"]]
                 out.append(comp)
             tags = {}
             for i in c["images"].values():
@@ -424,18 +437,18 @@ def scan_dist(root, problems, unit):
             for i in sorted((i for i in c["images"].values() if i["workload"] and not i["digest"] and len(tags[i["repository"]]) == 1), key=lambda i: (i["repository"], i["tag"])):
                 repo = i["repository"]
                 e = declare(repo.rsplit("/", 1)[-1], "oci", lambda x, repo=repo: x["image"]["repository"] == repo,
-                            f"set the version of `{repo}` explicitly: override it in `images:` of projects/{cluster}/src/{sub}/kustomization.yaml (`newName` + `newTag`) or write its `tag:` in the values, with `# oripathy: type=oci upstream=github.com/<owner>/<repo>` right above the version")
+                            f"set the version of `{repo}` explicitly: override it in `images:` of {base}/src/{sub}/kustomization.yaml (`newName` + `newTag`) or write its `tag:` in the values, with `# oripathy: type=oci upstream=github.com/<owner>/<repo>` right above the version")
                 if e:
                     name, img = e["ann"].get("name") or repo.rsplit("/", 1)[-1], e["info"]["image"]
                     comp = component(cluster, name, "dist", "oci", normalize(img["tag"]), e["rel"], image=img, images=[img], upstream=upstream_of(e["ann"]), digest=e["ann"].get("digest"),
                                      app=app, appName=directory, locations=[{**location(e), "role": "image"}])
                     comp["id"] = ident(name)
                     comp["deployedAt"] = deployed_at(root, e["rel"], e["needle"])
-                    comp["paths"] = [e["rel"], f"projects/{cluster}/dist/{sub}/"]
+                    comp["paths"] = [e["rel"], f"{base}/dist/{sub}/"]
                     out.append(comp)
         for repo, tags in sorted(f["images"].items()):
             e = declare(repo.rsplit("/", 1)[-1], "oci", lambda i, repo=repo: i["image"]["repository"] == repo,
-                        f"add `# oripathy: type=oci upstream=github.com/<owner>/<repo>` (or `ignore`) right above the line that sets the `{repo}` tag in projects/{cluster}/src/{sub}/", repo)
+                        f"add `# oripathy: type=oci upstream=github.com/<owner>/<repo>` (or `ignore`) right above the line that sets the `{repo}` tag in {base}/src/{sub}/", repo)
             if e:
                 info, name = e["info"], e["ann"].get("name") or repo.rsplit("/", 1)[-1]
                 img = info["image"] if info["kind"] == "oci" else next(iter(tags.values()))
@@ -445,7 +458,7 @@ def scan_dist(root, problems, unit):
                                  app=app, appName=directory, locations=[{**location(e), "role": "image"}])
                 comp["id"] = ident(name)
                 comp["deployedAt"] = deployed_at(root, e["rel"], e["needle"])
-                comp["paths"] = [e["rel"], f"projects/{cluster}/dist/{sub}/"]
+                comp["paths"] = [e["rel"], f"{base}/dist/{sub}/"]
                 out.append(comp)
     return out
 
@@ -771,12 +784,12 @@ def scan_mirrors(root, components, problems, unit):
     by_app = {}
     for c in components:
         by_app.setdefault(c["app"], []).append(c)
-    for path in sorted(root.glob(f"projects/{unit}/src/**/.application.patch")):
+    for path in sorted(root.glob(f"{kube_root(root, unit)}/src/**/.application.patch")):
         rel = path.relative_to(root).as_posix()
         cluster, (sub, _) = cluster_of(rel), product_dir(rel)
         if not (cluster and sub):
             continue
-        app, lines = f"projects/{cluster}/src/{sub}", path.read_text(errors="replace").splitlines()
+        app, lines = f"{kube_root(root, cluster)}/src/{sub}", path.read_text(errors="replace").splitlines()
         for i, line in enumerate(lines):
             if re.match(r"^\s*-\s*name:\s*.*Version\s*$", line):  # a displayed version must be declared
                 k = i + 1
@@ -919,6 +932,10 @@ def self_test():
     assert MIRROR_VALUE.search('      value: "1.20.0"').group(1) == "1.20.0" and MIRROR_VALUE.search("  - value: v2.7.0 # x").group(1) == "v2.7.0"
     assert versions_of(component("c", "x", "dist", "helm", "1.0", "f", chart={"version": "0.5", "appVersion": "v1.0"}, images=[{"tag": "v1.0"}])) == {"1.0", "0.5"}
     assert cluster_of("projects/lungmen.akn/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
+    assert product_dir("projects/lungmen.akn/dist/infrastructure/kubernetes/cilium/x.yaml") == ("infrastructure/kubernetes/cilium", "cilium")
+    assert product_dir("fleet/clusters/akn.lungmen/kubernetes/src/system/cilium/x.yaml") == ("system/cilium", "cilium")
+    assert product_dir("fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n/x.yaml") == ("apps/n8n", "n8n") and product_dir("projects/rhodes.akn/src/argocd/x.yaml") == ("argocd", "argocd")
+    assert kube_root(Path("/nonexistent"), "lungmen.akn") == "fleet/clusters/akn.lungmen/kubernetes"
     assert cluster_of("catalog/kubernetes/cloudnative-pg/helm/default.helmvalues.yaml") == "catalog" and cluster_of("docs/reference/Oripathy-Reference.md") is None
     assert cluster_of("fleet/hosts/core.omni/nix/modules/caddy.nix") == "omni.core" and cluster_of("fleet/hosts/core.omni-infra-provider-proxmox/nix/flake.lock") == "omni-infra-provider-proxmox.core"
     assert KEY_RE.match("    newTag: v1").group(1) == "newTag" and KEY_RE.match('  panelImage = "x";').group(1) == "panelImage" and KEY_RE.match("  - image: a:b").group(1) == "image" and KEY_RE.match("  - https://x/y") is None

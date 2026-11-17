@@ -1,0 +1,37 @@
+---
+# Internal CA that signs the certificates Cilium presents to pods when it inspects their
+# outbound TLS traffic (CiliumNetworkPolicy `terminatingTLS`, see apps/n8n/security/).
+# Pods that go through an inspected connection must trust `ca.crt` of this CA.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: egress-inspection-bootstrap
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: egress-inspection-ca
+  namespace: cert-manager-system
+spec:
+  isCA: true
+  commonName: egress-inspection-ca.lungmen.akn.chezmoi.sh
+  secretName: egress-inspection-ca
+  duration: 87600h
+  renewBefore: 8760h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  issuerRef:
+    name: egress-inspection-bootstrap
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: egress-inspection-ca
+spec:
+  ca:
+    secretName: egress-inspection-ca

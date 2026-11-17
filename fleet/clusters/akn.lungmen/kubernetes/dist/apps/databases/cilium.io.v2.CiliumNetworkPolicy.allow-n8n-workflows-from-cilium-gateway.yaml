@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows clients outside the cluster to reach the n8n-workflows PostgreSQL cluster through the TCPRoute
+      n8n-workflows-postgresql. Cilium implements a TCPRoute as a plain L4 load balancer straight to the
+      pod (no Envoy), so clients are never seen as reserved:ingress. They arrive with the world identity,
+      whatever the node that received the connection: with their own address when it is the node holding
+      the Gateway IP, SNATed to the Cilium router IP of that node otherwise (externalTrafficPolicy Cluster).
+      That router IP sits in the pod CIDR and is never matched by a CIDR rule, so the source address
+      cannot be filtered here: who may reach 10.0.0.72:5432 is decided by the UDM firewall, then by the
+      PostgreSQL password. Cluster workloads keep their own identity and are not covered by this rule.
+  name: allow-n8n-workflows-from-cilium-gateway
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: n8n-workflows-20261027
+  ingress:
+  - fromEntities:
+    - world
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP

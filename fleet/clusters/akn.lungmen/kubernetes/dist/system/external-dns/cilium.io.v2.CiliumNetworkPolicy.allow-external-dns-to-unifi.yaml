@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the external-dns-unifi webhook provider to reach the UniFi controller API
+      (UNIFI_HOST) to create and manage DNS records.
+  name: allow-external-dns-to-unifi
+  namespace: external-dns-system
+spec:
+  egress:
+  - toCIDR:
+    - 10.10.10.10/32
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: external-dns-unifi
+      app.kubernetes.io/name: external-dns
