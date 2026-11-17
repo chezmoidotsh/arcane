@@ -1,0 +1,85 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What pushes backups to pbs.core, and the external services the server    │
+# │   depends on (chunk storage, certificate, notifications).                  │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  backblaze: {
+    class: platform
+    label: "Backblaze B2\n(S3)"
+  }
+
+  letsencrypt: {
+    class: platform
+    label: Let's Encrypt
+    icon: assets/icons/platform/letsencrypt.blueprint.svg
+  }
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+
+  slack: {
+    class: platform
+    label: Slack
+    icon: assets/icons/platform/slack.blueprint.svg
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  proxmox: {
+    class: hardware
+    label: "Proxmox VE\n(pve-01)"
+    icon: assets/icons/platform/proxmox.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                  pbs.core                                  │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   The Proxmox Backup Server VM and its S3-backed datastore.                │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+pbs·core: {
+  class: project
+  label: pbs.core
+
+  pbs: {
+    class: application
+    label: "Proxmox\nBackup Server"
+    icon: assets/icons/platform/proxmox.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+localnet.proxmox -> pbs·core.pbs: "Push backups (PBS API)" {target-arrowhead: 8007; class: [connect-app]}
+pbs·core.pbs -> internet.backblaze: "Store chunks (S3)" {target-arrowhead: 443; class: [connect-to-internet]}
+pbs·core.pbs -> internet.slack: "Notify (webhook)" {target-arrowhead: 443; class: [connect-to-internet]}
+pbs·core.pbs -> internet.letsencrypt: "Get certificate (ACME)" {target-arrowhead: 443; class: [connect-to-internet]}
+pbs·core.pbs -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}

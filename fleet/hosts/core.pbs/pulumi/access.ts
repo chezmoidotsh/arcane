@@ -9,7 +9,7 @@ import { backupsDatastore } from "./datastore";
 // -----------------------------------------------------------------------------
 // Proxmox VE's `pbs` storage type (configured by hand -- Proxmox itself stays
 // outside Pulumi/GitOps, see docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md,
-// "Non-Goals"; see ./README.md, "Bootstrapping" for the exact `pvesm add`
+// "Non-Goals"; see ../README.md, "Première installation" for the exact `pvesm add`
 // invocation) needs an API token to push LXC/VM backups into the datastore
 // (`backupsDatastore`, see ./datastore.ts) -- never `root@pam` in steady
 // state, mirroring the CCM/CSI dual-token least-privilege pattern used
@@ -42,7 +42,7 @@ export const pveBackupToken = new pbs.ApiToken(
 export const pveBackupTokenId = pveBackupToken.tokenid;
 // One-time secret: PBS never returns it again after creation. Export it, then
 // use it to configure Proxmox VE's storage entry and discard it from
-// anywhere else -- see ./README.md, "Bootstrapping".
+// anywhere else -- see ../README.md, "Première installation".
 export const pveBackupTokenSecret = pveBackupToken.value;
 
 const backupAclPath = pulumi.interpolate`/datastore/${backupsDatastore.name}`;
@@ -84,11 +84,11 @@ export const pveBackupTokenAcl = new pbs.Acl(
 // Deliberately NOT `DatastorePowerUser`, even though it would additionally
 // grant `Datastore.Prune` and let Proxmox VE's own per-job "keep" retention
 // prune old backups through this token: retention is already handled
-// centrally by this datastore's own scheduled `PruneJob` (../jobs.ts), which
+// centrally by this datastore's own scheduled `PruneJob` (./jobs.ts), which
 // runs server-side and never touches this token. Giving `Datastore.Prune` to
 // the identity `vzdump` uses on every automated run would let a compromised
 // Proxmox VE host delete existing offsite backups -- exactly what backups are
-// meant to survive. See ../../../../../toolbox/proxmox-backup-server-docs/templates/partials.pve-integration.hbs
+// meant to survive. See ./toolbox/proxmox-backup-server-docs/templates/partials.pve-integration.hbs
 // for the matching operator-facing note not to set a "Prune Backups" policy on
 // the Proxmox VE storage entry.
 export const pveBackupReaderAcl = new pbs.Acl(

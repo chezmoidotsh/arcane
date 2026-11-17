@@ -15,11 +15,11 @@ import { render } from "./render";
 import { readOptionalConfig, readStackExport } from "./stack-export";
 
 // -----------------------------------------------------------------------------
-// Regenerates `projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md` from the
-// *deployed* `chezmoi_sh.live` stack state -- run standalone (`mise run
+// Regenerates `fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md` from the
+// *deployed* `pbs_core.live` stack state -- run standalone (`mise run
 // proxmox-backup-server:docs:generate`, chained onto `pulumi:apply`), not as part of `pulumi
 // up`/`preview` itself. See `./extract.ts` for how resource state becomes
-// plain data, and `../../stack/proxmox-backup-server/README.md` for the
+// plain data, and `../../../README.md` for the
 // sections this document doesn't cover (the manual VM/OS install, the
 // encryption keyfile/paperkey, and the Proxmox VE-side backup job
 // definitions -- none of these are `@pulumi/proxmox-backup-server`
@@ -33,16 +33,15 @@ async function main(): Promise<void> {
 	const projectRoot = path.resolve(__dirname, "../..");
 
 	// `pbs:endpoint` is normally always set (see
-	// stack/proxmox-backup-server/README.md, "Bootstrapping") -- this guard
+	// the host README.md, "Bootstrapping") -- this guard
 	// is a safety net for the rare case it
 	// isn't (e.g. a fresh stack config, a corrupted config file): skip
-	// gracefully instead of failing `mise run pulumi:apply`'s post-task for
-	// the entire shared stack, which covers observability/omni/truenas/
-	// zot-registry too, not just PBS.
+	// gracefully instead of failing `mise run pulumi:apply`'s post-task
+	// over a missing doc input.
 	const endpoint = readOptionalConfig(projectRoot, "pbs:endpoint");
 	if (!endpoint) {
 		console.log(
-			"pbs:endpoint is not set -- skipping docs/PROXMOX_BACKUP_SERVER.md regeneration.",
+			"pbs:endpoint is not set -- skipping PROXMOX_BACKUP_SERVER.md regeneration.",
 		);
 		return;
 	}
@@ -64,7 +63,7 @@ async function main(): Promise<void> {
 
 	const docPath = path.resolve(
 		projectRoot,
-		"../../../docs/PROXMOX_BACKUP_SERVER.md",
+		"../PROXMOX_BACKUP_SERVER.md",
 	);
 	fs.writeFileSync(docPath, render(context));
 	console.log(`Wrote ${docPath}`);

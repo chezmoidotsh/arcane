@@ -22,11 +22,11 @@ import type { ExportedResource } from "./stack-export";
  * tests never touch the network or `child_process`.
  */
 const STACK_URN =
-	"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pulumi:pulumi:Stack::chezmoi-sh-infra-chezmoi_sh.live";
+	"urn:pulumi:pbs_core.live::pbs-core::pulumi:pulumi:Stack::pbs-core-pbs_core.live";
 
 const resources: ExportedResource[] = [
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/datastore:Datastore::pbs-datastore-backups",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/datastore:Datastore::pbs-datastore-backups",
 		type: "pbs:index/datastore:Datastore",
 		parent: STACK_URN,
 		outputs: {
@@ -41,7 +41,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/pruneJob:PruneJob::pbs-prune-backups",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/pruneJob:PruneJob::pbs-prune-backups",
 		type: "pbs:index/pruneJob:PruneJob",
 		parent: STACK_URN,
 		outputs: {
@@ -55,7 +55,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/verifyJob:VerifyJob::pbs-verify-backups",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/verifyJob:VerifyJob::pbs-verify-backups",
 		type: "pbs:index/verifyJob:VerifyJob",
 		parent: STACK_URN,
 		outputs: {
@@ -68,7 +68,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/webhookNotification:WebhookNotification::pbs-notify-slack",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/webhookNotification:WebhookNotification::pbs-notify-slack",
 		type: "pbs:index/webhookNotification:WebhookNotification",
 		parent: STACK_URN,
 		outputs: {
@@ -83,7 +83,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/notificationMatcher:NotificationMatcher::pbs-notify-slack-matcher",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/notificationMatcher:NotificationMatcher::pbs-notify-slack-matcher",
 		type: "pbs:index/notificationMatcher:NotificationMatcher",
 		parent: STACK_URN,
 		outputs: {
@@ -95,7 +95,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/user:User::pbs-user-pve-backup",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/user:User::pbs-user-pve-backup",
 		type: "pbs:index/user:User",
 		parent: STACK_URN,
 		outputs: {
@@ -105,7 +105,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/apiToken:ApiToken::pbs-token-pve-backup",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/apiToken:ApiToken::pbs-token-pve-backup",
 		type: "pbs:index/apiToken:ApiToken",
 		parent: STACK_URN,
 		outputs: {
@@ -122,7 +122,7 @@ const resources: ExportedResource[] = [
 		},
 	},
 	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/acl:Acl::pbs-acl-pve-backup",
+		urn: "urn:pulumi:pbs_core.live::pbs-core::pbs:index/acl:Acl::pbs-acl-pve-backup",
 		type: "pbs:index/acl:Acl",
 		parent: STACK_URN,
 		outputs: {

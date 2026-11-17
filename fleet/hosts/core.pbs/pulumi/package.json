@@ -1,0 +1,27 @@
+{
+	"name": "pbs-core",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"scripts": {
+		"proxmox-backup-server:docs": "ts-node toolbox/proxmox-backup-server-docs/index.ts",
+		"test": "mocha",
+		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
+	},
+	"dependencies": {
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@pulumi/b2": "workspace:*",
+		"@pulumi/proxmox-backup-server": "workspace:*",
+		"@pulumi/pulumi": "catalog:",
+		"handlebars": "catalog:"
+	},
+	"devDependencies": {
+		"@types/chai": "catalog:",
+		"@types/mocha": "catalog:",
+		"@types/node": "catalog:",
+		"chai": "catalog:",
+		"mocha": "catalog:",
+		"ts-node": "catalog:",
+		"typescript": "catalog:"
+	}
+}

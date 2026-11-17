@@ -5,7 +5,6 @@ import "./stack/proxmox";
 export { observabilityDns01Token, observabilityTailscaleOauthKey } from "./stack/observability";
 export { chezmoiShCompartmentId } from "./stack/oci";
 export { adminGroupId, familleGroupId, maisonGroupId } from "./stack/pocket-id";
-export { pbsDns01Token, pveBackupTokenId, pveBackupTokenSecret } from "./stack/proxmox-backup-server";
 export {
   fireStickTvPasswordSecret,
   homeAssistantPasswordSecret,

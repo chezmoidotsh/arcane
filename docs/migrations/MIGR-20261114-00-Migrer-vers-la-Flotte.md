@@ -37,7 +37,7 @@ chaque élément ayant son README.
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                          |
 | 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                               |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 à 4 code prêt, état Pulumi à déplacer |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                                                                    |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | `core.pbs` code prêt, état Pulumi à déplacer ; `core.nas`, `core.pve-01` et `base` à faire                                 |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                    |
 | 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                    |
 
@@ -838,6 +838,49 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
 - **Vérification** : `pulumi preview` vide dans la pile source et dans la destination après **chaque** `state move`,
   avant de passer au suivant ; `bao:smb:drift-check` sans dérive.
 - **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` de l'état exporté avant l'étape.
+
+### Détail de l'étape 9 : `core.pbs`
+
+- **Constaté** : `stack/proxmox-backup-server/` devient le projet Pulumi `pbs-core` (pile `pbs_core.live`) sous
+  `fleet/hosts/core.pbs/pulumi/`, sur le modèle de `core.omni` (`Pulumi.yaml`, `package.json`, `tsconfig*.json`,
+  `.mocharc.json`, `.mise.toml`, `.sops.yaml` avec une règle pour `pulumi/.mise/env.yaml`) ; `pnpm-workspace.yaml`
+  couvre déjà `fleet/hosts/*/pulumi`. Le générateur de documentation (`toolbox/proxmox-backup-server-docs/`) suit,
+  `PROXMOX_BACKUP_SERVER.md` va à la racine de l'hôte (`.rtunk/rtunk.yaml` suit), le README du composant devient celui
+  de l'hôte. Noms logiques, types et parents inchangés, fournisseurs par défaut : pas d'alias. 16 ressources déplacées,
+  5 racines : `pbs-user-pve-backup` (utilisateur, jeton, quatre ACL), `acme-dns-pbs` (jeton Cloudflare DNS-01), le
+  bucket B2 `pbs-vm-backup` (`protect` et `retainOnDelete`), la clé B2 `pbs-vm-backup` (point S3, datastore, tâches de
+  purge et de vérification), `pbs-notify-slack` (webhook et son filtre).
+- **Constaté** : une seule ressource traverse la frontière : `proxmox.StoragePbs` `pve-storage-pbs` reste dans
+  `chezmoi_sh` (ressource de Proxmox VE). Sans `StackReference` (ADR-017), elle lit le nom du jeton en constante
+  (`pve-backup@pbs!pve-storage`) et son secret dans une nouvelle clé secrète `chezmoi-sh-infra:pveBackupTokenSecret`.
+  `chezmoi_sh` n'exporte plus `pbsDns01Token`, `pveBackupTokenId` ni `pveBackupTokenSecret` (aucun lecteur dans le
+  code). Une rotation du jeton dans `pbs-core` oblige à mettre à jour cette clé puis à appliquer `chezmoi_sh`.
+- **Manuel avant la fusion** :
+  1. créer `fleet/hosts/core.pbs/pulumi/.mise/env.yaml` (SOPS, `PULUMI_STACK=pbs_core.live`, nouvelle
+     `PULUMI_CONFIG_PASSPHRASE`) ;
+  2. `pulumi stack init pbs_core.live` ;
+  3. `pulumi config set --secret` de `pbs-core:cloudflare_account_id`, `pbs-core:cloudflare_zone_id` et
+     `pbs-core:notificationsSlackWebhookUrl` (mêmes valeurs que dans `chezmoi_sh`) ; l'authentification des
+     fournisseurs `pbs` et `b2` vient de l'environnement, comme avant ;
+  4. dans `chezmoi_sh`, `pulumi config set --secret pveBackupTokenSecret` avec la sortie actuelle, par un pipe ;
+  5. exporter les deux états ;
+  6. `pulumi state move` des 5 racines de `organization/chezmoi-sh-infra/chezmoi_sh.live` vers
+     `organization/pbs-core/pbs_core.live` ;
+  7. `pulumi preview` vide dans la destination, et dans la source seulement la suppression des 3 sorties.
+
+  Après : retirer de `chezmoi_sh` les clés orphelines `pbs:endpoint`, `pbs:insecure` et
+  `notificationsSlackWebhookUrl`.
+
+- **Risque** : aucun `pulumi up` dans `chezmoi_sh` depuis cette branche avant le `state move` : le code ne déclare plus
+  les ressources PBS, un `up` détruirait le jeton, les ACL, le datastore et la clé B2 (seul le bucket est retenu).
+- **À confirmer** (sur une copie de l'état) : le `state move` entre deux piles à phrases secrètes différentes ; le
+  déplacement du bucket protégé (peut-être un `pulumi state unprotect` d'abord) ; la dépendance de `pve-storage-pbs`
+  vers le jeton, qui reste dans la source.
+- **À trancher** : la clé secrète `pveBackupTokenSecret` contredit la règle du README de `stack/proxmox` (« aucun
+  identifiant dans la configuration Pulumi »), déjà enfreinte par `garage_*` et le webhook ; l'autre option, une
+  variable d'environnement avec `ignoreChanges`, ne propagerait plus une rotation. L'emplacement de
+  `PROXMOX_BACKUP_SERVER.md` à la racine de l'hôte n'a pas de précédent.
+- **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
 
 ### 10. Séquencer `core.o11y-datastore` avec l'ADR-022
 

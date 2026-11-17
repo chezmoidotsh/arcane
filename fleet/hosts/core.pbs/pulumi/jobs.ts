@@ -5,7 +5,7 @@ import { backupsDatastore } from "./datastore";
 // -----------------------------------------------------------------------------
 // Retention: keep-daily=4, keep-weekly=2, keep-monthly=3
 // -----------------------------------------------------------------------------
-// See ./README.md, "Retention policy", for the full reasoning -- daily
+// See ../README.md, "Retention policy", for the full reasoning -- daily
 // backups feeding PBS's chunk-level incremental dedup is what makes the
 // monthly tier affordable. Same policy for both LXC and VM jobs to start;
 // revisit per-workload if an opaque/compressed backup (e.g. a NAS archive)
