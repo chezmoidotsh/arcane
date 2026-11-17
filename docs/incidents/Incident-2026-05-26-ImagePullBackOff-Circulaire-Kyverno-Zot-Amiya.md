@@ -246,5 +246,5 @@ images de la couche de stockage via un registre qui dépend de ce même stockage
   l'incident de la veille, dont le contournement `system-cluster-critical` était le signal d'alerte manqué
 - [ADR-012 Remplacer Kyverno par OPA](../decisions/ADR-012-Remplacer-Kyverno-par-OPA.md) : la décision qui a remplacé la
   réécriture d'images à l'exécution par une vérification en CI
-- [SEC001 Imposer le registre local](../../catalog/opa/rules/SEC001-enforce-local-registry.md) : la règle OPA qui
+- [SEC001 Imposer le registre local](../../policies/opa/rules/SEC001-enforce-local-registry.md) : la règle OPA qui
   remplace la politique Kyverno

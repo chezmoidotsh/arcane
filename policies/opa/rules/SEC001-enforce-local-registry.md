@@ -92,13 +92,13 @@ requirement that bootstrap namespaces must _not_ use the mirror.
 
 ```sh
 # CI (GitHub Actions)
-conftest test <manifest.yaml> -p catalog/opa/policies/
+conftest test <manifest.yaml> -p policies/opa/
 
 # Local
-mise exec conftest -- conftest test <manifest.yaml> -p catalog/opa/policies/
+mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 
 # OPA unit tests
-mise exec opa -- opa test catalog/opa/policies/ -v
+mise exec opa -- opa test policies/opa/ -v
 ```
 
 CI enforcement is **blocking** (no `continue-on-error`). All manifests in `projects/*/dist/` must be compliant before

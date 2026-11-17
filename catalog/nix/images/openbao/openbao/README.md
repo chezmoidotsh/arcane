@@ -65,7 +65,7 @@ Build the container image using Nix directly:
 ```bash
 # Clone the repository
 git clone https://github.com/chezmoidotsh/arcane.git
-cd arcane/catalog/flakes/openbao/openbao
+cd arcane/catalog/nix/images/openbao/openbao
 
 # Build the image
 nix build .#default
@@ -80,10 +80,10 @@ Use the provided build script for cross-platform builds:
 
 ```bash
 # From repository root
-./scripts/nix:build:image catalog/flakes/openbao/openbao
+./scripts/nix:build:image catalog/nix/images/openbao/openbao
 
 # Or with specific platform
-./scripts/nix:build:image catalog/flakes/openbao/openbao --system x86_64-linux
+./scripts/nix:build:image catalog/nix/images/openbao/openbao --system x86_64-linux
 ```
 
 This method allows anyone to build the image on any platform, without requiring Nix to be installed. The build system

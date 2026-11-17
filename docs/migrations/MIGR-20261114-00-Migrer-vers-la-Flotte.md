@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État    |
-| ----- | ------------------------------------------------------------------- | ------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite   |
-| 2     | Créer les bases de catalogue manquantes                             | faite   |
-| 3     | Activer le lint de structure                                        | faite   |
-| 4     | Déplacer le catalogue                                               | à faire |
-| 5     | Les petits hôtes du groupe `core`                                   | à faire |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | à faire |
-| 7     | Les hôtes du groupe `akn`                                           | à faire |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire |
+| Étape | Contenu                                                             | État                              |
+| ----- | ------------------------------------------------------------------- | --------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                             |
+| 2     | Créer les bases de catalogue manquantes                             | faite                             |
+| 3     | Activer le lint de structure                                        | faite                             |
+| 4     | Déplacer le catalogue                                               | faite                             |
+| 5     | Les petits hôtes du groupe `core`                                   | à faire                           |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | à faire                           |
+| 7     | Les hôtes du groupe `akn`                                           | à faire                           |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                           |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                           |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                           |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                           |
 
 ## Avant de commencer
 
@@ -430,7 +430,9 @@ de cette migration sont dans
 
 - **Manuel, scopes de commit** : supprimer les 8 scopes `project:*` de `.commitlintrc.js` (ceux d'`amiya.akn` et de
   `shodan.akn` disparaissent sans remplacement), le label `project` de `.github/labels.yaml`, et leurs mentions dans
-  `.agents/skills/git-commit/SKILL.md`. Les scopes `fleet:*` et le label `fleet` existent depuis l'étape 1.
+  `.agents/skills/git-commit/SKILL.md`. Les scopes `fleet:*` et le label `fleet` existent depuis l'étape 1. Les scopes
+  `catalog:flakes`, `catalog:opa`, `catalog:talos` et `catalog:kustomize` nomment des chemins disparus : ils partent
+  aussi.
 - **Manuel, OpenBao** : amender l'[ADR-002](../decisions/ADR-002-Topologie-des-Secrets-OpenBao.md),
   l'[ADR-003](../decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md),
   l'[ADR-004](../decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) et la documentation d'OpenBao

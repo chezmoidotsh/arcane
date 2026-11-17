@@ -108,7 +108,7 @@ config:
     - name: NODE_EXTRA_CA_CERTS
       value: /etc/egress-inspection/ca.crt
 
-    # Community nodes are baked into OCI images (catalog/flakes/n8n/) and mounted below: n8n
+    # Community nodes are baked into OCI images (catalog/nix/images/n8n/) and mounted below: n8n
     # must never install packages by itself.
     - name: N8N_COMMUNITY_PACKAGES_ENABLED
       value: "false"

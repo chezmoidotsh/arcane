@@ -131,7 +131,7 @@
             "org.opencontainers.image.documentation" = "https://openbao.org/docs/";
             "org.opencontainers.image.licenses" = "MPL-2.0";
             "org.opencontainers.image.revision" = self.rev or self.dirtyRev or "dirty";
-            "org.opencontainers.image.source" = "https://github.com/chezmoidotsh/arcane/blob/main/catalog/flakes/openbao/openbao/flake.nix";
+            "org.opencontainers.image.source" = "https://github.com/chezmoidotsh/arcane/blob/main/catalog/nix/images/openbao/openbao/flake.nix";
             "org.opencontainers.image.title" = "openbao-softhsm";
             "org.opencontainers.image.url" = "https://github.com/chezmoidotsh/arcane";
             "org.opencontainers.image.version" = version;

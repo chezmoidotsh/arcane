@@ -817,7 +817,7 @@ ALL_UNITS = ("scripts/oripathy:", ".github/workflows/pull_request,schedule,workf
 
 def changed_units(root, ref):
     """The units a diff against `ref` touches (None = all of them): a file of `projects/<cluster>/`, of catalog/nix (the chezmoi.sh LXCs),
-    of catalog/flakes or catalog/kubernetes (`catalog`). The script and the workflow touch everything; other files touch nothing."""
+    of catalog/nix/images or catalog/kubernetes (`catalog`). The script and the workflow touch everything; other files touch nothing."""
     r = subprocess.run(["git", "-C", str(root), "diff", "--name-only", f"{ref}...HEAD"], capture_output=True, text=True)
     if r.returncode:
         print(f"warning: git diff {ref}...HEAD failed, scanning everything", file=sys.stderr)

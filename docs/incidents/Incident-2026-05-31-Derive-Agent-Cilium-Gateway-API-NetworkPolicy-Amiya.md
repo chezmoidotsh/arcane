@@ -311,7 +311,7 @@ Chaîne de défaillance 2 : 503 après le redémarrage de l'agent (NetworkPolicy
 
 ## Pour aller plus loin
 
-- [NET001, règle OPA sur l'entité ingress de Cilium Gateway](../../catalog/opa/rules/NET001-require-cilium-gateway-ingress-entity.md)
+- [NET001, règle OPA sur l'entité ingress de Cilium Gateway](../../policies/opa/rules/NET001-require-cilium-gateway-ingress-entity.md)
   : la règle qui encode la correspondance `fromEntities: [ingress]` exigée par cet incident.
 - [Passerelles et DNS Reference](../reference/Passerelles-et-DNS-Reference.md) : les Gateways Cilium actuelles de chaque
   cluster.

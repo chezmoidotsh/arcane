@@ -133,7 +133,7 @@ manifest, deleting/recreating a node), confirm using the interactive question to
 - The exact fix (file(s) touched, whether it requires a `git push` to `main` before it can take effect, whether it
   affects other clusters sharing the same manifest)
 
-Manifest fixes under `catalog/talos/manifests/` and `catalog/omni/` are shared across every cluster using Omni — treat
+Manifest fixes under `catalog/omni/manifests/` and `catalog/omni/` are shared across every cluster using Omni — treat
 edits there with the same care as any shared-infrastructure change.
 
 ## Step 4 — Execute
@@ -141,7 +141,7 @@ edits there with the same care as any shared-infrastructure change.
 Read the full linked procedure before executing; follow it step by step, including its own confirmation/verification
 gates. For a pattern with no existing procedure (e.g. the taint-toleration fix), the fix is generally:
 
-1. Edit the manifest under `catalog/talos/manifests/`.
+1. Edit the manifest under `catalog/omni/manifests/`.
 2. Commit and push to `main` (confirm with user first — see Step 3).
 3. Verify reachability of the new commit SHA:
    `curl -sI https://raw.githubusercontent.com/chezmoidotsh/arcane/<sha>/<path>`.
