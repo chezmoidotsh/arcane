@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État                                                                       |
-| ----- | ------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                      |
-| 2     | Créer les bases de catalogue manquantes                             | faite                                                                      |
-| 3     | Activer le lint de structure                                        | faite                                                                      |
-| 4     | Déplacer le catalogue                                               | faite                                                                      |
-| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                          |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                          |
-| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                               |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1 et 2 code prêt, PR 4 à faire ; `rhodes.akn` : à faire |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                    |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                    |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                    |
+| Étape | Contenu                                                             | État                                                                                    |
+| ----- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                                   |
+| 2     | Créer les bases de catalogue manquantes                             | faite                                                                                   |
+| 3     | Activer le lint de structure                                        | faite                                                                                   |
+| 4     | Déplacer le catalogue                                               | faite                                                                                   |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                                       |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                       |
+| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                            |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : à faire |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                                 |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                 |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                 |
 
 ## Avant de commencer
 
@@ -380,9 +380,9 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
   6. fusionner.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : cela
   créerait un second jeton Cloudflare et un second client Pocket-Id. Entre le renommage et la fusion, la pile référencée
-  par `main` n'existe plus : ses commandes échouent, sans rien planifier. Le tour A dépend de la pull request #1514
-  (`feat/pulumi-operator-prep`, qui modifie le `.mise.toml` Pulumi de `hass` et ajoute `scripts/pulumi:stack`) et ne
-  peut pas être fusionné avant elle.
+  par `main` n'existe plus : ses commandes échouent, sans rien planifier. La pull request #1514
+  (`feat/pulumi-operator-prep`, qui modifie le `.mise.toml` Pulumi de `hass` et ajoute `scripts/pulumi:stack`) est
+  fusionnée : le tour A part de `main`.
 - **À confirmer** : le comportement de `pulumi stack rename` entre deux projets sur le backend S3 maison ; l'emplacement
   des états dans le bucket (`.pulumi/stacks/<projet>/<pile>.json`) ; la validité de la phrase secrète et du sel après le
   renommage.
@@ -459,8 +459,8 @@ propriétaire.
   repartitionnent la cible). Entre le renommage de la pile et la fusion, `rhodes.akn` et `lungmen.akn` sur `main`
   échouent sur leur `StackReference` : fusionner vite. Entre la bascule de l'hôte (point 5) et les trois `apply` (points
   7 et 8), les piles gardent l'ancienne URL, qui ne répond plus : ne rien appliquer dans les clusters dans cet
-  intervalle. L'aperçu de `lungmen.akn` montre aussi le travail `litellm` du propriétaire, issu d'une autre branche : ne
-  juger que les lignes liées à Pangolin.
+  intervalle. Dans l'aperçu de `lungmen.akn`, ne juger
+  que les lignes liées à Pangolin.
 - **À confirmer** : le comportement de `pulumi stack rename` entre deux projets sur le backend S3 maison et
   l'emplacement de l'état dans le bucket ; la validité de la phrase secrète et du sel après le renommage ; la réécriture
   par OCI des politiques IAM qui nomment le compartiment (aucune n'est déclarée dans le dépôt) ; le nœud Tailscale suit
@@ -630,16 +630,50 @@ ce cas. Pour chaque cluster :
   `spec.sources[].path` de chaque `Application` est mis à jour en place, rien n'est recréé.
 - **Risque** (à vérifier avant la fusion) : les applications tournent avec `prune: true` automatique. Avant de
   fusionner, `diff -r` entre les deux copies doit être vide, et toute branche ouverte qui touche le cluster doit être
-  portée sur la copie. Aujourd'hui : `feat/lungmen-litellm` (#1349 : application `litellm` et changements des bases,
-  soit `Database` CNPG, `ExternalSecret`, `PushSecret`, générateur de mot de passe, `CiliumNetworkPolicy`, modification
-  du `Cluster` `apps-20260329`). Si elle arrive sur `main` avant la pull request 2 sans être portée, la pull request 2
-  supprime l'`Application` `litellm` (ressources orphelines) et élague les objets des bases.
+  portée sur la copie. Sinon, ce qui n'existe que sous `projects/` est élagué à la bascule : les `Application` correspondantes
+  sont supprimées et les objets des bases sont élagués.
 - **Risque** : après la fusion, seule la copie sous `fleet/` est déployée : modifier `projects/lungmen.akn` ne fait
   silencieusement rien. Geler les changements jusqu'à la pull request 4.
 - **À confirmer** : `argocd appset generate` avec les vrais secrets de cluster ; après la fusion, `argocd app list`
   donne les mêmes noms, aucune `Application` n'est supprimée ni recréée, l'état de synchronisation est inchangé et les
   `sources[].path` pointent vers `fleet/`.
 - **Retour arrière** : `git revert`, les chemins reviennent vers l'ancien code, toujours présent.
+
+### Détail de l'étape 8 : `lungmen.akn`, pull request 4
+
+- **Constaté** : `projects/lungmen.akn/` est supprimé (892 fichiers suivis). Depuis la pull request 2, ArgoCD lit
+  `fleet/clusters/akn.lungmen/kubernetes/` : plus rien ne lit l'ancien arbre. Le programme Pulumi, volontairement
+  absent de la pull request 1, se déplace ici de `projects/lungmen.akn/src/infrastructure/pulumi/` vers
+  `fleet/clusters/akn.lungmen/pulumi/`. Le projet est renommé `lungmen-akn-infra` en `lungmen-akn` (`Pulumi.yaml`,
+  `package.json`, les quatre clés de configuration du projet dans `Pulumi.lungmen_akn.live.yaml`) ; le nom de pile
+  `lungmen_akn.live` ne change pas. Aucune `StackReference` ne lit `lungmen-akn-infra`. Le `.sops.yaml` du cluster gagne
+  la règle `pulumi/\.mise/env\.yaml$` (même destinataire age, sans rechiffrement) ; l'espace de travail pnpm gagne
+  `fleet/clusters/*/pulumi`, le verrou et le `tsconfig` sont ajustés comme pour les hôtes.
+- **Constaté** : les outils lisent `lungmen.akn` depuis `fleet/` seulement : `argocd:app:sync`, `bao:secret:audit`,
+  `velero:backup`, le script de découverte de `cnpg-backup`, la tâche et le workflow DERP. Le modèle Omni s'utilise
+  depuis `fleet/clusters/akn.lungmen/omni/`. Le code à double arborescence reste, pour `rhodes.akn`.
+- **Constaté** : `wiki:lint` vérifie les liens de chaque page, donc cette pull request corrige les liens qui visaient
+  l'arbre supprimé dans trois pages (`Initialiser-Lungmen`, `Plan-de-Reprise-apres-Sinistre`, l'expérimentation
+  Proxmox CSI et CCM). Les 24 autres mentions textuelles de `projects/lungmen.akn` attendent l'étape 11.
+- **Risque** : toute branche ouverte qui touche `projects/lungmen.akn` entre en conflit et doit être rebasée sur
+  `fleet/`. Entre le renommage de l'état et la fusion, ne pas lancer Pulumi pour
+  `lungmen.akn` depuis `main` : le nom du projet ne correspond plus à l'état.
+- **À confirmer** : `pulumi stack rename` d'un projet à l'autre sur le backend S3 (à défaut : export, remplacement du
+  nom de projet dans les URN, `pulumi stack init` puis `pulumi stack import`, ancienne pile supprimée après la
+  vérification) ; le déchiffrement des clés de configuration après le renommage de leur préfixe ; un `preview` vide.
+- **Manuel avant la fusion** :
+  1. contrôler qu'aucun changement n'est arrivé sur `projects/lungmen.akn` depuis la pull request 2 (sinon le porter
+     sous `fleet/`) ;
+  2. sauvegarder l'état (`pulumi stack export`), puis répéter l'opération sur une copie ;
+  3. renommer la pile (`pulumi stack rename organization/lungmen-akn/lungmen_akn.live`) ;
+  4. vérifier `pulumi stack --show-name` (attendu : `lungmen_akn.live`, variable `PULUMI_STACK`) et que la
+     configuration se déchiffre ;
+  5. `pulumi preview` vide : tout `create`, `replace`, `delete` ou `update` arrête l'opération ;
+  6. fusionner, puis `omnictl cluster template diff` depuis `fleet/clusters/akn.lungmen/omni/` (attendu : aucun écart).
+- **Retour arrière** : avant la fusion, renommer la pile vers `lungmen-akn-infra` ou réimporter l'export ; après, `git
+  revert` puis le même renommage. ArgoCD n'est pas touché dans les deux cas.
+- **À faire à la fin de l'étape 8** (après `rhodes.akn`) : retirer la moitié `projects/` du code à double arborescence
+  et la condition du `seed`.
 
 ### Ce qui reste à confirmer à l'étape 8
 

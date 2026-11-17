@@ -100,7 +100,7 @@ Each entry has this shape:
   "source": "mutualized",
   "plugin_enabled": true,
   "logical_databases": ["atuin", "n8n", "linkding", "forgejo"],
-  "manifest_path": "projects/lungmen.akn/dist/apps/databases/postgresql.cnpg.io.v1.Cluster.apps-20260329.yaml",
+  "manifest_path": "fleet/clusters/akn.lungmen/kubernetes/dist/apps/databases/postgresql.cnpg.io.v1.Cluster.apps-20260329.yaml",
   "context_hint": "admin@lungmen.akn"
 }
 ```

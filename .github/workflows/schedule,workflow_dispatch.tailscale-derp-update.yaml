@@ -65,12 +65,10 @@ jobs:
           branch: chore/tailscale-derp-update
           sign-commits: true
           add-paths: |
-            projects/lungmen.akn/src/infrastructure/kubernetes/tailscale/**
-            projects/lungmen.akn/dist/infrastructure/kubernetes/tailscale/**
             fleet/clusters/akn.lungmen/kubernetes/src/system/tailscale/**
             fleet/clusters/akn.lungmen/kubernetes/dist/system/tailscale/**
           commit-message: |
-            ~[project:lungmen.akn]: Refresh the Tailscale DERP relay allow-list
+            ~[fleet:lungmen.akn]: Refresh the Tailscale DERP relay allow-list
 
             Regenerated from the DERP map by the weekly workflow.
 

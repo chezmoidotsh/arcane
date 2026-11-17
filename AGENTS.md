@@ -151,7 +151,7 @@ Pocket-Id, monitoring collection). Treat it as production: any change there must
 clusters.
 
 `lungmen.akn` is the home applications cluster and is under active development — apps are added and bumped frequently.
-See `projects/lungmen.akn/src/apps/` for the current app inventory; do not enumerate it here.
+See `fleet/clusters/akn.lungmen/kubernetes/src/apps/` for the current app inventory; do not enumerate it here.
 
 `kazimierz.akn` and `shodan.akn` are **not** part of the ArgoCD fleet: `kazimierz.akn` is a NixOS VPS (Pangolin stack as
 containers) by deliberate choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016), and

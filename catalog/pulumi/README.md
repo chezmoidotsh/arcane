@@ -1,12 +1,12 @@
 # `catalog/pulumi/`
 
-Shared Pulumi `ComponentResource` packages consumed by the per-project stacks in
+Shared Pulumi `ComponentResource` packages consumed by the stacks in `fleet/*/*/pulumi/` and
 `projects/*/src/infrastructure/pulumi/`.
 
 ## Two install paths, on purpose
 
 This repo is a **pnpm workspace** (`pnpm-workspace.yaml` + root `package.json` at the repo root) covering
-`catalog/pulumi/*` and every `projects/*/src/infrastructure/pulumi`. That's a **developer-convenience layer only**:
+`catalog/pulumi/*`, every `fleet/{clusters,hosts}/*/pulumi` and every `projects/*/src/infrastructure/pulumi`. That's a **developer-convenience layer only**:
 
 ```sh
 pnpm install -r   # one shot: installs + links every package in the workspace

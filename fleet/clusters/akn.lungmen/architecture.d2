@@ -5,459 +5,167 @@ vars: {
   }
 }
 
-...@"../../../docs/assets/d2/styles.architecture.d2"
+...@"../../../docs/assets/d2/styles.blueprint.d2"
 
-explanation: |md
-  # lungmen.akn Architecture
+direction: right
 
-  This document describes the architecture \
-  of the lungmen.akn platform in a visual way \
-  with all the components and how they \
-  interact with each other.
+# ── Outside the cluster ────────────────────────────────────────────────────────
 
-  lungmen.akn serves as the home applications \
-  cluster, providing media, life management, \
-  and personal productivity services for \
-  the homelab infrastructure.
-| {
-  near: top-left
-}
-
-# ╭────────────────────────────────────────────────────────────────────────────╮
-# │                              External Objects                              │
-# ├────────────────────────────────────────────────────────────────────────────┤
-# │ Desc:                                                                      │
-# │   These objects represent resources external to the lungmen.akn platform   │
-# │   but which interact with or are used by it.                               │
-# │   They include networks, hardware, or third-party services                 │
-# │   essential for the proper functioning, connectivity, security,            │
-# │   or management of the platform.                                           │
-# ╰────────────────────────────────────────────────────────────────────────────╯
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Networks
-
-internet: {class: network}
-localnet: {class: network}
-tailnet: {
+internet: {
   class: network
-  tooltip: Tailnet - Mesh VPN Network
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Hardware & Infrastructure
-
-udm-pro: {
-  class: hardware
-  icon: assets/icons/hardware/ubiquiti_unifi.svg
-  tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# External Clusters
-
-rhodes·akn: {
-  class: [application]
-  label: rhodes·akn
-  icon: ../../../projects/rhodes.akn/docs/assets/logo.light.svg # light variant: this diagram renders with the default (light) theme
-  tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
-
-  pocket-id: {
-    class: [application]
-    icon: assets/icons/apps/pocket-id.svg
-    label: auth.chezmoi.sh
-    link: https://pocket-id.org/
-    tooltip: Pocket-ID is an open-source identity and access management solution based only on passkeys.
-  }
-
-  openbao: {
-    class: [application]
-    icon: assets/icons/apps/openbao.svg
-    label: vault.chezmoi.sh
-    link: https://openbao.org/
-    tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation.
-  }
-
-  o11y: {
-    class: [application]
-    label: o11y.chezmoi.sh
-    link: https://grafana.com/
-    tooltip: External Grafana instance (rhodes.akn) managed by the Grafana operator of lungmen.akn.
-  }
-}
-
-kazimierz·akn: {
-  class: [application]
-  label: kazimierz·akn
-  icon: ../../hosts/akn.horn/assets/logo.light.svg
-  tooltip: Public gateway cluster (Pangolin, WAF, etc.)
+  label.near: bottom-center
 
   pangolin: {
-    class: [application]
-    icon: assets/icons/system/pangolin.svg
-    label: pangolin.chezmoi.sh
-    link: https://github.com/fosrl/pangolin
-    tooltip: Pangolin is a reverse proxy and WAF that provides secure access to homelab services.
+    class: platform
+    label: "Pangolin\n(public gateway)"
+    icon: assets/icons/system/pangolin.blueprint.svg
   }
 }
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Hardware & Infrastructure
+localnet: {
+  class: network
+  label.near: bottom-center
 
-pve: {
-  class: hardware
-  label: Proxmox VE
-  icon: assets/icons/platform/proxmox.svg
-  tooltip: Proxmox hypervisor hosting the cluster nodes and their LVM-thin volumes
-}
+  pocket-id: {
+    class: hardware
+    label: "Pocket-Id\n(rhodes.akn)"
+    icon: assets/icons/apps/pocket-id.blueprint.svg
+  }
 
-nas: {
-  class: namespace
-  label: TrueNAS Scale
-  icon: assets/icons/hardware/truenas-scale.svg
-  tooltip: Home Network Attached Storage (NAS)
+  nas: {
+    class: hardware
+    label: TrueNAS
+    icon: assets/icons/hardware/truenas-scale.blueprint.svg
+  }
 
   garage: {
-    class: [application]
-    label: Garage (s3.chezmoi.sh)
-    icon: assets/icons/apps/garage.svg
-    link: https://garagehq.deuxfleurs.fr/
-    tooltip: Garage is a lightweight S3-compatible distributed object storage system.
+    class: hardware
+    label: Garage
+    icon: assets/icons/apps/garage.blueprint.svg
   }
 }
 
-# ╭────────────────────────────────────────────────────────────────────────────╮
-# │                            lungmen.akn Platform                            │
-# ├────────────────────────────────────────────────────────────────────────────┤
-# │ Desc:                                                                      │
-# │   This namespace contains all the components of the lungmen.akn platform,  │
-# │   serving as the home applications cluster providing media, life           │
-# │   management, and personal productivity services for the homelab.          │
-# ╰────────────────────────────────────────────────────────────────────────────╯
+# ── lungmen.akn ────────────────────────────────────────────────────────────────
 
 lungmen·akn: {
-  icon: assets/logo.svg
-  style.fill-pattern: none
+  class: [project]
 
-  system: {class: namespace}
-  media: {class: namespace}
-  life: {class: namespace}
-  others: {class: namespace}
-  databases: {class: namespace}
+  applications: {class: namespace}
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Shared Databases
-
-  databases.apps: {
-    class: [application-datastore]
-    label: "apps"
-    icon: assets/icons/system/cloudnativepg.svg
-    link: https://postgresql.org/
-    tooltip: Shared PostgreSQL cluster (CloudNative-PG) used by Linkding (and the other small apps), with automated backups to S3.
-  }
-
-  databases.apps-secured: {
-    class: [application-datastore]
-    label: "apps-secured"
-    icon: assets/icons/system/cloudnativepg.svg
-    link: https://postgresql.org/
-    tooltip: Shared PostgreSQL cluster (CloudNative-PG) with VectorChord, used by Immich and Paperless-ngx, with automated backups to S3.
-  }
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # System Components
-
-  system.cert-manager: {
-    class: [application-system]
-    label: Cert-Manager
-    icon: assets/icons/system/cert-manager.svg
-    link: https://cert-manager.io/
-    tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
-  }
-
-  system.cilium: {
-    class: [application-system]
-    label: Cilium
-    icon: assets/icons/system/cilium.svg
-    link: https://cilium.io/
-    tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
-  }
-
-  system.cloudnativepg: {
-    class: [application-system]
-    label: CloudNativePG
-    icon: assets/icons/system/cloudnativepg.svg
-    link: https://cloudnativepg.io/
-    tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
-  }
-
-  system.cilium-gateway: {
+  gateway: {
     class: [application-system]
     label: Cilium Gateway
-    icon: assets/icons/system/cilium.svg
-    link: https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
-    tooltip: Cilium Gateway API implementation (external and internal gateways) routing HTTP traffic to the applications.
+    icon: assets/icons/system/cilium.blueprint.svg
   }
 
-  system.external-dns: {
-    class: [application-system]
-    label: ExternalDNS
-    icon: assets/icons/system/external-dns.png
-    link: https://github.com/kubernetes-sigs/external-dns
-    tooltip: ExternalDNS configures DNS records automatically for exposed services.
-  }
-
-  system.external-secrets: {
-    class: [application-system]
-    label: External-Secret
-    icon: assets/icons/system/external-secret.svg
-    link: https://external-secrets.io/
-    tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
-  }
-
-  system.proxmox-csi: {
-    class: [application-system]
-    label: Proxmox CSI + CCM
-    icon: assets/icons/platform/proxmox.svg
-    link: https://github.com/sergelogvinov/proxmox-csi-plugin
-    tooltip: Proxmox CSI plugin and cloud controller manager provisioning LVM-thin block volumes decoupled from VM lifecycle.
-  }
-
-  system.smb-csi: {
-    class: [application-system]
-    label: SMB CSI Driver
-    link: https://github.com/kubernetes-csi/csi-driver-smb
-    tooltip: CSI driver mounting NAS SMB shares (Immich, Jellyfin, Paperless-ngx).
-  }
-
-  system.velero: {
-    class: [application-system]
-    label: Velero
-    link: https://velero.io/
-    tooltip: Velero schedules PVC backups for Actual Budget, Jellyfin and Paperless-ngx.
-  }
-
-  system.grafana-operator: {
-    class: [application-system]
-    label: Grafana Operator
-    link: https://grafana.github.io/grafana-operator/
-    tooltip: Grafana operator pushing dashboards to the external Grafana instance on rhodes.akn.
-  }
-
-  system.tailscale: {
-    class: [application-system]
-    label: Tailscale
-    icon: assets/icons/platform/tailscale.svg
-    link: https://tailscale.com/
-    tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
-  }
-
-  system.newt: {
+  newt: {
     class: [application-system]
     label: Newt
-    icon: assets/icons/system/pangolin.svg
-    link: https://github.com/fosrl/newt
-    tooltip: Newt is a client for Pangolin that establishes a secure tunnel to the public gateway.
+    icon: assets/icons/system/pangolin.blueprint.svg
   }
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Media Components
-
-  media.immich-stack: {
-    class: [namespace]
-    label: Immich Stack
-    tooltip: Immich photo and video management stack with Redis cache (PostgreSQL on the shared cluster)
-
-    immich: {
-      class: [application]
-      label: Immich
-      icon: assets/icons/apps/immich.svg
-      link: https://immich.app/
-      tooltip: High-performance self-hosted photo and video management solution with mobile app support.
-    }
-
-    redis: {
-      class: [application-datastore]
-      label: Redis
-      icon: assets/icons/apps/redis.svg
-      link: https://redis.io/
-      tooltip: Redis cache for improved Immich performance and background task processing.
-    }
-  }
-
-  media.jellyfin: {
+  applications.jellyfin: {
     class: [application]
     label: Jellyfin
-    icon: assets/icons/apps/jellyfin.svg
-    link: https://jellyfin.org/
-    tooltip: Volunteer-built media solution that puts you in control of your media.
+    icon: assets/icons/apps/jellyfin.blueprint.svg
   }
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Life Management Components
+  applications.immich: {
+    class: [application]
+    label: Immich
+    icon: assets/icons/apps/immich.blueprint.svg
+  }
 
-  life.actual-budget: {
+  applications.paperless: {
+    class: [application]
+    label: Paperless-ngx
+    icon: assets/icons/apps/paperless.blueprint.svg
+  }
+
+  applications.actual: {
     class: [application]
     label: Actual Budget
-    icon: assets/icons/apps/actual-budget.png
-    link: https://actualbudget.com/
-    tooltip: Personal finance app that helps you track your spending and save money.
+    icon: assets/icons/apps/actual-budget.blueprint.svg
   }
 
-  life.paperless-stack: {
-    class: [namespace]
-    label: Paperless Stack
-    tooltip: Paperless document management stack with Redis cache (PostgreSQL on the shared cluster)
-
-    paperless: {
-      class: [application]
-      label: Paperless-ngx
-      icon: assets/icons/apps/paperless.svg
-      link: https://docs.paperless-ngx.com/
-      tooltip: Document management system to store, search and share documents.
-    }
-
-    redis: {
-      class: [application-datastore]
-      label: Redis
-      icon: assets/icons/apps/redis.svg
-      link: https://redis.io/
-      tooltip: Redis cache for improved Paperless performance and background task processing.
-    }
-  }
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # Other Components
-
-  others.homebox: {
+  applications.homebox: {
     class: [application]
     label: Homebox
-    link: https://homebox.software/
-    tooltip: Home inventory management application with OIDC authentication.
+    icon: assets/icons/apps/homebox.blueprint.svg
   }
 
-  others.spoolman: {
+  applications.linkding: {
+    class: [application]
+    label: Linkding
+    icon: assets/icons/apps/linkding.blueprint.svg
+  }
+
+  applications.spoolman: {
     class: [application]
     label: Spoolman
-    icon: assets/icons/apps/spoolman.svg
-    link: https://github.com/Donkie/Spoolman
-    tooltip: 3D printer filament spool inventory manager.
+    icon: assets/icons/apps/spoolman.blueprint.svg
   }
 
-  others.linkding-stack: {
-    class: [namespace]
-    label: Linkding Stack
-    tooltip: Linkding bookmarking stack (PostgreSQL on the shared cluster)
-
-    linkding: {
-      class: [application]
-      label: Linkding
-      icon: assets/icons/apps/linkding.svg
-      link: https://github.com/sissbruecker/linkding
-      tooltip: Self-hosted bookmarking and link aggregation service with OIDC authentication.
-    }
+  applications.n8n: {
+    class: [application]
+    label: n8n
+    icon: assets/icons/apps/n8n.blueprint.svg
   }
 
+  apps-db: {
+    class: [application-datastore]
+    label: apps
+    icon: assets/icons/system/cloudnativepg.blueprint.svg
+  }
+
+  secured-db: {
+    class: [application-datastore]
+    label: apps-secured
+    icon: assets/icons/system/cloudnativepg.blueprint.svg
+  }
+
+  redis: {
+    class: [application-datastore]
+    label: Redis
+    icon: assets/icons/apps/redis.blueprint.svg
+  }
 }
 
-# ╭────────────────────────────────────────────────────────────────────────────╮
-# │                                Connections                                 │
-# ├────────────────────────────────────────────────────────────────────────────┤
-# │ Desc:                                                                      │
-# │   This section describes the various connections within the lungmen.akn    │
-# │   platform and its interactions with external systems.                     │
-# ╰────────────────────────────────────────────────────────────────────────────╯
+# ── Flows ──────────────────────────────────────────────────────────────────────
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Network to Platform Flow
+localnet.users: {
+  class: hardware
+  label: Home network
+  icon: assets/icons/hardware/ubiquiti_unifi.blueprint.svg
+}
 
-localnet -> lungmen·akn.system.cilium-gateway: |md
-  HTTP (80)
-  HTTPS (443)
-|
+localnet.users -> lungmen·akn.gateway: "Browse apps (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
 
-tailnet -> lungmen·akn.system.tailscale: {class: [connect-vpn-backbone]}
+lungmen·akn.gateway -> lungmen·akn.applications: "Route (HTTP)" {class: [connect-app]}
+lungmen·akn.applications -> localnet.pocket-id: "Authenticate (OIDC)" {target-arrowhead: 443; class: [connect-local]}
 
-# ──────────────────────────────────────────────────────────────────────────────
-# System Connections
+lungmen·akn.newt -> internet.pangolin: "Open tunnel (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
+lungmen·akn.newt -> lungmen·akn.applications.immich: "Public photos" {class: [connect-app]}
+lungmen·akn.newt -> lungmen·akn.applications.jellyfin: "Public streaming" {class: [connect-app]}
+lungmen·akn.newt -> lungmen·akn.applications.n8n: "Private editor" {class: [connect-app]}
 
-lungmen·akn.system.cert-manager -> internet: "ACME certificate validation (443)" {class: [connect-to-internet]}
 
-lungmen·akn.system.external-dns -> udm-pro: "Automated DNS record management (443)"
-lungmen·akn.system.external-dns -> localnet: "BIND DNS updates, rfc2136 (53)"
+lungmen·akn.applications.immich -> lungmen·akn.secured-db: "Store" {target-arrowhead: 5432; class: [connect-app]}
+lungmen·akn.applications.paperless -> lungmen·akn.secured-db: "Store" {target-arrowhead: 5432; class: [connect-app]}
+lungmen·akn.applications.n8n -> lungmen·akn.secured-db: "Store" {target-arrowhead: 5432; class: [connect-app]}
+lungmen·akn.applications.homebox -> lungmen·akn.apps-db: "Store" {target-arrowhead: 5432; class: [connect-app]}
+lungmen·akn.applications.linkding -> lungmen·akn.apps-db: "Store" {target-arrowhead: 5432; class: [connect-app]}
+lungmen·akn.applications.spoolman -> lungmen·akn.apps-db: "Store" {target-arrowhead: 5432; class: [connect-app]}
 
-lungmen·akn.system.external-secrets -> rhodes·akn.openbao: "Secure secrets retrieval from vault (443)"
+lungmen·akn.applications.immich -> lungmen·akn.redis: "Cache" {target-arrowhead: 6379; class: [connect-app]}
+lungmen·akn.applications.paperless -> lungmen·akn.redis: "Queue" {target-arrowhead: 6379; class: [connect-app]}
+lungmen·akn.applications.n8n -> lungmen·akn.redis: "Queue" {target-arrowhead: 6379; class: [connect-app]}
 
-lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {class: [connect-to-internet]}
+lungmen·akn.applications.immich -> localnet.nas: "Mount media (SMB)" {class: [connect-local]}
+lungmen·akn.applications.jellyfin -> localnet.nas: "Mount media (SMB)" {class: [connect-local]}
+lungmen·akn.applications.paperless -> localnet.nas: "Mount documents (SMB)" {class: [connect-local]}
 
-lungmen·akn.system.newt -> kazimierz·akn.pangolin: "Secure tunnel establishment (443, 51820/UDP)" {class: [connect-to-internet]}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Media Services Flow
-
-lungmen·akn.media.immich-stack.immich -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.media.immich-stack.immich -> lungmen·akn.databases.apps-secured: "Database operations (5432)"
-lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.redis: "Cache operations (6379)"
-lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (2283)"
-lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.newt: "Tunnel traffic proxy (2283)" {class: [secured-connect-from-internet]}
-
-lungmen·akn.media.jellyfin -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.media.jellyfin <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (8096)"
-lungmen·akn.media.jellyfin <- lungmen·akn.system.newt: "Tunnel traffic proxy (8096)" {class: [secured-connect-from-internet]}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Life Management Flow
-
-lungmen·akn.life.actual-budget -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.life.actual-budget <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (5006)"
-
-lungmen·akn.life.paperless-stack.paperless -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.databases.apps-secured: "Database operations (5432)"
-lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)"
-lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (8000)"
-lungmen·akn.life.paperless-stack.paperless -> internet: "IMAP email access (993)" {class: [connect-to-internet]}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Other Services Flow
-
-lungmen·akn.others.linkding-stack.linkding -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.databases.apps: "Database operations (5432)"
-lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (9090)"
-lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.newt: "Tunnel traffic proxy (9090)" {class: [secured-connect-from-internet]}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Shared Databases Flow
-
-lungmen·akn.databases.apps -> nas.garage: "Database backups (S3, 443)"
-lungmen·akn.databases.apps <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-lungmen·akn.databases.apps-secured -> nas.garage: "Database backups (S3, 443)"
-lungmen·akn.databases.apps-secured <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Other Services (Homebox, Spoolman)
-
-lungmen·akn.others.homebox -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.others.homebox -> lungmen·akn.databases.apps: "Database operations (5432)"
-lungmen·akn.others.homebox -> nas.garage: "Attachments storage (S3, 443)"
-lungmen·akn.others.homebox <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (7745)"
-
-lungmen·akn.others.spoolman -> lungmen·akn.databases.apps: "Database operations (5432)"
-lungmen·akn.others.spoolman -> internet: "Filament database fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.others.spoolman <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (8000)"
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Storage and Backup Connections
-
-lungmen·akn.system.proxmox-csi -> pve: "Volume provisioning (8006)"
-lungmen·akn.system.smb-csi -> nas: "Share mounts (SMB)"
-lungmen·akn.system.velero -> nas.garage: "Backups (S3, 443)"
-lungmen·akn.system.velero -> lungmen·akn.life.actual-budget: "PVC backup schedule" {class: [connect-management]}
-lungmen·akn.system.velero -> lungmen·akn.media.jellyfin: "PVC backup schedule" {class: [connect-management]}
-lungmen·akn.system.velero -> lungmen·akn.life.paperless-stack.paperless: "PVC backup schedule" {class: [connect-management]}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Observability
-
-lungmen·akn.system.grafana-operator -> rhodes·akn.o11y: "Dashboards provisioning (443)"
+lungmen·akn.apps-db -> localnet.garage: "Back up (S3)" {target-arrowhead: 443; class: [connect-local]}
+lungmen·akn.secured-db -> localnet.garage: "Back up (S3)" {target-arrowhead: 443; class: [connect-local]}
+lungmen·akn.applications.homebox -> localnet.garage: "Attachments (S3)" {target-arrowhead: 443; class: [connect-local]}
+lungmen·akn.applications.n8n -> localnet.garage: "Binary data (S3)" {target-arrowhead: 443; class: [connect-local]}
