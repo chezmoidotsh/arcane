@@ -10,7 +10,7 @@ export const adminGroup = new pocketid.UserGroup("admin", {
 });
 
 // Pangolin reads this claim to pick the role of whoever signs in through
-// Pocket-Id (see kazimierz.akn's stack/pangolin/idp.ts); n8n reads
+// Pocket-Id (see horn.akn's stack/pangolin/idp.ts); n8n reads
 // `n8n_instance_role` the same way (everyone else falls back to global:member).
 // The set of claims is authoritative: anything not listed here is removed from
 // the group.

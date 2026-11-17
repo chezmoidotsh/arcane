@@ -1,0 +1,141 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Who reaches horn.akn (visitors, the tailnet), what it tunnels to (the    │
+# │   Kubernetes clusters), and the external services it depends on.           │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  visitors: {
+    class: platform
+    label: Visitors
+  }
+
+  pocketid: {
+    class: platform
+    label: "Pocket-Id\n(auth.chezmoi.sh)"
+    icon: assets/icons/apps/pocket-id.blueprint.svg
+  }
+
+  mailjet: {
+    class: platform
+    label: Mailjet
+    icon: assets/icons/platform/mailjet.blueprint.svg
+  }
+
+  letsencrypt: {
+    class: platform
+    label: Let's Encrypt
+    icon: assets/icons/platform/letsencrypt.blueprint.svg
+  }
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+}
+
+tailnet: {
+  class: network
+  label.near: bottom-center
+
+  operator: {
+    class: hardware
+    label: "Operator machine\n(deploys, SSH)"
+    icon: assets/icons/platform/tailscale.blueprint.svg
+  }
+
+  pulumi: {
+    class: hardware
+    label: "Pulumi stacks\n(clusters)"
+    icon: assets/icons/platform/tailscale.blueprint.svg
+  }
+}
+
+clusters: {
+  class: hardware
+  label: "Kubernetes clusters\n(Newt + services)"
+  icon: assets/icons/system/kubernetes.blueprint.svg
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                  horn.akn                                  │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   The Pangolin stack. Traefik shares the network namespace of Gerbil, so   │
+# │   Gerbil owns the public ports 80 and 443.                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+horn·akn: {
+  class: project
+  label: horn.akn
+
+  traefik: {
+    class: application-system
+    label: Traefik
+    icon: assets/icons/system/traefik.blueprint.svg
+  }
+
+  gerbil: {
+    class: application
+    label: Gerbil
+    icon: assets/icons/system/pangolin.blueprint.svg
+  }
+
+  pangolin: {
+    class: application
+    label: Pangolin
+    icon: assets/icons/system/pangolin.blueprint.svg
+  }
+
+  errorpages: {
+    class: application-system
+    label: error-pages
+  }
+
+  tailscale: {
+    class: application-system
+    label: "Tailscale\n(serve)"
+    icon: assets/icons/platform/tailscale.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# Public traffic.
+internet.visitors -> horn·akn.traefik: "Browse exposed services (HTTPS)" {target-arrowhead: 443; class: [connect-from-internet]}
+horn·akn.traefik -> horn·akn.pangolin: "Route and authorize (HTTP)" {target-arrowhead: 3001; class: [connect-local]}
+horn·akn.traefik -> horn·akn.errorpages: "Themed error pages (HTTP)" {target-arrowhead: 8080; class: [connect-local]}
+
+# Tunnels.
+horn·akn.gerbil -> horn·akn.pangolin: "Sync configuration (HTTP)" {target-arrowhead: 3001; class: [connect-local]}
+clusters -> horn·akn.gerbil: "WireGuard site tunnel" {target-arrowhead: "51820/udp"; class: [connect-vpn]}
+
+# Dependencies.
+horn·akn.pangolin -> internet.pocketid: "Authenticate users (OIDC)" {target-arrowhead: 443; class: [connect-to-internet]}
+horn·akn.pangolin -> internet.mailjet: "Send emails (SMTP)" {target-arrowhead: 465; class: [connect-to-internet]}
+horn·akn.traefik -> internet.letsencrypt: "Get certificate (ACME)" {target-arrowhead: 443; class: [connect-to-internet]}
+horn·akn.traefik -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}
+
+# Administration over the tailnet.
+tailnet.pulumi -> horn·akn.tailscale: "Manage resources (Integration API)" {target-arrowhead: 443; class: [connect-management]}
+horn·akn.tailscale -> horn·akn.pangolin: "Forward (HTTP)" {target-arrowhead: 3003; class: [connect-local]}
+tailnet.operator -> horn·akn: "Deploy and administer (SSH)" {target-arrowhead: 22; class: [connect-management]}
