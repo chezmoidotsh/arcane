@@ -1,7 +1,7 @@
 # =============================================================================
-# hass Pulumi stack - Mise configuration
+# closure.akn Pulumi stack - Mise configuration
 # =============================================================================
-# Cloudflare API token for Home Assistant, managed as a Pulumi stack (state in
+# Cloudflare API token for Home Assistant, managed as a Pulumi stack (closure_akn.live, state in
 # the Garage S3 backend, see Pulumi.yaml).
 #
 # `.mise/env.yaml` (SOPS-encrypted PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE,
