@@ -665,7 +665,6 @@ result-*
 
 ### Project ###
 # Kustomize: charts pulled in by helmChartInflationGenerator are not vendored
-catalog/kustomize/**/charts/
 projects/*/src/**/charts/
 
 # Local git worktrees (never tracked)

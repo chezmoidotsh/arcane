@@ -3,5 +3,4 @@ kind: Kustomization
 
 resources:
   - network-policy.allow-dns.yaml
-  - network-policy.allow-ingress-gateway.yaml
   - network-policy.allow-kube-system-full.yaml

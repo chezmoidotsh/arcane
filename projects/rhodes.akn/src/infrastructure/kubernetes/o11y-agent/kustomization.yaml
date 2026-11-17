@@ -47,7 +47,7 @@ resources:
 # base (ADR-020).
 components:
   - ../../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres
-  # Needs hubble.export.static on stdout (../cilium/helmvalues).
+  # Needs hubble.export.static on stdout (catalog/kubernetes/cilium/helm).
   - ../../../../../../catalog/kubernetes/o11y-agent/parsers/hubble-http
 
 images:

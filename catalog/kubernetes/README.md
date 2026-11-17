@@ -3,6 +3,14 @@
 Shared kustomize bases and helm reference values for Kubernetes infrastructure components. These are consumed by
 per-project `infrastructure/kubernetes/<app>/` directories across all clusters.
 
+## Rule
+
+A system component deployed on two clusters or more has a shared base here, in `catalog/kubernetes/<component>/`. The
+base holds only what is identical on every cluster. Each cluster keeps its own overlay in
+`projects/<cluster>/src/infrastructure/kubernetes/<component>/`: the chart version pin (`helmCharts`), image overrides,
+values overrides, gateways, secrets, cluster-specific resources and patches. A component used by a single cluster lives
+entirely in that cluster's directory.
+
 ## Structure
 
 ```text
@@ -56,7 +64,12 @@ setting up a new project.
 | Component        | kustomize resources                                             | helm reference                   |
 | ---------------- | --------------------------------------------------------------- | -------------------------------- |
 | cert-manager     | Let's Encrypt ClusterIssuer (DNS-01/Cloudflare), ExternalSecret | CRDs enabled, security ctx       |
+| cilium           | L2 announcement policy, HTTP→HTTPS redirect, ingress policy     | full Cilium configuration        |
 | cloudnative-pg   | ImageCatalog (local registry mirrors)                           | operator config                  |
 | envoy-gateway    | GatewayClass, default Gateway, HTTP→HTTPS redirect              | resources, logging, securityCtx  |
+| external-dns     | network policies (UniFi and BIND instances)                     | BIND config, securityCtx         |
 | external-secrets | ClusterSecretStore (OpenBao/Vault)                              | auth-delegator RBAC, securityCtx |
+| newt             | DNSEndpoint for the Pangolin server                             | tunnel instance                  |
 | o11y-agent       | OpenTelemetryCollector (node + cluster), RBAC, network policies | OpenTelemetry + Grafana Operator |
+| proxmox          | network policies (CCM + CSI plugin)                             | —                                |
+| toolhive         | network policies                                                | mirrored operator images         |

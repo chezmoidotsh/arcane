@@ -295,21 +295,52 @@ def scan_src(root, problems, unit):
         if "/charts/" in rel or "node_modules" in rel:
             continue
         cluster, (sub, _) = cluster_of(rel), product_dir(rel)
+        if not cluster or not sub:
+            continue
         lines = path.read_text(errors="replace").splitlines()
-        for i, line in enumerate(lines):
-            ann = parse_ann(line) if line.lstrip().startswith("#") else None
-            if not ann or not cluster or not sub:
-                continue
-            j = i + 1 if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].lstrip().startswith("#") else None
-            info = target_info(lines, j) if j is not None else None
-            if not info:
-                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "annotation must sit right above the line that sets a version: `version:` of a `helmCharts:` entry, `newTag:` of an `images:` entry, `tag:` under `repository:`, an image reference or a release URL"})
-                continue
-            if info["kind"] == "oci":
-                check_digest(problems, f"{rel}:{i + 1}", ann, info["image"])
-            needle = info["image"]["tag"] if info["kind"] == "oci" else info["chart"]["version"] if info["kind"] == "helm" else info["tag"]
-            entries.setdefault((cluster, sub), []).append({"rel": rel, "line": j + 1, "commentLine": i + 1, "ann": ann, "info": info, "needle": needle})
+        annotations(problems, entries, cluster, sub, rel, lines)
+        if path.name == "kustomization.yaml":  # values pulled from outside src/ (a catalog base) belong to this product
+            for ref in values_refs(lines):
+                vpath = (path.parent / ref).resolve()
+                if vpath.is_file() and vpath.is_relative_to(root.resolve()) and "/src/" not in vpath.relative_to(root.resolve()).as_posix():
+                    annotations(problems, entries, cluster, sub, vpath.relative_to(root.resolve()).as_posix(), vpath.read_text(errors="replace").splitlines())
     return entries
+
+
+def values_refs(lines):
+    """The Helm values files a kustomization reads: `valuesFile:` and the items of `additionalValuesFiles:`."""
+    refs, in_list = [], None
+    for line in lines:
+        m = re.match(r"^(\s*)(?:-\s*)?valuesFile:\s*[\"']?([^\s\"'#]+)", line)
+        if m:
+            refs.append(m.group(2))
+        n = re.match(r"^(\s*)(?:-\s*)?additionalValuesFiles:\s*$", line)
+        if n:
+            in_list = len(n.group(1))
+            continue
+        item = re.match(r"^(\s*)-\s*[\"']?([^\s\"'#]+)", line)
+        if in_list is not None and item and len(item.group(1)) >= in_list:
+            refs.append(item.group(2))
+        elif line.strip() and not line.lstrip().startswith("#"):
+            in_list = None
+    return refs
+
+
+def annotations(problems, entries, cluster, sub, rel, lines):
+    """Record the annotations of one file under the product (cluster, sub)."""
+    for i, line in enumerate(lines):
+        ann = parse_ann(line) if line.lstrip().startswith("#") else None
+        if not ann:
+            continue
+        j = i + 1 if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].lstrip().startswith("#") else None
+        info = target_info(lines, j) if j is not None else None
+        if not info:
+            problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "annotation must sit right above the line that sets a version: `version:` of a `helmCharts:` entry, `newTag:` of an `images:` entry, `tag:` under `repository:`, an image reference or a release URL"})
+            continue
+        if info["kind"] == "oci":
+            check_digest(problems, f"{rel}:{i + 1}", ann, info["image"])
+        needle = info["image"]["tag"] if info["kind"] == "oci" else info["chart"]["version"] if info["kind"] == "helm" else info["tag"]
+        entries.setdefault((cluster, sub), []).append({"rel": rel, "line": j + 1, "commentLine": i + 1, "ann": ann, "info": info, "needle": needle})
 
 
 WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob", "Pod"}
@@ -849,6 +880,8 @@ def self_test():
     assert normalize("v1.4.2-alpine") == "1.4.2" and normalize("v1.0.0-beta38") == "1.0.0-beta38" and normalize(None) is None
     assert parse_ann("# oripathy: type=helm upstream=github.com/a/b tagPrefix=v") == {"type": "helm", "upstream": "github.com/a/b", "tagPrefix": "v"}
     assert parse_ann("  # oripathy: ignore pkg=x") == {"ignore": True, "pkg": "x"} and parse_ann("# renovate: x=y") is None
+    assert values_refs(["helmCharts:", "  - name: a", "    valuesFile: ../../catalog/a/helm/default.helmvalues.yaml", "    additionalValuesFiles:",
+                        "      - a.helmvalues/override.yaml", "    releaseName: a", "resources:", "  - ../base"]) == ["../../catalog/a/helm/default.helmvalues.yaml", "a.helmvalues/override.yaml"]
     assert upstream_of({"upstream": "codeberg.org/a/b"}) == {"forge": "codeberg", "repo": "a/b", "url": "https://codeberg.org/a/b", "tagPrefix": ""}
     assert upstream_of({"upstream": "github.com/a/b", "tagPrefix": "v"})["tagPrefix"] == "v"
     assert upstream_of({}) is None and upstream_of({"upstream": "a/b"}) is None and upstream_of({"upstream": "gitlab.com/a/b"}) is None

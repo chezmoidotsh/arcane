@@ -25,7 +25,7 @@ helmCharts:
     valuesFile: proxmox-csi-plugin.helmvalues/default.yaml
 
 resources:
-  - security/
+  - ../../../../../../catalog/kubernetes/proxmox/kustomize
 
 images:
   - name: ghcr.io/sergelogvinov/proxmox-cloud-controller-manager
