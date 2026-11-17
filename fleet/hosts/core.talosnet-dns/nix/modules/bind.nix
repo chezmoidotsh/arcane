@@ -22,7 +22,7 @@
 # can redirect hostnames but not take over the zone.
 # bindTsigSecret (secrets/bind.sops.env, key BIND_TSIG_SECRET) is shared with
 # rhodes.akn's external-dns-bind release -- rotating it here also means
-# updating projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops/bind.secret.yaml
+# updating fleet/clusters/akn.rhodes/kubernetes/src/system/external-dns/sops/bind.secret.yaml
 # to the same value, or external-dns's RFC2136 updates start failing NOTAUTH.
 { lib, pkgs, bindTsigSecret ? "", ... }:
 let

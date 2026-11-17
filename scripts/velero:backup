@@ -3,8 +3,7 @@
 # velero:backup
 # =============================================================================
 # Trigger ad-hoc Velero backups and restores per app (one Velero Schedule per
-# app, see fleet/clusters/<family>.<name>/kubernetes/src/system/velero/, or
-# projects/<cluster>/src/infrastructure/kubernetes/velero/ for a cluster not migrated yet).
+# app, see fleet/clusters/<family>.<name>/kubernetes/src/system/velero/).
 #
 # Usage:
 #   velero:backup [-c <context>] [-n <velero-namespace>]            # interactive picker

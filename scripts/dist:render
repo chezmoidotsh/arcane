@@ -64,10 +64,9 @@ class BuildItem:
 
     @property
     def project(self) -> str:
-        # projects/<cluster>/src/... or fleet/clusters/<family>.<name>/kubernetes/src/...
+        # fleet/clusters/<family>.<name>/kubernetes/src/...
         parts = self.rel.split("/")
-        i = 2 if parts[0] == "fleet" else 1
-        return parts[i] if len(parts) > i else ""
+        return parts[2] if len(parts) > 2 else ""
 
     @property
     def src_path(self) -> str:
@@ -138,13 +137,8 @@ def _resource_filename(doc: dict, idx: int, used: set[str]) -> str:
 # ── discovery ─────────────────────────────────────────────────────────────────
 
 
-# Both layouts are rendered during the fleet migration (MIGR-20261114-00, step 8):
-# projects/<cluster>/src/{apps,infrastructure/kubernetes}/<x> and
-# fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<x>.
+# fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<x> and its argocd/.
 _APP_DIR_GLOBS = (
-    "projects/*/src/apps/*",
-    "projects/*/src/infrastructure/kubernetes/*",
-    "projects/*/src/argocd",
     "fleet/clusters/*/kubernetes/src/apps/*",
     "fleet/clusters/*/kubernetes/src/system/*",
     "fleet/clusters/*/kubernetes/src/argocd",
@@ -161,8 +155,7 @@ def find_app_dirs() -> list[Path]:
 
 
 _APP_DIR_PATTERN = re.compile(
-    r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd)"
-    r"|fleet/clusters/[^/]+/kubernetes/src/(?:(?:apps|system)/[^/]+|argocd))/"
+    r"^(fleet/clusters/[^/]+/kubernetes/src/(?:(?:apps|system)/[^/]+|argocd))/"
 )
 
 DEFAULT_BRANCH = "main"
@@ -604,7 +597,7 @@ def main() -> None:
             "  dist:render --staged-only\n"
             "  dist:render --changed\n"
             "  dist:render -j4 --all\n"
-            "  dist:render projects/rhodes.akn/src/apps/vault\n"
+            "  dist:render fleet/clusters/akn.rhodes/kubernetes/src/apps/vault\n"
             "  dist:render fleet/clusters/akn.lungmen/kubernetes/src/apps/n8n\n"
         ),
     )

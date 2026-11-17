@@ -12,7 +12,7 @@
 #
 # For project-specific configurations, see:
 #   fleet/{clusters,hosts}/<element>/.mise.toml   # Element-specific tasks
-#   projects/{cluster}/.mise.toml                 # Not migrated yet (rhodes.akn, chezmoi.sh)
+#   projects/<project>/.mise.toml                 # Not migrated yet (chezmoi.sh, shodan.akn)
 # =============================================================================
 
 [env]

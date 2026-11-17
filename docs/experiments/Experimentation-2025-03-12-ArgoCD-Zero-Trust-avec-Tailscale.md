@@ -277,15 +277,15 @@ en œuvre.
   security »).
 - ArgoCD est le moteur GitOps de chaque cluster Kubernetes. Sur `rhodes.akn`, l'instance ArgoCD pilote les clusters
   distants joints par Tailscale : ses `ApplicationSets`
-  ([`system.applicationset.yaml`](../../projects/rhodes.akn/src/argocd/shoot.apps/system.applicationset.yaml)) lisent
-  l'annotation `device.tailscale.com/hostname` pour trouver le chemin
+  ([`system.applicationset.yaml`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/system.applicationset.yaml))
+  lisent l'annotation `device.tailscale.com/hostname` pour trouver le chemin
   `projects/<hostname>/src/infrastructure/kubernetes/*` de chaque cluster, et le réglage de
-  [`helmvalues/default.yaml`](../../projects/rhodes.akn/src/argocd/helmvalues/default.yaml) traite les clusters servis
-  par Tailscale (timeouts TLS).
+  [`helmvalues/default.yaml`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/helmvalues/default.yaml) traite les
+  clusters servis par Tailscale (timeouts TLS).
 - Le dépôt Helm Tailscale (`https://pkgs.tailscale.com/helmcharts`) est autorisé dans
-  [`appprojects.yaml`](../../projects/rhodes.akn/src/argocd/appprojects.yaml) pour tous les clusters ; `lungmen.akn`
-  embarque l'opérateur dans `projects/lungmen.akn/src/infrastructure/kubernetes/tailscale/`, avec un secret OAuth fourni
-  par External Secrets (`operator-oauth.externalsecret.yaml`).
+  [`appprojects.yaml`](../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/appprojects.yaml) pour tous les clusters ;
+  `lungmen.akn` embarque l'opérateur dans `projects/lungmen.akn/src/infrastructure/kubernetes/tailscale/`, avec un
+  secret OAuth fourni par External Secrets (`operator-oauth.externalsecret.yaml`).
 
 > [!NOTE]\
 > Constat du 2026-10-11 : le montage de cette expérience (sidecar ArgoCD, `ApplicationSet` de démonstration, clusters

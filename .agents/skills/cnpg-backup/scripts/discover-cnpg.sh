@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # discover-cnpg.sh — Discover CNPG candidates from rendered dist/ manifests.
 #
-# Scans projects/*/dist/ and fleet/clusters/*/kubernetes/dist/ for postgresql.cnpg.io/v1 Cluster objects (the
+# Scans fleet/clusters/*/kubernetes/dist/ for postgresql.cnpg.io/v1 Cluster objects (the
 # rendered, canonical state applied by ArgoCD). Logical databases are derived
 # from Database objects in the same dist/ directory, avoiding src/ duplication
 # and helmvalues parsing.
@@ -9,7 +9,7 @@
 # Output schema (one element per cluster, no duplicates):
 #   {
 #     "cluster_name":       string,   // live CNPG cluster name
-#     "project":            string,   // canonical cluster name (projects/<name>, or fleet/clusters/<family>.<name> -> <name>.<family>)
+#     "project":            string,   // canonical cluster name (fleet/clusters/<family>.<name> -> <name>.<family>)
 #     "namespace":          string,   // resolved namespace
 #     "namespace_source":   string,   // "manifest" | "kustomization" | "inferred"
 #     "app_dir":            string,   // directory name under dist/apps/
@@ -48,26 +48,16 @@ yq_or_empty() {
 
 project_of() {
   local path="$1" rest folder
-  if [[ ${path} == fleet/clusters/* ]]; then
-    rest="${path#fleet/clusters/}"
-    folder="${rest%%/*}" # <family>.<name>
-    printf '%s.%s' "${folder#*.}" "${folder%%.*}"
-  else
-    rest="${path#projects/}"
-    printf '%s' "${rest%%/*}"
-  fi
+  rest="${path#fleet/clusters/}"
+  folder="${rest%%/*}" # <family>.<name>
+  printf '%s.%s' "${folder#*.}" "${folder%%.*}"
 }
 
 # Directory holding src/ and dist/ for a manifest path.
 kube_root_of() {
   local path="$1" rest
-  if [[ ${path} == fleet/clusters/* ]]; then
-    rest="${path#fleet/clusters/}"
-    printf 'fleet/clusters/%s/kubernetes' "${rest%%/*}"
-  else
-    rest="${path#projects/}"
-    printf 'projects/%s' "${rest%%/*}"
-  fi
+  rest="${path#fleet/clusters/}"
+  printf 'fleet/clusters/%s/kubernetes' "${rest%%/*}"
 }
 
 # --- Emit one JSON entry per Cluster found in dist/ ------------------------
@@ -81,20 +71,13 @@ kube_root_of() {
 # the same dist/ directory whose spec.cluster.name matches this cluster.
 # Clusters with at least one Database are classified as "mutualized".
 
-# Collect dist/ directories under projects/ and fleet/clusters/ and print the files that hold a CNPG
-# object. A cluster present in both layouts during step 8 of MIGR-20261114-00 is read from projects/
-# only: that tree is the reference ArgoCD deploys, its fleet/ copy is skipped.
+# Collect the dist/ directories under fleet/clusters/ and print the files that hold a CNPG object.
 cnpg_manifests() {
-  local d rest folder
+  local d
   local -a dist_dirs=()
   while IFS= read -r d; do
-    if [[ ${d} == fleet/clusters/* ]]; then
-      rest="${d#fleet/clusters/}"
-      folder="${rest%%/*}"
-      [[ -d "projects/${folder#*.}.${folder%%.*}/dist" ]] && continue
-    fi
     dist_dirs+=("${d}")
-  done < <(find projects fleet/clusters -mindepth 2 -maxdepth 3 -type d \( -path 'projects/*/dist' -o -path 'fleet/clusters/*/kubernetes/dist' \) 2>/dev/null | sort || true)
+  done < <(find fleet/clusters -mindepth 3 -maxdepth 3 -type d -path 'fleet/clusters/*/kubernetes/dist' 2>/dev/null | sort || true)
   if [[ ${#dist_dirs[@]} -gt 0 ]]; then
     rg -l --no-messages 'apiVersion:\s*postgresql\.cnpg\.io/v1' \
       -g '*.yaml' -g '*.yml' \

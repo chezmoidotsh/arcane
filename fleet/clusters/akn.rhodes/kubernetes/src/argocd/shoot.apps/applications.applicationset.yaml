@@ -29,7 +29,7 @@ spec:
                     repoURL: https://github.com/chezmoidotsh/arcane.git
                     revision: main
                     directories:
-                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*
+                      - path: fleet/clusters/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name | splitList "." | reverse | join "." }}/kubernetes/dist/apps/*
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
@@ -40,7 +40,7 @@ spec:
                     repoURL: https://github.com/chezmoidotsh/arcane.git
                     revision: main
                     files:
-                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*/.application.patch
+                      - path: fleet/clusters/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name | splitList "." | reverse | join "." }}/kubernetes/dist/apps/*/.application.patch
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
