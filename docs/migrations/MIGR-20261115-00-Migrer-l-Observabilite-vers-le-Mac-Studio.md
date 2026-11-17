@@ -118,7 +118,7 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 - **Vérification** : les agents poussent vers le Mac, les alertes et le heartbeat fonctionnent. Plus précisément :
   - `getent hosts data.o11y.chezmoi.sh` sur chaque LXC donne `10.0.0.32`.
   - Chaque source (les LXC, `pve-01` et les deux clusters) apparaît dans VictoriaMetrics et VictoriaLogs du Mac.
-  - Les alertes et le heartbeat partent de l'Alertmanager du Mac.
+  - L'Alertmanager du Mac reçoit les alertes de vmalert et de Grafana, et le heartbeat en part.
 - **Risque** : ne pas fusionner ni déployer avant que le Mac serve `data.o11y.chezmoi.sh`. Un LXC reconstruit ou un
   volume BIND neuf enverrait vers une machine absente.
 - **Constaté** : le code est prêt, la bascule reste manuelle.
