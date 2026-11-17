@@ -5,7 +5,9 @@
 # DNS only. Listens on eth1 (talosnet) so LAN queries on eth0 are never
 # answered. Serves two roles from one daemon:
 #   - static records for talosnet-only hostnames (avoiding SNAT + cross-zone
-#     conntrack issues): omni/api.omni/oci/data.o11y/nas/s3.chezmoi.sh
+#     conntrack issues): omni/api.omni/oci/data.o11y/nas/s3.chezmoi.sh.
+#     Exception: data.o11y targets the Mac Studio akn.ptilopsis on VLAN 5
+#     (10.0.0.32), outside talosnet, reached through the pve-01 SNAT
 #   - dynamic split-horizon records via external-dns/RFC2136: clusters publish
 #     the same *.chezmoi.sh hostname they already have externally (e.g.
 #     vault.chezmoi.sh, auth.chezmoi.sh), pointed at their internal Gateway's
@@ -37,7 +39,7 @@ let
     omni IN A 10.128.0.2
     api.omni IN A 10.128.0.2
     oci IN A 10.128.0.4
-    data.o11y IN A 10.128.0.5
+    data.o11y IN A 10.0.0.32
     s3 IN A 10.128.0.6
     nas IN A 10.128.0.6
   '';

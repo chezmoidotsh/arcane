@@ -23,12 +23,12 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 
 ## Avancement
 
-| Étape | Contenu                                            | État                   |
-| ----- | -------------------------------------------------- | ---------------------- |
-| 1     | Créer la configuration nix-darwin du Mac           | faite                  |
-| 2     | Porter les modules et régler la machine            | code prêt, non déployé |
-| 3     | Basculer `data.o11y.chezmoi.sh` vers le Mac Studio | à faire                |
-| 4     | Retirer le CT 103                                  | à faire                |
+| Étape | Contenu                                            | État                                                                                                 |
+| ----- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 1     | Créer la configuration nix-darwin du Mac           | faite                                                                                                |
+| 2     | Porter les modules et régler la machine            | code prêt, non déployé                                                                               |
+| 3     | Basculer `data.o11y.chezmoi.sh` vers le Mac Studio | code prêt, bascule manuelle à faire (ne pas fusionner avant que le Mac serve `data.o11y.chezmoi.sh`) |
+| 4     | Retirer le CT 103                                  | à faire                                                                                              |
 
 ## Avant de commencer
 
@@ -113,11 +113,36 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 - **Deux voies** : une bascule DNS franche (l'option la plus simple), ou un mirroring des écritures par le Caddy du LXC
   vers le Mac pendant quelques jours, pour comparer.
 - **Réseau des nœuds Talos** : les nœuds Talos joignent aujourd'hui le LXC sur le réseau `talosnet` (`10.128.0.5`), où
-  le Mac n'a pas d'interface : la route et l'adresse source vue par `pf` sont à vérifier avant la bascule.
-- **Vérification** : les agents poussent vers le Mac (**à confirmer** par les métriques de l'appliance), les alertes et
-  le heartbeat fonctionnent.
-- **Retour arrière** : le CT 103 reste en fonctionnement pendant cette période ; revenir à l'ancienne cible DNS (**à
-  confirmer**).
+  le Mac n'a pas d'interface. Décision : ils joignent le Mac à `10.0.0.32` à travers le SNAT de `pve-01` (voir «
+  Constaté »). Le passage par le SNAT est à vérifier avant la bascule.
+- **Vérification** : les agents poussent vers le Mac, les alertes et le heartbeat fonctionnent. Plus précisément :
+  - `getent hosts data.o11y.chezmoi.sh` sur chaque LXC donne `10.0.0.32`.
+  - Chaque source (les LXC, `pve-01` et les deux clusters) apparaît dans VictoriaMetrics et VictoriaLogs du Mac.
+  - L'Alertmanager du Mac reçoit les alertes de vmalert et de Grafana, et le heartbeat en part.
+- **Risque** : ne pas fusionner ni déployer avant que le Mac serve `data.o11y.chezmoi.sh`. Un LXC reconstruit ou un
+  volume BIND neuf enverrait vers une machine absente.
+- **Constaté** : le code est prêt, la bascule reste manuelle.
+  - Le Mac Studio a l'adresse fixe `10.0.0.32` (VLAN 5), ajoutée à la page de référence IPAM et au README
+    d'`akn.ptilopsis`.
+  - Deux vues DNS coexistent : UniFi (enregistrement local `data.o11y` → `10.0.0.22`, fait à la main, hors dépôt) et le
+    BIND de `core.talosnet-dns` (`seedZone` de `bind.nix`, `data.o11y` → `10.128.0.5`). BIND est maître de `chezmoi.sh`
+    : sans enregistrement, la vue `talosnet` répondrait NXDOMAIN aux nœuds Talos et aux pods (les collecteurs
+    OpenTelemetry de `rhodes.akn` et `lungmen.akn` n'utilisent que ce résolveur).
+  - Décision : l'enregistrement de `seedZone` vise `10.0.0.32`, joint à travers le SNAT de `pve-01` (le `pf` du Mac
+    autorise `10.0.0.0/22`).
+  - Les quatre LXC qui épinglent le nom dans `/etc/hosts` (`core.omni`, `core.omni-infra-provider-proxmox` et
+    `core.oci-registry` sur `10.0.0.22`, `core.talosnet-dns` sur `10.128.0.5`) épinglent `10.0.0.32`.
+  - Les clients qui passent par le nom (agents des clusters, politiques Cilium FQDN, sources de données Grafana,
+    serveurs MCP, collecteur de `pve-01`) suivent l'enregistrement sans changement.
+- **Manuel, à la bascule** :
+  - Vérifier que le Mac répond sur `10.0.0.32:4318` depuis le LAN et depuis `talosnet` (`curl --resolve`).
+  - Changer l'enregistrement UniFi `10.0.0.22` → `10.0.0.32`.
+  - Mettre à jour la zone vivante de BIND par `nsupdate` avec la clé TSIG `external-dns.` (`update delete` puis
+    `update add data.o11y.chezmoi.sh 300 A 10.0.0.32`) : `seedZone` ne sert qu'à un volume neuf.
+  - Reconstruire et mettre à jour les quatre LXC : version du `flake.nix`, construction, `lxc:push`, `lxc:upgrade`,
+    instantané `pre-upgrade-<ts>`.
+- **Retour arrière** : le CT 103 reste en fonctionnement pendant cette période. UniFi vers `10.0.0.22` ; `nsupdate` vers
+  `10.128.0.5` ; `pct rollback <vmid> pre-upgrade-<ts>` ; `git revert`.
 
 ### 4. Retirer le CT 103
 
