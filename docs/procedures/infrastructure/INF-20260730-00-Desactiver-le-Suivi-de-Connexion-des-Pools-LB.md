@@ -237,7 +237,7 @@ d'inventaire `pve` et relancer le playbook : il n'apparaît pas automatiquement.
 ### SNAT non actif sur talosnet à la date de la découverte
 
 Lors de l'investigation initiale (2026-07-30), le SNAT n'était pas actif sur `talosnet`, bien que
-`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts` déclare `snat: true` et que
+`fleet/hosts/core.pve-01/pulumi/sdn.ts` déclare `snat: true` et que
 [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) le décrive comme obligatoire :
 `pvesh get /cluster/sdn/vnets/talosnet/subnets` ne montrait aucune clé `snat` et `iptables -t nat -L POSTROUTING` était
 vide. Cet écart entre état déclaré et état réel est distinct du sujet de cette procédure, qui ne le corrige pas ; il

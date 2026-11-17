@@ -1,0 +1,11 @@
+# `pulumi stack init` adds `encryptionsalt`. The secret keys
+# `pve-01-core:cloudflare_account_id`, `pve-01-core:cloudflare_zone_id` and
+# `pve-01-core:pveBackupTokenSecret` are set with `pulumi config set --secret`
+# (same values as the chezmoi_sh.live stack). The provider credentials
+# (`root@pam` username/password) come from the environment, never from here:
+# see ../README.md, « Première installation ».
+config:
+  proxmox:endpoint: https://pve-01.pve.chezmoi.sh:8006/api2/json
+  proxmox:insecure: "true"
+  pve-01-core:rhodesAknKubernetesContext: omni-rhodes-akn
+  pve-01-core:lungmenAknKubernetesContext: omni-lungmen-akn

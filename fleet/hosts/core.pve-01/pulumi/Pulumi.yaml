@@ -1,0 +1,12 @@
+name: pve-01-core
+description: >-
+  Proxmox VE (pve-01.pve.chezmoi.sh) as code: access control (roles, users, tokens, ACLs), SDN, resource pools, the
+  PBS storage entry, ACME and the Talos firewall security group. VM/LXC lifecycle stays manual.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

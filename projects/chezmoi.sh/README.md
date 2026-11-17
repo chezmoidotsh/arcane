@@ -40,19 +40,19 @@ Start here — one auto-generated reference per managed system, each with its ow
 
 | Document                                                                          | System                                                                               |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [`docs/PROXMOX-VE.md`](docs/PROXMOX-VE.md)                                        | `pve-01.pve.chezmoi.sh` — the hypervisor: access control, SDN, pools, ACME, firewall |
+| [`PROXMOX-VE.md`](../../fleet/hosts/core.pve-01/PROXMOX-VE.md)                    | `pve-01.pve.chezmoi.sh` — the hypervisor: access control, SDN, pools, ACME, firewall |
 | [`PROXMOX_BACKUP_SERVER.md`](../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) | `pbs.pve.chezmoi.sh` — offsite VM/LXC backups (S3-backed datastore on Backblaze B2)  |
 | [`TRUENAS.md`](../../fleet/hosts/core.nas/TRUENAS.md)                             | `nas.chezmoi.sh` — datasets, shares, permissions, snapshots, offsite sync, Garage    |
 
-These three files are **generated from the live Pulumi state** (`toolbox/*-docs/` in the stack) — never edit them by
-hand; `mise run pulumi:apply` regenerates them automatically.
+These three files are **generated from the live Pulumi state** (`pulumi/toolbox/*-docs/` of each host) — never edit them
+by hand; `mise run pulumi:apply` in the host's `pulumi/` regenerates them automatically.
 
 For the code behind them:
 
 - [`src/infrastructure/pulumi/README.md`](src/infrastructure/pulumi/README.md) — the stack itself, directory layout,
   tasks
-- [`src/infrastructure/pulumi/stack/proxmox/README.md`](src/infrastructure/pulumi/stack/proxmox/README.md) — Proxmox VE
-  scope, access model, bootstrapping (incl. the `root@pam` Keychain setup)
+- [`fleet/hosts/core.pve-01/README.md`](../../fleet/hosts/core.pve-01/README.md) (project `pve-01-core`) — Proxmox VE
+  scope, access model, bootstrapping (incl. the `root@pam` Keychain setup), files installed on the node
 - [`fleet/hosts/core.pbs/README.md`](../../fleet/hosts/core.pbs/README.md) (project `pbs-core`) — PBS scope, datastore
   architecture, bootstrapping (incl. the client-side encryption key)
 - [`fleet/hosts/core.nas/README.md`](../../fleet/hosts/core.nas/README.md) (project `nas-core`) — TrueNAS scope and
@@ -60,13 +60,12 @@ For the code behind them:
 
 ## 🏗️ Project structure
 
-| Path                               | Contents                                                                                                                            |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `src/infrastructure/pulumi/`       | The `chezmoi-sh-infra` Pulumi stack — Proxmox VE, PBS, TrueNAS, cloud tokens — and the doc generators                               |
-| `src/infrastructure/proxmox/lxc/`  | The `o11y-datastore` LXC appliance (Nix-built) and the shared LXC build library; the other appliances moved to `fleet/hosts/core.*` |
-| `src/infrastructure/proxmox/host/` | Files installed on the Proxmox VE nodes themselves: the OpenTelemetry Collector config (journal + host metrics → o11y)              |
-| `docs/`                            | The generated reference documents above                                                                                             |
-| `dist/`                            | Rendered outputs (regenerate with `dist:render`, never edit)                                                                        |
+| Path                              | Contents                                                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/infrastructure/pulumi/`      | The `chezmoi-sh-infra` Pulumi stack — cloud tokens, parent OCI compartment, Pocket-Id groups                                        |
+| `src/infrastructure/proxmox/lxc/` | The `o11y-datastore` LXC appliance (Nix-built) and the shared LXC build library; the other appliances moved to `fleet/hosts/core.*` |
+| `docs/`                           | Icons used by the generated reference documents above                                                                               |
+| `dist/`                           | Rendered outputs (regenerate with `dist:render`, never edit)                                                                        |
 
 ## 🛡️ License
 

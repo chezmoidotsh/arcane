@@ -8,11 +8,10 @@ Le résultat est un réseau de gestion des nœuds (`eth1`) isolé en L2 et parta
 sur `eth0` (`vmbr1`, VLAN 5) et ne sont pas concernées.
 
 Depuis le 2026-07-28, la zone, le VNet, le sous-réseau, l'ACL et l'application du SDN sont déclarés dans Pulumi
-([`sdn.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts)) : les commandes `pvesh create`
-et `pveum acl modify` de la version initiale ne sont plus à exécuter à la main. Il reste à faire à la main la
-préparation de l'hôte (étape 1), qui précède le `pulumi up`, et le contrôle du résultat sur le nœud (étape 3). La
-procédure est additive : elle crée des objets SDN et des ACL, sans modifier les bridges existants, les VM en cours
-d'exécution ni l'ACL de `vmbr1`.
+([`sdn.ts`](../../../fleet/hosts/core.pve-01/pulumi/sdn.ts)) : les commandes `pvesh create` et `pveum acl modify` de la
+version initiale ne sont plus à exécuter à la main. Il reste à faire à la main la préparation de l'hôte (étape 1), qui
+précède le `pulumi up`, et le contrôle du résultat sur le nœud (étape 3). La procédure est additive : elle crée des
+objets SDN et des ACL, sans modifier les bridges existants, les VM en cours d'exécution ni l'ACL de `vmbr1`.
 
 > [!WARNING]\
 > Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur Proxmox pour cette migration.
@@ -68,14 +67,13 @@ Les accès suivants sont également nécessaires :
 
 - accès SSH `root` au nœud Proxmox, par clé ;
 - droits pour exécuter `mise run pulumi:diff` et `mise run pulumi:apply` sur la stack Proxmox (voir le
-  [README de la stack](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md), notamment la
-  section sur les identifiants) ;
+  [README de la stack](../../../fleet/hosts/core.pve-01/README.md), notamment la section sur les identifiants) ;
 - PVE 8.x ou plus récent avec le plugin SDN activé (Datacenter → SDN visible dans l'interface) ; la version de référence
   est PVE 9.
 
 Les objets suivants doivent exister (créés par Pulumi dans
-[`access/omni.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/omni.ts) et
-[`pools.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/pools.ts), ou à défaut selon le
+[`access/omni.ts`](../../../fleet/hosts/core.pve-01/pulumi/access/omni.ts) et
+[`pools.ts`](../../../fleet/hosts/core.pve-01/pulumi/pools.ts), ou à défaut selon le
 [README du provider Omni](../../../fleet/hosts/core.omni-infra-provider-proxmox/README.md#proxmox-user-and-role-setup))
 : l'utilisateur `omni@pve`, le pool `talos` et l'ACL de `/sdn/zones/localnetwork/vmbr1`. Cette procédure étend cette ACL
 sans la recréer.
@@ -101,9 +99,8 @@ export PULUMI_DIR=<répertoire de la stack Pulumi> # ex. projects/chezmoi.sh/src
 
 ## Étape 1 — Préparer l'hôte Proxmox (manuel)
 
-Pulumi ne gère ni les paquets ni les fichiers système de l'hôte : le dépôt ne contient aucun code qui
-installe `dnsmasq` ou configure `source-directory` sur le nœud. Ces deux prérequis se vérifient à la main avant le
-premier `pulumi up`.
+Pulumi ne gère ni les paquets ni les fichiers système de l'hôte : le dépôt ne contient aucun code qui installe `dnsmasq`
+ou configure `source-directory` sur le nœud. Ces deux prérequis se vérifient à la main avant le premier `pulumi up`.
 
 ```sh
 ssh root@$PVE_HOST
@@ -133,8 +130,8 @@ grep "source-directory" /etc/network/interfaces
 
 ## Étape 2 — Provisionner la zone, le VNet, le sous-réseau et l'ACL (Pulumi)
 
-Cette étape est automatisée. [`sdn.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts)
-déclare ce que la version initiale créait avec `pvesh` et `pveum` :
+Cette étape est automatisée. [`sdn.ts`](../../../fleet/hosts/core.pve-01/pulumi/sdn.ts) déclare ce que la version
+initiale créait avec `pvesh` et `pveum` :
 
 | Ressource Pulumi               | Ce qu'elle crée                                                                     | Commande manuelle remplacée                                                   |
 | ------------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -145,8 +142,8 @@ déclare ce que la version initiale créait avec `pvesh` et `pveum` :
 | `sdnApplier` (`SdnApplier`)    | Application du SDN, à chaque `pulumi up` qui touche l'état SDN                      | `pvesh set /cluster/sdn`                                                      |
 
 L'ACL de `vmbr1` (plan `eth0`, Cilium L2) est déclarée à part dans
-[`access/omni.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/omni.ts)
-(`omniSdnVmbr1Acl`) : elle est conservée, l'ACL du VNet s'y ajoute.
+[`access/omni.ts`](../../../fleet/hosts/core.pve-01/pulumi/access/omni.ts) (`omniSdnVmbr1Acl`) : elle est conservée,
+l'ACL du VNet s'y ajoute.
 
 ```sh
 cd $PULUMI_DIR
@@ -266,7 +263,8 @@ systemctl is-active dnsmasq@pvenet
 - **DHCP** : `systemctl is-active dnsmasq@$ZONE` — `active`.
 - **Bail** (après le premier démarrage d'un invité sur le VNet) : `cat /var/lib/misc/dnsmasq.$ZONE.leases` — une ligne
   `MAC IP nom` par invité connecté.
-- **SNAT depuis un invité** : `curl -k https://$PVE_IP:8006/api2/json/version` (`-k` : certificat autosigné) — JSON de version.
+- **SNAT depuis un invité** : `curl -k https://$PVE_IP:8006/api2/json/version` (`-k` : certificat autosigné) — JSON de
+  version.
 
 ## Problèmes connus
 

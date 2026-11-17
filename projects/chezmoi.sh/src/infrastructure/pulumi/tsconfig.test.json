@@ -1,8 +1,0 @@
-{
-	"extends": "../../../../../tsconfig.base.json",
-	"compilerOptions": {
-		"noEmit": true,
-		"types": ["mocha", "node", "chai"]
-	},
-	"include": ["*.ts", "stack/**/*.ts", "toolbox/**/*.ts"]
-}

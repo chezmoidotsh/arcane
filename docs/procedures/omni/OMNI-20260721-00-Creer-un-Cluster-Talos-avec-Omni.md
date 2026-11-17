@@ -25,9 +25,9 @@ cluster décrivent l'état voulu (versions de Kubernetes et de Talos, machine cl
 bootstrap), et Omni provisionne et réconcilie les VM Proxmox sur cet état.
 
 Omni tourne dans un **LXC Proxmox autonome**
-([NixOS, Omni, un fournisseur OIDC Dex colocalisé et Caddy](../../../fleet/hosts/core.omni/nix))
-sur l'[hôte Proxmox `pve-01.pve.chezmoi.sh`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md). Il n'est une charge de
-travail d'aucun cluster Kubernetes.
+([NixOS, Omni, un fournisseur OIDC Dex colocalisé et Caddy](../../../fleet/hosts/core.omni/nix)) sur
+l'[hôte Proxmox `pve-01.pve.chezmoi.sh`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md). Il n'est une charge de travail
+d'aucun cluster Kubernetes.
 
 ### Talos
 
@@ -109,19 +109,17 @@ Avant de commencer, vérifier que les outils suivants sont installés et configu
 Les accès et états suivants sont également nécessaires :
 
 - **SDN Proxmox opérationnel** : le VNet partagé `talosnet`, son sous-réseau et l'ACL `SDN.Use` de `omni@pve` existent,
-  provisionnés par la configuration SDN de la stack Pulumi `stack/proxmox`
-  (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts`, ACL dans `access/omni.ts`). Appliquer cette
-  stack d'abord si ce n'est pas fait.
+  provisionnés par la configuration SDN de la stack Pulumi `pve-01-core` (`fleet/hosts/core.pve-01/pulumi/sdn.ts`, ACL
+  dans `access/omni.ts`). Appliquer cette stack d'abord si ce n'est pas fait.
 - **Authentification Omni** : `OMNICONFIG` renseigné par le flux de connexion d'Omni (`omnictl config new` ou
   `omnictl config add`).
 - **Machine classes appliquées dans Omni** : ce sont des ressources COSI, hors template. Si Omni a été réinitialisé, les
   réappliquer (étape 1).
 - **SHA épinglé accessible sur `main`** : voir l'étape 4.
-- **Identifiant d'amorçage Proxmox délégué** : la stack `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/`
-  doit déjà être appliquée pour avoir créé `<cluster>-bootstrap@pve` (`access/rhodes-akn-bootstrap.ts`,
-  `access/lungmen-akn-bootstrap.ts`) et l'avoir écrit dans le cluster sous la forme du Secret
-  `kube-system/<cluster>-bootstrap-pve`. L'étape 9 s'en sert pour créer l'identité CCM/CSI du cluster. Un nouveau
-  cluster a d'abord besoin de son propre `access/<cluster>-bootstrap.ts`.
+- **Identifiant d'amorçage Proxmox délégué** : la stack `fleet/hosts/core.pve-01/pulumi/` doit déjà être appliquée pour
+  avoir créé `<cluster>-bootstrap@pve` (`access/rhodes-akn-bootstrap.ts`, `access/lungmen-akn-bootstrap.ts`) et l'avoir
+  écrit dans le cluster sous la forme du Secret `kube-system/<cluster>-bootstrap-pve`. L'étape 9 s'en sert pour créer
+  l'identité CCM/CSI du cluster. Un nouveau cluster a d'abord besoin de son propre `access/<cluster>-bootstrap.ts`.
 
 ## Entrées requises
 
