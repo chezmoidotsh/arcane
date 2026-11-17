@@ -1,0 +1,15 @@
+# SOPS creation rules for rhodes.akn. There is no root .sops.yaml: each element that encrypts files owns one.
+# sops looks for it from the *current directory* upward (not from the file's), so run sops from inside this folder.
+# path_regex is relative to this file's directory.
+creation_rules:
+  # Encrypt all .decrypted~ files
+  - path_regex: \.decrypted~.+\.yaml$
+    encrypted_regex: "^(stringData|data)$"
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+
+  # Encrypt all .secret.yaml files' data and stringData fields
+  - path_regex: kubernetes/src/(apps|argocd|system)/.*/.+\.secret\.yaml$
+    encrypted_regex: "^(stringData|data)$"
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9

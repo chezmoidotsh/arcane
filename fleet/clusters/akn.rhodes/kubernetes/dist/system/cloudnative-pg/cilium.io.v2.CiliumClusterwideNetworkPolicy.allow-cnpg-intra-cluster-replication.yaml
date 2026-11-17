@@ -1,0 +1,42 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows CloudNative-PG cluster pods to reach PostgreSQL (5432) on any other CNPG
+      cluster pod, for primary<->replica streaming replication and pg_basebackup-based
+      instance joins. Broad on purpose: Cilium selectors can't express "only pods
+      sharing my own cnpg.io/cluster value," and Postgres's own certificate-based
+      replication auth already scopes actual access to pods of the same cluster, so
+      this only widens network reachability, not effective access. Without this,
+      any multi-instance CNPG Cluster combined with a Cilium default-deny posture
+      hangs indefinitely on "Creating a new replica" / "join" pods with
+      "dial tcp <primary>:5432: i/o timeout" - found live during a rhodes.akn DR
+      drill restoring Pocket-Id's 2-instance cluster (2026-07-28); openbao's
+      single-instance cluster never exercised this path.
+  name: allow-cnpg-intra-cluster-replication
+  namespace: cloudnative-pg-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+  endpointSelector:
+    matchExpressions:
+    - key: cnpg.io/cluster
+      operator: Exists
+  ingress:
+  - fromEndpoints:
+    - matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP

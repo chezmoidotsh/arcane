@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: applications
+  namespace: argocd
+spec:
+  clusterResourceBlacklist: []
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  description: |
+    This project is responsible for deploying all applications and configurations inside the targeted cluster,
+    depending on existing templates and cluster definitions.
+  destinations:
+  - name: '*'
+    namespace: '*'
+    server: '*'
+  namespaceResourceBlacklist: []
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  roles: []
+  sourceNamespaces:
+  - '*'
+  sourceRepos:
+  - '*'

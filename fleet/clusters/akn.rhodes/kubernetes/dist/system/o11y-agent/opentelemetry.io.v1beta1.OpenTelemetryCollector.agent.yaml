@@ -1,0 +1,882 @@
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  name: agent
+  namespace: o11y-agent-system
+spec:
+  config:
+    connectors:
+      forward/parsed: {}
+      routing/log-format:
+        default_pipelines:
+        - logs/pods/export
+        table:
+        - condition: resource.attributes["o11y.log.format"] == "ansi"
+          pipelines:
+          - logs/parsers/ansi
+        - condition: resource.attributes["o11y.log.format"] == "bracketed"
+          pipelines:
+          - logs/parsers/bracketed
+        - condition: resource.attributes["o11y.log.format"] == "golog"
+          pipelines:
+          - logs/parsers/golog
+        - condition: resource.attributes["o11y.log.format"] == "json"
+          pipelines:
+          - logs/parsers/json
+        - condition: resource.attributes["o11y.log.format"] == "klog"
+          pipelines:
+          - logs/parsers/klog
+        - condition: resource.attributes["o11y.log.format"] == "logfmt"
+          pipelines:
+          - logs/parsers/logfmt
+        - condition: resource.attributes["o11y.log.format"] == "redis"
+          pipelines:
+          - logs/parsers/redis
+        - condition: resource.attributes["o11y.log.format"] == "uvicorn"
+          pipelines:
+          - logs/parsers/uvicorn
+        - condition: resource.attributes["o11y.log.format"] == "zap-console"
+          pipelines:
+          - logs/parsers/zap-console
+        - condition: resource.attributes["o11y.log.format"] == "cnpg-postgres"
+          pipelines:
+          - logs/parsers/cnpg-postgres
+        - condition: resource.attributes["o11y.log.format"] == "hubble-http"
+          pipelines:
+          - logs/parsers/hubble-http
+    exporters:
+      otlp_http:
+        compression: gzip
+        endpoint: https://data.o11y.chezmoi.sh:4318
+        sending_queue:
+          storage: file_storage
+    extensions:
+      file_storage:
+        create_directory: false
+        directory: /var/lib/o11y-agent
+      health_check:
+        endpoint: ${env:K8S_POD_IP}:13133
+    processors:
+      batch: {}
+      groupbyattrs/prometheus:
+        keys:
+        - namespace
+        - pod
+        - container
+      groupbyattrs/talos:
+        keys:
+        - service.name
+      k8s_attributes:
+        auth_type: serviceAccount
+        extract:
+          annotations:
+          - from: pod
+            key: o11y.chezmoi.sh/log-format
+            tag_name: o11y.log.format
+          - from: pod
+            key_regex: ^o11y\.chezmoi\.sh/log-format\.(.+)$$
+            tag_name: o11y.log.format.$$1
+          labels:
+          - from: pod
+            key: app.kubernetes.io/name
+            tag_name: app.kubernetes.io/name
+          metadata:
+          - k8s.namespace.name
+          - k8s.node.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - k8s.pod.ip
+          - k8s.container.name
+          - container.image.name
+          - container.image.tag
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.daemonset.name
+          - k8s.replicaset.name
+          - k8s.cronjob.name
+          - k8s.job.name
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        passthrough: false
+        pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.name
+          - from: resource_attribute
+            name: k8s.namespace.name
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resource/cluster:
+        attributes:
+        - action: upsert
+          key: k8s.cluster.name
+          value: ${env:K8S_CLUSTER_NAME}
+        - action: insert
+          key: k8s.node.name
+          value: ${env:K8S_NODE_NAME}
+      resource/hostmetrics:
+        attributes:
+        - action: insert
+          key: service.name
+          value: hostmetrics
+      resource/kubelet:
+        attributes:
+        - action: insert
+          key: service.name
+          value: kubelet
+      resource/no-log-format:
+        attributes:
+        - action: delete
+          pattern: ^o11y\.log\.format(\..+)?$$
+      transform/identity:
+        error_mode: ignore
+        log_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["host.name"], "${env:K8S_NODE_NAME}") where resource.attributes["k8s.node.name"]
+            == nil and resource.attributes["k8s.pod.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.daemonset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.cronjob.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.job.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.container.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+            where resource.attributes["service.name"] == nil
+          - delete_key(resource.attributes, "app.kubernetes.io/name")
+        metric_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["host.name"], "${env:K8S_NODE_NAME}") where resource.attributes["k8s.node.name"]
+            == nil and resource.attributes["k8s.pod.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["app.kubernetes.io/name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.deployment.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.statefulset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.daemonset.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.cronjob.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.job.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.container.name"])
+            where resource.attributes["service.name"] == nil
+          - set(resource.attributes["service.name"], resource.attributes["k8s.pod.name"])
+            where resource.attributes["service.name"] == nil
+          - delete_key(resource.attributes, "app.kubernetes.io/name")
+      transform/log-format:
+        error_mode: ignore
+        log_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["o11y.log.format"], resource.attributes[Concat(["o11y.log.format.",
+            resource.attributes["k8s.container.name"]], "")]) where resource.attributes[Concat(["o11y.log.format.",
+            resource.attributes["k8s.container.name"]], "")] != nil
+          - delete_matching_keys(resource.attributes, "^o11y\\.log\\.format\\..+")
+      transform/parse-ansi:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\\x1b\\[[0-9;]*m\\s*(?P<lvl>(?i:TRC|DBG|INF|WRN|ERR|FTL|LOG|DEBUG|VERBOSE|INFO|WARN|WARNING|ERROR|FATAL))\\x1b"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-bracketed:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\\[(?P<lvl>(?i:TRC|DBG|INF|WRN|ERR|FTL|CRT|TRACE|DEBUG|INFO|WARNING|WARN|ERROR|CRITICAL|FATAL))\\]"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-cnpg-postgres:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body) and IsMatch(log.body, "^\\{.*\"logger\":\"postgres\",\"msg\":\"record\"")
+          context: log
+          statements:
+          - set(log.cache["pg"], ParseJSON(log.body)["record"])
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where IsMatch(log.cache["pg"]["error_severity"],
+            "^DEBUG[1-5]$")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where IsMatch(log.cache["pg"]["error_severity"],
+            "^(LOG|INFO|NOTICE)$")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["pg"]["error_severity"]
+            == "WARNING"
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.cache["pg"]["error_severity"]
+            == "ERROR"
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where IsMatch(log.cache["pg"]["error_severity"],
+            "^(FATAL|PANIC)$")
+          - set(log.attributes["db.system.name"], "postgresql")
+          - set(log.attributes["db.namespace"], log.cache["pg"]["database_name"])
+            where IsString(log.cache["pg"]["database_name"]) and log.cache["pg"]["database_name"]
+            != ""
+          - set(log.attributes["db.operation.name"], log.cache["pg"]["command_tag"])
+            where IsMatch(log.cache["pg"]["command_tag"], "^[A-Z][A-Z ]*$")
+          - set(log.attributes["db.response.status_code"], log.cache["pg"]["sql_state_code"])
+            where IsString(log.cache["pg"]["sql_state_code"]) and log.cache["pg"]["sql_state_code"]
+            != "" and log.cache["pg"]["sql_state_code"] != "00000"
+          - set(log.attributes["error.type"], log.attributes["db.response.status_code"])
+            where log.severity_number >= SEVERITY_NUMBER_ERROR and log.attributes["db.response.status_code"]
+            != nil
+          - set(log.attributes["exception.message"], log.cache["pg"]["message"]) where
+            log.severity_number >= SEVERITY_NUMBER_ERROR and IsString(log.cache["pg"]["message"])
+          - merge_maps(log.cache, ExtractPatterns(log.cache["pg"]["connection_from"],
+            "^(?P<client_address>[^:\\[\\]]+|\\[[^\\]]+\\]):(?P<client_port>\\d+)$"),
+            "insert") where IsString(log.cache["pg"]["connection_from"])
+          - set(log.attributes["client.address"], log.cache["client_address"]) where
+            log.cache["client_address"] != nil
+          - set(log.attributes["client.port"], Int(log.cache["client_port"])) where
+            log.cache["client_port"] != nil
+          - set(log.attributes["process.pid"], Int(log.cache["pg"]["process_id"]))
+            where IsString(log.cache["pg"]["process_id"])
+      transform/parse-golog:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - 'merge_maps(log.cache, ExtractPatterns(log.body, "^(?P<lvl>[A-Z]+): \\d{4}/\\d{2}/\\d{2}
+            "), "upsert")'
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d{4}/\\d{2}/\\d{2}
+            \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? (?P<lvl>[A-Z]+) "), "insert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-hubble-http:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body) and IsMatch(log.body, "^\\{\"flow\":")
+          context: log
+          statements:
+          - set(log.cache["flow"], ParseJSON(log.body)["flow"])
+          - set(log.cache["http"], log.cache["flow"]["l7"]["http"]) where log.cache["flow"]["l7"]["http"]
+            != nil
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.cache["http"]
+            != nil
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.cache["http"]
+            != nil and Int(log.cache["http"]["code"]) >= 400
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.cache["http"]
+            != nil and Int(log.cache["http"]["code"]) >= 500
+          - set(log.attributes["http.request.method"], log.cache["http"]["method"])
+            where IsString(log.cache["http"]["method"])
+          - set(log.attributes["http.response.status_code"], Int(log.cache["http"]["code"]))
+            where log.cache["http"]["code"] != nil
+          - set(log.attributes["error.type"], String(Int(log.cache["http"]["code"])))
+            where log.cache["http"]["code"] != nil and Int(log.cache["http"]["code"])
+            >= 500
+          - set(log.attributes["cilium.http.duration"], Double(log.cache["flow"]["l7"]["latency_ns"])
+            / 1000000000.0) where log.cache["flow"]["l7"]["latency_ns"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["url"], "^(?P<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://(?P<host>[^/:?#]+)(?::(?P<port>\\d+))?(?P<path>[^?#]*)(?:\\?(?P<query>[^#]*))?"),
+            "upsert") where IsString(log.cache["http"]["url"])
+          - set(log.attributes["url.full"], log.cache["http"]["url"]) where log.cache["scheme"]
+            != nil
+          - set(log.attributes["url.scheme"], log.cache["scheme"]) where log.cache["scheme"]
+            != nil
+          - set(log.attributes["server.address"], log.cache["host"]) where log.cache["host"]
+            != nil
+          - set(log.attributes["server.port"], Int(log.cache["port"])) where log.cache["port"]
+            != nil and log.cache["port"] != ""
+          - set(log.attributes["url.path"], log.cache["path"]) where log.cache["path"]
+            != nil and log.cache["path"] != ""
+          - set(log.attributes["url.query"], log.cache["query"]) where log.cache["query"]
+            != nil and log.cache["query"] != ""
+          - merge_maps(log.cache, ExtractPatterns(log.cache["http"]["protocol"], "^(?P<proto_name>[A-Za-z]+)/(?P<proto_version>[0-9.]+)$"),
+            "upsert") where IsString(log.cache["http"]["protocol"])
+          - set(log.attributes["network.protocol.name"], ToLowerCase(log.cache["proto_name"]))
+            where log.cache["proto_name"] != nil
+          - set(log.attributes["network.protocol.version"], log.cache["proto_version"])
+            where log.cache["proto_version"] != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"key\":\"(?i:user-agent)\",\"value\":\"(?P<ua>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert") where log.cache["http"] != nil
+          - set(log.attributes["user_agent.original"], log.cache["ua"]) where log.cache["ua"]
+            != nil and log.cache["ua"] != ""
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"key\":\"(?i:x-forwarded-for)\",\"value\":\"\\s*(?P<xff>[^,\"
+            ]+)"), "upsert") where log.cache["http"] != nil
+          - set(log.attributes["client.address"], log.cache["xff"]) where log.cache["xff"]
+            != nil and log.cache["xff"] != ""
+          - set(log.attributes["cilium.backend.namespace"], log.cache["flow"]["source"]["namespace"])
+            where log.cache["http"] != nil and IsString(log.cache["flow"]["source"]["namespace"])
+          - set(log.attributes["cilium.backend.pod"], log.cache["flow"]["source"]["pod_name"])
+            where log.cache["http"] != nil and IsString(log.cache["flow"]["source"]["pod_name"])
+          - set(log.attributes["cilium.backend.workload"], log.cache["flow"]["source"]["workloads"][0]["name"])
+            where log.cache["http"] != nil and log.cache["flow"]["source"]["workloads"]
+            != nil
+      transform/parse-json:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - set(log.cache["json"], ParseJSON(log.body)) where IsMatch(log.body, "^\\s*\\{")
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["level"]) where
+            IsString(log.cache["json"]["level"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["@level"]) where
+            log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["@level"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["severity"]) where
+            log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["severity"])
+          - set(log.attributes["o11y.log.level"], log.cache["json"]["lvl"]) where
+            log.attributes["o11y.log.level"] == nil and IsString(log.cache["json"]["lvl"])
+          - set(log.attributes["exception.message"], log.cache["json"]["error"]) where
+            IsString(log.cache["json"]["error"]) and log.cache["json"]["error"] !=
+            ""
+          - set(log.attributes["exception.message"], log.cache["json"]["err"]) where
+            log.attributes["exception.message"] == nil and IsString(log.cache["json"]["err"])
+            and log.cache["json"]["err"] != ""
+          - set(log.attributes["exception.stacktrace"], log.cache["json"]["stacktrace"])
+            where IsString(log.cache["json"]["stacktrace"])
+          - set(log.attributes["exception.stacktrace"], log.cache["json"]["stack"])
+            where log.attributes["exception.stacktrace"] == nil and IsString(log.cache["json"]["stack"])
+      transform/parse-klog:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^(?P<lvl>[IWEF])\\d{4}
+            \\d{2}:\\d{2}:\\d{2}"), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert")
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=(?P<err>[^\\s\"]\\S*)"),
+            "insert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"]
+            != nil and log.cache["err"] != ""
+      transform/parse-logfmt:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)level=\"?(?P<lvl>[A-Za-z]+)"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert")
+          - merge_maps(log.cache, ExtractPatterns(log.body, "(?:^|\\s)err(?:or)?=(?P<err>[^\\s\"]\\S*)"),
+            "insert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"]
+            != nil and log.cache["err"] != ""
+      transform/parse-redis:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\d+:[MCSX] \\d{2} \\w{3}
+            \\d{4} [\\d:.]+ (?P<lvl>[.*#-]) "), "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-uvicorn:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\S+\\s+(?P<lvl>DEBUG|INFO|WARNING|ERROR|CRITICAL)\\s{2,}"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+      transform/parse-zap-console:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - IsString(log.body)
+          context: log
+          statements:
+          - merge_maps(log.cache, ExtractPatterns(log.body, "^\\S+\\t(?P<lvl>[a-zA-Z]+)\\t"),
+            "upsert")
+          - set(log.attributes["o11y.log.level"], log.cache["lvl"]) where log.cache["lvl"]
+            != nil
+          - merge_maps(log.cache, ExtractPatterns(log.body, "\"error\":\\s*\"(?P<err>(?:[^\"\\\\]|\\\\.)*)\""),
+            "upsert")
+          - set(log.attributes["exception.message"], log.cache["err"]) where log.cache["err"]
+            != nil and log.cache["err"] != ""
+      transform/prometheus:
+        error_mode: ignore
+        metric_statements:
+        - context: resource
+          statements:
+          - set(resource.attributes["k8s.namespace.name"], resource.attributes["namespace"])
+            where resource.attributes["namespace"] != nil
+          - set(resource.attributes["k8s.pod.name"], resource.attributes["pod"]) where
+            resource.attributes["pod"] != nil
+          - set(resource.attributes["k8s.container.name"], resource.attributes["container"])
+            where resource.attributes["container"] != nil
+          - delete_matching_keys(resource.attributes, "^(namespace|pod|container|server\\.port|url\\.scheme)$")
+          - delete_key(resource.attributes, "service.name") where resource.attributes["k8s.pod.name"]
+            != nil
+      transform/severity:
+        error_mode: ignore
+        log_statements:
+        - conditions:
+          - log.attributes["o11y.log.level"] != nil
+          context: log
+          statements:
+          - set(log.severity_number, SEVERITY_NUMBER_TRACE) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(trace|trc)$")
+          - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(debug|dbg|verbose|\\.|-)$")
+          - set(log.severity_number, SEVERITY_NUMBER_INFO) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(i|info|inf|information|notice|log|\\*)$")
+          - set(log.severity_number, SEVERITY_NUMBER_WARN) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(w|warn|warning|wrn|#)$")
+          - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(e|error|err|eror)$")
+          - set(log.severity_number, SEVERITY_NUMBER_FATAL) where log.severity_number
+            == SEVERITY_NUMBER_UNSPECIFIED and IsMatch(log.attributes["o11y.log.level"],
+            "^(?i)(f|fatal|ftl|crit|critical|crt|panic|dpanic|alert|emerg)$")
+          - delete_key(log.attributes, "o11y.log.level")
+      transform/talos:
+        error_mode: ignore
+        log_statements:
+        - context: log
+          statements:
+          - set(log.attributes["service.name"], log.attributes["talos-service"])
+          - set(log.attributes["service.name"], "kernel") where log.attributes["service.name"]
+            == nil and log.attributes["facility"] != nil
+          - set(log.attributes["service.name"], "talos") where log.attributes["service.name"]
+            == nil
+          - delete_matching_keys(log.attributes, "^talos-(service|time|level)$")
+    receivers:
+      file_log/pods:
+        include:
+        - /var/log/pods/*/*/*.log
+        include_file_name: false
+        include_file_path: true
+        operators:
+        - add_metadata_from_filepath: true
+          type: container
+        start_at: beginning
+        storage: file_storage
+      host_metrics:
+        collection_interval: 30s
+        root_path: /hostfs
+        scrapers:
+          cpu: {}
+          disk: {}
+          filesystem:
+            exclude_fs_types:
+              fs_types:
+              - autofs
+              - binfmt_misc
+              - bpf
+              - cgroup2
+              - configfs
+              - debugfs
+              - devpts
+              - devtmpfs
+              - fusectl
+              - hugetlbfs
+              - mqueue
+              - nsfs
+              - overlay
+              - proc
+              - pstore
+              - securityfs
+              - selinuxfs
+              - squashfs
+              - sysfs
+              - tracefs
+              - tmpfs
+              match_type: strict
+            exclude_mount_points:
+              match_type: regexp
+              mount_points:
+              - /dev/.*
+              - /proc/.*
+              - /sys/.*
+              - /run/.*
+              - /var/run/.*
+              - /var/lib/kubelet/.*
+              - /var/lib/containerd/.*
+          load: {}
+          memory: {}
+          network: {}
+          paging: {}
+          processes: {}
+          system: {}
+      kubelet_stats:
+        auth_type: serviceAccount
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        collection_interval: 30s
+        endpoint: https://${env:K8S_NODE_IP}:10250
+        extra_metadata_labels:
+        - container.id
+        - k8s.volume.type
+        metric_groups:
+        - node
+        - pod
+        - container
+        - volume
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: kubernetes-pods
+            kubernetes_sd_configs:
+            - role: pod
+            relabel_configs:
+            - action: keep
+              regex: "true"
+              source_labels:
+              - __meta_kubernetes_pod_annotation_prometheus_io_scrape
+            - action: drop
+              regex: Pending|Succeeded|Failed|Completed
+              source_labels:
+              - __meta_kubernetes_pod_phase
+            - action: replace
+              regex: (https?)
+              source_labels:
+              - __meta_kubernetes_pod_annotation_prometheus_io_scheme
+              target_label: __scheme__
+            - action: replace
+              regex: (.+)
+              source_labels:
+              - __meta_kubernetes_pod_annotation_prometheus_io_path
+              target_label: __metrics_path__
+            - action: replace
+              regex: (.+);(\d+)
+              replacement: $$1:$$2
+              source_labels:
+              - __meta_kubernetes_pod_ip
+              - __meta_kubernetes_pod_annotation_prometheus_io_port
+              target_label: __address__
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+              - __meta_kubernetes_pod_container_name
+              target_label: container
+            scrape_interval: 30s
+      tcp_log/talos:
+        listen_address: 127.0.0.1:6050
+        operators:
+        - severity:
+            parse_from: attributes["talos-level"]
+          timestamp:
+            layout: 2006-01-02T15:04:05.999999999Z07:00
+            layout_type: gotime
+            parse_from: attributes["talos-time"]
+          type: json_parser
+        - from: attributes.msg
+          to: body
+          type: move
+        - if: 'body matches "^[a-z]+: +[a-z]+: \\["'
+          regex: '^(?P<facility>[a-z]+): +[a-z]+: \[(?P<kmsg_time>[^\]]+)\]: (?P<kmsg_msg>(?s).*)$'
+          timestamp:
+            layout: 2006-01-02T15:04:05.999999999Z07:00
+            layout_type: gotime
+            parse_from: attributes.kmsg_time
+          type: regex_parser
+        - from: attributes.kmsg_msg
+          if: attributes.kmsg_msg != nil
+          to: body
+          type: move
+        - field: attributes.kmsg_time
+          if: attributes.kmsg_time != nil
+          type: remove
+    service:
+      extensions:
+      - health_check
+      - file_storage
+      pipelines:
+        logs/parsers/ansi:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-ansi
+          receivers:
+          - routing/log-format
+        logs/parsers/bracketed:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-bracketed
+          receivers:
+          - routing/log-format
+        logs/parsers/cnpg-postgres:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-json
+          - transform/parse-cnpg-postgres
+          receivers:
+          - routing/log-format
+        logs/parsers/golog:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-golog
+          receivers:
+          - routing/log-format
+        logs/parsers/hubble-http:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-hubble-http
+          - transform/parse-logfmt
+          receivers:
+          - routing/log-format
+        logs/parsers/json:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-json
+          receivers:
+          - routing/log-format
+        logs/parsers/klog:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-klog
+          receivers:
+          - routing/log-format
+        logs/parsers/logfmt:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-logfmt
+          receivers:
+          - routing/log-format
+        logs/parsers/redis:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-redis
+          receivers:
+          - routing/log-format
+        logs/parsers/uvicorn:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-uvicorn
+          receivers:
+          - routing/log-format
+        logs/parsers/zap-console:
+          exporters:
+          - forward/parsed
+          processors:
+          - transform/parse-zap-console
+          receivers:
+          - routing/log-format
+        logs/pods:
+          exporters:
+          - routing/log-format
+          processors:
+          - memory_limiter
+          - k8s_attributes
+          - transform/identity
+          - transform/log-format
+          receivers:
+          - file_log/pods
+        logs/pods/export:
+          exporters:
+          - otlp_http
+          processors:
+          - transform/severity
+          - resource/cluster
+          - batch
+          receivers:
+          - routing/log-format
+          - forward/parsed
+        logs/talos:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - transform/talos
+          - groupbyattrs/talos
+          - transform/identity
+          - resource/cluster
+          - batch
+          receivers:
+          - tcp_log/talos
+        metrics/host:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - resource/hostmetrics
+          - transform/identity
+          - resource/cluster
+          - batch
+          receivers:
+          - host_metrics
+        metrics/kubelet:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - k8s_attributes
+          - transform/identity
+          - resource/no-log-format
+          - resource/kubelet
+          - resource/cluster
+          - batch
+          receivers:
+          - kubelet_stats
+        metrics/prometheus:
+          exporters:
+          - otlp_http
+          processors:
+          - memory_limiter
+          - groupbyattrs/prometheus
+          - transform/prometheus
+          - k8s_attributes
+          - transform/identity
+          - resource/no-log-format
+          - resource/cluster
+          - batch
+          receivers:
+          - prometheus
+      telemetry:
+        metrics:
+          readers:
+          - periodic:
+              exporter:
+                otlp:
+                  endpoint: https://data.o11y.chezmoi.sh:4318/v1/metrics
+                  protocol: http/protobuf
+              interval: 15000
+        resource:
+          host.name: ${env:K8S_NODE_NAME}
+          k8s.cluster.name: ${env:K8S_CLUSTER_NAME}
+          service.name: o11y-agent
+  env:
+  - name: K8S_CLUSTER_NAME
+    value: rhodes.akn
+  - name: K8S_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: K8S_NODE_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
+  - name: K8S_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: GOMEMLIMIT
+    value: 400MiB
+  hostNetwork: true
+  image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.162.0
+  mode: daemonset
+  podAnnotations:
+    o11y.chezmoi.sh/log-format: zap-console
+  podSecurityContext:
+    runAsGroup: 0
+    runAsUser: 0
+    seccompProfile:
+      type: RuntimeDefault
+  priorityClassName: system-node-critical
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+  serviceAccount: o11y-agent
+  targetAllocator:
+    allocationStrategy: per-node
+    enabled: true
+    image: oci.chezmoi.sh/ghcr.io/open-telemetry/opentelemetry-operator/target-allocator:0.162.0
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    prometheusCR:
+      enabled: true
+      podMonitorSelector: {}
+      scrapeInterval: 30s
+      serviceMonitorSelector: {}
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+    serviceAccount: o11y-agent-targetallocator
+  tolerations:
+  - operator: Exists
+  volumeMounts:
+  - mountPath: /var/log/pods
+    name: varlogpods
+    readOnly: true
+  - mountPath: /hostfs
+    mountPropagation: HostToContainer
+    name: hostfs
+    readOnly: true
+  - mountPath: /var/lib/o11y-agent
+    name: state
+  volumes:
+  - hostPath:
+      path: /var/log/pods
+      type: Directory
+    name: varlogpods
+  - hostPath:
+      path: /
+      type: Directory
+    name: hostfs
+  - hostPath:
+      path: /var/lib/o11y-agent
+      type: DirectoryOrCreate
+    name: state
