@@ -28,8 +28,9 @@ on:
       - projects/*/src/**/.application.patch
       - projects/**/*.nix
       - projects/**/flake.lock
+      - fleet/**/*.nix
+      - fleet/**/flake.lock
       - catalog/nix/**
-      - catalog/flakes/**
       - catalog/kubernetes/**
       - scripts/oripathy:inventory
       - scripts/oripathy:seal

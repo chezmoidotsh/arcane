@@ -1,0 +1,125 @@
+# =============================================================================
+# omni LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs Omni (omni.chezmoi.sh) with Caddy HTTPS termination + path routing to
+# the co-located Dex OIDC provider (/dex).
+#
+# Usage:
+#   mise run lxc:secrets:rotate                            # Generate Dex admin hash → nix/secrets/omni.sops.env
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from Pulumi → nix/secrets/caddy.sops.env
+#   mise run lxc:build                                     # Build the LXC tarball with secrets baked in
+#   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> --vmid <vmid>       # Upgrade a running LXC in place
+#
+# Typical workflow (first time):
+#   mise run lxc:secrets:rotate            # Sets the Dex admin password
+#   mise run lxc:secrets:sync              # Requires Pulumi (pulumi up first)
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#
+# Typical workflow (upgrade):
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#   mise run lxc:upgrade -- pve.lan --vmid <vmid>
+#
+# Secret files (SOPS/age-encrypted, baked into the image at build time):
+#   nix/secrets/omni.sops.env    DEX_ADMIN_PASSWORD_HASH    (operator-provided — bcrypt hash for the Dex admin user)
+#   nix/secrets/caddy.sops.env   CLOUDFLARE_API_TOKEN       (Pulumi — DNS-01 ACME for omni.chezmoi.sh)
+#
+# File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - Pulumi CLI with access to the omni_core.live stack (see pulumi/.mise.toml); run pulumi up first
+#   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
+#   - htpasswd (apache2-utils / httpd-tools) for lxc:secrets:rotate
+#   - SSH key-based access to root@<pve-host> (for lxc:push / lxc:upgrade)
+# =============================================================================
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secret Management — Dex admin password hash
+# -----------------------------------------------------------------------------
+# Generates a bcrypt hash for the Dex admin user and writes it to
+# nix/secrets/omni.sops.env, SOPS-encrypted.
+#
+# Run once before the first build, and again whenever the password needs
+# to be rotated.
+
+[tasks."lxc:secrets:rotate"]
+description = "Generate Dex admin password hash and write nix/secrets/omni.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  command -v htpasswd >/dev/null 2>&1 ||
+    { echo "[ERROR] htpasswd not found — install apache2-utils (Debian/Ubuntu) or httpd-tools (RHEL)." >&2; exit 1; }
+
+  echo -n "Dex admin password: " >&2
+  read -r -s password
+  echo >&2
+  [[ -n "${password}" ]] || { echo "[ERROR] Empty password." >&2; exit 1; }
+
+  HASH=$(htpasswd -bnBC 12 "" "${password}" | tr -d ':\n')
+  [[ -n "${HASH}" ]] || { echo "[ERROR] Hash generation failed." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/nix/secrets"
+  TMPFILE="{{ config_root }}/nix/secrets/.tmp.$$.omni.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'DEX_ADMIN_PASSWORD_HASH=%s\n' "${HASH}" > "${TMPFILE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/nix/secrets/omni.sops.env"
+
+  echo "[SUCCESS] nix/secrets/omni.sops.env written." >&2
+'''
+
+[tools]
+sops = "latest"
+
+# -----------------------------------------------------------------------------
+# Secret Management — Cloudflare DNS-01 token
+# -----------------------------------------------------------------------------
+# Reads the omniDns01Token output of the omni_core.live Pulumi stack
+# (pulumi/) and writes it into nix/secrets/caddy.sops.env with `sops set`,
+# which leaves every other key of that file untouched. `mise exec` runs pulumi
+# from pulumi/ so that its .mise/env.yaml (stack name and passphrase) is
+# loaded: a task `dir` alone does not load the env of that directory.
+#
+# Requires `pulumi up` to have run in pulumi/ first.
+
+[tasks."lxc:secrets:sync"]
+description = "Fetch Cloudflare DNS-01 token from Pulumi and write nix/secrets/caddy.sops.env"
+dir = "{{ config_root }}/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(mise exec -- pulumi stack output omniDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  sops set --input-type dotenv --output-type dotenv \
+    "{{ config_root }}/nix/secrets/caddy.sops.env" \
+    '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in nix/secrets/caddy.sops.env" >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with secrets baked in)
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)
+
+# -----------------------------------------------------------------------------
+# Architecture diagram
+# -----------------------------------------------------------------------------
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of omni.core"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]

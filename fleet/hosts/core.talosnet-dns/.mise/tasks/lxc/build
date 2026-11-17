@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the talosnet-dns LXC template"
+# [MISE] dir="{{config_root}}"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# Shared library, left next to the o11y-datastore LXC that still uses it.
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+
+lxc_init "talosnet-dns" "${CONFIG_ROOT}/nix" _talosnet_dns
+lxc_secret "secrets/bind.sops.env" BIND_TSIG_SECRET
+lxc_build

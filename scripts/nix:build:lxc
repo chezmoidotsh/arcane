@@ -20,8 +20,8 @@ Options:
   --output-name <basename> Rename the first output tarball to <basename>.tar.xz
 
 Examples:
-  $(basename "$0") projects/chezmoi.sh/src/infrastructure/proxmox/zot-registry
-  $(basename "$0") --impure --output-name oci-proxy.2.1.17-amd64 projects/chezmoi.sh/src/infrastructure/proxmox/zot-registry
+  $(basename "$0") fleet/hosts/core.oci-registry/nix
+  $(basename "$0") --impure --output-name oci-registry.2.1.17-amd64 fleet/hosts/core.oci-registry/nix
 
 Upload to Proxmox after building:
   scp <path-to-flake-dir>/<name>.tar.xz root@<proxmox-host>:/var/lib/vz/template/cache/<name>.tar.xz
