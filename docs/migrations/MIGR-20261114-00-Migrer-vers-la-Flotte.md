@@ -34,7 +34,7 @@ chaque élément ayant son README.
 | 3     | Activer le lint de structure                                        | faite                             |
 | 4     | Déplacer le catalogue                                               | faite                             |
 | 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | à faire                           |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer |
 | 7     | Les hôtes du groupe `akn`                                           | à faire                           |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                           |
 | 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                           |
@@ -159,11 +159,11 @@ confirmer** par un essai sur une copie de l'état :
 
 `StackReference` à mettre à jour (vérifié le 2026-11-15, `grep -rn "organization/" --include='*.ts' projects catalog`) :
 
-| Cible lue                                             | Lue par                                                                                                                                             |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `organization/chezmoi-sh-infra/chezmoi_sh.live`       | `hass`, `kazimierz.akn`, `lungmen.akn`, `rhodes.akn` (`stack/pocket-id/index.ts`), `rimbilliton.akn` (`stack/pocket-id.ts`)                         |
-| `organization/kazimierz-akn-infra/kazimierz_akn.live` | `rimbilliton.akn` (`stack/oci/compartments.ts`), `catalog/pulumi/lib/src/pangolin.ts` (règles `edgeAccess`, lues par `rhodes.akn` et `lungmen.akn`) |
-| `organization/amiya-akn-infra/amiya_akn.live`         | `rhodes.akn` (`stack/cloudnative-pg.ts`) : référence vers un projet qui n'existe plus, à supprimer plutôt qu'à renommer (à confirmer)               |
+| Cible lue                                             | Lue par                                                                                                                                                                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `organization/chezmoi-sh-infra/chezmoi_sh.live`       | `hass`, `kazimierz.akn`, `lungmen.akn`, `rhodes.akn` (`stack/pocket-id/index.ts`), `rimbilliton.akn` (`stack/pocket-id.ts`), `kazimierz.akn` et `rimbilliton.akn` (`chezmoiShCompartmentId`, après l'étape 6) |
+| `organization/kazimierz-akn-infra/kazimierz_akn.live` | `catalog/pulumi/lib/src/pangolin.ts` (règles `edgeAccess`, lues par `rhodes.akn` et `lungmen.akn`)                                                                                                            |
+| `organization/amiya-akn-infra/amiya_akn.live`         | `rhodes.akn` (`stack/cloudnative-pg.ts`) : référence vers un projet qui n'existe plus, à supprimer plutôt qu'à renommer (à confirmer)                                                                         |
 
 Ordre : mettre à jour les lecteurs et la cible dans la même fenêtre, et rejouer un `pulumi preview` sur chaque lecteur.
 
@@ -306,12 +306,46 @@ compartiments `kazimierz.akn` et `rimbilliton.akn` sont des enfants ; `rimbillit
 - **Ce qui change** : le code du compartiment `chezmoiSh` passe de la pile de `kazimierz` à celle de `chezmoi_sh`, qui
   devient `base` à l'étape 9 ; `kazimierz` et `rimbilliton` le lisent depuis cette pile (`chezmoiShCompartmentId`).
 - **Nature** : migration manuelle, un `pulumi state move` du compartiment de la pile de `kazimierz` vers celle de
-  `chezmoi_sh` (**à confirmer** : version de Pulumi, comportement entre deux piles à phrases secrètes différentes).
-- **Risque** : tant que ce déplacement n'est pas fait, détruire la pile de `kazimierz` (`pulumi destroy`) ou supprimer
-  cette ressource ferait détruire le parent d'`exusiai`. Après le déplacement, `exusiai` ne dépend plus d'`horn`.
-- **Vérification** : `pulumi preview` vide dans les trois piles (`kazimierz`, `chezmoi_sh`, `rimbilliton`), sans
-  `replace` ni `delete` sur un compartiment.
+  `chezmoi_sh` (**à confirmer** : comportement entre deux piles à phrases secrètes différentes, même point ouvert qu'à
+  l'étape 5, à essayer sur une copie de l'état).
+- **Vérification** : `pulumi preview` sans `replace` ni `delete` sur un compartiment dans les trois piles. Les aperçus
+  ne sont pas strictement vides : `chezmoi_sh` gagne une sortie, `kazimierz` en perd une, `rimbilliton` perd une
+  `StackReference` en lecture seule.
 - **Retour arrière** : `pulumi state move` inverse, ou `pulumi stack import` de l'état exporté avant l'étape.
+- **Constaté** : le compartiment est déclaré dans `projects/chezmoi.sh/src/infrastructure/pulumi/stack/oci.ts`
+  (ressource `chezmoiSh`, même type, même nom logique, sans parent ni option : aucun alias nécessaire) et exporté sous
+  `chezmoiShCompartmentId`. `kazimierz.akn` et `rimbilliton.akn` le lisent par la `StackReference` vers `chezmoi_sh`
+  qu'ils avaient déjà (groupes Pocket-Id), avec `requireOutput` : si la sortie manque, le programme échoue au lieu de
+  planifier le déplacement des compartiments enfants à la racine du tenancy. `kazimierz` n'exporte plus
+  `chezmoiShCompartmentId` et `rimbilliton` n'a plus de `StackReference` vers `kazimierz` : `exusiai` ne dépend plus
+  d'`horn`. Le fournisseur est celui par défaut (`@pulumi/oci` 4.20.0) dans les deux piles ; `chezmoi_sh` n'en avait pas
+  : la dépendance et la clé de configuration `oci:region` (`eu-paris-1`) sont ajoutées. Le `compartmentId` d'un
+  compartiment OCI se modifie en place (même OCID) : changer sa source ne peut pas remplacer les compartiments enfants.
+  Le compartiment n'a pas de `protect` et `enableDelete` n'est pas positionné : d'après la documentation du fournisseur,
+  le retirer d'un programme le sort de l'état sans le supprimer dans OCI, et en créer un adopte le compartiment existant
+  de même nom (comportement documenté, non essayé). Reste **à confirmer** ce que `state move` rapporte sur la dépendance
+  du compartiment enfant à `chezmoiSh`.
+- **Manuel, avant la fusion**, dans cet ordre : terminer le `state move` de l'étape 5 ; sauvegarder les trois états ;
+  ajouter à la main les cinq variables `TF_VAR_*` d'accès OCI au `.mise/env.yaml` (SOPS) de `chezmoi.sh` (elles sont
+  dans ceux de `kazimierz.akn` et `rimbilliton.akn` ; dès lors, chaque exécution de `chezmoi_sh` les exige) ;
+  `pulumi state move` du compartiment de `kazimierz_akn.live` vers `chezmoi_sh.live` ; `preview` puis `up` de
+  `chezmoi_sh` (la sortie doit exister) ; `preview` puis `up` de `kazimierz` et de `rimbilliton`. Arrêt au moindre
+  `replace` ou `delete` sur un compartiment. Le déroulé détaillé est dans la pull request de l'étape.
+- **Risque** : l'ordre compte.
+  - Un `pulumi up` de `chezmoi_sh` depuis cette branche avant le `state move` de l'étape 5 révoquerait les jetons Omni
+    et du registre.
+  - Un `pulumi up` de `chezmoi_sh` avant le `state move` du compartiment l'adopterait par son nom : deux piles le
+    porteraient.
+  - Un `pulumi up` de `kazimierz` après l'export par `chezmoi_sh` mais avant le `state move` planifierait la suppression
+    de `chezmoiSh` de son état.
+- **À trancher** : l'ADR-017 côté producteur est respecté (la pile d'amorçage `chezmoi.sh` exporte une valeur non
+  secrète), mais l'ADR dit qu'après l'amorçage les données partagées passent par OpenBao, jamais par `StackReference` :
+  confirmer que lire cet OCID depuis `chezmoi.sh` est permis, ou prévoir son passage dans OpenBao avec les identifiants
+  des groupes Pocket-Id.
+- **À trancher** : `protect: true` sur le compartiment parent, non ajouté ici (il apparaîtrait dans un aperçu censé ne
+  porter aucun changement de ressource) ; proposé en suite.
+- **À trancher** : la clé d'API OCI vit désormais dans trois fichiers chiffrés ; la tâche `oci:apikey:rotate` de
+  `kazimierz` supprime l'ancienne clé dans OCI, ce qui révoquerait les autres copies : décider où se fait la rotation.
 
 ### 7. Les hôtes du groupe `akn`
 
