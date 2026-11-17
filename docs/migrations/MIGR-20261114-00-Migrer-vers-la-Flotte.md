@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État                                                                                                                 |
-| ----- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                                                                |
-| 2     | Créer les bases de catalogue manquantes                             | faite                                                                                                                |
-| 3     | Activer le lint de structure                                        | faite                                                                                                                |
-| 4     | Déplacer le catalogue                                               | faite                                                                                                                |
-| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                                                                    |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                    |
-| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                         |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 code prêt, PR 2, 3 et 4 à faire |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                                                              |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                              |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                              |
+| Étape | Contenu                                                             | État                                                                                                                   |
+| ----- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                                                                                                                  |
+| 2     | Créer les bases de catalogue manquantes                             | faite                                                                                                                  |
+| 3     | Activer le lint de structure                                        | faite                                                                                                                  |
+| 4     | Déplacer le catalogue                                               | faite                                                                                                                  |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                                                                      |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                      |
+| 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                           |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 et 2 code prêt, PR 3 et 4 à faire |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                                                                |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                |
 
 ## Avant de commencer
 
@@ -459,8 +459,7 @@ propriétaire.
   repartitionnent la cible). Entre le renommage de la pile et la fusion, `rhodes.akn` et `lungmen.akn` sur `main`
   échouent sur leur `StackReference` : fusionner vite. Entre la bascule de l'hôte (point 5) et les trois `apply` (points
   7 et 8), les piles gardent l'ancienne URL, qui ne répond plus : ne rien appliquer dans les clusters dans cet
-  intervalle. Dans l'aperçu de `lungmen.akn`, ne juger
-  que les lignes liées à Pangolin.
+  intervalle. Dans l'aperçu de `lungmen.akn`, ne juger que les lignes liées à Pangolin.
 - **À confirmer** : le comportement de `pulumi stack rename` entre deux projets sur le backend S3 maison et
   l'emplacement de l'état dans le bucket ; la validité de la phrase secrète et du sel après le renommage ; la réécriture
   par OCI des politiques IAM qui nomment le compartiment (aucune n'est déclarée dans le dépôt) ; le nœud Tailscale suit
@@ -630,8 +629,8 @@ ce cas. Pour chaque cluster :
   `spec.sources[].path` de chaque `Application` est mis à jour en place, rien n'est recréé.
 - **Risque** (à vérifier avant la fusion) : les applications tournent avec `prune: true` automatique. Avant de
   fusionner, `diff -r` entre les deux copies doit être vide, et toute branche ouverte qui touche le cluster doit être
-  portée sur la copie. Sinon, ce qui n'existe que sous `projects/` est élagué à la bascule : les `Application` correspondantes
-  sont supprimées et les objets des bases sont élagués.
+  portée sur la copie. Sinon, ce qui n'existe que sous `projects/` est élagué à la bascule : les `Application`
+  correspondantes sont supprimées et les objets des bases sont élagués.
 - **Risque** : après la fusion, seule la copie sous `fleet/` est déployée : modifier `projects/lungmen.akn` ne fait
   silencieusement rien. Geler les changements jusqu'à la pull request 4.
 - **À confirmer** : `argocd appset generate` avec les vrais secrets de cluster ; après la fusion, `argocd app list`
@@ -642,8 +641,8 @@ ce cas. Pour chaque cluster :
 ### Détail de l'étape 8 : `lungmen.akn`, pull request 4
 
 - **Constaté** : `projects/lungmen.akn/` est supprimé (892 fichiers suivis). Depuis la pull request 2, ArgoCD lit
-  `fleet/clusters/akn.lungmen/kubernetes/` : plus rien ne lit l'ancien arbre. Le programme Pulumi, volontairement
-  absent de la pull request 1, se déplace ici de `projects/lungmen.akn/src/infrastructure/pulumi/` vers
+  `fleet/clusters/akn.lungmen/kubernetes/` : plus rien ne lit l'ancien arbre. Le programme Pulumi, volontairement absent
+  de la pull request 1, se déplace ici de `projects/lungmen.akn/src/infrastructure/pulumi/` vers
   `fleet/clusters/akn.lungmen/pulumi/`. Le projet est renommé `lungmen-akn-infra` en `lungmen-akn` (`Pulumi.yaml`,
   `package.json`, les quatre clés de configuration du projet dans `Pulumi.lungmen_akn.live.yaml`) ; le nom de pile
   `lungmen_akn.live` ne change pas. Aucune `StackReference` ne lit `lungmen-akn-infra`. Le `.sops.yaml` du cluster gagne
@@ -653,11 +652,11 @@ ce cas. Pour chaque cluster :
   `velero:backup`, le script de découverte de `cnpg-backup`, la tâche et le workflow DERP. Le modèle Omni s'utilise
   depuis `fleet/clusters/akn.lungmen/omni/`. Le code à double arborescence reste, pour `rhodes.akn`.
 - **Constaté** : `wiki:lint` vérifie les liens de chaque page, donc cette pull request corrige les liens qui visaient
-  l'arbre supprimé dans trois pages (`Initialiser-Lungmen`, `Plan-de-Reprise-apres-Sinistre`, l'expérimentation
-  Proxmox CSI et CCM). Les 24 autres mentions textuelles de `projects/lungmen.akn` attendent l'étape 11.
+  l'arbre supprimé dans trois pages (`Initialiser-Lungmen`, `Plan-de-Reprise-apres-Sinistre`, l'expérimentation Proxmox
+  CSI et CCM). Les 24 autres mentions textuelles de `projects/lungmen.akn` attendent l'étape 11.
 - **Risque** : toute branche ouverte qui touche `projects/lungmen.akn` entre en conflit et doit être rebasée sur
-  `fleet/`. Entre le renommage de l'état et la fusion, ne pas lancer Pulumi pour
-  `lungmen.akn` depuis `main` : le nom du projet ne correspond plus à l'état.
+  `fleet/`. Entre le renommage de l'état et la fusion, ne pas lancer Pulumi pour `lungmen.akn` depuis `main` : le nom du
+  projet ne correspond plus à l'état.
 - **À confirmer** : `pulumi stack rename` d'un projet à l'autre sur le backend S3 (à défaut : export, remplacement du
   nom de projet dans les URN, `pulumi stack init` puis `pulumi stack import`, ancienne pile supprimée après la
   vérification) ; le déchiffrement des clés de configuration après le renommage de leur préfixe ; un `preview` vide.
@@ -666,12 +665,12 @@ ce cas. Pour chaque cluster :
      sous `fleet/`) ;
   2. sauvegarder l'état (`pulumi stack export`), puis répéter l'opération sur une copie ;
   3. renommer la pile (`pulumi stack rename organization/lungmen-akn/lungmen_akn.live`) ;
-  4. vérifier `pulumi stack --show-name` (attendu : `lungmen_akn.live`, variable `PULUMI_STACK`) et que la
-     configuration se déchiffre ;
+  4. vérifier `pulumi stack --show-name` (attendu : `lungmen_akn.live`, variable `PULUMI_STACK`) et que la configuration
+     se déchiffre ;
   5. `pulumi preview` vide : tout `create`, `replace`, `delete` ou `update` arrête l'opération ;
   6. fusionner, puis `omnictl cluster template diff` depuis `fleet/clusters/akn.lungmen/omni/` (attendu : aucun écart).
-- **Retour arrière** : avant la fusion, renommer la pile vers `lungmen-akn-infra` ou réimporter l'export ; après, `git
-  revert` puis le même renommage. ArgoCD n'est pas touché dans les deux cas.
+- **Retour arrière** : avant la fusion, renommer la pile vers `lungmen-akn-infra` ou réimporter l'export ; après,
+  `git revert` puis le même renommage. ArgoCD n'est pas touché dans les deux cas.
 - **À faire à la fin de l'étape 8** (après `rhodes.akn`) : retirer la moitié `projects/` du code à double arborescence
   et la condition du `seed`.
 
@@ -682,20 +681,21 @@ ce cas. Pour chaque cluster :
   `src/infrastructure/kubernetes` devient `kubernetes/src/system`, `src/argocd` devient `kubernetes/src/argocd`, idem
   pour `dist/` ; `src/bootstrap.applications.yaml` va dans `kubernetes/bootstrap.applications.yaml` ; le modèle Omni va
   dans `omni/` (dupliqué mais inerte) et `docs/assets` dans `assets/`. Les quatre tâches `dr:*` de
-  `docs/disaster-recovery/.mise.toml` sont fusionnées dans le `.mise.toml` racine, et
-  `patch-recovery-source` va dans `.mise/tasks/dr/cnpg/`. `.sops.yaml` ne demande qu'une réécriture de `path_regex`,
-  sans rechiffrement. Le `dist/` copié est identique octet à octet à l'ancien, les `kustomize build` de `seed.apps` et
-  de `shoot.apps` donnent le même résultat, et la simulation des ApplicationSets avec et sans la copie est identique :
-  aucun ne pointe vers `akn.rhodes`, et aucun motif de génération ne couvre `fleet/clusters/*`.
+  `docs/disaster-recovery/.mise.toml` sont fusionnées dans le `.mise.toml` racine, et `patch-recovery-source` va dans
+  `.mise/tasks/dr/cnpg/`. `.sops.yaml` ne demande qu'une réécriture de `path_regex`, sans rechiffrement. Le `dist/`
+  copié est identique octet à octet à l'ancien, les `kustomize build` de `seed.apps` et de `shoot.apps` donnent le même
+  résultat, et la simulation des ApplicationSets avec et sans la copie est identique : aucun ne pointe vers
+  `akn.rhodes`, et aucun motif de génération ne couvre `fleet/clusters/*`.
 - **Constaté** : `pulumi/` n'est pas dupliqué (même raison que pour `lungmen.akn`) : il se déplace en pull request 4,
   avec le renommage `rhodes-akn-infra` en `rhodes-akn`.
 - **Constaté** : la copie garde les anciens chemins `projects/rhodes.akn/…` à cinq endroits, pour que le `dist/` reste
-  identique et que rien ne change dans le cluster : `bootstrap.applications.yaml`, `seed.apps/shoot.applicationset.yaml`,
-  les chemins factices de `shoot.apps` et les trois `.application.patch` (`pocket-id`, `vault`, `external-dns`). La
-  pull request 2 réécrit les patches et ajoute `"rhodes.akn"` à la liste `has $host (list …)` du `seed` ; la pull
-  request 3 pointe la source des `shoots` vers le `shoot.apps` de la copie et les `Application` `argocd` et `seed` du
-  `bootstrap` vers `fleet/clusters/akn.rhodes/kubernetes/{dist/argocd,src/argocd/sops,src/argocd/seed.apps}`, puis
-  applique à la main `kubectl apply --server-side -f fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml`.
+  identique et que rien ne change dans le cluster : `bootstrap.applications.yaml`,
+  `seed.apps/shoot.applicationset.yaml`, les chemins factices de `shoot.apps` et les trois `.application.patch`
+  (`pocket-id`, `vault`, `external-dns`). La pull request 2 réécrit les patches et ajoute `"rhodes.akn"` à la liste
+  `has $host (list …)` du `seed` ; la pull request 3 pointe la source des `shoots` vers le `shoot.apps` de la copie et
+  les `Application` `argocd` et `seed` du `bootstrap` vers
+  `fleet/clusters/akn.rhodes/kubernetes/{dist/argocd,src/argocd/sops,src/argocd/seed.apps}`, puis applique à la main
+  `kubectl apply --server-side -f fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml`.
 - **Constaté** : un seul changement d'outil partagé : `discover-cnpg.sh` lit depuis `projects/` seul un cluster présent
   dans les deux arborescences, pour ne pas lister deux fois les trois clusters CNPG de `rhodes.akn`. Les autres outils
   (dont `oripathy:inventory`) connaissent déjà les deux arborescences.
@@ -705,6 +705,32 @@ ce cas. Pour chaque cluster :
 - **À trancher** : l'emplacement des outils de reprise après sinistre (`.mise/tasks/` de la copie, ou un dossier du
   style de `docs/`) ; les pages de procédure de reprise visent toujours `projects/`.
 - **Retour arrière** : `git revert`, l'ancien code reste la référence et rien ne pointe vers la copie.
+
+### Détail de l'étape 8 : `rhodes.akn`, pull request 2
+
+- **Constaté** : le `seed` (`projects/rhodes.akn/src/argocd/seed.apps/shoot.applicationset.yaml`, et sa copie sous
+  `fleet/clusters/akn.rhodes/kubernetes/src/argocd/seed.apps/`, gardées identiques) ajoute `"rhodes.akn"` à
+  `has $host (list "lungmen.akn" "rhodes.akn")` dans les deux patches (`system`, `applications`). Le secret de cluster
+  du hub s'appelle `rhodes.akn` (`clusterCredentials` de `helmvalues/default.yaml`) sans annotation
+  `device.tailscale.com/hostname`, donc `$host` vaut `rhodes.akn` et les générateurs lisent
+  `fleet/clusters/akn.rhodes/kubernetes/dist/{system,apps}/*`.
+- **Constaté** : les trois `.application.patch` de la copie (`apps/pocket-id`, `apps/vault`, `system/external-dns`, src
+  et dist via `dist:render`) visent maintenant `fleet/clusters/akn.rhodes/kubernetes/dist/…` et `…/src/…/sops`. Après
+  rendu, les `dist/` des deux arborescences ne diffèrent que par ces trois fichiers. Les `Application` gardent leurs
+  noms et espaces de noms (basename) : seul `sources[].path` change.
+- **Constaté** : le `seed` lui-même est toujours servi depuis `projects/rhodes.akn/src/argocd/seed.apps`
+  (l'`Application` `seed` du `bootstrap` n'est repointée qu'en pull request 3), c'est pourquoi les deux copies du `seed`
+  sont modifiées.
+- **Manuel avant la fusion** : `diff -r projects/rhodes.akn/dist/apps fleet/clusters/akn.rhodes/kubernetes/dist/apps` et
+  `diff -r projects/rhodes.akn/dist/infrastructure/kubernetes fleet/clusters/akn.rhodes/kubernetes/dist/system` ne
+  montrent que les trois `.application.patch` (les applications élaguent) ; geler `rhodes.akn` ; après la fusion et la
+  synchro du `seed`, `argocd app list` : mêmes noms, aucune `Application` supprimée ni recréée, `sources[].path` vers
+  `fleet/`, `pocket-id`, `vault` et `external-dns` `Synced`/`Healthy`.
+- **Risque** : `rhodes.akn` est la production (OpenBao, Pocket-Id) ; un `dist/` divergent entre les copies serait
+  appliqué avec élagage. Les sources `sops` des trois patches changent de dossier : le déchiffrement KSOPS ne dépend pas
+  de `path_regex`, rien à rechiffrer.
+- **À confirmer** : `argocd appset generate` sur le `seed` (comme pour `lungmen.akn`).
+- **Retour arrière** : `git revert` ; les chemins reviennent vers `projects/`, toujours présent.
 
 ### Ce qui reste à confirmer à l'étape 8
 
@@ -723,9 +749,9 @@ kubectl apply --server-side -f fleet/clusters/akn.rhodes/kubernetes/bootstrap.ap
 
 `bootstrap.applications.yaml` se trouve désormais dans la copie, à
 `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml` (emplacement tranché ; ses chemins visent encore
-`projects/rhodes.akn/…` jusqu'à la pull request 3). Entre la pull request 1 et la pull request 4, geler
-les modifications du cluster, ou les appliquer aux deux copies. Les projets Pulumi des clusters sont renommés à la fin
-de leur migration (`lungmen-akn-infra` devient `lungmen-akn`, `rhodes-akn-infra` devient `rhodes-akn`, voir
+`projects/rhodes.akn/…` jusqu'à la pull request 3). Entre la pull request 1 et la pull request 4, geler les
+modifications du cluster, ou les appliquer aux deux copies. Les projets Pulumi des clusters sont renommés à la fin de
+leur migration (`lungmen-akn-infra` devient `lungmen-akn`, `rhodes-akn-infra` devient `rhodes-akn`, voir
 [Renommer un projet Pulumi](#renommer-un-projet-pulumi)).
 
 ### 9. Scinder les piles lourdes de `chezmoi_sh`
