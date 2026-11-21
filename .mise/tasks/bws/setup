@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#MISE description="Store the BWS access token and project ID in the local macOS Keychain"
+#MISE hide=true
+#USAGE flag "-f --force" help="Replace the entries already stored"
+#
+# The BWS token is deliberately NOT in [env] (.mise.toml): it stays in the macOS Keychain
+# and is only resolved by `fnox exec -- <cmd>` (see .fnox.toml). Remove it with bws:reset.
+#
+# Also runs as the postinstall hook of .mise.toml (`mise install`), only while an entry is
+# missing; without a terminal it only prints a hint instead of prompting.
+#
+# Requires: macOS (security).
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/bws:_lib"
+
+require_macos
+
+if [[ ! -t 0 ]]; then
+  echo "No terminal: run 'mise run bws:setup' to store the BWS credentials in the Keychain." >&2
+  exit 0
+fi
+
+force="${usage_force:-false}"
+need_token=false
+need_project=false
+if [[ "${force}" == "true" ]] || ! keychain_has "${ACCOUNT_TOKEN}"; then need_token=true; fi
+if [[ "${force}" == "true" ]] || ! keychain_has "${ACCOUNT_PROJECT}"; then need_project=true; fi
+
+if [[ "${need_token}" == "false" && "${need_project}" == "false" ]]; then
+  ok "Bitwarden credentials already in the Keychain (--force to replace, bws:reset to remove)."
+  exit 0
+fi
+
+callout \
+  "${C_BOLD}Welcome! This project uses fnox with Bitwarden Secrets Manager.${C_OFF}" \
+  "" \
+  "Its secrets are resolved on demand by 'fnox exec -- <cmd>'. To do so, fnox needs" \
+  "two values, kept in your macOS Keychain: never in a file, never in your shell" \
+  "environment." \
+  "" \
+  "Create the machine account and its access token (step by step):" \
+  "  https://bitwarden.com/help/access-tokens/" \
+  "The project ID is shown on the project page of the Secrets Manager web vault." \
+  "" \
+  "Paste each value below, then press Enter."
+
+if [[ "${need_token}" == "true" ]]; then
+  ask_hidden "Bitwarden Secrets Manager access token"
+  [[ -n "${REPLY}" ]] || fail "Empty access token, nothing stored."
+  keychain_put "${ACCOUNT_TOKEN}" "${REPLY}" || fail "Could not store the access token in the Keychain."
+fi
+
+if [[ "${need_project}" == "true" ]]; then
+  if [[ "${need_token}" == "true" ]]; then gap; fi
+  ask "Bitwarden Secrets Manager project ID"
+  [[ -n "${REPLY}" ]] || fail "Empty project ID, nothing stored for it."
+  keychain_put "${ACCOUNT_PROJECT}" "${REPLY}" || fail "Could not store the project ID in the Keychain."
+fi
+REPLY=""
+
+gap
+ok "Stored in the macOS Keychain. Try: fnox exec -- bws project list"

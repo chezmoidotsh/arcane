@@ -1,0 +1,76 @@
+# shellcheck shell=bash
+# Output and Keychain helpers shared by .mise/tasks/bws/*. Source it, do not run it.
+#
+#   callout <line>...  left-aligned callout under a thick coloured bar (┃), blank bar line above/below
+#   gap                thin vertical line (│) between two steps
+#   ask <label>        ● label : <input>  (visible, answer in REPLY)
+#   ask_hidden <label> same, input not echoed
+#   ok / warn / fail   ✔ / ! / ✘ one-line status (fail exits 1)
+#
+# Colours only on a terminal (and without NO_COLOR); the layout is identical in plain text.
+
+KEYCHAIN_SERVICE="fnox"      # same service as the `kc` provider of .fnox.toml
+ACCOUNT_TOKEN="bws-access-token"
+ACCOUNT_PROJECT="bws-project-id"
+
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+  C_BAR=$'\033[38;5;75m' C_DIM=$'\033[2m' C_OK=$'\033[38;5;78m' C_WARN=$'\033[38;5;215m'
+  C_ERR=$'\033[38;5;203m' C_BOLD=$'\033[1m' C_OFF=$'\033[0m'
+else
+  C_BAR="" C_DIM="" C_OK="" C_WARN="" C_ERR="" C_BOLD="" C_OFF=""
+fi
+
+callout() {
+  printf '\n%s┃%s\n' "${C_BAR}" "${C_OFF}"
+  local line
+  for line in "$@"; do
+    printf '%s┃%s  %s\n' "${C_BAR}" "${C_OFF}" "${line}"
+  done
+  printf '%s┃%s\n' "${C_BAR}" "${C_OFF}"
+}
+
+gap() { printf '%s│%s\n' "${C_DIM}" "${C_OFF}"; }
+
+ask() { # <label>: answer in REPLY
+  printf '%s●%s %s: ' "${C_BAR}" "${C_OFF}" "${1}"
+  read -r REPLY
+}
+
+ask_hidden() { # <label>: answer in REPLY, nothing echoed
+  printf '%s●%s %s %s(hidden)%s: ' "${C_BAR}" "${C_OFF}" "${1}" "${C_DIM}" "${C_OFF}"
+  # Always give the terminal its echo back, even on Ctrl-C.
+  trap 'stty echo 2>/dev/null || true' EXIT INT
+  read -rs REPLY
+  trap - EXIT INT
+  printf '\n'
+}
+
+ok() { printf '%s✔%s %s\n' "${C_OK}" "${C_OFF}" "${1}"; }
+warn() { printf '%s!%s %s\n' "${C_WARN}" "${C_OFF}" "${1}"; }
+fail() {
+  printf '%s✘%s %s\n' "${C_ERR}" "${C_OFF}" "${1}" >&2
+  exit 1
+}
+
+require_macos() {
+  local os
+  os="$(uname -s)"
+  if [[ "${os}" != "Darwin" ]]; then
+    echo "${0##*/}: macOS Keychain only; nothing to do on ${os}." >&2
+    exit 0
+  fi
+}
+
+keychain_has() { security find-generic-password -s "${KEYCHAIN_SERVICE}" -a "${1}" >/dev/null 2>&1; }
+
+# <account> <value>: the value goes through stdin of `security -i`, never through a command line.
+keychain_put() {
+  local value="${2}"
+  # security -i parses its input: escape \ and " so a pasted value cannot end the quoting, and refuse newlines.
+  [[ "${value}" != *$'\n'* ]] || return 1
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  printf 'add-generic-password -U -s %s -a %s -w "%s"\n' "${KEYCHAIN_SERVICE}" "${1}" "${value}" | security -i >/dev/null 2>&1
+}
+
+keychain_del() { security delete-generic-password -s "${KEYCHAIN_SERVICE}" -a "${1}" >/dev/null 2>&1; }
