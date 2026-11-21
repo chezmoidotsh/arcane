@@ -57,7 +57,7 @@ Decide from the path of the file that declares the version.
 | `projects/*/src/apps/**`, `projects/*/src/infrastructure/kubernetes/**`, `projects/rhodes.akn/src/argocd/**` | 1. Kubernetes (ArgoCD)                |
 | `catalog/kubernetes/**`                                                                                      | 2. Catalog (shared Kubernetes bases)  |
 | `fleet/hosts/core.<name>/nix/**`, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/**`     | 3. NixOS LXC appliance                |
-| `projects/kazimierz.akn/src/infrastructure/nixos/**`, `projects/rimbilliton.akn/src/infrastructure/nixos/**` | 4. NixOS host (OCI VPS)               |
+| `projects/kazimierz.akn/src/infrastructure/nixos/**`, `fleet/hosts/akn.exusiai/nix/**`                       | 4. NixOS host (OCI VPS)               |
 | a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules)                       | 5. Nix flake input or nixpkgs package |
 | no file in the repository (Home Assistant OS, a router firmware, a manual component)                         | 6. Outside the repository             |
 
@@ -128,9 +128,10 @@ Needs `nix`, `sops` and SSH access to the Proxmox host: this is done from the ma
 
 ## 4. NixOS host (OCI VPS)
 
-`kazimierz.akn` (public gateway: Pangolin, Gerbil, Traefik) and `rimbilliton.akn` (Minecraft host) are NixOS machines
+`kazimierz.akn` (public gateway: Pangolin, Gerbil, Traefik) and `exusiai.akn` (Minecraft host) are NixOS machines
 deployed with `nixos-rebuild switch --target-host` over the tailnet (ADR-016). The version lives in a module under
-`src/infrastructure/nixos/` (a container image `fooImage = "…"`, a pinned binary, a package).
+`src/infrastructure/nixos/` (`kazimierz.akn`) or `nix/` (`exusiai.akn`) (a container image `fooImage = "…"`, a pinned
+binary, a package).
 
 1. Change the annotated line (`tag`, and the digest when `digest=true`). For a pinned binary or `fetchurl`, refresh its
    hash with `nix:hash:update` from the directory of the `flake.nix`.

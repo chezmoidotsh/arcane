@@ -27,19 +27,19 @@ chaque élément ayant son README.
 
 ## Avancement
 
-| Étape | Contenu                                                             | État                              |
-| ----- | ------------------------------------------------------------------- | --------------------------------- |
-| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                             |
-| 2     | Créer les bases de catalogue manquantes                             | faite                             |
-| 3     | Activer le lint de structure                                        | faite                             |
-| 4     | Déplacer le catalogue                                               | faite                             |
-| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer |
-| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer |
-| 7     | Les hôtes du groupe `akn`                                           | en cours (A prêt, B et C à faire) |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                           |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                           |
-| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                           |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                           |
+| Étape | Contenu                                                             | État                               |
+| ----- | ------------------------------------------------------------------- | ---------------------------------- |
+| 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite                              |
+| 2     | Créer les bases de catalogue manquantes                             | faite                              |
+| 3     | Activer le lint de structure                                        | faite                              |
+| 4     | Déplacer le catalogue                                               | faite                              |
+| 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer  |
+| 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer  |
+| 7     | Les hôtes du groupe `akn`                                           | en cours (A et B prêts, C à faire) |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                            |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                            |
+| 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                            |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                            |
 
 ## Avant de commencer
 
@@ -368,8 +368,8 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
   jeton Cloudflare reste `hass` : le nom du jeton, `(hass) - Home Assistant`, ne change pas. Aucun nom côté cloud ne
   dérive du nom du projet ou de la pile : l'aperçu attendu après le renommage est vide. Le fichier `.mise/env.yaml` (sops) est
   supprimé : la phrase secrète et les identifiants Garage viennent de fnox (`fleet/.fnox.toml`), le `.mise.toml` Pulumi
-  ne fixe que `PULUMI_STACK`. Les tours B (`rimbilliton.akn` vers `exusiai.akn`) et C (`kazimierz.akn` vers
-  `horn.akn`) restent à faire.
+  ne fixe que `PULUMI_STACK`. Le tour B (`rimbilliton.akn` vers `exusiai.akn`) est décrit plus bas ; le tour C
+  (`kazimierz.akn` vers `horn.akn`) reste à faire.
 - **Manuel, avant la fusion** (tour A), depuis l'ancienne arborescence (celle de l'étape 6) :
   1. sauvegarder l'état (`pulumi stack export`) ;
   2. répéter l'opération sur un backend `file://` (import de la sauvegarde, puis le renommage ci-dessous) ;
@@ -404,16 +404,62 @@ depuis l'étape 6.
 
 ### Détail de l'étape 7 : `exusiai.akn`, renommage en place
 
-`rimbilliton` porte des données : il n'est pas reconstruit. D'après la documentation du fournisseur Terraform OCI, dont
-le fournisseur Pulumi est issu, le `name` d'un compartiment, le `display_name` d'une instance, d'un VCN, d'un
-sous-réseau, d'un NSG et d'une liste de sécurité, et le `hostname_label` des VNIC sont modifiables sur place. Le
-`dns_label` d'un VCN et d'un sous-réseau ne l'est pas (le changer force le remplacement) : `dnsLabel: "rimbillitonvcn"`,
-dans `stack/oci/network.ts`, **reste inchangé**. Ordre :
+`rimbilliton` porte des données (les mondes Minecraft) : il n'est pas reconstruit, et tout ce qui forcerait un
+remplacement garde son ancienne valeur.
 
-1. renommer le compartiment et les noms d'affichage dans le code Pulumi ;
-2. `pulumi preview` : seules des mises à jour (`update`) sont attendues. **Toute ligne `replace` ou `delete` arrête
-   l'opération**, en particulier sur l'instance, le VCN et le volume ;
-3. appliquer, puis changer le nom d'hôte NixOS et le nom du nœud Tailscale, sans réinstaller.
+- **Constaté** (tour B) : `projects/rimbilliton.akn` devient `fleet/hosts/akn.exusiai` (`nix/`, `pulumi/`, `assets/`),
+  le projet Pulumi `exusiai-akn` et la pile `exusiai_akn.live` (fichier `Pulumi.exusiai_akn.live.yaml`), le nom d'hôte
+  NixOS `exusiai-akn` et les sorties de flake `exusiai-akn-{aarch64,x86_64}`. `nixos:oci:update` accepte une cible
+  facultative (par défaut `root@exusiai-akn`), pour atteindre l'hôte sous son ancien nom Tailscale au premier
+  basculement.
+  - **Renommage en place possible.** Vérifié sur le schéma de `@pulumi/oci` 4.20.0 (`Args` des ressources, mention «
+    Updatable ») : le `name` et la `description` du compartiment, le `displayName` de l'instance, du VCN, de la liste de
+    sécurité, du sous-réseau et du NSG, et les `freeformTags.project` sont modifiables sur place. Le `dnsLabel` du VCN
+    ne l'est pas : `dnsLabel: "rimbillitonvcn"` **reste inchangé** (commentaire dans `stack/oci/network.ts`). Le
+    sous-réseau n'a pas de `dnsLabel` et la VNIC de l'instance n'a pas de `hostnameLabel` dans le code.
+  - **Conservé volontairement** : les noms logiques (ils font partie des URN), le nom du bucket B2 et de sa clé (le
+    bucket ne se renomme pas, la clé serait remplacée), la description de la clé Tailscale (remplacement de la clé), les
+    commentaires des enregistrements DNS, le fichier `nix/secrets/rimbilliton.sops.yaml` et les libellés du schéma
+    d'architecture (les SVG ne sont pas re-rendus ; à corriger au prochain redessin).
+  - **Preuve côté NixOS** : `nix eval` de `…toplevel.drvPath` pour les deux sorties. Après le simple déplacement, le
+    résultat est identique ; après le renommage, il est égal à celui de l'ancienne configuration avec le seul
+    `networking.hostName` changé. Le nom d'hôte est la seule modification du système.
+  - **Aucune `StackReference` ne lit cette pile** ; elle lit `organization/chezmoi-sh-infra/chezmoi_sh.live`, inchangée.
+- **Manuel, avant la fusion** (tour B), depuis l'ancienne arborescence pour les points 1 à 3 :
+  1. sauvegarder l'état (`pulumi stack export`, `pulumi stack --show-urns`) et prendre un snapshot restic neuf des
+     mondes ;
+  2. répéter le renommage sur un backend `file://` (import de la sauvegarde) ;
+  3. `pulumi stack rename organization/exusiai-akn/exusiai_akn.live` ; à défaut, export, réécriture des URN
+     (`rimbilliton-akn-infra` vers `exusiai-akn`, `rimbilliton_akn.live` vers `exusiai_akn.live`), `pulumi stack init`
+     puis `pulumi stack import` ;
+  4. vérifier que `PULUMI_STACK` vaut `exusiai_akn.live` dans `pulumi/.mise.toml` ;
+  5. `pulumi preview --diff` : exactement six `update` (compartiment : `name` et `description` ; instance, NSG
+     : `displayName` et `freeformTags.project` ; VCN, liste de sécurité, sous-réseau : `displayName`). **Tout `create`,
+     `replace` ou `delete`, tout autre changement, ou toute autre propriété sur ces six ressources arrête l'opération**,
+     en particulier `dnsLabel`, `compartmentId`, `sourceDetails` et le volume de démarrage ;
+  6. `pulumi up`, puis `pulumi preview` (aucun changement attendu) ;
+  7. `mise run nixos:oci:update root@rimbilliton-akn` (bascule du nom d'hôte, sans réinstaller), puis contrôles : nœud
+     `exusiai-akn` dans le tailnet, `tailscaled`, `docker` et `caddy` actifs, `minecraft.chezmoi.sh` répond sur les
+     ports de jeu, connexion au Panel par Pocket-Id, prochaine sauvegarde restic réussie ;
+  8. fusionner, avec `pulumi/.mise/env.yaml` commité.
+- **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : un
+  état vide planifierait une seconde instance, un second VCN, un second bucket B2 et de nouveaux enregistrements DNS. Ne
+  jamais lancer `nixos:oci:install` ni `nixos:e2e` (elles repartitionnent la cible). Après le basculement, le nom
+  MagicDNS `rimbilliton-akn` ne résout plus : la cible par défaut de `nixos:oci:update` est `root@exusiai-akn`.
+- **À confirmer** : le comportement de `pulumi stack rename` entre deux projets sur le backend S3 maison, et
+  l'emplacement de l'état dans le bucket (`.pulumi/stacks/<projet>/<pile>.json`) ; la validité de la phrase secrète et
+  du sel après le renommage ; la réécriture par OCI des politiques IAM qui nomment le compartiment (à regarder dans la
+  console avant et après l'application ; aucune politique n'est déclarée dans le dépôt) ; le nom du nœud Tailscale, qui
+  suit le nom d'hôte sauf s'il a été renommé à la main dans la console d'administration.
+- **À trancher** : les identifiants de composants d'Oripathy passent de `rimbilliton.akn/…` à `exusiai.akn/…` (`disko`,
+  `sops-nix`, `panel`, `wings`, `pelican-plugins`, `pelican-pocketid-provider`), et des issues déjà indexées sur
+  l'ancien identifiant peuvent être dupliquées (même point que l'étape 5) ; supprimer ou garder le groupe de snapshots
+  restic de l'ancien nom d'hôte (`rimbilliton-akn`), qui ne reçoit plus de sauvegardes et garde sa dernière série de
+  rétention (`restic forget --host rimbilliton-akn --keep-last 1 --prune`) ; relabeller le schéma d'architecture au
+  prochain redessin.
+- **Retour arrière** : avant l'application, renommer la pile en sens inverse (ou réimporter la sauvegarde) et rétablir
+  `PULUMI_STACK` ; après, relancer `pulumi up` avec l'ancien code et la pile renommée en sens inverse remet les anciens
+  noms (six `update`, aucune ressource recréée). Côté hôte : `nixos-rebuild switch --rollback`.
 
 ### 8. Les clusters
 
