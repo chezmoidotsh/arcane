@@ -120,8 +120,8 @@ connexion, qui produisait des RST.
 
 **Secrets** : le jeton Cloudflare de Caddy est la sortie `zotRegistryDns01Token` du projet Pulumi `oci-registry-core`
 (pile `oci-registry_core.live`, dans `pulumi/`). Il ne passe pas par OpenBao, qui tourne dans un cluster dont ce
-registre ne doit pas dépendre. `mise run lxc:secrets:sync` le copie, chiffré avec sops, dans
-`nix/secrets/caddy.sops.env` (clé `CLOUDFLARE_API_TOKEN`) ; `mise run lxc:build` le déchiffre le temps du build et
+registre ne doit pas dépendre. Son `pulumi up` l'écrit, chiffré avec sops (ressource `SopsFile`), dans
+`nix/secrets/caddy.sops.json` (clé `CLOUDFLARE_API_TOKEN`) ; `mise run lxc:build` le déchiffre le temps du build et
 l'écrit dans `/etc/caddy/secrets` (mode 0400, propriétaire `caddy`). Sans jeton, Caddy démarre mais n'obtient pas de
 certificat.
 
@@ -131,16 +131,16 @@ NixOS (`pkgs.testers.runNixOSTest`) qui démarre le conteneur et vérifie `/v2/`
 
 ```text
 .
-├── .mise.toml          tâches : lxc:secrets:sync, diagram:generate
+├── .mise.toml          tâches : diagram:generate
 ├── .mise/tasks/lxc/    build, push, upgrade (bibliothèque partagée ../.mise/lib/lxc.sh)
-├── .sops.yaml          règles de chiffrement de nix/secrets/
 ├── architecture.d2     source du schéma
 ├── nix/
 │   ├── flake.nix       version de l'image et de Zot, binaire amont patché pour NixOS
+│   ├── .sops.yaml      règles de chiffrement de secrets/
 │   ├── configuration.nix
 │   ├── upstreams.nix   registres amont
 │   ├── modules/        zot, caddy, hardening, o11y-agent
-│   └── secrets/        caddy.sops.env
+│   └── secrets/        caddy.sops.json
 └── pulumi/             jeton DNS-01 Cloudflare
 ```
 
@@ -152,7 +152,7 @@ Le conteneur se crée à la main, une seule fois. Prérequis : Docker (le build 
 la clé age (`SOPS_AGE_KEY_FILE`), l'accès à la pile Pulumi `oci-registry_core.live` (`pulumi/.mise.toml`) et un accès
 SSH root au nœud Proxmox.
 
-1. Créer le jeton puis le synchroniser : `pulumi up` dans `pulumi/`, puis `mise run lxc:secrets:sync`.
+1. Créer le jeton : `pulumi up` dans `pulumi/`, qui écrit `nix/secrets/caddy.sops.json`.
 2. Construire et envoyer l'image : `mise run lxc:build`, puis `mise run lxc:push -- <pve-host>` (dans
    `/var/lib/vz/template/cache/`).
 3. Créer le conteneur, sans le démarrer (VMID libre, stockage à adapter) :
@@ -213,8 +213,8 @@ refusée. Caddy demande un nouveau certificat au premier démarrage (30 à 60 se
 Avant chaque build, passer `imageVersion` de `nix/flake.nix` à la date du jour (`AAAA.MM.JJ`, suffixe `-N` pour un
 second build) : elle nomme le template. La version de Zot (`version`) est suivie par Oripathy
 ([référence](../../../docs/reference/Oripathy-Reference.md)). Pour une rotation du jeton : remplacer la ressource
-`caddy-dns01-zot` (`pulumi up --replace <urn>` dans `pulumi/`), `mise run lxc:secrets:sync`, rebuild et mise à jour. Si
-Pulumi est injoignable, le jeton peut être roté dans Cloudflare et `nix/secrets/caddy.sops.env` modifié à la main.
+`caddy-dns01-zot` (`pulumi up --replace <urn>` dans `pulumi/`, qui réécrit le fichier), rebuild et mise à jour. Si
+Pulumi est injoignable, le jeton peut être roté dans Cloudflare et `nix/secrets/caddy.sops.json` modifié à la main (avec `sops`).
 
 Le détail pas à pas est dans la
 [procédure de mise à jour d'un LXC](../../../docs/procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md)

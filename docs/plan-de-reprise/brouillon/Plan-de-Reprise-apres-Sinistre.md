@@ -312,9 +312,9 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
   outside is exported »). Les deux clés B2 ne vivent donc que dans l'état Pulumi et dans la configuration du NAS ou de
   PBS. À l'inverse, les jetons Cloudflare et Tailscale des LXC (`fleet/hosts/core.omni/pulumi/`,
   `stack/observability.ts`, `fleet/hosts/core.oci-registry/pulumi/`) ont une copie chiffrée avec SOPS dans
-  `secrets/caddy.sops.env` de leur LXC, écrite par la tâche `lxc:secrets:sync` des hôtes `core.omni` et
-  `core.oci-registry` et par les tâches `pulumi:*` de [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml) pour
-  observability. Le jeton ACME de PBS (`proxmox-backup-server/acme.ts`) n'a aucune copie dans le dépôt : il est injecté
+  `secrets/caddy.sops.json` (hôtes `core.omni` et `core.oci-registry`, écrite par le `pulumi up` de leur pile) ou
+  `secrets/caddy.sops.env` (observability, écrite par les tâches `pulumi:*` de
+  [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml)). Le jeton ACME de PBS (`proxmox-backup-server/acme.ts`) n'a aucune copie dans le dépôt : il est injecté
   à la main dans PBS.
 - **État** : atténuée pour les LXC (leur reconstruction n'a pas besoin de l'état Pulumi) ; ouverte pour les deux clés B2
   et le jeton ACME de PBS. Une nouvelle clé peut sans doute être créée depuis le compte Backblaze, mais le dépôt ne le

@@ -1,8 +1,9 @@
 # SOPS creation rules for oci-registry.core. There is no root .sops.yaml: each element that encrypts files owns one.
-# sops looks for it from the *current directory* upward (not from the file's), so run sops from inside this folder.
+# sops looks for it from the *current directory* upward and never merges configs: run sops from this directory.
 # path_regex is relative to this file's directory. Recipients copied from projects/chezmoi.sh/.sops.yaml.
 creation_rules:
-  # LXC build-time secrets (dotenv format, baked into the image at build time)
-  - path_regex: nix/secrets/.*\.sops\.env$
+  # LXC build-time secrets, baked into the image at build time: dotenv by hand (omni.sops.env),
+  # caddy.sops.json is written by pulumi/ (SopsFile, with this same rule)
+  - path_regex: secrets/.*\.sops\.(env|json)$
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9,age1es2vf7fjj4jja6mhyc2r8cfp0kzpce2qdru3cz8cllsuw3qmwpqstplq0f

@@ -49,7 +49,7 @@
       # are empty (CI smoke build) and reproducible when `mise run lxc:build`
       # sources them from the SOPS-encrypted files under ./secrets/.
       #
-      #   cloudflareToken         — Caddy ACME DNS-01 (caddy.sops.env)
+      #   cloudflareToken         — Caddy ACME DNS-01 (caddy.sops.json)
       #   dexAdminPasswordHash    — bcrypt hash for the Dex admin user
       #                             (omni.sops.env)
       # -----------------------------------------------------------------------
