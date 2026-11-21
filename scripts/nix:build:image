@@ -2,7 +2,7 @@
 # trunk-ignore-all(shellcheck/SC2312): don't care about masking return value
 set -euo pipefail
 
-# shellcheck source=nix:_lib
+# shellcheck source=/dev/null
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/nix:_lib"
 
 show_usage() {
