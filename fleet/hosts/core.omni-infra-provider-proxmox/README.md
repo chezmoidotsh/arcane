@@ -78,7 +78,7 @@ pas depuis le LAN (hairpin NAT). Le durcissement (`hardening.nix`) coupe SSH, la
 inutiles, règle quelques sysctl et garde le journal en mémoire (64 Mio). Le service tourne sous l'utilisateur système
 `infra-provider`, avec `NoNewPrivileges`, et redémarre en cas d'échec.
 
-Deux secrets, chiffrés avec sops/age (règle dans `.sops.yaml`) et injectés dans l'image au build, pas au démarrage :
+Deux secrets, chiffrés avec sops/age (règle dans `nix/.sops.yaml`) et injectés dans l'image au build, pas au démarrage :
 `nix/secrets/proxmox.sops.env` (`PROXMOX_PASSWORD`, mot de passe de `omni@pve`, écrit dans
 `/etc/infra-provider/provider.yaml`) et `nix/secrets/omni.sops.env` (`OMNI_SERVICE_ACCOUNT_KEY`, clé du fournisseur
 générée par Omni, écrite dans `/etc/infra-provider/secrets`). Sans la clé Omni, le build reste valable : le service
@@ -88,6 +88,7 @@ démarre mais ne peut pas se connecter (il journalise une clé vide).
 nix/
 ├── flake.nix                          nixpkgs, catalogue (arcane), version de l'image, secrets de build
 ├── flake.lock
+├── .sops.yaml                         règle de création de secrets/
 ├── configuration.nix                  identité, réseau, options du fournisseur
 ├── secrets/                           proxmox.sops.env, omni.sops.env
 └── modules/

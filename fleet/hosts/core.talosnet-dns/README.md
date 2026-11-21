@@ -87,7 +87,7 @@ Ce nom est figé dans `/etc/hosts` sur `10.0.0.32`, la même adresse que dans la
 résolveur, qui est celui qu'il surveille.
 
 Le seul secret est `BIND_TSIG_SECRET`, dans `nix/secrets/bind.sops.env` (SOPS et age, règle de création dans
-`.sops.yaml`). Il est intégré à l'image au moment du build, et la même valeur est utilisée par `external-dns-bind` sur
+`nix/.sops.yaml`). Il est intégré à l'image au moment du build, et la même valeur est utilisée par `external-dns-bind` sur
 `rhodes.akn` et `lungmen.akn` (`kubernetes/src/system/external-dns/sops/bind.secret.yaml` de chaque cluster) : la
 changer demande de mettre à jour les trois, sinon les mises à jour RFC2136 échouent en `NOTAUTH`. Sans le secret
 (`nix build` seul), l'image se construit mais refuse les mises à jour dynamiques.
@@ -98,11 +98,11 @@ changer demande de mettre à jour les trois, sinon les mises à jour RFC2136 éc
 ├── architecture.d2           source du schéma
 ├── .mise.toml                tâche du schéma et documentation des tâches
 ├── .mise/tasks/lxc/          build, push, upgrade (bibliothèque partagée)
-├── .sops.yaml                règle de création de nix/secrets/
 ├── assets/                   schéma généré, lien vers docs/assets/icons
 └── nix/
     ├── flake.nix             build de l'image LXC, version CalVer
     ├── flake.lock
+    ├── .sops.yaml            règle de création de secrets/
     ├── configuration.nix     nom, adresses statiques (eth0 et eth1)
     ├── modules/
     │   ├── default.nix

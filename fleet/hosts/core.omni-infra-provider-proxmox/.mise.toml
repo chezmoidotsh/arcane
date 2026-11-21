@@ -66,7 +66,7 @@ run = '''
   TMPFILE="{{ config_root }}/nix/secrets/.tmp.$$.proxmox.sops.env"
   trap 'rm -f "${TMPFILE}"' EXIT
   printf 'PROXMOX_PASSWORD=%s\n' "${password}" > "${TMPFILE}"
-  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+  sops --config "{{ config_root }}/nix/.sops.yaml" --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
     > "{{ config_root }}/nix/secrets/proxmox.sops.env"
 
   echo "[SUCCESS] nix/secrets/proxmox.sops.env written." >&2
@@ -90,7 +90,7 @@ run = '''
   TMPFILE="{{ config_root }}/nix/secrets/.tmp.$$.omni.sops.env"
   trap 'rm -f "${TMPFILE}"' EXIT
   printf 'OMNI_SERVICE_ACCOUNT_KEY=%s\n' "${key}" > "${TMPFILE}"
-  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+  sops --config "{{ config_root }}/nix/.sops.yaml" --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
     > "{{ config_root }}/nix/secrets/omni.sops.env"
 
   echo "[SUCCESS] nix/secrets/omni.sops.env written." >&2
