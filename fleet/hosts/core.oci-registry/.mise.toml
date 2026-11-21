@@ -43,8 +43,9 @@
 # stack (pulumi/) and writes it into nix/secrets/caddy.sops.env with
 # `sops set`, which leaves every other key of that file untouched, so it can be
 # baked into the LXC image at build time. `mise exec` runs pulumi from pulumi/
-# so that its .mise/env.yaml (stack name and passphrase) is loaded: a task
-# `dir` alone does not load the env of that directory.
+# so that its PULUMI_STACK is set, and `fnox exec` resolves the passphrase and
+# the Garage credentials (fleet/.fnox.toml): a task `dir` alone does not load the
+# env of that directory.
 #
 # Requires `pulumi up` to have run in pulumi/ first.
 
@@ -53,7 +54,7 @@ description = "Fetch Cloudflare DNS-01 token from Pulumi and write nix/secrets/c
 dir = "{{ config_root }}/pulumi"
 run = '''
   set -euo pipefail
-  TOKEN=$(mise exec -- pulumi stack output zotRegistryDns01Token --show-secrets)
+  TOKEN=$(mise exec -- fnox exec -- pulumi stack output zotRegistryDns01Token --show-secrets)
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
   sops set --input-type dotenv --output-type dotenv \
     "{{ config_root }}/nix/secrets/caddy.sops.env" \
