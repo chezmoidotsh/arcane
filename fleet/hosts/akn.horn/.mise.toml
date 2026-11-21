@@ -1,0 +1,14 @@
+# =============================================================================
+# horn.akn - Mise Configuration
+# =============================================================================
+# NixOS host tasks (nixos:*) are scripts in .mise/tasks/nixos/. Run from anywhere: `mise run nixos:<task>`.
+# nonix forwards $SSH_AUTH_SOCK to the container, so the key must be in your agent.
+# =============================================================================
+
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of horn.akn"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]

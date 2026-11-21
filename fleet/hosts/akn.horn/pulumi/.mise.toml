@@ -1,0 +1,28 @@
+# =============================================================================
+# horn.akn Pulumi stack - Mise configuration
+# =============================================================================
+# OCI Free Tier infrastructure for horn.akn (VCN + NSG, ARM instance, Cloudflare DNS),
+# stack horn_akn.live (state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the root secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) are resolved from
+# Bitwarden Secrets Manager (fleet/.fnox.toml, with the token and project ID of the
+# Keychain, see `mise run bws:setup`) and exist only inside that process.
+# The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
+#
+# The OCI credentials (TF_VAR_tenancy_ocid, TF_VAR_user_ocid, TF_VAR_fingerprint,
+# TF_VAR_private_key, TF_VAR_region) are not part of fleet/.fnox.toml: export them
+# for the session until they are added to fnox.
+#
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+PULUMI_STACK = "horn_akn.live"

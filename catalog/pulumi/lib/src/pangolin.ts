@@ -18,13 +18,14 @@ import * as pulumi from "@pulumi/pulumi";
 // behind a VPN, iCloud Private Relay or a cloud-hosted device is dropped too.
 
 /** Our own egress, accepted before every deny rule. The OCI ASN is denied,
- * yet Pangolin on kazimierz calls the identity provider through its own public
+ * yet Pangolin on horn.akn calls the identity provider through its own public
  * edge (OIDC token exchange), so it would otherwise be blocked. Read from the
- * kazimierz.akn stack output, one StackReference shared by every caller. */
+ * horn.akn stack output, one StackReference shared by every caller. The
+ * logical name stays "kazimierz.akn" so the readers' URNs do not change. */
 let kazimierzEgressIp: pulumi.Output<string> | undefined;
 function getKazimierzEgressIp(): pulumi.Output<string> {
 	kazimierzEgressIp ??= new pulumi.StackReference("kazimierz.akn", {
-		name: "organization/kazimierz-akn-infra/kazimierz_akn.live",
+		name: "organization/horn-akn/horn_akn.live",
 	}).getOutput("egressIp") as pulumi.Output<string>;
 	return kazimierzEgressIp;
 }
