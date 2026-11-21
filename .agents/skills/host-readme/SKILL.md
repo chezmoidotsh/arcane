@@ -42,8 +42,9 @@ Model to copy: `fleet/hosts/akn.ptilopsis/README.md`. Read it before writing.
 
 ## Structure
 
-1. **Header** (below): logo, title, subtitle, badges, table of contents, lore callout.
-2. **Rôle**: what the host is for and why it exists, in a short paragraph, with the ADR link.
+1. **Header** (below): logo, title, subtitle, badges, table of contents.
+2. **Introduction** (no heading): right after the header, a short paragraph on what the host is for and why it exists,
+   with the ADR link. The README opens on it, so it needs no `## Rôle` title and no entry in the table of contents.
 3. **Services**: the services that run on it, one block per service, logo and text alternating left and right (see
    [Services](#services)).
 4. **Architecture**: the D2 diagram of how these services talk to each other and to the outside, in the blueprint style
@@ -150,16 +151,16 @@ clients that send or read, the external platforms). It uses the shared **bluepri
 
 ## Header
 
-The logo and the lore depend on the family of the directory (`docs/reference/Nommage-des-Machines-Reference.md`):
+The logo depends on the family of the directory (`docs/reference/Nommage-des-Machines-Reference.md`):
 
-| Directory              | Named after                    | Logo                                                                                        | Lore callout               |
-| ---------------------- | ------------------------------ | ------------------------------------------------------------------------------------------- | -------------------------- |
-| `fleet/hosts/akn.*`    | An Arknights operator or group | Animated logo from a skin of the operator, `assets/logo.webp` ([below](#building-the-logo)) | The operator               |
-| `fleet/clusters/akn.*` | An Arknights place or ship     | The emblem of the place from the wiki, `assets/logo.png`                                    | The place                  |
-| `fleet/hosts/core.*`   | Its function                   | The logo of the main product it runs (Proxmox, TrueNAS, Omni…), from `docs/assets/icons/`   | None: the name has no lore |
+| Directory              | Named after                    | Logo                                                                                        |
+| ---------------------- | ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `fleet/hosts/akn.*`    | An Arknights operator or group | Animated logo from a skin of the operator, `assets/logo.webp`                               |
+| `fleet/clusters/akn.*` | An Arknights place or ship     | The emblem of the place from the wiki, `assets/logo.png`                                    |
+| `fleet/hosts/core.*`   | Its function                   | The logo of the main product it runs (Proxmox, TrueNAS, Omni…), from `docs/assets/icons/`   |
 
-The title keeps the `「 」` quotation marks in every case. For a `core.*` host, skip the callout and go straight from
-the table of contents to _Rôle_.
+The title keeps the `「 」` quotation marks in every case. There is no lore: no callout, no story of the character. The
+table of contents leads to the first section, _Services_.
 
 Everything above the first `##` is HTML, because GitHub does not centre Markdown inside a `<div align="center">`. Use
 one block per element:
@@ -181,7 +182,7 @@ one block per element:
 </p>
 
 <p align="center">
-  <a href="#rôle">Rôle</a> · <a href="#accès">Accès</a> · … · <a href="#pour-aller-plus-loin">Pour aller plus loin</a>
+  <a href="#services">Services</a> · <a href="#accès">Accès</a> · … · <a href="#pour-aller-plus-loin">Pour aller plus loin</a>
 </p>
 ```
 
@@ -191,74 +192,10 @@ one block per element:
   from `host`. Escape `-` as `--` and `+` as `%2B` in the shields URL.
 - Anchors use GitHub's slug of the heading: lower case, accents kept, apostrophes removed (`#le-chemin-des-signaux`).
 
-### Lore callout
+### Where to find the logo
 
-Right after the header, a `[!NOTE]` callout of four or five lines, in French, **paraphrased** from the operator's page
-on the game wiki (never copy the text), ending with an italic sentence that ties the character to the machine's role,
-then the source link:
-
-```markdown
-> [!NOTE]\
-> **Ptilopsis** (Rhine Lab, médecin) a servi de cobaye à un prototype… _Seul le langage machine apaise ses troubles, un
-> bon nom pour la machine qui lit tous les logs du homelab._ ([source](https://arknights.wiki.gg/wiki/Ptilopsis))
-```
-
-The backslash after `[!NOTE]` is mandatory: without it Prettier joins the marker with the next line and the callout
-breaks (a trailing double space would be stripped). Use it on every callout.
-
-The operator (or the place, for a cluster) is the one the directory is named after
-(`docs/reference/Nommage-des-Machines-Reference.md`). For a place, the italic sentence ties the place to the role of the
-cluster in the same way.
-
-### Where to find the information
-
-The Arknights wiki: `https://arknights.wiki.gg/wiki/<Operator>` (e.g. `/wiki/Ptilopsis`).
-
-- Lore: the _Basic info_, _Profile_ and _Archive_ sections when present (some operators have only the basic info and the
-  project director's recording; paraphrase what is there, do not invent).
-- Logo animation: a `.webm` file on the same wiki, e.g. `https://arknights.wiki.gg/images/Ptilopsis_Skin_2.webm`. Open
-  the operator's page, pick a skin, and follow the file link; the file name follows `<Operator>_Skin_<n>.webm`. Check
-  the animation before converting it.
-
-- Place emblem (clusters): the page of the place on the same wiki (`https://arknights.wiki.gg/wiki/Rhodes_Island`,
-  `/wiki/Lungmen`) shows its emblem or faction logo in the infobox. Follow the file link, download the original (PNG
-  with a transparent background, or SVG), and store it as `assets/logo.png` (or `.svg`), rendered at `height="150"`.
-  Keep it under 1 MB. When the page has no emblem, take the faction logo the place belongs to and say so in the PR. A
-  single-colour emblem (white or black on transparent) disappears on one of GitHub's themes: store
-  `assets/logo.dark.png` (white) and `assets/logo.light.png` (the inverted, black copy) and use a `<picture>` with a
-  `prefers-color-scheme: dark` source, like `fleet/clusters/akn.lungmen/README.md`. The direct file URL is
-  `https://arknights.wiki.gg/images/<File>.png`; the wiki rate-limits automated clients (HTTP 429), so wait and retry
-  rather than working around it.
-- Lore of a place: its page on the wiki (_Overview_, _History_), paraphrased like an operator's.
-
-## Building the logo
-
-The `.webm` is VP9 with an **alpha channel** (transparent background). GitHub does not play a relative `.webm` in a
-README, so convert it to an **animated WebP** (supports alpha, is rendered inline). The file goes in
-`<directory>/assets/logo.webp`.
-
-1. Download into a throw-away directory (untrusted file) and look at a frame to choose the crop. The source has a lot of
-   empty margin:
-
-   ```sh
-   mise x ffmpeg -- ffmpeg -c:v libvpx-vp9 -i source.webm -vf "select=eq(n\,30)" -frames:v 1 frame.png
-   ```
-
-2. Crop to the character, then convert. `-c:v libvpx-vp9` **before** `-i` is required: the default VP9 decoder drops the
-   alpha plane.
-
-   ```sh
-   mise x ffmpeg -- ffmpeg -y -c:v libvpx-vp9 -i source.webm \
-     -vf "crop=400:420:312:156,fps=15,scale=-1:200:flags=lanczos" \
-     -c:v libwebp_anim -q:v 90 -compression_level 6 -loop 0 -pix_fmt yuva420p assets/logo.webp
-   ```
-
-   `crop=W:H:X:Y` is specific to the video (the values above fit `Ptilopsis_Skin_2.webm`, 1024x576). Check the result by
-   extracting a frame from the _source_ with the same crop: ffmpeg cannot decode animated WebP.
-
-3. Quality and size: the file is rendered at `height="150"` and stored at 200 px for sharpness. `-q:v 90` keeps the
-   edges clean (`-q:v 55` visibly degraded them); `fps=15` and the crop keep it around 650 KB. Stay **under 1 MB**:
-   below that, no Git LFS (it would break clones without LFS and the wiki mirror).
+The source, the crop and the size budget are in [`references/Logo-Reference.md`](references/Logo-Reference.md); the
+conversion is `scripts/build-logo` (`frame` to choose the crop, `convert` to build `assets/logo.webp`).
 
 ## Writing and checking
 
@@ -266,8 +203,7 @@ README, so convert it to an **animated WebP** (supports alpha, is rendered inlin
   the code does not do is worse than none.
 - Tasks mentioned in the README must exist in the directory's `.mise.toml`. A task that touches the machine uses
   `confirm`, and `skip_if` to stay quiet where it cannot apply (wrong OS, not installed yet).
-- Run `mise run lint:fix` (Prettier wraps at 120 columns and may rewrite tables and callouts), then check the callouts
-  still start with `[!NOTE]\`.
+- Run `mise run lint:fix` (Prettier wraps at 120 columns and may rewrite tables).
 - Mermaid diagrams render on GitHub; keep labels to names and ports.
 - Check the diagram against the code like the text: every edge is a flow that exists (a port that listens, a client
   configured to send). Open the PNG after `mise run diagram:generate`.

@@ -37,7 +37,8 @@ let
     omni IN A 10.128.0.2
     api.omni IN A 10.128.0.2
     oci IN A 10.128.0.4
-    data.o11y IN A 10.128.0.5
+    ; ptilopsis has no talosnet interface: reached through the SNAT of pve-01
+    data.o11y IN A 10.0.0.32
     s3 IN A 10.128.0.6
     nas IN A 10.128.0.6
   '';

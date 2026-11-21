@@ -1,0 +1,13 @@
+# SOPS creation rules for ptilopsis.akn (sops-nix, decrypted on the host with its SSH host key).
+# sops looks for this file from the *current directory* upward and never merges configs: run sops from this directory.
+# path_regex is relative to this file's directory.
+creation_rules:
+  # Recipients: the admin key, and the Mac's own age key (its SSH host key, via
+  # ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub). secrets/o11y.sops.yaml does
+  # not exist yet: `sops` creates it with both recipients (see ../README.md).
+  # secrets/cloudflare.sops.json is written by pulumi/ (SopsFile), with this same rule.
+  - path_regex: secrets/(o11y\.sops\.yaml|cloudflare\.sops\.json)$
+    key_groups:
+      - age:
+          - age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+          - age1ke488khyx9tjzwrvulj4kmy4slcdl0t04mc0x4rmkah39qtpq33q0944qt

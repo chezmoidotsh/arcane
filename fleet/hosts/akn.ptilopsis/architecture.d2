@@ -1,0 +1,160 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What sends signals to ptilopsis.akn, what reads them, and the external   │
+# │   services the stack depends on (certificates, notifications, heartbeat).  │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+
+  letsencrypt: {
+    class: platform
+    label: Let's Encrypt
+    icon: assets/icons/platform/letsencrypt.blueprint.svg
+  }
+
+  slack: {
+    class: platform
+    label: Slack
+    icon: assets/icons/platform/slack.blueprint.svg
+  }
+
+  healthchecks: {
+    class: platform
+    label: healthchecks.io
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  lxc: {
+    class: hardware
+    label: "LXC appliances\n(core.*)"
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+
+  proxmox: {
+    class: hardware
+    label: "Proxmox VE\n(pve-01)"
+    icon: assets/icons/platform/proxmox.blueprint.svg
+  }
+
+  clusters: {
+    class: hardware
+    label: Kubernetes clusters
+    icon: assets/icons/system/kubernetes.blueprint.svg
+  }
+
+  grafana: {
+    class: hardware
+    label: Grafana
+    icon: assets/icons/system/grafana.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              ptilopsis.akn                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   The services of the Mac Studio, and the two components every flow goes   │
+# │   through: Caddy (single entry point) and the OTLP gateway (write path).   │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+ptilopsis·akn: {
+  class: project
+  label: ptilopsis.akn
+
+  caddy: {
+    class: application-system
+    label: "Caddy\n(data.o11y.chezmoi.sh)"
+    icon: assets/icons/apps/caddy.blueprint.svg
+  }
+
+  gateway: {
+    class: application-system
+    label: OTLP gateway
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+
+  victoriametrics: {
+    class: application-datastore
+    label: VictoriaMetrics
+    icon: assets/icons/system/victoriametrics.blueprint.svg
+  }
+
+  victorialogs: {
+    class: application-datastore
+    label: VictoriaLogs
+    icon: assets/icons/system/victorialogs.blueprint.svg
+  }
+
+  victoriatraces: {
+    class: application-datastore
+    label: VictoriaTraces
+    icon: assets/icons/system/victoriatraces.blueprint.svg
+  }
+
+  vmalert: {
+    class: application
+    label: vmalert
+    icon: assets/icons/system/victoriametrics.blueprint.svg
+  }
+
+  alertmanager: {
+    class: application
+    label: Alertmanager
+    icon: assets/icons/system/prometheus.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# Write path: everything enters on :4318 and goes through the gateway.
+localnet.lxc -> ptilopsis·akn.caddy: "Push metrics and logs (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}
+localnet.proxmox -> ptilopsis·akn.caddy: "Push metrics (OTLP/JSON)" {target-arrowhead: 4318; class: [connect-app]}
+localnet.clusters -> ptilopsis·akn.caddy: "Push metrics, logs and traces (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}
+ptilopsis·akn.caddy -> ptilopsis·akn.gateway: "Forward /v1/* (OTLP)" {target-arrowhead: 14318; class: [connect-network]}
+ptilopsis·akn.gateway -> ptilopsis·akn.victoriametrics: "Write metrics (OTLP protobuf)" {target-arrowhead: 8428; class: [connect-app]}
+ptilopsis·akn.gateway -> ptilopsis·akn.victorialogs: "Write logs (OTLP protobuf)" {target-arrowhead: 9428; class: [connect-app]}
+ptilopsis·akn.gateway -> ptilopsis·akn.victoriatraces: "Write traces (OTLP protobuf)" {target-arrowhead: 10428; class: [connect-app]}
+
+# Read path: :443, read-only APIs served by Caddy.
+localnet.grafana -> ptilopsis·akn.caddy: "Query metrics, logs and traces (HTTPS)" {target-arrowhead: 443; class: [connect-app]}
+ptilopsis·akn.caddy -> ptilopsis·akn.victoriametrics: "Serve /metrics/ (HTTP)" {target-arrowhead: 8428; class: [connect-local]}
+ptilopsis·akn.caddy -> ptilopsis·akn.victorialogs: "Serve /logs/select/ (HTTP)" {target-arrowhead: 9428; class: [connect-local]}
+ptilopsis·akn.caddy -> ptilopsis·akn.victoriatraces: "Serve /traces/select/ (HTTP)" {target-arrowhead: 10428; class: [connect-local]}
+ptilopsis·akn.caddy -> ptilopsis·akn.alertmanager: "Serve /alerts/ (HTTP)" {target-arrowhead: 9093; class: [connect-local]}
+
+# Alerting.
+ptilopsis·akn.vmalert -> ptilopsis·akn.victoriametrics: "Evaluate rules (PromQL)" {target-arrowhead: 8428; class: [connect-app]}
+ptilopsis·akn.vmalert -> ptilopsis·akn.alertmanager: "Send alerts (HTTP)" {target-arrowhead: 9093; class: [connect-app]}
+ptilopsis·akn.alertmanager -> internet.slack: "Notify (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
+ptilopsis·akn.alertmanager -> internet.healthchecks: "Ping heartbeat (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
+
+# Certificates.
+ptilopsis·akn.caddy -> internet.letsencrypt: "Get certificate (ACME)" {target-arrowhead: 443; class: [connect-to-internet]}
+ptilopsis·akn.caddy -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}

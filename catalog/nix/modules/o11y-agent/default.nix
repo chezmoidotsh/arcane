@@ -40,42 +40,8 @@ let
   scrape = cfg.metrics.enable && cfg.metrics.scrapeTargets != [ ];
   hostMetrics = cfg.metrics.enable && cfg.metrics.hostMetrics;
 
-  # "host:port" | "host:port/path?query" | "scheme://host:port/path?query"
-  # ponytail: path/query/scheme are taken from the job's first target; split the
-  # job if its targets ever need different paths.
-  parseTarget = t:
-    let
-      m = builtins.match "(([a-z]+)://)?([^/?]+)(/[^?]*)?(\\?(.*))?" t;
-      query = builtins.elemAt m 5;
-    in
-    {
-      scheme = if builtins.elemAt m 1 == null then "http" else builtins.elemAt m 1;
-      host = builtins.elemAt m 2;
-      path = if builtins.elemAt m 3 == null then "/metrics" else builtins.elemAt m 3;
-      params =
-        if query == null then { }
-        else
-          lib.listToAttrs (map
-            (kv:
-              let p = lib.splitString "=" kv;
-              in { name = builtins.head p; value = [ (lib.concatStringsSep "=" (builtins.tail p)) ]; })
-            (lib.splitString "&" query));
-    };
-
-  scrapeConfig = target:
-    let first = parseTarget (builtins.head target.targets);
-    in
-    {
-      job_name = target.jobName;
-      scrape_interval = "${toString cfg.metrics.scrapeInterval}s";
-      scheme = first.scheme;
-      metrics_path = first.path;
-      static_configs = [{
-        targets = map (t: (parseTarget t).host) target.targets;
-        labels = target.extraLabels;
-      }];
-    } // lib.optionalAttrs (first.params != { }) { params = first.params; };
-
+  common = import ./lib.nix { inherit lib; };
+  inherit (common) receiverParsers;
 
   logPipelines =
     [ "logs/journald" ] ++ lib.optional cfg.logs.syslog.enable "logs/syslog";
@@ -87,14 +53,7 @@ let
   # Opt-in log parsers (logs.parsers), one file per application in ./parsers.
   # journald and syslog are the receivers' own mapping, always applied to their
   # pipeline; every other file is an opt-in application parser.
-  receiverParsers = [ "journald" "syslog" ];
-  availableParsers = lib.subtractLists receiverParsers
-    (map (lib.removeSuffix ".nix") (builtins.attrNames (builtins.readDir ./parsers)));
-  parserConfigs = lib.listToAttrs (map
-    # error_mode ignore: a record a statement fails on (e.g. a truncated JSON
-    # line) keeps its raw body instead of the whole batch being dropped.
-    (name: { name = "transform/parser-${name}"; value = import ./parsers/${name}.nix { inherit lib; } // { error_mode = "ignore"; }; })
-    (receiverParsers ++ cfg.logs.parsers));
+  parserConfigs = common.mkParserConfigs (receiverParsers ++ cfg.logs.parsers);
 
   userProcessorIds = signal:
     lib.optionals (signal == "logs") (map (name: "transform/parser-${name}") cfg.logs.parsers)
@@ -121,7 +80,7 @@ let
         tcp.listen_address = cfg.logs.syslog.listenAddress;
       };
     } // lib.optionalAttrs scrape {
-      prometheus.config.scrape_configs = map scrapeConfig cfg.metrics.scrapeTargets;
+      prometheus.config.scrape_configs = map (common.scrapeConfig cfg.metrics.scrapeInterval) cfg.metrics.scrapeTargets;
     } // lib.optionalAttrs hostMetrics {
       # LXC-safe scrapers only (no disk: /proc/diskstats is host-wide).
       hostmetrics = {
@@ -185,28 +144,11 @@ let
       batch = { };
     } // parserConfigs // userProcessorConfigs;
 
-    # `otlphttp`: the id accepted by every pinned collector version (0.144+).
-    exporters.otlphttp = {
-      endpoint = cfg.o11y.endpoint;
-      compression = "gzip";
-      sending_queue.storage = "file_storage";
-    };
+    exporters.otlphttp = common.mkExporter cfg;
 
     service = {
       extensions = [ "file_storage" ];
-      # The collector's own metrics, pushed as OTLP (no self-scrape).
-      telemetry = {
-        resource = { "host.name" = hostName; } // cfg.resourceAttributes;
-        metrics.readers = [{
-          periodic = {
-            interval = cfg.metrics.scrapeInterval * 1000;
-            exporter.otlp = {
-              protocol = "http/protobuf";
-              endpoint = "${cfg.o11y.endpoint}/v1/metrics";
-            };
-          };
-        }];
-      };
+      telemetry = common.mkTelemetry { inherit cfg hostName; };
       pipelines = {
         "logs/journald" = {
           receivers = [ "journald" ];
@@ -254,16 +196,10 @@ let
     '';
 in
 {
-  options.catalog.o11yAgent = {
-    enable = lib.mkEnableOption "LXC observability agent (OpenTelemetry Collector → o11y over OTLP)";
+  imports = [ ./options.nix ];
 
-    o11y = {
-      endpoint = lib.mkOption {
-        type = lib.types.str;
-        description = "OTLP/HTTP base URL of the o11y appliance (signal paths /v1/* are appended).";
-        example = "https://data.o11y.chezmoi.sh:4318";
-      };
-    };
+  options.catalog.o11yAgent = {
+    # (enable, o11y, logs.parsers, metrics, resourceAttributes: see ./options.nix)
 
     processors = {
       logs = lib.mkOption {
@@ -319,17 +255,6 @@ in
       };
     };
 
-    logs.parsers = lib.mkOption {
-      type = lib.types.listOf (lib.types.enum availableParsers);
-      default = [ ];
-      example = [ "caddy" ];
-      description = ''
-        Log parsers to enable, one per application (files in ./parsers). Each
-        maps that application's logs to OTel SemConv attributes and runs before
-        the user processors.
-      '';
-    };
-
     logs.syslog = {
       enable = lib.mkEnableOption "an RFC 5424 syslog TCP listener forwarded as OTLP logs";
       listenAddress = lib.mkOption {
@@ -337,67 +262,6 @@ in
         default = "0.0.0.0:5140";
         description = "Syslog TCP listen address (open it in the firewall yourself).";
       };
-    };
-
-    metrics = {
-      enable = lib.mkEnableOption "metrics shipping (host metrics + scrape targets)";
-
-      hostMetrics = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Collect LXC host metrics with the OTel hostmetrics receiver.";
-      };
-
-      scrapeInterval = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 30;
-        description = "Collection / scrape interval in seconds.";
-      };
-
-      scrapeTargets = lib.mkOption {
-        type = lib.types.listOf (lib.types.submodule {
-          options = {
-            jobName = lib.mkOption {
-              type = lib.types.str;
-              description = "Prometheus job name (OTel service.name of the scraped series).";
-            };
-            targets = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              description = ''
-                Scrape endpoints: "host:port" (→ /metrics), "host:port/path?query"
-                or a full URL. All targets of a job share the first one's path.
-              '';
-              example = [ "127.0.0.1:5000" "127.0.0.1:9221/pve?target=pve&cluster=1&node=1" ];
-            };
-            extraLabels = lib.mkOption {
-              type = lib.types.attrsOf lib.types.str;
-              default = { };
-              description = ''
-                Static labels on every series of this job. `host_name` is special:
-                it becomes the host.name resource attribute (use it when scraping
-                a remote machine).
-              '';
-              example = lib.literalExpression ''{ host_name = "pve-01"; }'';
-            };
-          };
-        });
-        default = [ ];
-        description = ''
-          Prometheus scrape targets, one entry per job. Only for applications
-          that expose nothing but Prometheus metrics: prefer OTLP otherwise.
-        '';
-      };
-    };
-
-    resourceAttributes = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      default = { };
-      example = { "deployment.environment.name" = "homelab"; "cloud.region" = "home"; };
-      description = ''
-        Static OTel resource attributes added to every signal this agent ships
-        (logs, metrics and its own telemetry) — the equivalent of Prometheus
-        external_labels. They override values set by the receivers.
-      '';
     };
 
     hostsOverride = lib.mkOption {

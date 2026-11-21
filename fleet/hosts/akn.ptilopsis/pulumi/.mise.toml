@@ -1,0 +1,15 @@
+# =============================================================================
+# ptilopsis.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Cloudflare DNS-01 token of the observability stack, managed as a Pulumi stack
+# (ptilopsis_akn.live, state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the root secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) are resolved from
+# Bitwarden Secrets Manager (fleet/.fnox.toml, with the token and project ID of the
+# Keychain, see `mise run bws:setup`) and exist only inside that process.
+# The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
+# =============================================================================
+
+[env]
+PULUMI_STACK = "ptilopsis_akn.live"

@@ -11,6 +11,14 @@ description = "Evaluate the nix-darwin configuration without building it"
 dir = "{{ config_root }}/nix"
 run = "nix eval --raw .#darwinConfigurations.ptilopsis.system.drvPath"
 
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of ptilopsis.akn"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
+
 [tasks."nix:switch"]
 description = "Apply the nix-darwin configuration to this Mac (macOS only, once nix-darwin is installed)"
 dir = "{{ config_root }}/nix"

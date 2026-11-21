@@ -23,7 +23,7 @@ for how it fits in the internal/external Gateway split.
      and `TXT` records anywhere in the zone and may AXFR it, nothing else.
 - **Forwarding** — everything else goes to `10.10.10.10`, then `1.1.1.1` / `1.0.0.1`.
 - **Observability** — OpenTelemetry Collector (`catalog.o11yAgent`) ships journald logs and host metrics as OTLP to
-  `data.o11y.chezmoi.sh:4318`, pinned to `10.128.0.5` in `/etc/hosts` so shipping does not depend on this very resolver
+  `data.o11y.chezmoi.sh:4318`, pinned to `10.0.0.32` (ptilopsis, through the SNAT of pve-01) in `/etc/hosts` so shipping does not depend on this very resolver
   being up.
 
 ## What's in this directory

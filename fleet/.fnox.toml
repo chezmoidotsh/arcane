@@ -1,0 +1,14 @@
+# Root secrets shared by every fleet Pulumi stack, held in Bitwarden Secrets Manager.
+# Values never live here, only the key names. fnox finds it by walking up from any stack under fleet/.
+# The token and project ID come from the root .fnox.toml (macOS Keychain, see `mise run bws:setup`).
+[providers.bws]
+type = "bitwarden-sm"
+project_id = { secret = "BWS_PROJECT_ID" }
+
+[secrets]
+# Garage S3 backend of the Pulumi state (Pulumi.yaml `backend.url`).
+AWS_ACCESS_KEY_ID = { provider = "bws", value = "garage-pulumi-access-key-id" }
+AWS_SECRET_ACCESS_KEY = { provider = "bws", value = "garage-pulumi-secret-access-key" }
+
+# Shared passphrase of the fleet stacks' Pulumi secrets.
+PULUMI_CONFIG_PASSPHRASE = { provider = "bws", value = "pulumi-config-passphrase" }
