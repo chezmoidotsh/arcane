@@ -59,6 +59,19 @@ git clone https://github.com/chezmoidotsh/arcane.git
 mise install
 ```
 
+### Bitwarden Secrets Manager access (macOS)
+
+Secrets that live in Bitwarden Secrets Manager (BWS) are resolved by [fnox](https://fnox.jdx.dev/) (`.fnox.toml`). The
+BWS access token and project ID are kept in the local macOS Keychain and are **never** exported in the shell
+environment: they only exist inside the process started by `fnox exec`.
+
+The setup happens during `mise install`, which asks for both values the first time. Then run any command with the
+secrets resolved:
+
+```bash
+fnox exec -- bws project list
+```
+
 ## 📁 Project Structure
 
 ```plaintext

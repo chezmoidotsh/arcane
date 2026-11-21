@@ -125,12 +125,14 @@ velero = "latest"   # Velero CLI used by scripts/velero:backup for ad-hoc backup
 # -----------------------------------------------------------------------------
 # Tools for handling secrets, data processing, and security operations
 
-conftest = "latest" # OPA policy testing for Kubernetes manifests
-dive = "latest"     # Container image analysis tool for security scanning
-gitleaks = "latest" # Secret detection engine, also used to redact Bash output (see .claude/hooks/redact-secrets)
-opa = "latest"      # Open Policy Agent engine for policy evaluation
-sops = "latest"     # Secrets OPerationS CLI for encrypting/decrypting secrets in Git
-yq = "latest"       # YAML/JSON processor for configuration file manipulation
+bitwarden-secrets-manager = "latest" # Bitwarden Secrets Manager CLI (bws), fed by fnox
+conftest = "latest"                  # OPA policy testing for Kubernetes manifests
+dive = "latest"                      # Container image analysis tool for security scanning
+fnox = "latest"                      # Secrets resolver: `fnox exec -- <cmd>` injects secrets without exporting them
+gitleaks = "latest"                  # Secret detection engine, also used to redact Bash output (see .claude/hooks/redact-secrets)
+opa = "latest"                       # Open Policy Agent engine for policy evaluation
+sops = "latest"                      # Secrets OPerationS CLI for encrypting/decrypting secrets in Git
+yq = "latest"                        # YAML/JSON processor for configuration file manipulation
 
 # -----------------------------------------------------------------------------
 # Development and Documentation Tools
@@ -171,6 +173,15 @@ omnictl = "1.12.2"
 
 cilium-cli = "latest"
 cilium-hubble = "latest"
+
+# =============================================================================
+# Hooks
+# =============================================================================
+# `mise install` offers to store the BWS token in the macOS Keychain, but only on
+# macOS and only while an entry is missing (see .mise/tasks/bws/setup).
+
+[hooks]
+postinstall = '[ "$(uname -s)" != Darwin ] || { security find-generic-password -s fnox -a bws-access-token && security find-generic-password -s fnox -a bws-project-id; } >/dev/null 2>&1 || mise run bws:setup'
 
 # =============================================================================
 # Tasks definition

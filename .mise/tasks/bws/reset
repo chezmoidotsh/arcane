@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#MISE description="Remove the BWS access token and project ID from the local macOS Keychain"
+#MISE hide=true
+#USAGE flag "-y --yes" help="Do not ask for confirmation"
+#
+# Undoes bws:setup: deletes the two entries fnox reads from the Keychain (service "fnox").
+#
+# Requires: macOS (security).
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/bws:_lib"
+
+require_macos
+
+present=()
+for account in "${ACCOUNT_TOKEN}" "${ACCOUNT_PROJECT}"; do
+  if keychain_has "${account}"; then present+=("${account}"); fi
+done
+
+if [[ "${#present[@]}" -eq 0 ]]; then
+  ok "Nothing to remove: no Bitwarden credentials in the Keychain."
+  exit 0
+fi
+
+if [[ "${usage_yes:-false}" != "true" ]]; then
+  [[ -t 0 ]] || fail "No terminal: run with --yes to remove without confirmation."
+  callout "Removes from your macOS Keychain (service \"${KEYCHAIN_SERVICE}\"): ${present[*]}" \
+    "fnox will no longer be able to reach Bitwarden until you run 'mise run bws:setup' again."
+  ask "Remove them? [y/N]"
+  [[ "${REPLY}" =~ ^[yY] ]] || { warn "Kept as is."; exit 0; }
+fi
+
+for account in "${present[@]}"; do
+  keychain_del "${account}" || fail "Could not remove ${account}."
+done
+ok "Removed ${present[*]} from the Keychain."

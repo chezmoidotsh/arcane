@@ -1,0 +1,28 @@
+# =============================================================================
+# fnox — secrets resolved on demand, never exported in the shell environment
+# =============================================================================
+# Usage: fnox exec -- <cmd>   (e.g. `fnox exec -- bws project list`)
+#
+# The Bitwarden Secrets Manager (BWS) access token and project ID live in the
+# local macOS Keychain (service "fnox"); store them with `mise run bws:setup`.
+# fnox resolves BWS_ACCESS_TOKEN before it uses the `bws` provider, so the token
+# only exists inside the process started by `fnox exec`. Nothing sensitive is
+# written in this repository.
+# =============================================================================
+
+[providers.kc]
+type = "keychain"
+service = "fnox"
+
+[providers.bws]
+type = "bitwarden-sm"
+project_id = { secret = "BWS_PROJECT_ID" }
+
+[secrets]
+# Keychain entries: service "fnox", account = `value` below.
+BWS_ACCESS_TOKEN = { provider = "kc", value = "bws-access-token" }
+BWS_PROJECT_ID = { provider = "kc", value = "bws-project-id" }
+
+# Bitwarden EU region: bws targets the US server by default (invalid_client otherwise).
+# Not a secret, only injected into the `fnox exec` child environment.
+BWS_SERVER_URL = { default = "https://vault.bitwarden.eu" }
