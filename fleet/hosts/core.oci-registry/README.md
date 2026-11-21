@@ -133,7 +133,7 @@ NixOS (`pkgs.testers.runNixOSTest`) qui démarre le conteneur et vérifie `/v2/`
 .
 ├── .mise.toml          tâches : lxc:secrets:sync, diagram:generate
 ├── .mise/tasks/lxc/    build, push, upgrade (bibliothèque partagée ../.mise/lib/lxc.sh)
-├── .sops.yaml          règles de chiffrement de nix/secrets/ et de pulumi/.mise/env.yaml
+├── .sops.yaml          règles de chiffrement de nix/secrets/
 ├── architecture.d2     source du schéma
 ├── nix/
 │   ├── flake.nix       version de l'image et de Zot, binaire amont patché pour NixOS
