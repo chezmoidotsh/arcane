@@ -1,0 +1,108 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What talks to omni.core (people, Talos machines), and the services it    │
+# │   depends on (certificates, observability).                                │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  letsencrypt: {
+    class: platform
+    label: Let's Encrypt
+    icon: assets/icons/platform/letsencrypt.blueprint.svg
+  }
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  operator: {
+    class: hardware
+    label: "Operator\n(browser, omnictl, kubectl)"
+    icon: assets/icons/system/kubernetes.blueprint.svg
+  }
+
+  talos: {
+    class: hardware
+    label: Talos machines
+    icon: assets/icons/hardware/talos.blueprint.svg
+  }
+
+  ptilopsis: {
+    class: hardware
+    label: "ptilopsis.akn\n(observability)"
+    icon: assets/icons/system/victoriametrics.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                omni.core                                   │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   The two services of the LXC, and Caddy, the single HTTPS entry point.    │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+omni·core: {
+  class: project
+  label: omni.core
+
+  caddy: {
+    class: application-system
+    label: "Caddy\n(omni, api.omni, kube.omni)"
+    icon: assets/icons/apps/caddy.blueprint.svg
+  }
+
+  omni: {
+    class: application
+    label: Omni
+    icon: assets/icons/hardware/talos.blueprint.svg
+  }
+
+  dex: {
+    class: application
+    label: Dex
+    icon: assets/icons/apps/dex.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# Everything TCP enters through Caddy on :443.
+localnet.operator -> omni·core.caddy: "Use UI and API (HTTPS)" {target-arrowhead: 443; class: [connect-app]}
+localnet.talos -> omni·core.caddy: "Register (HTTPS)" {target-arrowhead: 443; class: [connect-app]}
+omni·core.caddy -> omni·core.omni: "Proxy UI, API, k8s (HTTPS)" {target-arrowhead: "8443, 9090, 8100"; class: [connect-local]}
+omni·core.caddy -> omni·core.dex: "Proxy /dex (HTTP)" {target-arrowhead: 5557; class: [connect-local]}
+
+# The only direct flow: the SideroLink WireGuard tunnel.
+localnet.talos -> omni·core.omni: "Open SideroLink tunnel (WireGuard)" {target-arrowhead: 50180; class: [connect-vpn]}
+
+# Certificates.
+omni·core.caddy -> internet.letsencrypt: "Get certificate (ACME)" {target-arrowhead: 443; class: [connect-to-internet]}
+omni·core.caddy -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}
+
+# Observability.
+omni·core.omni -> localnet.ptilopsis: "Push metrics and logs (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}

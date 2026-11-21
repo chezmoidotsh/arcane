@@ -1,0 +1,104 @@
+# =============================================================================
+# omni-infra-provider-proxmox LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs omni-infra-provider-proxmox — the Omni infra provider enabling Talos VM
+# provisioning directly from the Omni UI.
+#
+# Two-phase deployment (first time):
+#
+#   Phase 1 — Proxmox credentials:
+#     mise run lxc:secrets:proxmox        # Proxmox password → nix/secrets/proxmox.sops.env
+#     mise run lxc:build
+#     mise run lxc:push -- <pve-host>
+#     # Create the LXC manually (see README, Première installation)
+#     # Provider starts but cannot connect to Omni yet.
+#
+#   Phase 2 — Omni registration:
+#     # In Omni UI: Settings → Infrastructure Providers → Create
+#     # Copy the generated provider key.
+#     mise run lxc:secrets:omni           # Paste key → nix/secrets/omni.sops.env
+#     mise run lxc:build
+#     mise run lxc:push -- <pve-host>
+#     mise run lxc:upgrade -- <pve-host> --vmid <vmid>
+#
+# Typical upgrade workflow (after initial setup):
+#     mise run lxc:build
+#     mise run lxc:push -- <pve-host>
+#     mise run lxc:upgrade -- <pve-host> --vmid <vmid>
+#
+# Secret files (SOPS/age-encrypted):
+#   nix/secrets/proxmox.sops.env   PROXMOX_PASSWORD         (Proxmox API password)
+#   nix/secrets/omni.sops.env      OMNI_SERVICE_ACCOUNT_KEY (Omni infra provider key)
+#
+# File-based tasks:
+#   .mise/tasks/lxc/build    — build LXC tarball with secrets baked in
+#   .mise/tasks/lxc/push     — upload template to Proxmox
+#   .mise/tasks/lxc/upgrade  — in-place rootfs-swap upgrade (same VMID)
+# =============================================================================
+
+[tools]
+sops = "latest"
+
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of omni-infra-provider-proxmox.core"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
+
+# -----------------------------------------------------------------------------
+# Secret Management — Proxmox API password
+# -----------------------------------------------------------------------------
+[tasks."lxc:secrets:proxmox"]
+description = "Store Proxmox API password in nix/secrets/proxmox.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  echo -n "Proxmox API password for the configured username: " >&2
+  read -r -s password
+  echo >&2
+  [[ -n "${password}" ]] || { echo "[ERROR] Empty password." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/nix/secrets"
+  TMPFILE="{{ config_root }}/nix/secrets/.tmp.$$.proxmox.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'PROXMOX_PASSWORD=%s\n' "${password}" > "${TMPFILE}"
+  sops --config "{{ config_root }}/nix/.sops.yaml" --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/nix/secrets/proxmox.sops.env"
+
+  echo "[SUCCESS] nix/secrets/proxmox.sops.env written." >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Secret Management — Omni infrastructure provider key
+# -----------------------------------------------------------------------------
+[tasks."lxc:secrets:omni"]
+description = "Store Omni infra provider key in nix/secrets/omni.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  echo "Paste the Omni infrastructure provider key" >&2
+  echo "(from Omni UI: Settings → Infrastructure Providers → Create):" >&2
+  read -r key
+  [[ -n "${key}" ]] || { echo "[ERROR] Empty key." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/nix/secrets"
+  TMPFILE="{{ config_root }}/nix/secrets/.tmp.$$.omni.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'OMNI_SERVICE_ACCOUNT_KEY=%s\n' "${key}" > "${TMPFILE}"
+  sops --config "{{ config_root }}/nix/.sops.yaml" --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/nix/secrets/omni.sops.env"
+
+  echo "[SUCCESS] nix/secrets/omni.sops.env written." >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball)
+# lxc:push    → .mise/tasks/lxc/push    (upload to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)

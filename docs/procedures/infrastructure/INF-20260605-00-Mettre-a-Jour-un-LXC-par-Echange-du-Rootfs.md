@@ -38,9 +38,9 @@ Avant de commencer, vérifier que les outils suivants sont installés et configu
 Les accès suivants sont également nécessaires :
 
 - accès SSH par clé à `root@<PVE_HOST>` ;
-- secrets du conteneur présents dans `secrets/*.sops.env` (déchiffrés au moment du build puis effacés de
-  l'environnement) ; s'ils manquent, `mise run lxc:secrets:sync` les régénère pour les conteneurs qui le proposent
-  (`observability`, `oci-registry` et `omni`).
+- secrets du conteneur présents dans `secrets/*.sops.env` ou `secrets/*.sops.json` (déchiffrés au moment du build puis effacés de
+  l'environnement) ; s'ils manquent, le `pulumi up` de la pile du conteneur réécrit `caddy.sops.json` (`oci-registry` et `omni`) et
+  `mise run lxc:secrets:sync` régénère ceux d'`observability`.
 
 ## Entrées requises
 

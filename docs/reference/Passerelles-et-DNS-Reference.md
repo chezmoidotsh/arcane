@@ -64,7 +64,7 @@ La zone `chezmoi.sh` de `talosnet-dns` contient des enregistrements statiques r�
 `pve-01.pve`, `omni`, `api.omni`, `oci`, `data.o11y`, `s3`, `nas`) et les enregistrements `A` et `TXT` écrits
 dynamiquement par external-dns. Tout le reste est transmis à des résolveurs amont (UniFi, puis deux résolveurs publics).
 Les enregistrements statiques ne sont créés qu'au premier démarrage du volume. Sources :
-`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix` et le `README.md` du même dossier.
+`fleet/hosts/core.talosnet-dns/nix/modules/bind.nix` et le `README.md` du même dossier.
 
 Les clients talosnet reçoivent `talosnet-dns` comme DNS par les options DHCP talosnet. Les hôtes hors talosnet (par
 exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
@@ -103,5 +103,5 @@ exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
 - [Réseau Reference](Reseau-Reference.md) : topologie et vue d'ensemble du réseau.
 - [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
   : justification du découpage réseau (double NIC et zone SDN `simple`).
-- [talosnet-dns](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/README.md) : construction et mise
+- [talosnet-dns](../../fleet/hosts/core.talosnet-dns/README.md) : construction et mise
   à jour du LXC BIND.

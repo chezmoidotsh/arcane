@@ -1,0 +1,6 @@
+encryptionsalt: v1:frOv/FHgkY0=:v1:ti1l50e+fPpZuoSP:RKO71oYOqGupdH4dWrfUme4+3Hgu7Q==
+config:
+  omni-core:cloudflare_account_id:
+    secure: v1:j660OLA3YKHVyTs0:2NwxNyTa2tjFpIUzUvunA9WkSAHwnaUEdDvOdmkv6hEHWBJ2Ycv6gFqO049c1PaJ
+  omni-core:cloudflare_zone_id:
+    secure: v1:AT5yRA+hA2rx6KKb:W7FKvzAtFWDOeU+aYq8m9gIPfRxrC3dZW+1xizAUkj9KoyH3ciXy8vOyEJd75UNo

@@ -3,7 +3,6 @@
 import "./stack/proxmox";
 
 export { observabilityDns01Token, observabilityTailscaleOauthKey } from "./stack/observability";
-export { omniDns01Token } from "./stack/omni";
 export { adminGroupId, familleGroupId, maisonGroupId } from "./stack/pocket-id";
 export { pbsDns01Token, pveBackupTokenId, pveBackupTokenSecret } from "./stack/proxmox-backup-server";
 export {
@@ -14,4 +13,3 @@ export {
   nfs4AclAssignments,
   paperlessPasswordSecret,
 } from "./stack/truenas";
-export { zotRegistryDns01Token } from "./stack/zot-registry";

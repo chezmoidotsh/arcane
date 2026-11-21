@@ -486,7 +486,7 @@ Une liste de contrôle normative concise (le _pourquoi_ figure dans les décisio
 - [ADR-015 Migrer Crossplane vers Pulumi](./ADR-015-Migrer-Crossplane-vers-Pulumi.md) : le remplacement de Crossplane
   cité dans la décision initiale.
 - [README du LXC d'observabilité](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/README.md) et
-  [README du LXC `oci-registry`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/README.md), sur
+  [README du LXC `oci-registry`](../../fleet/hosts/core.oci-registry/README.md), sur
   lequel il est modelé : l'implémentation.
 - [Mettre à jour un LXC par échange du rootfs](../procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md)
   : la mise à jour de le conteneur.
