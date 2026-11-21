@@ -159,11 +159,11 @@ confirmer** par un essai sur une copie de l'état :
 
 `StackReference` à mettre à jour (vérifié le 2026-11-15, `grep -rn "organization/" --include='*.ts' projects catalog`) :
 
-| Cible lue                                             | Lue par                                                                                                                                                                                                       |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `organization/chezmoi-sh-infra/chezmoi_sh.live`       | `hass`, `kazimierz.akn`, `lungmen.akn`, `rhodes.akn` (`stack/pocket-id/index.ts`), `rimbilliton.akn` (`stack/pocket-id.ts`), `kazimierz.akn` et `rimbilliton.akn` (`chezmoiShCompartmentId`, après l'étape 6) |
-| `organization/kazimierz-akn-infra/kazimierz_akn.live` | `catalog/pulumi/lib/src/pangolin.ts` (règles `edgeAccess`, lues par `rhodes.akn` et `lungmen.akn`)                                                                                                            |
-| `organization/amiya-akn-infra/amiya_akn.live`         | `rhodes.akn` (`stack/cloudnative-pg.ts`) : référence vers un projet qui n'existe plus, à supprimer plutôt qu'à renommer (à confirmer)                                                                         |
+| Cible lue                                             | Lue par                                                                                                                                                                                                                           |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `organization/chezmoi-sh-infra/chezmoi_sh.live`       | `akn.closure` (`index.ts`), `kazimierz.akn`, `lungmen.akn`, `rhodes.akn` (`stack/pocket-id/index.ts`), `rimbilliton.akn` (`stack/pocket-id.ts`), `kazimierz.akn` et `rimbilliton.akn` (`chezmoiShCompartmentId`, après l'étape 6) |
+| `organization/kazimierz-akn-infra/kazimierz_akn.live` | `catalog/pulumi/lib/src/pangolin.ts` (règles `edgeAccess`, lues par `rhodes.akn` et `lungmen.akn`)                                                                                                                                |
+| `organization/amiya-akn-infra/amiya_akn.live`         | `rhodes.akn` (`stack/cloudnative-pg.ts`) : référence vers un projet qui n'existe plus, à supprimer plutôt qu'à renommer (à confirmer)                                                                                             |
 
 Ordre : mettre à jour les lecteurs et la cible dans la même fenêtre, et rejouer un `pulumi preview` sur chaque lecteur.
 
