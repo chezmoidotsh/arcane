@@ -111,10 +111,10 @@ détour par la passerelle.
 
 Deux secrets, chiffrés avec sops/age et injectés dans l'image à la construction (jamais en clair sur disque) :
 
-| Fichier                      | Variable                  | Origine                                                       |
-| ---------------------------- | ------------------------- | ------------------------------------------------------------- |
-| `nix/secrets/omni.sops.env`  | `DEX_ADMIN_PASSWORD_HASH` | Opérateur : hash bcrypt, `mise run lxc:secrets:rotate`        |
-| `nix/secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN`    | Pulumi (sortie `omniDns01Token`), `mise run lxc:secrets:sync` |
+| Fichier                       | Variable                  | Origine                                                |
+| ----------------------------- | ------------------------- | ------------------------------------------------------ |
+| `nix/secrets/omni.sops.env`   | `DEX_ADMIN_PASSWORD_HASH` | Opérateur : hash bcrypt, `mise run lxc:secrets:rotate` |
+| `nix/secrets/caddy.sops.json` | `CLOUDFLARE_API_TOKEN`    | Écrit par le `pulumi up` de `pulumi/` (`SopsFile`)     |
 
 Le hash est lu à l'évaluation Nix et écrit dans la configuration de Dex : créer `/etc/omni/secrets` à la main après coup
 ne change rien, il faut reconstruire l'image avec les secrets présents. Le jeton Cloudflare (DNS-01 de Caddy) vient du
@@ -131,7 +131,7 @@ doit exister avant les clusters.
 │   ├── flake.nix           image LXC, version de l'image (CalVer)
 │   ├── configuration.nix   identité, réseau, uid, réglages Omni et Dex
 │   ├── modules/            omni, dex (+ thème), caddy, hardening, secrets, o11y-agent
-│   └── secrets/            omni.sops.env, caddy.sops.env
+│   └── secrets/            omni.sops.env, caddy.sops.json
 └── pulumi/                 jeton DNS-01 Cloudflare
 ```
 
@@ -155,16 +155,17 @@ procédure se fait à la main, une seule fois.
    démarrage) ; s'il devient bruyant, le forcer à `[ ]` dans `nix/configuration.nix`.
 
 2. Préparer les secrets. Hash de l'administrateur Dex : `mise run lxc:secrets:rotate`. Jeton Cloudflare : appliquer la
-   pile (`pulumi up` dans `pulumi/`), puis `mise run lxc:secrets:sync`. Sans pile, créer le jeton à la main dans
+   pile (`pulumi up` dans `pulumi/`), qui écrit `nix/secrets/caddy.sops.json`. Sans pile, créer le jeton à la main dans
    Cloudflare (_Edit zone DNS_, ou _Zone → DNS → Edit_ et _Zone → Zone → Read_, limité à la zone `chezmoi.sh`) et le
    chiffrer directement :
 
    ```sh
-   printf 'CLOUDFLARE_API_TOKEN=%s\n' '<jeton>' \
-     | sops -e --input-type dotenv --output-type dotenv /dev/stdin > nix/secrets/caddy.sops.env
+   printf '{"CLOUDFLARE_API_TOKEN": "%s"}' '<jeton>' \
+     | sops -e --input-type json --output-type json --filename-override nix/secrets/caddy.sops.json /dev/stdin \
+     > nix/secrets/caddy.sops.json
    ```
 
-   Repasser sur `lxc:secrets:sync` dès que la pile est appliquée, pour gérer le jeton de façon déclarative.
+   Appliquer la pile dès que possible pour que `pulumi/` reprenne le fichier de façon déclarative.
 
 3. Construire et envoyer le template : `mise run lxc:build`, puis `mise run lxc:push -- <hôte-pve>`. Le nom du template
    (`omni.<version>-amd64.tar.xz`) vient de `version` dans `nix/flake.nix` (CalVer `YYYY.MM.DD`, suffixe `-N` pour
@@ -268,12 +269,12 @@ fichiers ci-dessous ; copier en plus `omni.asc` dans un endroit sûr à part.
 | `/persistent/omni/db/omni.db` | Inventaire des clusters et des machines perdu.     |
 
 Rotation : le mot de passe Dex avec `mise run lxc:secrets:rotate`, le jeton Cloudflare avec `pulumi up --replace` dans
-`pulumi/` puis `mise run lxc:secrets:sync` ; dans les deux cas, reconstruire et redéployer.
+`pulumi/` (qui réécrit `caddy.sops.json`) ; dans les deux cas, reconstruire et redéployer.
 
 Quand ça ne démarre pas :
 
 - **Caddy n'obtient pas de certificat** : lire `journalctl -u caddy`. Causes habituelles : jeton expiré (rotation, puis
-  `lxc:secrets:sync`), pas de sortie réseau, DNS, dérive d'horloge.
+  `pulumi up`), pas de sortie réseau, DNS, dérive d'horloge.
 - **Omni échoue à lire la configuration OIDC** (`failed to fetch openid configuration`) : tester l'URL de découverte
   ci-dessus. Un 404 veut dire que le routeur `/dex*` de `nix/modules/caddy.nix` n'est pas placé avant le `handle` par
   défaut ; un 502 que Dex est arrêté ou écoute ailleurs que `services.omni.dex.bindAddr`. Un Dex qui refuse tous les

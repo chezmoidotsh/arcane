@@ -5,13 +5,12 @@
 # runs the Zot OCI registry (oci.chezmoi.sh) with Caddy HTTPS termination.
 #
 # Usage:
-#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from Pulumi → nix/secrets/caddy.sops.env
 #   mise run lxc:build                                     # Build the LXC tarball with Cloudflare token baked in
 #   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
 #   mise run lxc:upgrade -- <pve-host> --vmid <vmid>        # Upgrade a running LXC in place
 #
 # Typical workflow (first time):
-#   mise run lxc:secrets:sync              # Requires Pulumi (pulumi up first)
+#   (cd pulumi && pulumi up)               # Writes the Cloudflare token → nix/secrets/caddy.sops.json
 #   mise run lxc:build
 #   mise run lxc:push -- pve.lan
 #
@@ -35,32 +34,6 @@
 # =============================================================================
 # Tasks definition
 # =============================================================================
-
-# -----------------------------------------------------------------------------
-# Secret Management
-# -----------------------------------------------------------------------------
-# Reads the zotRegistryDns01Token output of the oci-registry_core.live Pulumi
-# stack (pulumi/) and writes it into nix/secrets/caddy.sops.env with
-# `sops set`, which leaves every other key of that file untouched, so it can be
-# baked into the LXC image at build time. `mise exec` runs pulumi from pulumi/
-# so that its PULUMI_STACK is set, and `fnox exec` resolves the passphrase and
-# the Garage credentials (fleet/.fnox.toml): a task `dir` alone does not load the
-# env of that directory.
-#
-# Requires `pulumi up` to have run in pulumi/ first.
-
-[tasks."lxc:secrets:sync"]
-description = "Fetch Cloudflare DNS-01 token from Pulumi and write nix/secrets/caddy.sops.env"
-dir = "{{ config_root }}/pulumi"
-run = '''
-  set -euo pipefail
-  TOKEN=$(mise exec -- fnox exec -- pulumi stack output zotRegistryDns01Token --show-secrets)
-  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
-  sops set --input-type dotenv --output-type dotenv \
-    "{{ config_root }}/nix/secrets/caddy.sops.env" \
-    '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
-  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in nix/secrets/caddy.sops.env" >&2
-'''
 
 # -----------------------------------------------------------------------------
 # Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts

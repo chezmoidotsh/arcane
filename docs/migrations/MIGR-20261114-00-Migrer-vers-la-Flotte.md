@@ -265,9 +265,9 @@ Concerne `core.omni`, `core.oci-registry`, `core.talosnet-dns`, `core.omni-infra
   ([ADR-017](../decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md))
   et son entrée dans `pnpm-workspace.yaml`. Le transfert de l'état se fait avec `pulumi state move` (**à confirmer** :
   comportement entre deux piles dont les phrases secrètes diffèrent ; la commande existe dans la version épinglée par
-  `mise`). Les tâches `lxc:secrets:sync` des LXC (jeton DNS-01) lisent la sortie de la nouvelle pile.
+  `mise`). Le `pulumi up` de la nouvelle pile écrit `nix/secrets/caddy.sops.json` (jeton DNS-01, ressource `SopsFile`).
 - **Vérification** : `pulumi preview` vide **dans la pile source et dans la pile destination** après chaque `state move`
-  ; `mise run lxc:secrets:sync` rend les mêmes valeurs ; l'image reconstruite se déploie sur un LXC de test si
+  ; `caddy.sops.json` contient la même valeur que l'ancien `caddy.sops.env` ; l'image reconstruite se déploie sur un LXC de test si
   disponible (**à confirmer**).
 - **Retour arrière** : `pulumi state move` dans l'autre sens, ou restauration de l'état exporté avant l'étape
   (`pulumi stack import`) ; `git revert` pour les fichiers.
@@ -283,7 +283,7 @@ Concerne `core.omni`, `core.oci-registry`, `core.talosnet-dns`, `core.omni-infra
   Les projets lisent l'identifiant du compte et celui de la zone Cloudflare dans leur propre configuration, sans
   `StackReference`. `pulumi state move` existe dans la version épinglée par `mise` (v3.268.0) ; son comportement entre
   deux piles à phrases secrètes différentes reste **à confirmer** et doit être essayé d'abord sur une copie de l'état.
-  `lxc:secrets:sync` de `core.omni` et de `core.oci-registry` lit la sortie de sa propre pile. La bibliothèque commune
+  Le `pulumi up` de `core.omni` et de `core.oci-registry` écrit `caddy.sops.json` depuis sa propre pile. La bibliothèque commune
   des LXC (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`) reste à côté de `o11y-datastore` et
   est référencée par les hôtes déplacés ; elle bouge à l'étape 10.
 - **Manuel, avant la fusion** : créer la phrase secrète de chaque projet (`.mise/env.yaml`, SOPS), `pulumi stack init`,
