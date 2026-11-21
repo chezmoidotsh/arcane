@@ -15,10 +15,22 @@ POLICY="${REPO_ROOT}/policies/opa/OBS001:kubernetes.rego"
 declared="$(sed -n '/^log_formats := {/,/^}/p' "${POLICY}" | grep -o '"[^"]*"' | tr -d '"' | grep -vx none | sort)"
 available="$(for k in "${PARSERS}"/*/kustomization.yaml; do basename "$(dirname "${k}")"; done | sort)"
 
-if [[ ${declared} != "${available}" ]]; then
-	echo "log_formats of ${POLICY#"${REPO_ROOT}/"} does not match the parser directories (< OBS001, > parsers/):" >&2
-	diff <(echo "${declared}") <(echo "${available}") >&2 || true
-	exit 1
-fi
+# Findings are `path:line: message` lines (the format rtunk parses, .rtunk/local-plugin/linters/o11y-log-formats/).
+rel="${POLICY#"${REPO_ROOT}/"}"
+line="$(grep -n '^log_formats := {' "${POLICY}" | cut -d: -f1)"
+status=0
+extra="$(comm -13 <(echo "${declared}") <(echo "${available}") || true)"
+missing="$(comm -23 <(echo "${declared}") <(echo "${available}") || true)"
+while IFS= read -r format; do
+	[[ -n ${format} ]] || continue
+	echo "${rel}:${line}: parser '${format}' exists but is not in log_formats"
+	status=1
+done <<<"${extra}"
+while IFS= read -r format; do
+	[[ -n ${format} ]] || continue
+	echo "${rel}:${line}: log_formats lists '${format}' but there is no such parser directory"
+	status=1
+done <<<"${missing}"
+((status == 0)) || exit 1
 count="$(grep -c . <<<"${available}")"
 echo "OBS001 knows the ${count} parser formats, plus none"

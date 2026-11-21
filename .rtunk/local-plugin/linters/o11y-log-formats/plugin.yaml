@@ -1,0 +1,19 @@
+# Repository-local rtunk plugin: linters specific to Arcane (referenced from ../rtunk.yaml, `plugins.sources`).
+version: 0.1
+lint:
+  definitions:
+    # The log formats the OPA rule OBS001 accepts are exactly the o11y-agent parser directories (ADR-020). The OBS001
+    # policy and the parsers' kustomization.yaml trigger it; the check spans both, so it runs once per run. The path of
+    # OBS001 holds a colon, hence the non-greedy `path`. Findings are `path:line: message` lines.
+    - name: o11y-log-formats
+      files: [rego, yaml]
+      commands:
+        - name: lint
+          run: .mise/tasks/o11y/parsers/check-formats
+          output: regex
+          parse_regex: "(?P<path>.+?):(?P<line>\\d+): (?P<message>.*)"
+          success_codes: [0, 1]
+          read_output_from: stdout
+          batch: true
+          cache_results: false
+          disable_upstream: true

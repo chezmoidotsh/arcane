@@ -33,6 +33,9 @@ if ! REPO_ROOT="$(git rev-parse --show-toplevel)"; then
 fi
 FAILURES=0
 
+# One finding as a `path:line:` message, the format rtunk parses (.rtunk/local-plugin/linters/omni-template/).
+report() { echo "${1#"${REPO_ROOT}"/}:1: $2"; }
+
 # Octet/prefix pattern: "0" or a non-zero-leading 1-3 digit run. Rejects
 # leading zeros ("016") so no value here ever reaches bash arithmetic in a
 # form it would misparse as octal.
@@ -81,7 +84,7 @@ check_field() {
   yq_status=$?
 
   if ((yq_status != 0)); then
-    echo "ERROR ${file}: ${label} query failed: $(<"${yq_error}")"
+    report "${file}" "${label} query failed: $(<"${yq_error}")"
     FAILURES=$((FAILURES + 1))
     rm -f "${yq_error}"
     return
@@ -89,7 +92,7 @@ check_field() {
   rm -f "${yq_error}"
 
   if [[ -z ${values} ]]; then
-    echo "FAIL ${file}: ${label} is missing or empty"
+    report "${file}" "${label} is missing or empty"
     FAILURES=$((FAILURES + 1))
     return
   fi
@@ -99,18 +102,18 @@ check_field() {
     [[ -z ${value} ]] && continue
 
     if [[ ${kind} == "cidr" && ${value} != *"/"* ]]; then
-      echo "FAIL ${file}: ${label} value '${value}' is missing a /prefix (must be CIDR notation)"
+      report "${file}" "${label} value '${value}' is missing a /prefix (must be CIDR notation)"
       FAILURES=$((FAILURES + 1))
       continue
     fi
     if [[ ${kind} == "ip" && ${value} == *"/"* ]]; then
-      echo "FAIL ${file}: ${label} value '${value}' must be a bare IP, not a CIDR"
+      report "${file}" "${label} value '${value}' must be a bare IP, not a CIDR"
       FAILURES=$((FAILURES + 1))
       continue
     fi
 
     if ! in_adr014_range "${value}"; then
-      echo "FAIL ${file}: ${label} value '${value}' is outside ADR-014's 172.16.0.0/12 range"
+      report "${file}" "${label} value '${value}' is outside ADR-014's 172.16.0.0/12 range"
       FAILURES=$((FAILURES + 1))
     fi
   done <<<"${values}"
