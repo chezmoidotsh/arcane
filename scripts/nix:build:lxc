@@ -2,7 +2,7 @@
 # trunk-ignore-all(shellcheck/SC2312): don't care about masking return value
 set -euo pipefail
 
-# shellcheck source=nix:_lib
+# shellcheck source=/dev/null
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/nix:_lib"
 
 show_usage() {
@@ -199,9 +199,11 @@ docker run --rm \
       WORK_DIR=$(mktemp -d)
       git clone --quiet --no-hardlinks /src "${WORK_DIR}"
       # Filesystem at /src has overlay files already applied by Docker mounts
+      # mkdir -p: the main checkout may be on a branch where these directories do not exist
+      mkdir -p "${WORK_DIR}/${RELATIVE_FLAKE_PATH}" "${WORK_DIR}/catalog/nix"
       cp -rf "/src/${RELATIVE_FLAKE_PATH}/." "${WORK_DIR}/${RELATIVE_FLAKE_PATH}/"
       cp -rf /src/catalog/nix/. "${WORK_DIR}/catalog/nix/"
-      git -C "${WORK_DIR}" add -A
+      git -C "${WORK_DIR}" add -Af # -f: the main checkout branch may ignore these paths
       cd "${WORK_DIR}/${RELATIVE_FLAKE_PATH}"
     fi
 
