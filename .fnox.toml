@@ -23,6 +23,9 @@ project_id = { secret = "BWS_PROJECT_ID" }
 BWS_ACCESS_TOKEN = { provider = "kc", value = "bws-access-token" }
 BWS_PROJECT_ID = { provider = "kc", value = "bws-project-id" }
 
+# age private key (sops), stored in BWS under the name of its public key.
+SOPS_AGE_KEY = { provider = "bws", value = "arcane-age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9" }
+
 # Bitwarden EU region: bws targets the US server by default (invalid_client otherwise).
 # Not a secret, only injected into the `fnox exec` child environment.
 BWS_SERVER_URL = { default = "https://vault.bitwarden.eu" }
