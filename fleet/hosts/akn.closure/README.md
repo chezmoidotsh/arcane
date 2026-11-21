@@ -73,8 +73,8 @@ et le client OIDC `Home Assistant` de Pocket-Id, avec PKCE et réservé au group
 la pile `chezmoi.sh` par `StackReference`. Ni l'un ni l'autre n'est poussé dans OpenBao : ce sont des sorties de la pile
 (`homeAssistantDns01Token`, `homeAssistantOidcClientId`, `homeAssistantOidcClientSecret`), à recopier à la main dans
 Home Assistant. Le `secrets.yaml` de l'hôte vit sur l'hôte, pas dans le dépôt. L'état Pulumi est stocké dans le backend
-S3 de Garage, et la phrase secrète de la pile se trouve dans `pulumi/.mise/env.yaml`, chiffré avec sops (règle dans
-`.sops.yaml`, à lancer depuis ce dossier).
+S3 de Garage ; la phrase secrète et les identifiants de ce backend sont résolus par fnox depuis Bitwarden Secrets
+Manager (`fleet/.fnox.toml`), et `pulumi/.mise.toml` ne fixe que `PULUMI_STACK`.
 
 ```text
 pulumi/
@@ -99,20 +99,18 @@ la pile appliquée (voir ci-dessous), brancher les secrets dans Home Assistant :
 
 ### Mises à jour
 
-`mise run pulumi:diff` prévisualise la pile, `mise run pulumi:apply` l'applique après confirmation (depuis `pulumi/`).
-Le rafraîchissement de l'état n'a lieu que si le dernier date de plus de 24 h ; `-- --refresh` ou `-- --no-refresh` le
-forcent ou l'évitent. Si un secret change, il faut le recopier dans Home Assistant avec les deux commandes ci-dessus.
+Depuis `pulumi/`, `pulumi preview` prévisualise la pile et `pulumi up` l'applique (la commande `pulumi` passe par fnox
+dans un shell interactif, voir `fleet/.mise.toml`). Si un secret change, il faut le recopier dans Home Assistant avec les deux commandes ci-dessus.
 
 ### Vérifier un déploiement
 
-- `mise run pulumi:diff` ne doit rien proposer.
+- `pulumi preview` (depuis `pulumi/`) ne doit rien proposer.
 - `mise run pulumi:oidc-client` affiche un `client_id` et un `client_secret` non vides.
 - Se connecter sur `https://hass.chezmoi.sh` avec le bouton Pocket-Id, depuis un compte du groupe `maison`.
 
 ## Contribuer
 
-Les tâches `pulumi:diff` et `pulumi:apply` se lancent depuis `pulumi/`, les deux tâches de récupération des secrets
-depuis ce dossier. Le composant du jeton vient de `catalog/pulumi/components/cloudflare-dns01-token`. Le schéma se
+Les deux tâches de récupération des secrets se lancent depuis ce dossier. Le composant du jeton vient de `catalog/pulumi/components/cloudflare-dns01-token`. Le schéma se
 modifie dans `architecture.d2`, puis `mise run diagram:generate` régénère `assets/architecture.png`, à commiter avec.
 Lancer `mise run lint` avant de pousser.
 
