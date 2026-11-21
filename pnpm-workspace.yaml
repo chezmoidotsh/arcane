@@ -2,6 +2,7 @@ packages:
   - catalog/pulumi/lib
   - catalog/pulumi/components/*
   - catalog/pulumi/sdks/*
+  - fleet/hosts/*/pulumi
   - projects/*/src/infrastructure/pulumi
 
 allowBuilds:

@@ -1,0 +1,6 @@
+encryptionsalt: v1:vvql9u4lAfI=:v1:nNzWn1Jmimm5XWqF:q7uZMyrISF/RMorsvf3nlmaCvI3sLA==
+config:
+  ptilopsis-akn:cloudflare_account_id:
+    secure: v1:tWSeOnw3bT+FHZoD:HcGBCnH5L8jZHaehRnq09ZGMwArjgSvshCl1TgOQZZ7uLBikL3Ojysb66g5zn6TV
+  ptilopsis-akn:cloudflare_zone_id:
+    secure: v1:2+ub2fAC+tIF9WSc:yuRllBWyUZqtrNdzGHcWu7aNLld8ctghnqNZoZbQ6lnHDfqRh8Tm665MDF8Z+NeY
