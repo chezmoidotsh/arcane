@@ -436,7 +436,7 @@ propriétaire.
   3. `pulumi stack rename organization/horn-akn/horn_akn.live` ; à défaut, export, réécriture des URN
      (`kazimierz-akn-infra` vers `horn-akn`, `kazimierz_akn.live` vers `horn_akn.live`), `pulumi stack init` puis
      `pulumi stack import` ;
-  4. `sops set pulumi/.mise/env.yaml '["PULUMI_STACK"]' '"horn_akn.live"'` ;
+  4. vérifier que `PULUMI_STACK` vaut `horn_akn.live` dans `pulumi/.mise.toml` ;
   5. basculer l'hôte : `mise run nixos:binding-ip`, `nixos-rebuild dry-activate` (aucune unité `docker-*` ne doit être
      redémarrée), puis `mise run nixos:oci:update root@kazimierz-akn` ; contrôler que le nœud s'appelle `horn-akn` dans
      le tailnet et que `tailscaled`, `pangolin-tailscale-serve`, `docker-pangolin`, `docker-gerbil` et `docker-traefik`
@@ -444,16 +444,16 @@ propriétaire.
   6. **barrière** : `https://horn-akn.tail831c5d.ts.net/` doit répondre avec un certificat valide (tout code HTTP, 401
      ou 404 compris), `pangolin.chezmoi.sh` répondre et les deux sites Newt être en ligne. Ne pas continuer sans cette
      réponse (si le certificat manque : redémarrer `pangolin-tailscale-serve`) ;
-  7. `mise run pulumi:diff -- --diff` dans `horn` : exactement cinq `update` OCI (compartiment : `name` et `description`
+  7. `pulumi preview --diff` dans `horn` : exactement cinq `update` OCI (compartiment : `name` et `description`
      ; instance et NSG : `displayName` et `freeformTags.project` ; VCN et liste de sécurité : `displayName`) plus un
      `update` du fournisseur Pangolin par défaut (propriété `url`) ; **tout `create`, `replace` ou `delete` (en
      particulier un `replace` du fournisseur ou d'une ressource `pangolin:*`), tout `update` sur une autre ressource ou
-     toute autre propriété arrête l'opération** ; puis `mise run pulumi:apply` et un second `mise run pulumi:diff` vide
+     toute autre propriété arrête l'opération** ; puis `pulumi up` et un second `pulumi preview` vide
      ;
-  8. `mise run pulumi:diff -- --diff` dans `rhodes.akn` et `lungmen.akn` : **uniquement** l'`update` du fournisseur
+  8. `pulumi preview --diff` dans `rhodes.akn` et `lungmen.akn` : **uniquement** l'`update` du fournisseur
      Pangolin (`url`), même condition d'arrêt (un `replace` ferait tourner les identifiants Newt) ; puis
-     `mise run pulumi:apply` dans les deux, pour que l'état référence la nouvelle URL ;
-  9. fusionner, avec `pulumi/.mise/env.yaml` commité. Contrôles : `pangolin.chezmoi.sh` répond, les deux sites Newt sont
+     `pulumi up` dans les deux, pour que l'état référence la nouvelle URL ;
+  9. fusionner, sans secret de projet à commiter. Contrôles : `pangolin.chezmoi.sh` répond, les deux sites Newt sont
      en ligne, un service public de chaque cluster répond.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : un
   état vide planifierait une seconde passerelle (instance, VCN, enregistrements DNS, dont l'écrasement de

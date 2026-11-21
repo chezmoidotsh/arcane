@@ -39,7 +39,7 @@ error-pages.
 
 1. **Outils** : `mise install`, Docker (OrbStack ou Docker Desktop sur macOS) et toute commande Nix passée par `nonix`
    (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur.
-2. **Instance OCI** : provisionnée par la stack Pulumi (`mise run pulumi:diff && mise run pulumi:apply` dans
+2. **Instance OCI** : provisionnée par la stack Pulumi (`pulumi preview && pulumi up` dans
    `fleet/hosts/akn.horn/pulumi/`), une instance Always Free `VM.Standard.A1.Flex` en `eu-paris-1`, sous Ubuntu.
 3. **Accès SSH public** : fermé au niveau du NSG OCI. Activer temporairement l'option Pulumi `unsecure` pour
    l'installation (`pulumi config set unsecure true && pulumi up`), puis la remettre à `false`.

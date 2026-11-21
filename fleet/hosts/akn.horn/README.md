@@ -137,7 +137,7 @@ nix/
 La procédure complète, avec le dépannage, est dans le guide
 [Initialiser Kazimierz](../../../docs/guides/Initialiser-Kazimierz.md). En résumé :
 
-1. Provisionner l'instance : `mise run pulumi:diff` puis `mise run pulumi:apply` dans `pulumi/`. Ouvrir temporairement
+1. Provisionner l'instance : `pulumi preview` puis `pulumi up` dans `pulumi/`. Ouvrir temporairement
    le SSH avec `pulumi config set unsecure true`, et vérifier que `tag:svc-pangolin` existe dans l'ACL du tailnet et
    qu'aucun nœud `horn-akn` ne traîne dans la console Tailscale (sinon le nouveau devient `horn-akn-1`, et le
    `pangolin:url` des piles casse).
@@ -177,7 +177,7 @@ Pour valider une modification sans toucher à l'hôte : `mise run nixos:binding-
 `nonix eval --raw ".#nixosConfigurations.horn-akn-aarch64.config.system.build.toplevel.drvPath"` (toute commande Nix
 passe par `nonix`, qui l'exécute en conteneur). Il ne valide que l'évaluation : une dérivation qui ne compile pas ne se
 voit qu'au build. `mise run nixos:e2e <user@host>` répète l'installation complète sur une VM de test Proxmox (x86_64),
-et **efface la cible**. Côté Pulumi, `mise run pulumi:diff` dans `pulumi/`.
+et **efface la cible**. Côté Pulumi, `pulumi preview` dans `pulumi/`.
 
 Les images des conteneurs sont à mettre à jour dans `nix/modules/pangolin.nix`, à un seul endroit. Le schéma
 d'architecture se modifie dans `architecture.d2`, puis `mise run diagram:generate` régénère `assets/architecture.png`, à
