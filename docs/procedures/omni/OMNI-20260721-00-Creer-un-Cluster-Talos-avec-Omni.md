@@ -237,7 +237,7 @@ mise run omni:clustertemplate:validate
 
 Ajouter cette tâche au `.mise.toml` du nouveau projet si elle manque, en s'inspirant de ces deux projets. Le script
 `omni:template:lint` vérifie en plus que `podSubnets`, `serviceSubnets` et `clusterDNS` de chaque template de cluster
-respectent la plage de l'ADR-014 ; la CI l'exécute à chaque changement sous `projects/*/src/infrastructure/omni/`.
+respectent la plage de l'ADR-014 ; rtunk l'exécute (linter `omni-template`), en local comme en CI.
 
 ## Étape 6 — Appliquer le template de cluster
 

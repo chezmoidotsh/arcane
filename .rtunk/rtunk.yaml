@@ -75,6 +75,8 @@ lint:
     # Linters of the local plugin (.rtunk/local-plugin/linters/)
     - wiki-lint
     - fleet-structure
+    - omni-template
+    - o11y-log-formats
   threshold:
     - linters: [checkov, trivy]
       level: none
