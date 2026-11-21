@@ -1,0 +1,19 @@
+# Repository-local rtunk plugin: linters specific to Arcane (referenced from ../../plugin.yaml's parent, `plugins.sources`).
+version: 0.1
+lint:
+  definitions:
+    # Fleet structure: a system component shared by two clusters or more has a catalog base, and the folders of
+    # fleet/hosts and fleet/clusters carry a family. The whole tree is checked at once (the rules span clusters), so
+    # the linter runs once per run, whatever the files. Findings are `path:line: message` lines.
+    - name: fleet-structure
+      files: [ALL]
+      commands:
+        - name: lint
+          run: ${plugin}/linters/fleet-structure/fleet-structure-lint.sh ${workspace}
+          output: regex
+          parse_regex: "(?P<path>[^:]+):(?P<line>\\d+): (?P<message>.*)"
+          success_codes: [0, 1]
+          read_output_from: stdout
+          batch: true
+          cache_results: false
+          disable_upstream: true
