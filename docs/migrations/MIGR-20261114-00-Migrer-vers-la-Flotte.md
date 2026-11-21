@@ -361,13 +361,14 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
 - **Manuel, noms d'hôte** : le nom d'hôte NixOS et le nom du nœud Tailscale sont alignés sur le nom canonique
   (`horn.akn`, `exusiai.akn`) pendant la migration. Vérifier avant les références au nom actuel dans les ACL Tailscale,
   les enregistrements DNS et Pangolin (**à confirmer**).
-- **Constaté** (tour A, `closure.akn`) : `projects/hass` est devenu `fleet/hosts/akn.closure` (`.mise.toml`,
-  `.sops.yaml` et `README.md` à la racine, code Pulumi dans `pulumi/`), le projet `closure-akn` et la pile
+- **Constaté** (tour A, `closure.akn`) : `projects/hass` est devenu `fleet/hosts/akn.closure` (`.mise.toml`
+  et `README.md` à la racine, code Pulumi dans `pulumi/`), le projet `closure-akn` et la pile
   `closure_akn.live` (fichier `Pulumi.closure_akn.live.yaml`). Aucune `StackReference` ne lit `hass-infra` ; il n'y a ni
   schéma d'architecture ni Nix à rendre (`hass` n'a aucune configuration de machine dans le dépôt). Le propriétaire du
   jeton Cloudflare reste `hass` : le nom du jeton, `(hass) - Home Assistant`, ne change pas. Aucun nom côté cloud ne
-  dérive du nom du projet ou de la pile : l'aperçu attendu après le renommage est vide. Le fichier `.mise/env.yaml` est
-  déplacé tel quel, sans être déchiffré. Les tours B (`rimbilliton.akn` vers `exusiai.akn`) et C (`kazimierz.akn` vers
+  dérive du nom du projet ou de la pile : l'aperçu attendu après le renommage est vide. Le fichier `.mise/env.yaml` (sops) est
+  supprimé : la phrase secrète et les identifiants Garage viennent de fnox (`fleet/.fnox.toml`), le `.mise.toml` Pulumi
+  ne fixe que `PULUMI_STACK`. Les tours B (`rimbilliton.akn` vers `exusiai.akn`) et C (`kazimierz.akn` vers
   `horn.akn`) restent à faire.
 - **Manuel, avant la fusion** (tour A), depuis l'ancienne arborescence (celle de l'étape 6) :
   1. sauvegarder l'état (`pulumi stack export`) ;
@@ -375,8 +376,9 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
   3. `pulumi stack rename organization/closure-akn/closure_akn.live` ; à défaut, export, réécriture des URN
      (`hass-infra` vers `closure-akn`, `hass.live` vers `closure_akn.live`), `pulumi stack init` puis
      `pulumi stack import` ;
-  4. `sops set pulumi/.mise/env.yaml '["PULUMI_STACK"]' '"closure_akn.live"'` ;
-  5. `mise run pulumi:diff` : l'aperçu doit être vide (tout `create` ou `delete` arrête l'opération) ;
+  4. `pulumi stack change-secrets-provider` vers la phrase secrète de fnox, puis vérifier les secrets de config
+     (`cloudflare_account_id`, `cloudflare_zone_id`) ;
+  5. `pulumi preview` depuis `pulumi/` : l'aperçu doit être vide (tout `create` ou `delete` arrête l'opération) ;
   6. fusionner.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : cela
   créerait un second jeton Cloudflare et un second client Pocket-Id. Entre le renommage et la fusion, la pile référencée

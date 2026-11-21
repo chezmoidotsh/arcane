@@ -9,8 +9,9 @@
 #   mise run pulumi:oidc-client       # Print the Pocket-Id OIDC client_id/client_secret for manual setup
 #
 # Prerequisites:
-#   - Pulumi CLI configured for the closure_akn.live stack (see
-#     pulumi/.mise.toml)
+#   - `pnpm install` and the Bitwarden Secrets Manager setup (`mise run bws:setup`): `mise exec`
+#     runs pulumi from pulumi/ so that its PULUMI_STACK is set, and `fnox exec` resolves the
+#     passphrase and the Garage credentials (fleet/.fnox.toml)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -32,7 +33,7 @@ description = "Print the Home Assistant Cloudflare token from Pulumi for manual 
 dir = "{{ config_root }}/pulumi"
 run = '''
   set -euo pipefail
-  TOKEN=$(pulumi stack output homeAssistantDns01Token --show-secrets)
+  TOKEN=$(mise exec -- fnox exec -- pulumi stack output homeAssistantDns01Token --show-secrets)
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
   echo "${TOKEN}"
 '''
@@ -51,8 +52,8 @@ description = "Print the Home Assistant Pocket-Id OIDC client_id/client_secret f
 dir = "{{ config_root }}/pulumi"
 run = '''
   set -euo pipefail
-  CLIENT_ID=$(pulumi stack output homeAssistantOidcClientId)
-  CLIENT_SECRET=$(pulumi stack output homeAssistantOidcClientSecret --show-secrets)
+  CLIENT_ID=$(mise exec -- fnox exec -- pulumi stack output homeAssistantOidcClientId)
+  CLIENT_SECRET=$(mise exec -- fnox exec -- pulumi stack output homeAssistantOidcClientSecret --show-secrets)
   [[ -n "${CLIENT_ID}" && -n "${CLIENT_SECRET}" ]] || { echo "[ERROR] Empty output — did 'pulumi up' run?" >&2; exit 1; }
   echo "client_id: ${CLIENT_ID}"
   echo "client_secret: ${CLIENT_SECRET}"
