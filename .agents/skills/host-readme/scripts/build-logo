@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# build-logo — turn an Arknights skin .webm (VP9 + alpha) into the README's animated WebP.
+#
+#   build-logo frame   <source.webm> [N]                     frame N (default 30) as PNG, to choose the crop
+#   build-logo convert <source.webm> <out.webp> <W:H:X:Y>    crop, then animated WebP with alpha
+#
+# `-c:v libvpx-vp9` before `-i` is required: the default VP9 decoder drops the alpha plane.
+# See ../references/Logo-Reference.md for the why and the size budget.
+set -euo pipefail
+
+ffmpeg() { mise x ffmpeg -- ffmpeg -hide_banner -loglevel error "$@"; }
+usage() { sed -n '2,7p' "${0}" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+
+[[ $# -ge 2 ]] || usage
+cmd=${1} src=${2}
+[[ -f "${src}" ]] || { echo "build-logo: ${src} not found" >&2; exit 1; }
+
+case ${cmd} in
+  frame)
+    out="${src%.webm}.frame.png"
+    ffmpeg -y -c:v libvpx-vp9 -i "${src}" -vf "select=eq(n\,${3:-30})" -frames:v 1 "${out}"
+    echo "${out}"
+    ;;
+  convert)
+    [[ $# -eq 4 ]] || usage
+    out=${3} crop=${4}
+    ffmpeg -y -c:v libvpx-vp9 -i "${src}" \
+      -vf "crop=${crop},fps=15,scale=-1:200:flags=lanczos" \
+      -c:v libwebp_anim -q:v 90 -compression_level 6 -loop 0 -pix_fmt yuva420p "${out}"
+    size=$(wc -c <"${out}")
+    echo "${out}: ${size} bytes"
+    # Under 1 MB: no Git LFS (it breaks clones without LFS and the wiki mirror).
+    [[ "${size}" -lt 1048576 ]] || { echo "build-logo: over 1 MB, tighten the crop or lower fps" >&2; exit 1; }
+    ;;
+  *) usage ;;
+esac

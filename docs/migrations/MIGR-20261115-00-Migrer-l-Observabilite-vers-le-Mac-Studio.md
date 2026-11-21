@@ -23,22 +23,19 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 
 ## Avancement
 
-| Étape | Contenu                                            | État    |
-| ----- | -------------------------------------------------- | ------- |
-| 1     | Créer la configuration nix-darwin du Mac           | faite   |
-| 2     | Porter les modules et régler la machine            | à faire |
-| 3     | Basculer `data.o11y.chezmoi.sh` vers le Mac Studio | à faire |
-| 4     | Retirer le CT 103                                  | à faire |
+| Étape | Contenu                                            | État                   |
+| ----- | -------------------------------------------------- | ---------------------- |
+| 1     | Créer la configuration nix-darwin du Mac           | faite                  |
+| 2     | Porter les modules et régler la machine            | code prêt, non déployé |
+| 3     | Basculer `data.o11y.chezmoi.sh` vers le Mac Studio | à faire                |
+| 4     | Retirer le CT 103                                  | à faire                |
 
 ## Avant de commencer
 
-| À fixer ou à vérifier                                                                                                                                   | Pourquoi                                                                                                                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Le SSD interne (1 To) est partagé avec les modèles d'IA : fixer la part de disque donnée à l'observabilité et celle donnée aux modèles, avant l'étape 1 | Les rétentions actuelles (18 mois de métriques, 30 jours de journaux, 2 jours de traces) doivent tenir dans la première (à vérifier)                                                                           |
-| Budget des charges d'IA : mémoire, mémoire GPU, CPU                                                                                                     | Chaque charge a un budget borné et documenté, fixé avant son déploiement                                                                                                                                       |
-| Emplacement du heartbeat du Dead-Man's-Switch                                                                                                           | La panne de la machine hôte reste détectée par healthchecks.io tant que le heartbeat part de l'Alertmanager du Mac ; l'emplacement exact et la surveillance du Mac par un observateur extérieur sont à décider |
-| Équivalent du snapshot Proxmox pour `/persistent`                                                                                                       | La sauvegarde par snapshot du CT n'existe plus sur le Mac                                                                                                                                                      |
-| Place de l'élément dans la migration du dépôt                                                                                                           | Le LXC reste sous `projects/chezmoi.sh` jusqu'à cette migration, puis passe directement à `fleet/hosts/akn.ptilopsis/` ([MIGR-20261114-00 Migrer vers la flotte](MIGR-20261114-00-Migrer-vers-la-Flotte.md))   |
+| À fixer ou à vérifier                                                                                                                                | Pourquoi                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Volume APFS dédié de 250 Go (une limite, pas une réservation) pour `/var/lib/o11y-datastore`, créé sur le bon disque et jamais sur le disque système | Les rétentions actuelles (18 mois de métriques, 30 jours de journaux, 2 jours de traces) doivent y tenir (à vérifier)                                                                                        |
+| Heartbeat du Dead-Man's-Switch : un nouveau check healthchecks.io, dont l'URL est un secret SOPS (`alertmanager-deadman-url`)                        | La panne de la machine hôte reste détectée par healthchecks.io tant que le heartbeat part de l'Alertmanager du Mac                                                                                           |
 
 ## Étapes
 
@@ -60,23 +57,63 @@ la cible DNS de `data.o11y.chezmoi.sh` change.
 
 - **Ce qui change** : les modules de `o11y-datastore/modules/` (NixOS) sont réécrits en démons `launchd` nix-darwin et
   deviennent des modules de rôle partagés (`catalog/nix/modules/`). La configuration nix-darwin porte tout ce qui fait
-  du Mac un serveur : pas de veille, redémarrage après coupure de courant (`pmset`), pare-feu (les règles actuelles, 443
-  et 4318 depuis le LAN et Tailscale, reprises dans `pf` ou le pare-feu applicatif de macOS) et limites des stores
-  (`-memory.allowedBytes` et plafonds par requête, puisqu'il n'y a plus de `MemoryMax`). Tout cela est déclaré dans
-  nix-darwin, pas réglé à la main. Les mises à jour de macOS sont déclenchées à la main, jamais automatiquement.
-- **Un `o11y-agent` propre au Mac** : la machine fait tourner son propre agent d'observabilité, pour ses journaux, le
-  CPU, la mémoire et le disque de la machine, et la consommation électrique en watts si possible (la partie watts est
-  **à confirmer** : source de la mesure sous macOS, et faisabilité dans l'agent).
-- **Risque** : dérive entre l'implémentation NixOS et l'implémentation nix-darwin tant que les deux coexistent.
-- **Vérification** : la pile répond sur le Mac (`:443` en lecture, `:4318` en écriture) avant toute bascule ; les
-  requêtes lourdes mesurées dans l'ADR-022 s'exécutent (commandes **à confirmer**).
+  du Mac un serveur : pas de veille, redémarrage après coupure de courant, pare-feu `pf`, mises à jour de macOS jamais
+  automatiques et limites des stores (puisqu'il n'y a plus de `MemoryMax`). Tout est déclaré dans nix-darwin, pas réglé
+  à la main.
+- **Un `o11y-agent` propre au Mac** : la machine fait tourner son propre agent, pour ses journaux, ses métriques d'hôte
+  et sa consommation électrique en watts. Les watts sont mesurés avec `macmon` (consommation lue par IOReport, sans
+  root) et exportés en jauge `hw.power`.
+- **Risque** : dérive entre l'implémentation NixOS et l'implémentation nix-darwin tant que les deux coexistent. Elle est
+  réduite par des sources partagées (voir « Constaté »), mais la configuration d'Alertmanager et une partie de celle du
+  collecteur de l'agent restent dupliquées côté darwin.
+- **Risque** : le heartbeat doit utiliser son propre check healthchecks.io. Si le Mac reprend l'URL du LXC pendant que
+  les deux tournent, la mort de l'un ou de l'autre passe inaperçue.
+- **Risque** : dérive de version, le nixpkgs du Mac donne VictoriaMetrics 1.156.0 quand le LXC en est à 1.155.0.
+- **Risque** : IOReport est une API privée d'Apple, une mise à jour de macOS peut casser cette seule jauge.
+- **Limites des stores** : elles gardent les valeurs du LXC (`services.o11yDatastore.limits`, sizées pour un CT de 8
+  Gio) : les requêtes lourdes de l'ADR-022 ne passent pas avec, il faudra les relever.
+- **Vérification** : la pile répond sur le Mac (`:443` en lecture, `:4318` en écriture) avant toute bascule, et les
+  requêtes lourdes mesurées dans l'ADR-022 s'exécutent (commandes **à confirmer**). Le déploiement et les contrôles du
+  premier démarrage sont dans le [README de l'hôte](../../fleet/hosts/akn.ptilopsis/README.md).
 - **Retour arrière** : sans effet sur la production.
+- **Constaté** : le code est écrit, rien n'est construit, activé ni déployé : le Mac n'existe pas encore.
+  - Configuration du Mac dans `fleet/hosts/akn.ptilopsis/nix/modules/` : `o11y-datastore/` (la pile : options des
+    démons, Caddyfile, page d'accueil, pipeline de la passerelle OTLP, règles vmalert, construction de Caddy),
+    `server.nix` et `secrets.nix`. Seuls l'agent (`o11y-agent/darwin.nix`) et le plafond de taille des journaux
+    `launchd` (`darwin-log-trim/`) restent dans `catalog/nix/modules/`, exportés en `darwinModules.o11yAgent` et
+    `darwinModules.logTrim`. Le LXC garde ses propres fichiers, inchangés : ils disparaissent avec lui.
+  - Démons : VictoriaMetrics, VictoriaLogs, VictoriaTraces, vmalert, Alertmanager, passerelle OTLP et Caddy, mêmes ports
+    et mêmes options que le LXC. Seuls les chemins changent : `/persistent` devient `/var/lib/o11y-datastore` (le volume
+    racine de macOS est en lecture seule), journaux dans `/var/log/o11y-datastore/`. Comptes dédiés `_o11y`, `_caddy` et
+    `_o11yagent`.
+  - Réglages serveur : pas de veille et redémarrage après coupure (options `power.*`, avec `pmset` en secours dans le
+    script d'activation) ; pare-feu par une ancre `pf` (`com.apple/o11y-datastore`) qui autorise TCP 443 et 4318 depuis
+    `10.0.0.0/22` et le bouclage, et bloque le reste. Le pare-feu applicatif de macOS est désactivé : il ne filtre pas
+    par source et bloquerait le binaire Caddy construit par Nix.
+  - Limites : pas de `MemoryMax` ; les options des stores (`-memory.allowedBytes`, `-search.maxMemoryPerQuery`,
+    `-search.maxConcurrentRequests`, `-search.maxQueryDuration`) portent les plafonds, via l'option
+    `services.o11yDatastore.limits`, aux valeurs actuelles du LXC en attendant la décision.
+  - Agent du Mac : fichiers de journaux des démons, erreurs et fautes du journal unifié de macOS, métriques d'hôte (CPU,
+    charge, mémoire, réseau, pagination, processus, disque, système de fichiers) et mêmes scrapes que l'agent du LXC,
+    poussés en OTLP/HTTP vers `https://data.o11y.chezmoi.sh:4318`. `macmon` a été testé sur un autre Mac Apple Silicon.
+  - Secrets : sops-nix (module darwin), déchiffrés avec la clé d'hôte SSH du Mac dans `/run/secrets/` ; trois secrets
+    (jeton DNS-01 Cloudflare, webhook Slack, URL du heartbeat). Aucun n'existe encore : `nix/secrets/o11y.sops.yaml` est
+    créé au déploiement ; sans lui la configuration s'évalue avec un avertissement et les fonctions concernées restent
+    désactivées.
+  - Vérifié sans la machine : la configuration s'évalue (`nix eval .#darwinConfigurations.ptilopsis.system.drvPath`),
+    les configurations générées du collecteur passent `otelcol-contrib validate`, celle d'Alertmanager passe
+    `amtool check-config`, et les arguments `launchd` de chaque démon ont été comparés à l'`ExecStart` du LXC.
+  - **À confirmer** au premier démarrage (invérifiable sans la machine) : les règles `pf` (jamais passées dans `pfctl`),
+    Caddy qui écoute sur 80 et 443 sans être root, les journaux `launchd` et leur rotation, la lecture du journal unifié
+    par le compte de l'agent, les requêtes lourdes.
 
 ### 3. Basculer `data.o11y.chezmoi.sh` vers le Mac Studio
 
 - **Ce qui change** : la cible DNS de `data.o11y.chezmoi.sh`. Les agents ne changent pas.
 - **Deux voies** : une bascule DNS franche (l'option la plus simple), ou un mirroring des écritures par le Caddy du LXC
   vers le Mac pendant quelques jours, pour comparer.
+- **Réseau des nœuds Talos** : les nœuds Talos joignent aujourd'hui le LXC sur le réseau `talosnet` (`10.128.0.5`), où
+  le Mac n'a pas d'interface : la route et l'adresse source vue par `pf` sont à vérifier avant la bascule.
 - **Vérification** : les agents poussent vers le Mac (**à confirmer** par les métriques de l'appliance), les alertes et
   le heartbeat fonctionnent.
 - **Retour arrière** : le CT 103 reste en fonctionnement pendant cette période ; revenir à l'ancienne cible DNS (**à
