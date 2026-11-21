@@ -280,6 +280,9 @@ let
       otelcol-contrib validate --config=file:$TMPDIR/check.json
     '';
 
+  # NSPredicate string literal.
+  quote = v: "'${lib.replaceStrings [ "\\" "'" ] [ "\\\\" "\\'" ] v}'";
+
   # ── Directories ───────────────────────────────────────────────────────
   # launchd has no StateDirectory/tmpfiles, so the activation script creates
   # them, and a root job does it again at every boot: a missing log directory
@@ -351,11 +354,46 @@ in
         default = true;
         description = "Ship the macOS unified log (filtered by `predicate`).";
       };
+      ignore = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            process = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Name of the emitting process; null matches any process.";
+            };
+            message = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Only the records whose message contains this; null matches every message of the process.";
+            };
+          };
+        });
+        default = [ ];
+        example = [
+          { process = "cfprefsd"; message = "due to No such file or directory"; }
+          { process = "bluetoothd"; }
+          { message = "TaskFolder missing"; }
+        ];
+        description = ''
+          Known noise to keep out of the stream, added to the default predicate
+          (not used when `predicate` is set). A rule needs a process, a message or
+          both: with a message too, a real error from the same process still gets
+          through, whereas a process alone drops everything it logs.
+        '';
+      };
       predicate = lib.mkOption {
         type = lib.types.str;
         # avconferenced logs tens of thousands of media errors a minute while a
         # Screen Sharing session is open (96% of all errors on a headless Mac).
-        default = "(logType == 'error' OR logType == 'fault') AND process != 'avconferenced'";
+        default = lib.concatStrings ([
+          "(logType == 'error' OR logType == 'fault') AND process != 'avconferenced'"
+        ] ++ map
+          (i: " AND NOT (" + lib.concatStringsSep " AND " (
+            lib.optional (i.process != null) "process == ${quote i.process}"
+            ++ lib.optional (i.message != null) "eventMessage CONTAINS ${quote i.message}") + ")")
+          cfg.logs.unifiedLog.ignore);
+        defaultText = lib.literalMD "errors and faults, without `avconferenced` and the `ignore` list";
         description = "`log stream` predicate (passed as one argument, no shell).";
       };
     };
@@ -371,6 +409,10 @@ in
     assertions = [{
       assertion = hostName != null;
       message = "catalog.o11yAgent needs networking.hostName (it becomes host.name).";
+    }
+    {
+      assertion = lib.all (i: i.process != null || i.message != null) cfg.logs.unifiedLog.ignore;
+      message = "catalog.o11yAgent.logs.unifiedLog.ignore: a rule needs a process, a message or both.";
     }];
 
     users.knownUsers = [ user ];
