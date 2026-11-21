@@ -98,9 +98,9 @@ Before pushing anything:
    `references/pr-examples.md`.
 6. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the
    commit symbol format is for git log, not for PR titles).
-7. Apply the scope label(s) matching the changed paths (`project`, `catalog`, `agents:skills`, `agents:sessions`,
-   `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for PRs; type is a
-   GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
+7. Apply the scope label(s) matching the changed paths (`project`, `fleet`, `catalog`, `agents:skills`,
+   `agents:sessions`, `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for
+   PRs; type is a GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
 8. Launch the post-creation monitor (see "Post-creation monitoring" below) so merges and new comments are picked up
    without the user having to check back manually.
 
@@ -337,8 +337,8 @@ rm /tmp/pr_body.md
 - **PR title**: sentence-case English, verb-first, no symbol prefix, no bracketed scope, no trailing period. The commit
   symbol format stays on commits.
 - **PR labels**: the scope label(s) matching the changed paths are mandatory (see `.github/labels.yaml`: `project`,
-  `catalog`, `agents:skills`, `agents:sessions`, `agents:knowledge`, `gh`, `deps`). Add `size::*` when you have signal;
-  `priority::*` is issues-only.
+  `fleet`, `catalog`, `agents:skills`, `agents:sessions`, `agents:knowledge`, `gh`, `deps`). Add `size::*` when you have
+  signal; `priority::*` is issues-only.
 - **Commits**: All commits must have the symbol-based `type[scope]: Subject` format, GPG signature (`-S`), and
   `Assisted-by:` trailer. Signed-off-by is the user's responsibility — never add `-s` yourself.
 - **PR body line length**: No hard limit — do NOT wrap PR body text at 80 characters. GitHub renders Markdown, so
