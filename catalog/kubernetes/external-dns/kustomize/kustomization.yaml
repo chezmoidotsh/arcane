@@ -1,3 +1,6 @@
+# Kustomization for external-dns default configuration
+# Provides the network policies of the two external-dns instances (UniFi webhook and BIND/RFC2136)
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 

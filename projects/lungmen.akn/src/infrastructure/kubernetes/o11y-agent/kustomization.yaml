@@ -51,7 +51,7 @@ resources:
 # base (ADR-020).
 components:
   - ../../../../../../catalog/kubernetes/o11y-agent/parsers/cnpg-postgres
-  # Needs hubble.export.static on stdout (../cilium/helmvalues).
+  # Needs hubble.export.static on stdout (catalog/kubernetes/cilium/helm).
   - ../../../../../../catalog/kubernetes/o11y-agent/parsers/hubble-http
 
 images:
@@ -83,9 +83,9 @@ patches:
           name: K8S_CLUSTER_NAME
           value: lungmen.akn
   # Log formats of the pods (ADR-020).
-  - target: {kind: Deployment, name: grafana-operator}
+  - target: { kind: Deployment, name: grafana-operator }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: zap-console}}
-  - target: {kind: Deployment, name: opentelemetry-operator}
+  - target: { kind: Deployment, name: opentelemetry-operator }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: json}

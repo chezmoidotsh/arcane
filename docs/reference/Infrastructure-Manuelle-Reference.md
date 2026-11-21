@@ -111,14 +111,14 @@ environ 6 cœurs perdus. Un `qm agent <vmid> ping` lit la réponse en attente et
 
 Sur `pve-01`, le timer systemd `qga-ping.timer` lance `/usr/local/sbin/qga-ping` toutes les minutes : il envoie un
 `guest-sync` directement sur le socket `/var/run/qemu-server/<vmid>.qga` de chaque VM démarrée dont l'agent est activé,
-sans passer par `qm` (un interpréteur Perl par appel, environ 50 s de CPU par passage), et ne journalise que les échecs. Une occurrence coûte donc au plus une minute
-de CPU.
+sans passer par `qm` (un interpréteur Perl par appel, environ 50 s de CPU par passage), et ne journalise que les échecs.
+Une occurrence coûte donc au plus une minute de CPU.
 
-| Élément               | Source dans le dépôt                                                                |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| Script                | `projects/chezmoi.sh/src/infrastructure/proxmox/host/fs/usr.local.sbin/qga-ping`    |
-| Unités systemd        | `.../host/fs/etc.systemd.system/qga-ping.service` et `qga-ping.timer`               |
-| Déploiement           | tâche `mise` `host:qga-ping:deploy` (`.../host/.mise.toml`)                         |
+| Élément        | Source dans le dépôt                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| Script         | `projects/chezmoi.sh/src/infrastructure/proxmox/host/fs/usr.local.sbin/qga-ping` |
+| Unités systemd | `.../host/fs/etc.systemd.system/qga-ping.service` et `qga-ping.timer`            |
+| Déploiement    | tâche `mise` `host:qga-ping:deploy` (`.../host/.mise.toml`)                      |
 
 C'est un contournement : le correctif (« qga: don't busy-loop writing to virtio-serial when host disconnected »,
 qemu-devel, juillet 2026) n'est pas encore intégré. Une fois qu'il le sera dans l'extension, retirer le timer et le
@@ -173,7 +173,6 @@ de l'hôte, que le collecteur OpenTelemetry envoie avec le même `host.name`.
 | `catalog/fluxcd`     | Manifestes Flux (cert-manager, CNPG, traefik, ...)                 | Orphelin                       | Référencé nulle part dans le dépôt, et `AGENTS.md` indique qu'ArgoCD est l'unique moteur GitOps (candidat 6). Chemin d'époque : le répertoire a été supprimé (#1301)                                                                                                                                                                                              |
 | `catalog/helm`       | Chart `mutualized-cnpg-databases`                                  | Déclaratif                     | Sources du chart ; la consolidation relève de l'[ADR-009](../decisions/ADR-009-Consolider-les-Bases-PostgreSQL.md), statut `proposed`                                                                                                                                                                                                                             |
 | `catalog/kubernetes` | Bases kustomize partagées et valeurs Helm de référence             | Déclaratif                     | `catalog/kubernetes/README.md` ; rendu dans `dist/` (ADR-011)                                                                                                                                                                                                                                                                                                     |
-| `catalog/kustomize`  | `tun-device-plugin`                                                | Déclaratif                     | `catalog/kustomize/README.md`                                                                                                                                                                                                                                                                                                                                     |
 | `catalog/nix`        | Modules (`o11y-agent`, `lxc-static-network`) et modules NixOS Omni | Déclaratif                     | Consommés par les flakes des LXC de la plateforme                                                                                                                                                                                                                                                                                                                 |
 | `catalog/omni`       | Machine classes et base des templates de cluster                   | Déclaratif, appliqué à la main | `mise run omni:machineclass:apply` ; `OMNI-20260721-00`, « Machine classes are erased on Omni reset » : l'état d'Omni en place n'est pas réconcilié depuis Git                                                                                                                                                                                                    |
 | `catalog/opa`        | Politiques Rego                                                    | Déclaratif                     | Exécutées par conftest en CI (`push,pull_request.opa-test.yaml`, workflows de conformité ; [ADR-012](../decisions/ADR-012-Remplacer-Kyverno-par-OPA.md), `accepted`)                                                                                                                                                                                              |

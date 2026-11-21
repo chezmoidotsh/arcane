@@ -20,13 +20,13 @@ helmCharts:
     releaseName: toolhive-operator
     namespace: toolhive-system
 
-    valuesFile: toolhive-operator.helmvalues/default.yaml
+    valuesFile: ../../../../../../catalog/kubernetes/toolhive/helm/default.helmvalues.yaml
 
 resources:
-  - security/
+  - ../../../../../../catalog/kubernetes/toolhive/kustomize
 
 patches:
   # Log formats of the pods (ADR-020).
-  - target: {kind: Deployment, name: toolhive-operator}
+  - target: { kind: Deployment, name: toolhive-operator }
     patch: |-
       - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: golog}}
