@@ -1,0 +1,6 @@
+encryptionsalt: v1:mLXKr7s2q6w=:v1:s+eIOZbe5EstrPFr:+pbf4UXiyeynE1A0JQeDnZof/evxOw==
+config:
+  oci-registry-core:cloudflare_account_id:
+    secure: v1:7xq0agz5i7rICu+7:1QR8meb4iSbPM8Fs00V9tMJKW8SMC2guM2bW7FZPc8Ut3DZpi1qHqfDCVOBt+4VH
+  oci-registry-core:cloudflare_zone_id:
+    secure: v1:pyryd2hsneX6nvG9:9AGRcBXEElO/FjUNuEK3m9y4YHow+mUl5mdjAVishucAjLkOgr01fgLgQCsqgM+8

@@ -1,0 +1,99 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What queries talosnet-dns.core, what writes to it, and what it talks to  │
+# │   (upstream resolvers, observability appliance).                           │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  public-resolvers: {
+    class: platform
+    label: "Public resolvers\n(1.1.1.1, 1.0.0.1)"
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  talos-nodes: {
+    class: hardware
+    label: "Talos nodes\n(talosnet)"
+    icon: assets/icons/hardware/talos.blueprint.svg
+  }
+
+  clusters: {
+    class: hardware
+    label: "Kubernetes clusters\n(external-dns)"
+    icon: assets/icons/system/kubernetes.blueprint.svg
+  }
+
+  udm-pro: {
+    class: hardware
+    label: "Upstream resolver\n(UniFi)"
+    icon: assets/icons/hardware/ubiquiti_unifi.blueprint.svg
+  }
+
+  o11y: {
+    class: hardware
+    label: "Observability appliance\n(ptilopsis.akn)"
+    icon: assets/icons/system/victoriametrics.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            talosnet-dns.core                               │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   BIND, its zone on the persistent volume, and the agent that ships its    │
+# │   logs and metrics.                                                        │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+talosnet-dns·core: {
+  class: project
+  label: talosnet-dns.core
+
+  bind: {
+    class: application
+    label: BIND
+    icon: assets/icons/system/bind9.blueprint.svg
+  }
+
+  zone: {
+    class: application-datastore
+    label: "chezmoi.sh zone\n(volume mp0)"
+  }
+
+  agent: {
+    class: application-system
+    label: OTel Collector
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+localnet.talos-nodes -> talosnet-dns·core.bind: "Resolve names (DNS)" {target-arrowhead: 53; class: [connect-app]}
+localnet.clusters -> talosnet-dns·core.bind: "Update records (RFC2136, TSIG)" {target-arrowhead: 53; class: [connect-management]}
+talosnet-dns·core.bind <-> talosnet-dns·core.zone: "Read and update" {class: [connect-local]}
+talosnet-dns·core.bind -> localnet.udm-pro: "Forward other queries (DNS)" {target-arrowhead: 53; class: [connect-app]}
+talosnet-dns·core.bind -> internet.public-resolvers: "Fallback (DNS)" {target-arrowhead: 53; class: [connect-to-internet]}
+talosnet-dns·core.agent -> localnet.o11y: "Push logs and metrics (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}

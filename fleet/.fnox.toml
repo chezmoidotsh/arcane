@@ -7,8 +7,14 @@ project_id = { secret = "BWS_PROJECT_ID" }
 
 [secrets]
 # Garage S3 backend of the Pulumi state (Pulumi.yaml `backend.url`).
-AWS_ACCESS_KEY_ID = { provider = "bws", value = "garage-pulumi-access-key-id" }
-AWS_SECRET_ACCESS_KEY = { provider = "bws", value = "garage-pulumi-secret-access-key" }
+AWS_ACCESS_KEY_ID = { provider = "bws", value = "pulumi-garage-access-key-id" }
+AWS_SECRET_ACCESS_KEY = { provider = "bws", value = "pulumi-garage-secret-access-key" }
+
+# Cloudflare provider of the stacks that create DNS-01 tokens (Dns01TokenComponent: omni.core,
+# oci-registry.core, akn.ptilopsis, ...): email + global API key, which can create account tokens. `warn` so the
+# stacks that don't touch Cloudflare keep working while a secret is missing from Bitwarden.
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email", if_missing = "warn" }
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key", if_missing = "warn" }
 
 # Shared passphrase of the fleet stacks' Pulumi secrets.
 PULUMI_CONFIG_PASSPHRASE = { provider = "bws", value = "pulumi-config-passphrase" }

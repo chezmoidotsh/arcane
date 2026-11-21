@@ -1,0 +1,93 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Who pulls from the registry, the upstream registries it caches, and the  │
+# │   external services it depends on (DNS-01 challenge, observability).       │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  upstreams: {
+    class: platform
+    label: "Upstream registries\n(Docker Hub, GHCR, Quay…)"
+  }
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  clusters: {
+    class: hardware
+    label: Kubernetes clusters
+    icon: assets/icons/system/kubernetes.blueprint.svg
+  }
+
+  ptilopsis: {
+    class: hardware
+    label: "ptilopsis.akn\n(observability)"
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            oci-registry.core                               │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Zot and the two components its flows go through: Caddy (single entry     │
+# │   point) and the o11y agent (metrics and logs).                            │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+oci-registry·core: {
+  class: project
+  label: oci-registry.core
+
+  caddy: {
+    class: application-system
+    label: "Caddy\n(oci.chezmoi.sh)"
+    icon: assets/icons/apps/caddy.blueprint.svg
+  }
+
+  zot: {
+    class: application-datastore
+    label: Zot
+    icon: assets/icons/apps/zot-registry.blueprint.svg
+  }
+
+  agent: {
+    class: application-system
+    label: o11y agent
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+localnet.clusters -> oci-registry·core.caddy: "Pull images (HTTPS)" {target-arrowhead: 443; class: [connect-app]}
+oci-registry·core.caddy -> oci-registry·core.zot: "Reverse proxy (HTTP)" {target-arrowhead: 5000; class: [connect-local]}
+oci-registry·core.zot -> internet.upstreams: "Fetch missing images (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
+oci-registry·core.caddy -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}
+oci-registry·core.agent -> oci-registry·core.zot: "Scrape /metrics (HTTP)" {target-arrowhead: 5000; class: [connect-local]}
+oci-registry·core.agent -> localnet.ptilopsis: "Push metrics and logs (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}

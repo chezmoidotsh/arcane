@@ -76,7 +76,7 @@ Les accès suivants sont également nécessaires :
 Les objets suivants doivent exister (créés par Pulumi dans
 [`access/omni.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/omni.ts) et
 [`pools.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/pools.ts), ou à défaut selon le
-[README du provider Omni](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md#proxmox-user-and-role-setup))
+[README du provider Omni](../../../fleet/hosts/core.omni-infra-provider-proxmox/README.md#proxmox-user-and-role-setup))
 : l'utilisateur `omni@pve`, le pool `talos` et l'ACL de `/sdn/zones/localnetwork/vmbr1`. Cette procédure étend cette ACL
 sans la recréer.
 

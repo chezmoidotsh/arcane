@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the omni-infra-provider-proxmox LXC template with secrets baked in"
+# [MISE] dir="{{config_root}}"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# Shared library, left next to the o11y-datastore LXC that still uses it.
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh"
+
+lxc_init "omni-infra-provider-proxmox" "${CONFIG_ROOT}/nix" _omni_proxmox_provider
+lxc_secret "secrets/proxmox.sops.env" PROXMOX_PASSWORD
+lxc_secret_optional "secrets/omni.sops.env" OMNI_SERVICE_ACCOUNT_KEY
+lxc_build

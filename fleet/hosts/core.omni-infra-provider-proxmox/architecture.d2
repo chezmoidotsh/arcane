@@ -1,0 +1,81 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What the provider talks to: Omni (the control plane that asks for        │
+# │   machines), Proxmox VE (which creates them), and the observability        │
+# │   appliance that receives the logs and metrics of the LXC.                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  omni: {
+    class: hardware
+    label: Omni
+    icon: assets/icons/hardware/talos.blueprint.svg # no dedicated Omni icon, reusing Sidero Labs' Talos mark
+  }
+
+  proxmox: {
+    class: hardware
+    label: "Proxmox VE\n(pve-01)"
+    icon: assets/icons/platform/proxmox.blueprint.svg
+  }
+
+  talos-vms: {
+    class: hardware
+    label: "Talos VMs\n(pool talos)"
+    icon: assets/icons/hardware/talos.blueprint.svg
+  }
+
+  o11y: {
+    class: hardware
+    label: "O11y stack\n(ptilopsis.akn)"
+    icon: assets/icons/system/victoriametrics.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                    omni-infra-provider-proxmox.core                        │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   The provider, which only dials out, and the agent that ships its logs.   │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+omni-infra-provider-proxmox·core: {
+  class: project
+  label: omni-infra-provider-proxmox.core
+
+  provider: {
+    class: application
+    label: omni-infra-provider-proxmox
+    icon: assets/icons/hardware/talos.blueprint.svg
+  }
+
+  o11y-agent: {
+    class: application-system
+    label: o11y-agent
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+omni-infra-provider-proxmox·core.provider -> localnet.omni: "Register and watch machine requests (HTTPS)" {target-arrowhead: 443; class: [connect-app]}
+omni-infra-provider-proxmox·core.provider -> localnet.proxmox: "Create, start and delete VMs (REST API)" {target-arrowhead: 8006; class: [connect-app]}
+localnet.proxmox -> localnet.talos-vms: "Runs" {class: [connect-local]}
+omni-infra-provider-proxmox·core.o11y-agent -> localnet.o11y: "Push logs and metrics (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}

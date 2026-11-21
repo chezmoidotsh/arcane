@@ -179,7 +179,7 @@ joignables depuis la maison par la règle VLAN 2 vers VLAN 5). Il porte un `serv
 
 Le DNS split-horizon rend ce pool utile : talosnet-dns (BIND, `10.128.0.3`) laisse external-dns (RFC2136) publier le
 même nom `*.chezmoi.sh` qu'un cluster expose déjà à l'extérieur (par exemple `vault.chezmoi.sh`), pointé vers l'IP
-interne. Voir `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix`.
+interne. Voir `fleet/hosts/core.talosnet-dns/nix/modules/bind.nix`.
 
 Chaque cluster reçoit un bloc de 2 IP, dans le même ordre que les pools `external`. Le bac à sable est exclu : cluster
 jetable sans charge de travail interne.
