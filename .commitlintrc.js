@@ -140,10 +140,6 @@ const scopes = [
 		value: "project:chezmoi.sh",
 	},
 	{
-		name: "project:hass          - Anything related to the Home Assistant project",
-		value: "project:hass",
-	},
-	{
 		name: "project:kazimierz.akn - Anything related to the kazimierz.akn project",
 		value: "project:kazimierz.akn",
 	},
