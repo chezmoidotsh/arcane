@@ -4,8 +4,10 @@ import * as pulumi from "@pulumi/pulumi";
 // application below.
 //
 // Group membership (admin/maison/famille) is managed in chezmoi.sh, not
-// here -- read across via StackReference rather than duplicating it.
-const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
+// here -- read across via StackReference rather than duplicating it. Also
+// read by ../oci/compartments.ts (parent compartment id): one StackReference
+// per program, a second one with the same name would collide.
+export const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
 	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
 });
 

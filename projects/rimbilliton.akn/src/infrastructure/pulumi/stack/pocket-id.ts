@@ -8,8 +8,10 @@ import * as pulumi from "@pulumi/pulumi";
 const minecraftGroupUuid = "63433895-1598-4755-88fd-be11da3c225c";
 const minecraftClientUuid = "daf37fa0-3508-47d0-8dee-7180e8bd9437";
 
-// The `admin` group lives in chezmoi.sh (single source of truth).
-const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
+// The `admin` group lives in chezmoi.sh (single source of truth). Also read by
+// oci/compartments.ts (parent compartment id): one StackReference per program,
+// a second one with the same name would collide.
+export const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
 	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
 });
 const adminGroupId = chezmoiSh.getOutput(
