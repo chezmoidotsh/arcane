@@ -34,7 +34,7 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
   `nonix` (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur, y compris
   `ssh-to-age`.
 - **Identifiants** : OCI sous la forme `TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`,
-  `TF_VAR_private_key` et `TF_VAR_region` (lues par `pulumi/.mise/env.yaml`, comme pour `kazimierz.akn`), puis ceux des
+  `TF_VAR_private_key` et `TF_VAR_region` (à exporter dans le shell, comme pour `kazimierz.akn`), puis ceux des
   providers Backblaze, Cloudflare et Tailscale.
 - **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
   posé sur la clé par `stack/tailscale.ts`).
@@ -50,7 +50,7 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
 cd fleet/hosts/akn.exusiai/pulumi
 pnpm install
 pulumi stack init exusiai_akn.live   # puis définir la configuration ci-dessous
-mise run pulumi:diff && mise run pulumi:apply
+pulumi preview && pulumi up
 ```
 
 Configuration Pulumi (`pulumi config set <clé> <valeur>`, avec `--secret` pour les valeurs secrètes) :
@@ -80,14 +80,14 @@ Premier `pulumi up` (à exécuter une fois, par un humain) :
 
 ```sh
 export POCKET_ID_API_KEY=<clé d'API Pocket-Id>   # ou : pulumi config set --secret pocket-id:apiKey ...
-mise run pulumi:diff
+pulumi preview
 ```
 
 L'aperçu doit afficher le groupe et le client en **import** ou sans changement, avec au plus des mises à jour en place
 de champs cosmétiques, plus la **création** de `minecraft-secret`. Si l'aperçu affiche une création (`create`) ou un
 remplacement (`replace`) du client ou du groupe, s'arrêter : un UUID ou un champ est faux. Sinon :
 
-1. Exécuter `mise run pulumi:apply`. Le nouveau secret **remplace** l'ancien dans Pocket-Id ; si Pelican tourne déjà, sa
+1. Exécuter `pulumi up`. Le nouveau secret **remplace** l'ancien dans Pocket-Id ; si Pelican tourne déjà, sa
    connexion est cassée à partir de cet instant.
 2. Placer la sortie de `pulumi stack output --show-secrets minecraftOidcClientSecret` dans le fichier SOPS sous la clé
    `oauth_pocketid_client_secret` (étape 3). Si l'hôte tourne déjà, le redéployer avec `mise run nixos:oci:update` ;

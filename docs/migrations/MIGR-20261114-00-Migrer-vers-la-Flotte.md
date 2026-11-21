@@ -432,12 +432,12 @@ remplacement garde son ancienne valeur.
   3. `pulumi stack rename organization/exusiai-akn/exusiai_akn.live` ; à défaut, export, réécriture des URN
      (`rimbilliton-akn-infra` vers `exusiai-akn`, `rimbilliton_akn.live` vers `exusiai_akn.live`), `pulumi stack init`
      puis `pulumi stack import` ;
-  4. `sops set pulumi/.mise/env.yaml '["PULUMI_STACK"]' '"exusiai_akn.live"'` ;
-  5. `mise run pulumi:diff -- --diff` : exactement six `update` (compartiment : `name` et `description` ; instance, NSG
+  4. vérifier que `PULUMI_STACK` vaut `exusiai_akn.live` dans `pulumi/.mise.toml` ;
+  5. `pulumi preview --diff` : exactement six `update` (compartiment : `name` et `description` ; instance, NSG
      : `displayName` et `freeformTags.project` ; VCN, liste de sécurité, sous-réseau : `displayName`). **Tout `create`,
      `replace` ou `delete`, tout autre changement, ou toute autre propriété sur ces six ressources arrête l'opération**,
      en particulier `dnsLabel`, `compartmentId`, `sourceDetails` et le volume de démarrage ;
-  6. `mise run pulumi:apply`, puis `mise run pulumi:diff` (aucun changement attendu) ;
+  6. `pulumi up`, puis `pulumi preview` (aucun changement attendu) ;
   7. `mise run nixos:oci:update root@rimbilliton-akn` (bascule du nom d'hôte, sans réinstaller), puis contrôles : nœud
      `exusiai-akn` dans le tailnet, `tailscaled`, `docker` et `caddy` actifs, `minecraft.chezmoi.sh` répond sur les
      ports de jeu, connexion au Panel par Pocket-Id, prochaine sauvegarde restic réussie ;

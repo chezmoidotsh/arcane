@@ -127,7 +127,7 @@ L'installation est manuelle et se fait une fois. Le détail (configuration Pulum
 dépannage de `nixos-anywhere`, encadré macOS pour l'agent SSH) est dans le
 [guide d'initialisation](../../../docs/guides/Initialiser-Rimbilliton.md) ; en résumé :
 
-1. Provisionner l'infrastructure depuis `pulumi/` (`mise run pulumi:diff`, puis `mise run pulumi:apply`), avec
+1. Provisionner l'infrastructure depuis `pulumi/` (`pulumi preview`, puis `pulumi up`), avec
    `unsecure` à `true` pour ouvrir SSH le temps de l'installation.
 2. Générer la clé d'hôte dans `nix/extra/etc/ssh/`, créer `nix/secrets/rimbilliton.sops.yaml` depuis le modèle avec les
    sorties de la pile, renseigner `bucket` dans `nix/modules/backup.nix` avec la sortie `backupsBucketName`, et
@@ -142,7 +142,7 @@ dépannage de `nixos-anywhere`, encadré macOS pour l'agent SSH) est dans le
 ### Mises à jour
 
 `mise run nixos:oci:update` lance `nixos-rebuild switch` sur l'hôte à travers le tailnet (`root@exusiai-akn` par défaut,
-une autre cible se passe en argument). `mise run pulumi:apply`, depuis `pulumi/`, applique les changements de
+une autre cible se passe en argument). `pulumi up`, depuis `pulumi/`, applique les changements de
 l'infrastructure. Pour rejouer l'installation sur une VM de test Proxmox, `mise run nixos:e2e <utilisateur@hôte>` (cible
 obligatoire, destructive pour elle).
 
