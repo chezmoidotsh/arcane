@@ -116,6 +116,12 @@ lint:
       linters: [ALL]
       paths:
         - catalog/pulumi/sdks/**
+    - # Upstream Talos bootstrap manifests (CoreDNS, Cilium, ...) pinned by SHA in
+      # the Omni cluster templates: editing them would change what the clusters
+      # apply, so their checkov findings are accepted as is.
+      linters: [checkov]
+      paths:
+        - catalog/omni/manifests/**
     - # dist/ folders contain generated manifests — excluded from all linters (the compliance workflows run the OPA policies on them)
       linters:
         - actionlint

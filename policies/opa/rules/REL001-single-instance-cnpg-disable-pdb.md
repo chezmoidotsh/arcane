@@ -14,8 +14,8 @@ CloudNative-PG defaults `spec.enablePDB` to `true` and creates a `PodDisruptionB
 primary. With a single instance, that budget can never be satisfied: `kubectl drain` (and therefore Talos upgrades and
 node rotations) blocks forever on the lone pod.
 
-A `Cluster` with `spec.instances: 1` must therefore set `spec.enablePDB: false`. Clusters with more than one instance are
-unaffected: the PDB protects the quorum there.
+A `Cluster` with `spec.instances: 1` must therefore set `spec.enablePDB: false`. Clusters with more than one instance
+are unaffected: the PDB protects the quorum there.
 
 ## Background
 
@@ -41,13 +41,13 @@ A `postgresql.cnpg.io/v1` `Cluster` with `spec.instances == 1` is denied unless 
 
 ```sh
 # CI (GitHub Actions)
-conftest test projects/*/dist --policy catalog/opa/policies/ --combine
+conftest test projects/*/dist --policy policies/opa/ --combine
 
 # Local
-mise exec conftest -- conftest test <manifest.yaml> -p catalog/opa/policies/
+mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 
 # OPA unit tests
-mise exec opa -- opa test catalog/opa/policies/ -v
+mise exec opa -- opa test policies/opa/ -v
 ```
 
 CI enforcement is **blocking**. All manifests in `projects/*/dist/` must be compliant before merging.

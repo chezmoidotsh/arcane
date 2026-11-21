@@ -247,7 +247,7 @@ depuis son propre `/19` dans `172.30.0.0/16` (un `/16` contient exactement 8 × 
 | `clustermesh-apiserver` joignable           | À faire | Exposition du plan de contrôle par LoadBalancer (TCP 2379). Mécanisme à définir (SDN `talosnet` ou pool LB du VLAN 5)     |
 | `cilium-ca` partagée entre clusters         | À faire | Requise pour la vérification mTLS des identités entre clusters                                                            |
 
-Les manifestes d'installation Cilium partagés (`catalog/talos/manifests/cilium/1.19.5-native.yaml`, `1.20.0-native.yaml`
+Les manifestes d'installation Cilium partagés (`catalog/omni/manifests/cilium/1.19.5-native.yaml`, `1.20.0-native.yaml`
 et `1.20.2-native.yaml`, référencés par URL depuis les templates de cluster) ne peuvent pas porter de valeurs par
 cluster. `cluster.name` et `cluster.id` sont donc à appliquer après l'installation (par exemple
 `cilium config set cluster-name rhodes-akn` et `cilium config set cluster-id 1`, ou un overlay de valeurs Helm géré par

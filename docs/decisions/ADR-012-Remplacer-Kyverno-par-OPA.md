@@ -206,6 +206,6 @@ mêmes politiques Rego, sans remplacer la couche de CI.
   le durcissement complémentaire de la chaîne d'approvisionnement, dont les `dist/` que conftest vérifie.
 - [Incident du 2026-05-26](../incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md) :
   l'incident qui a déclenché cette décision.
-- [Documentation des politiques OPA](../../catalog/opa/README.md) : les politiques et les règles en vigueur.
+- [Documentation des politiques OPA](../../policies/opa/README.md) : les politiques et les règles en vigueur.
 - [conftest](https://www.conftest.dev/) : l'outil d'application des politiques sur les manifestes Kubernetes.
 - [OPA Gatekeeper](https://open-policy-agent.github.io/gatekeeper/) : l'option d'application à l'exécution différée.

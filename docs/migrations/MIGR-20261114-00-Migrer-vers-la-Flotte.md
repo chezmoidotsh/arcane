@@ -32,7 +32,7 @@ chaque élément ayant son README.
 | 1     | Ajouter les scopes de commit `fleet:*` et le label `fleet`          | faite   |
 | 2     | Créer les bases de catalogue manquantes                             | faite   |
 | 3     | Activer le lint de structure                                        | faite   |
-| 4     | Déplacer le catalogue                                               | à faire |
+| 4     | Déplacer le catalogue                                               | faite   |
 | 5     | Les petits hôtes du groupe `core`                                   | à faire |
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | à faire |
 | 7     | Les hôtes du groupe `akn`                                           | à faire |
@@ -219,12 +219,11 @@ utiliser. Les scopes `project:*` restent valides jusqu'à l'étape 11.
 - **Vérification** : le lint passe sur l'état courant, et échoue sur un `system/<x>` partagé auquel on retire sa base
   (test volontaire sur une branche).
 - **Retour arrière** : retirer le linter `fleet-structure` de `.rtunk/rtunk.yaml`.
-- **Constaté** : le lint est le linter rtunk `fleet-structure`
-  (`.rtunk/local-plugin/linters/fleet-structure/`), lancé par `mise run lint` et donc par la CI. Son script avec
-  `--self-test` couvre les
-  quatre cas (composant partagé sans base : échec ; avec base : succès ; cluster présent dans les deux arborescences :
-  compté une fois ; nom de dossier invalide : échec). En local, le lint peut signaler `tailscale` à cause d'un dossier
-  `projects/amiya.akn/` non suivi resté sur le disque ; en CI ce dossier n'existe pas.
+- **Constaté** : le lint est le linter rtunk `fleet-structure` (`.rtunk/local-plugin/linters/fleet-structure/`), lancé
+  par `mise run lint` et donc par la CI. Son script avec `--self-test` couvre les quatre cas (composant partagé sans
+  base : échec ; avec base : succès ; cluster présent dans les deux arborescences : compté une fois ; nom de dossier
+  invalide : échec). En local, le lint peut signaler `tailscale` à cause d'un dossier `projects/amiya.akn/` non suivi
+  resté sur le disque ; en CI ce dossier n'existe pas.
 
 ### 4. Déplacer le catalogue
 
@@ -431,7 +430,9 @@ de cette migration sont dans
 
 - **Manuel, scopes de commit** : supprimer les 8 scopes `project:*` de `.commitlintrc.js` (ceux d'`amiya.akn` et de
   `shodan.akn` disparaissent sans remplacement), le label `project` de `.github/labels.yaml`, et leurs mentions dans
-  `.agents/skills/git-commit/SKILL.md`. Les scopes `fleet:*` et le label `fleet` existent depuis l'étape 1.
+  `.agents/skills/git-commit/SKILL.md`. Les scopes `fleet:*` et le label `fleet` existent depuis l'étape 1. Les scopes
+  `catalog:flakes`, `catalog:opa`, `catalog:talos` et `catalog:kustomize` nomment des chemins disparus : ils partent
+  aussi.
 - **Manuel, OpenBao** : amender l'[ADR-002](../decisions/ADR-002-Topologie-des-Secrets-OpenBao.md),
   l'[ADR-003](../decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md),
   l'[ADR-004](../decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) et la documentation d'OpenBao

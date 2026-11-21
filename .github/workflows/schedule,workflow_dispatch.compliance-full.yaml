@@ -5,7 +5,7 @@
 # =============================================================================
 # Daily counterpart of push,pull_request.compliance-partial.yaml: checks EVERY dist/ directory
 # instead of only the changed ones, so a policy change cannot break an untouched app unnoticed.
-# One matrix job per directory: conftest against catalog/opa/policies/, then the Zot registry
+# One matrix job per directory: conftest against policies/opa/, then the Zot registry
 # coverage check.
 #
 # Events:      schedule (daily), workflow_dispatch
@@ -70,7 +70,7 @@ jobs:
         run: >-
           mise exec conftest --
           conftest test "${{ matrix.directory }}"
-          --policy catalog/opa/policies/
+          --policy policies/opa/
           --combine
           --output github
 

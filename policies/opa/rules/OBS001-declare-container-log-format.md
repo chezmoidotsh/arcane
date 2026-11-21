@@ -71,10 +71,10 @@ counting only their own `deny` messages.
 
 ```sh
 # CI (GitHub Actions)
-conftest test projects/*/dist --policy catalog/opa/policies/ --combine
+conftest test projects/*/dist --policy policies/opa/ --combine
 
 # OPA unit tests
-mise exec opa -- opa test catalog/opa/policies/ -v
+mise exec opa -- opa test policies/opa/ -v
 ```
 
 CI enforcement is **blocking**. All manifests in `projects/*/dist/` must be compliant before merging.
