@@ -25,3 +25,4 @@ config:
   chezmoi-sh-infra:rhodesAknKubernetesContext: omni-rhodes-akn
   chezmoi-sh-infra:lungmenAknKubernetesContext: omni-lungmen-akn
   pocket-id:baseUrl: https://auth.chezmoi.sh
+  oci:region: eu-paris-1
