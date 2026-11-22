@@ -3,7 +3,8 @@
 This folder contains the Pulumi TypeScript stack that manages a narrow, deliberately scoped slice of
 `pve-01.pve.chezmoi.sh` — the Proxmox VE host every cluster in this homelab runs on — as declarative code. It follows
 the same bridged-provider pattern already established for
-[`fleet/hosts/core.pbs/`](../../../../../../../fleet/hosts/core.pbs/) and [`../truenas/`](../truenas/):
+[`fleet/hosts/core.pbs/`](../../../../../../../fleet/hosts/core.pbs/) and
+[`fleet/hosts/core.nas/`](../../../../../../../fleet/hosts/core.nas/):
 [`@pulumi/proxmox`](../../../../../../../catalog/pulumi/sdks/proxmox/), a Pulumi provider dynamically bridged from the
 [`bpg/terraform-provider-proxmox`](https://github.com/bpg/terraform-provider-proxmox) Terraform provider.
 
@@ -87,8 +88,8 @@ One-time setup before the first `pulumi up` against this stack:
 > belong in Pulumi config, matching the existing `pbs:endpoint`/`pbs:insecure`/`truenas:url` convention.
 
 1. **Authenticate as `root@pam` with a username/password, not an API token — mandatory, not optional.** Every other
-   stack in this project (`../truenas/`) or next to it (`fleet/hosts/core.pbs/`) authenticates via a scoped API token,
-   and that remains the default posture to aim for. This stack is the deliberate exception: `acme.ts`'s `AcmeAccount`
+   stack next to this one (`fleet/hosts/core.nas/`, `fleet/hosts/core.pbs/`) authenticates via a scoped API token, and
+   that remains the default posture to aim for. This stack is the deliberate exception: `acme.ts`'s `AcmeAccount`
    resource manages Proxmox VE's `/cluster/acme/account` endpoint, which **hard-rejects API token authentication
    entirely** — confirmed live, `pulumi import`/`preview` fail with `Permission check failed (user != root@pam)` no
    matter how the token is scoped, even with `privsep` disabled (a token still authenticates as `root@pam!<tokenname>`,
