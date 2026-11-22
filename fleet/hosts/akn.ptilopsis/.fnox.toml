@@ -1,0 +1,7 @@
+# akn.ptilopsis Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+
+[secrets]
+# Cloudflare provider of the Dns01TokenComponent: email + global API key, which can create account tokens.
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }

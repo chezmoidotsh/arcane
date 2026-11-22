@@ -30,9 +30,10 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
 ## Avant de commencer
 
 - **Outils** : `mise install` (fournit `sops`) et Nix, exécuté en natif (`nix run`), y compris pour `ssh-to-age`.
-- **Identifiants** : OCI sous la forme `TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`,
-  `TF_VAR_private_key` et `TF_VAR_region` (à exporter dans le shell, comme pour `kazimierz.akn`), puis ceux des
-  providers Backblaze, Cloudflare et Tailscale.
+- **Identifiants** : OCI (`TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`, `TF_VAR_private_key`,
+  `TF_VAR_region`), Backblaze, Cloudflare, Tailscale et Pocket-Id, déclarés dans `fleet/hosts/akn.exusiai/.fnox.toml` et
+  résolus par fnox depuis Bitwarden Secrets Manager (`mise run bws:setup`, puis la commande `pulumi` passe par fnox). Les
+  secrets Bitwarden correspondants doivent exister : un secret manquant fait échouer la commande.
 - **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
   posé sur la clé par `stack/access/tailscale.ts`).
 - **Stack parente** : `chezmoi_sh.live` déjà appliquée. Elle crée le compartiment parent `chezmoi.sh` et le groupe
@@ -78,8 +79,7 @@ remplacerait le client par un autre, avec un nouvel identifiant. Le secret du cl
 Premier `pulumi up` (à exécuter une fois, par un humain) :
 
 ```sh
-export POCKET_ID_API_KEY=<clé d'API Pocket-Id>   # ou : pulumi config set --secret pocket-id:apiKey ...
-pulumi preview
+pulumi preview   # POCKET_ID_API_KEY vient de fnox (secret Bitwarden pulumi-pocket-id-api-key)
 ```
 
 L'aperçu doit afficher le groupe et le client sans changement, avec au plus des mises à jour en place

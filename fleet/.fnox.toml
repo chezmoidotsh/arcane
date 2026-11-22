@@ -1,6 +1,11 @@
-# Root secrets shared by every fleet Pulumi stack, held in Bitwarden Secrets Manager.
-# Values never live here, only the key names. fnox finds it by walking up from any stack under fleet/.
+# Secrets shared by every fleet Pulumi stack, held in Bitwarden Secrets Manager.
+# Values never live here, only the key names. fnox merges the .fnox.toml files found from the stack's directory
+# (fleet/hosts/<host>/pulumi/) up to the repository root, the closest one winning.
 # The token and project ID come from the root .fnox.toml (macOS Keychain, see `mise run bws:setup`).
+#
+# Only what every stack needs lives here: the Bitwarden provider, the state backend and the Pulumi passphrase.
+# The provider credentials (OCI, Cloudflare, Pocket-Id, ...) are declared by the host that uses them, in
+# fleet/hosts/<host>/.fnox.toml, so that a missing secret fails the stack that needs it (no `if_missing`).
 [providers.bws]
 type = "bitwarden-sm"
 project_id = { secret = "BWS_PROJECT_ID" }
@@ -10,29 +15,5 @@ project_id = { secret = "BWS_PROJECT_ID" }
 AWS_ACCESS_KEY_ID = { provider = "bws", value = "pulumi-garage-access-key-id" }
 AWS_SECRET_ACCESS_KEY = { provider = "bws", value = "pulumi-garage-secret-access-key" }
 
-# Cloudflare provider of the stacks that create DNS-01 tokens (Dns01TokenComponent: omni.core,
-# oci-registry.core, akn.ptilopsis, ...): email + global API key, which can create account tokens. `warn` so the
-# stacks that don't touch Cloudflare keep working while a secret is missing from Bitwarden.
-CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email", if_missing = "warn" }
-CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key", if_missing = "warn" }
-
-# Admin API key of Pocket-Id (auth.chezmoi.sh), read by the pocket-id provider of the stacks that
-# manage OIDC clients (akn.closure, akn.exusiai, ...). `warn` so the stacks that don't use it keep working.
-POCKET_ID_API_KEY = { provider = "bws", value = "pulumi-pocket-id-api-key", if_missing = "warn" }
-
 # Shared passphrase of the fleet stacks' Pulumi secrets.
 PULUMI_CONFIG_PASSPHRASE = { provider = "bws", value = "pulumi-config-passphrase" }
-
-# OCI provider (compartments, networks, instances of kazimierz.akn, exusiai.akn, ...). Created by hand in the
-# Bitwarden project under these names. `warn` like the Cloudflare ones.
-TF_VAR_tenancy_ocid = { provider = "bws", value = "pulumi-oci-tenancy-ocid", if_missing = "warn" }
-TF_VAR_user_ocid = { provider = "bws", value = "pulumi-oci-user-ocid", if_missing = "warn" }
-TF_VAR_fingerprint = { provider = "bws", value = "pulumi-oci-fingerprint", if_missing = "warn" }
-TF_VAR_region = { provider = "bws", value = "pulumi-oci-region", if_missing = "warn" }
-TF_VAR_private_key = { provider = "bws", value = "pulumi-oci-private-key", if_missing = "warn" }
-
-# exusiai.akn only: Backblaze B2 (backup bucket and key), Tailscale (first-boot auth key). Its Pocket-Id OIDC client uses POCKET_ID_API_KEY above.
-# Also created by hand in the Bitwarden project under these names.
-B2_APPLICATION_KEY_ID = { provider = "bws", value = "pulumi-b2-application-key-id", if_missing = "warn" }
-B2_APPLICATION_KEY = { provider = "bws", value = "pulumi-b2-application-key", if_missing = "warn" }
-TAILSCALE_API_KEY = { provider = "bws", value = "pulumi-tailscale-api-key", if_missing = "warn" }

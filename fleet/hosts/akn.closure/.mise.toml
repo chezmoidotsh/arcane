@@ -11,7 +11,8 @@
 # Prerequisites:
 #   - `pnpm install` and the Bitwarden Secrets Manager setup (`mise run bws:setup`): `mise exec`
 #     runs pulumi from pulumi/ so that its PULUMI_STACK is set, and `fnox exec` resolves the
-#     passphrase and the Garage credentials (fleet/.fnox.toml)
+#     passphrase and the Garage credentials (fleet/.fnox.toml) and the Cloudflare and Pocket-Id
+#     credentials (.fnox.toml of this directory)
 # =============================================================================
 
 # -----------------------------------------------------------------------------

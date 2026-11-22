@@ -1,0 +1,22 @@
+# akn.exusiai Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+
+[secrets]
+# Cloudflare provider (DNS records of the Minecraft names): email + global API key.
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }
+
+# Admin API key of Pocket-Id (auth.chezmoi.sh), read by the pocket-id provider.
+POCKET_ID_API_KEY = { provider = "bws", value = "pulumi-pocket-id-api-key" }
+
+# OCI provider (compartment, network, instance).
+TF_VAR_tenancy_ocid = { provider = "bws", value = "pulumi-oci-tenancy-ocid" }
+TF_VAR_user_ocid = { provider = "bws", value = "pulumi-oci-user-ocid" }
+TF_VAR_fingerprint = { provider = "bws", value = "pulumi-oci-fingerprint" }
+TF_VAR_region = { provider = "bws", value = "pulumi-oci-region" }
+TF_VAR_private_key = { provider = "bws", value = "pulumi-oci-private-key" }
+
+# Backblaze B2 (backup bucket and application key) and Tailscale (first-boot auth key).
+B2_APPLICATION_KEY_ID = { provider = "bws", value = "pulumi-b2-application-key-id" }
+B2_APPLICATION_KEY = { provider = "bws", value = "pulumi-b2-application-key" }
+TAILSCALE_API_KEY = { provider = "bws", value = "pulumi-tailscale-api-key" }

@@ -1,9 +1,10 @@
 # =============================================================================
 # Fleet — shared mise configuration
 # =============================================================================
-# Applies to every element under fleet/. The root secrets of the Pulumi stacks
-# (state backend credentials, passphrase) live in Bitwarden Secrets Manager and
-# are resolved by fnox (see .fnox.toml).
+# Applies to every element under fleet/. The secrets of the Pulumi stacks live in
+# Bitwarden Secrets Manager and are resolved by fnox: the shared ones (state backend
+# credentials, passphrase) in .fnox.toml, the provider credentials of each host in
+# hosts/<host>/.fnox.toml (merged by fnox, the closest file wins).
 # =============================================================================
 
 [tools]

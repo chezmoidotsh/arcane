@@ -6,14 +6,14 @@
 #
 # First run: see docs/guides/Initialiser-Exusiai.md (Pulumi configuration).
 #
-# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the root secrets
-# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) are resolved from
-# Bitwarden Secrets Manager (fleet/.fnox.toml, with the token and project ID of the
-# Keychain, see `mise run bws:setup`) and exist only inside that process.
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the shared secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) come from fleet/.fnox.toml and
+# the provider credentials (OCI TF_VAR_*, Cloudflare, Pocket-Id, Backblaze, Tailscale) come from ../.fnox.toml. Both are resolved from Bitwarden Secrets Manager
+# (with the token and project ID of the Keychain, see `mise run bws:setup`) and exist
+# only inside that process.
 # The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
 #
-# The other provider credentials (OCI TF_VAR_*, Backblaze, Tailscale, Pocket-Id) come from the same fnox file;
-# they are created by hand in the Bitwarden project under the names listed there.
+# They are created by hand in the Bitwarden project under the names listed in ../.fnox.toml; a missing one fails the run.
 # =============================================================================
 
 [tools]
