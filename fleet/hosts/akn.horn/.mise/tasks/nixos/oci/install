@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #MISE description="(Re)install the OCI A1 host with nixos-anywhere (DESTRUCTIVE: repartitions the boot volume)"
 #MISE dir="{{ config_root }}/nix"
+#MISE depends=["nixos:_require-nix"]
 #USAGE arg "<target>" help="SSH target of the stock Ubuntu instance, user@host"
 #
 # Needs `unsecure=true` on the Pulumi stack (SSH closed otherwise). Example: mise run nixos:oci:install ubuntu@<public-ip>
@@ -14,7 +15,7 @@ set -euo pipefail
 mise run nixos:binding-ip
 
 # Evaluate the whole system before touching the instance: nixos-anywhere only does it after kexec and partitioning.
-nonix eval --raw ".#nixosConfigurations.horn-akn-aarch64.config.system.build.toplevel.drvPath" >/dev/null
+nix eval --raw ".#nixosConfigurations.horn-akn-aarch64.config.system.build.toplevel.drvPath" >/dev/null
 
 # Last thing before the point of no return: show the latest Pangolin backup and ask. Fresh (< 24h, see
 # KAZIMIERZ_BACKUP_MAX_AGE_HOURS): just confirm. Missing or stale: warn, offer to take one from the running host first.
@@ -67,5 +68,5 @@ ask "Proceed? This will ERASE ${usage_target}. [y/N] " n || {
 	exit 1
 }
 
-nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#horn-akn-aarch64" --extra-files extra \
+nix run .#nixos-anywhere -- --flake ".#horn-akn-aarch64" --extra-files extra --build-on remote \
 	--kexec-extra-flags --kexec-syscall --target-host "${usage_target}"

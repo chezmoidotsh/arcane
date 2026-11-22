@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #MISE description="Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for the target)"
 #MISE dir="{{ config_root }}/nix"
+#MISE depends=["nixos:_require-nix"]
 #USAGE arg "<target>" help="SSH target of the test VM, user@host or an ssh_config alias (required)"
 set -euo pipefail
 
@@ -25,9 +26,9 @@ git add -f -N extra/etc/pangolin/binding-ip
 
 # Evaluate the whole system before touching the VM: nixos-anywhere only does it after kexec and partitioning, and a
 # failure there (empty binding IP, untracked secrets file, ...) leaves the target wiped but not installed.
-if ! nonix eval --raw ".#nixosConfigurations.horn-akn-x86_64.config.system.build.toplevel.drvPath" >/dev/null; then
+if ! nix eval --raw ".#nixosConfigurations.horn-akn-x86_64.config.system.build.toplevel.drvPath" >/dev/null; then
 	echo "nixos:e2e: the system does not evaluate (see above); the target was not touched" >&2
 	exit 1
 fi
-nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#horn-akn-x86_64" --extra-files extra \
+nix run .#nixos-anywhere -- --flake ".#horn-akn-x86_64" --extra-files extra \
 	--build-on remote --target-host "${usage_target}"

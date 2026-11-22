@@ -1,5 +1,24 @@
 # =============================================================================
-# horn.akn (formerly kazimierz.akn) - Mise Configuration
+# horn.akn — Task Automation
+# =============================================================================
+# Tasks for the NixOS host of the public gateway (Pangolin + Gerbil + Traefik) on OCI Always Free, and for its
+# diagram. The infrastructure around it (OCI, DNS, Tailscale, Pocket-Id, Pangolin) is Pulumi, in pulumi/.
+# The nixos:* tasks are scripts in .mise/tasks/nixos/. Run from anywhere: `mise run nixos:<task>`.
+#
+# Usage:
+#   mise run nixos:oci:update [-- <target>]    # Apply nix/ to the running host over the tailnet (default root@horn-akn)
+#   mise run nixos:oci:install -- <target>     # (Re)install with nixos-anywhere (DESTRUCTIVE: repartitions the boot volume)
+#   mise run nixos:e2e -- <target>             # Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for it)
+#   mise run nixos:backup [-- <host>]          # Back up Pangolin's state from the running host into a local tarball
+#   mise run nixos:binding-ip                  # Write the instance private address (Pulumi output) for the flake
+#   mise run diagram:generate                  # Render architecture.d2 to assets/architecture.png
+#
+# Prerequisites:
+#   - nix, run natively (no container). The tools are the packages of nix/flake.nix, pinned by nix/flake.lock
+#     (`nix flake update nixos-anywhere` to bump the installer)
+#   - the SSH key of the target in your agent (nixos-anywhere forwards it)
+#   - the target is built on the host itself (--build-on / --build-host remote): this machine is not an
+#     aarch64-linux builder
 # =============================================================================
 
 [tasks."diagram:generate"]
@@ -13,5 +32,8 @@ run = [
 ]
 dir = "{{ config_root }}"
 
-# NixOS host tasks (nixos:*) are scripts in .mise/tasks/nixos/. Run from anywhere: `mise run nixos:<task>`.
-# nonix forwards $SSH_AUTH_SOCK to the container, so the key must be in your agent.
+[tasks."nixos:_require-nix"]
+hide = true
+description = "Fail with a clear message when nix is not installed"
+# No fallback on purpose: these tasks are destructive, they must not run through another path.
+run = 'command -v nix >/dev/null || { echo "nix is required (https://nixos.org/download), see docs/guides/Initialiser-Kazimierz.md" >&2; exit 1; }'
