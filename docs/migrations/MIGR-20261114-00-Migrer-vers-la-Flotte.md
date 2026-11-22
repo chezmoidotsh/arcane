@@ -377,8 +377,13 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
      (`hass-infra` vers `closure-akn`, `hass.live` vers `closure_akn.live`), `pulumi stack init` puis
      `pulumi stack import` ;
   4. `pulumi stack change-secrets-provider` vers la phrase secrète de fnox, puis vérifier les secrets de config
-     (`cloudflare_account_id`, `cloudflare_zone_id`) ;
-  5. `pulumi preview` depuis `pulumi/` : l'aperçu doit être vide (tout `create` ou `delete` arrête l'opération) ;
+     (`cloudflare_account_id`, `cloudflare_zone_id`). La pile `hass` n'utilisait pas la phrase secrète de fnox : la
+     sienne était dans le `.mise/env.yaml` (sops) supprimé, à lire dans `main` avant de le perdre. Il faut la passer
+     dans `PULUMI_CONFIG_PASSPHRASE` pour le renommage et pour `change-secrets-provider`, dont la nouvelle phrase
+     secrète est demandée de façon interactive (deux invites) ;
+  5. `pulumi preview` depuis `pulumi/` : l'aperçu doit être vide (tout `create` ou `delete` arrête l'opération). Le
+     provider Pocket-Id exige `POCKET_ID_API_KEY` (clé d'API de Pocket-Id, secret `pulumi-pocket-id-api-key` de
+     Bitwarden Secrets Manager, fourni par `fleet/.fnox.toml`) dans l'environnement ;
   6. fusionner.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : cela
   créerait un second jeton Cloudflare et un second client Pocket-Id. Entre le renommage et la fusion, la pile référencée
