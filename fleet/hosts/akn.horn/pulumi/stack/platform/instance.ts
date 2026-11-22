@@ -48,7 +48,7 @@ const ubuntuImage = oci.core.getImagesOutput({
 // slot on a fragmented host pool. Bump back to 2/12 once capacity allows and
 // more headroom is actually needed.
 export const instance = new oci.core.Instance(
-	"kazimierz-pangolin",
+	"horn-pangolin",
 	{
 		availabilityDomain,
 		compartmentId: ociCompartment.id,

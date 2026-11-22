@@ -17,7 +17,7 @@ const parentCompartmentId = oci.identity
 
 // Dedicated compartment: isolates horn.akn's own OCI resources (VCN, instance, volume) under chezmoi.sh instead
 // of sharing its parent compartment.
-export const ociCompartment = new oci.identity.Compartment("kazimierz", {
+export const ociCompartment = new oci.identity.Compartment("horn", {
 	compartmentId: parentCompartmentId,
 	name: "horn.akn",
 	description: "horn.akn -- public VPS gateway (Pangolin + Gerbil + Traefik)",

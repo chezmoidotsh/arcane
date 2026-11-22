@@ -19,7 +19,7 @@ import { cloudflareAccountId, cloudflareZoneId } from "../config";
 // of rhodes.akn in July 2026), and kazimierz.akn is the public gateway every
 // cluster (including rhodes.akn) depends on to be reachable -- it can't
 // depend on Vault being up first.
-const traefikDns01Token = new Dns01TokenComponent("kazimierz-traefik-dns01", {
+const traefikDns01Token = new Dns01TokenComponent("horn-traefik-dns01", {
 	owner: "kazimierz.akn",
 	application: "Traefik DNS-01 wildcard cert (*.chezmoi.sh)",
 	accountId: cloudflareAccountId,

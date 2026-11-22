@@ -3,16 +3,14 @@ import * as oci from "@pulumi/oci";
 import { unsecure } from "../config";
 import { ociCompartment } from "./oci-compartment";
 
-// Dual-stack VCN/subnet/NSG for kazimierz.akn, ported from the abandoned
+// Dual-stack VCN/subnet/NSG for horn.akn, ported from the abandoned
 // Crossplane implementation (issue 1010/1076 -- see
 // projects/kazimierz.akn/src/infrastructure/crossplane on branch
 // i1076-crossplane-oci-publicinstance for the original manifests). CIDR
 // ranges are kept identical.
-// Host renamed kazimierz.akn -> horn.akn in place: displayNames follow
-// (updatable), but the logical names (`kazimierz-akn-*`, part of the URNs)
-// and `dnsLabel` stay -- `dnsLabel` cannot be updated, changing it would
-// replace the VCN and everything in it.
-const vcn = new oci.core.Vcn("kazimierz-akn-vcn", {
+// Host renamed kazimierz.akn -> horn.akn in place: the displayNames and the logical names follow, but
+// `dnsLabel` stays -- it cannot be updated, changing it would replace the VCN and everything in it.
+const vcn = new oci.core.Vcn("horn-akn-vcn", {
 	compartmentId: ociCompartment.id,
 	cidrBlocks: ["172.16.0.0/26"],
 	displayName: "horn-akn-vcn",
@@ -22,7 +20,7 @@ const vcn = new oci.core.Vcn("kazimierz-akn-vcn", {
 });
 
 const internetGateway = new oci.core.InternetGateway(
-	"kazimierz-akn-igw",
+	"horn-akn-igw",
 	{
 		compartmentId: ociCompartment.id,
 		vcnId: vcn.id,
@@ -30,7 +28,7 @@ const internetGateway = new oci.core.InternetGateway(
 	},
 );
 
-const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
+const routeTable = new oci.core.RouteTable("horn-akn-rt", {
 	compartmentId: ociCompartment.id,
 	vcnId: vcn.id,
 	routeRules: [
@@ -59,7 +57,7 @@ const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
 // array outright ("Subnet securityListIds must have at least 1 element",
 // verified live). So this replicates the ICMP ingress allowances from
 // OCI's own default rules (fetched live from "Default Security List for
-// kazimierz-akn-vcn") -- path MTU discovery and packet-too-big, neither
+// horn-akn-vcn") -- path MTU discovery and packet-too-big, neither
 // covered by the NSG below -- minus the two SSH ingress rules that made
 // SSH reachable regardless of the NSG.
 //
@@ -68,7 +66,7 @@ const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
 // an egress-all rule here would be pure duplication, not an additional
 // permission.
 const defaultSecurityList = new oci.core.SecurityList(
-	"kazimierz-akn-default-sl",
+	"horn-akn-default-sl",
 	{
 		compartmentId: ociCompartment.id,
 		vcnId: vcn.id,
@@ -96,7 +94,7 @@ const defaultSecurityList = new oci.core.SecurityList(
 	},
 );
 
-export const subnet = new oci.core.Subnet("kazimierz-akn-subnet", {
+export const subnet = new oci.core.Subnet("horn-akn-subnet", {
 	compartmentId: ociCompartment.id,
 	vcnId: vcn.id,
 	cidrBlock: "172.16.0.0/28",
@@ -104,7 +102,7 @@ export const subnet = new oci.core.Subnet("kazimierz-akn-subnet", {
 	securityListIds: [defaultSecurityList.id],
 });
 
-export const nsg = new oci.core.NetworkSecurityGroup("kazimierz-akn-nsg", {
+export const nsg = new oci.core.NetworkSecurityGroup("horn-akn-nsg", {
 	compartmentId: ociCompartment.id,
 	vcnId: vcn.id,
 	displayName: "horn-akn-nsg",
@@ -132,7 +130,7 @@ for (const { name, protocol, port } of allIngressRules.filter(unsecure_mode)) {
 		["ipv6", "::/0"],
 	] as const) {
 		new oci.core.NetworkSecurityGroupSecurityRule(
-			`kazimierz-akn-nsg-ingress-${name}-${suffix}`,
+			`horn-akn-nsg-ingress-${name}-${suffix}`,
 			{
 				networkSecurityGroupId: nsg.id,
 				direction: "INGRESS",
@@ -158,7 +156,7 @@ for (const { name, protocol } of egressProtocols) {
 		["ipv6", "::/0"],
 	] as const) {
 		new oci.core.NetworkSecurityGroupSecurityRule(
-			`kazimierz-akn-nsg-egress-${name}-${suffix}`,
+			`horn-akn-nsg-egress-${name}-${suffix}`,
 			{
 				networkSecurityGroupId: nsg.id,
 				direction: "EGRESS",
