@@ -1,12 +1,12 @@
-encryptionsalt: v1:agX4pNhPZ3Y=:v1:39UQDzNp+0o/rxa9:2tGZNL4YATbjQ2Qa1pVS/OTsrjnP2w==
+encryptionsalt: v1:+C7tZHAz1F4=:v1:MsHA8ulSH3VhvOc5:GzNG1d50skQ/h1l0glgpx8Olu6+fVA==
 config:
   horn-akn:ssh_authorized_keys: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPH7IEv+Q6s6WSPlWVva6UlCbkhePQdZYbN1TbI7rCDx
   horn-akn:unsecure: "false"
   horn-akn:cloudflare_zone_id:
-    secure: v1:hIOJwej5EdxOtRaq:7KObpoMJHwzKM/5JHMvICYb0nDHWkSZZMrafroOmXGEGoFGcGaRV+J8EWxBTt+KZ
+    secure: v1:O2DaluUNEV7UDLWp:oqh3TLBjvdDy1GfApbTjX5klLXWbhj5Z7a6I8K6ycEbnQ7sEwlekSMZ2yNj7ydri
   oci:region: eu-paris-1
   horn-akn:cloudflare_account_id:
-    secure: v1:74yL2K4KuCM0Kyez:itTM6JfYAJNCu/oOavcacVzRrLsGigd6T8/Ejdc/iltxPIi+NpW96dZ72T489Wc8
+    secure: v1:/DNjvx1qoHQ0tHe4:YLlOkef62wpN6TlspkUACz8sEHJD3B+FpqmpQ5XBl3dp2AGAA1K678bO4M5LxK/G
   pocket-id:baseUrl: https://auth.chezmoi.sh
   pangolin:orgId: chezmoi-sh
   pangolin:url: https://horn-akn.tail831c5d.ts.net
