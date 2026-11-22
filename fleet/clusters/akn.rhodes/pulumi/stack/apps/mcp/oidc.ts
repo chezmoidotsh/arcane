@@ -4,7 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
 import * as vault from "@pulumi/vault";
 
-import { adminGroupId } from "./index";
+import { adminGroupId } from "../../config";
 
 // Upstream IdP client of the mcp-o11y vMCP embedded authorization server (ADR-019). The client ID
 // is hardcoded in apps/mcp/o11y.virtualmcpserver.yaml, the secret and the HMAC key (signs the

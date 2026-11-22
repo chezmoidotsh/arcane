@@ -1,7 +1,7 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 
-import { adminGroupId } from "./index";
+import { adminGroupId } from "../../config";
 
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here -- this
 // public client already exists and is already in use by `argocd login`'s

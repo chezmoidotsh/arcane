@@ -1,7 +1,7 @@
 import { must } from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
-import { rhodesSiteId } from "./index";
+import { rhodesSiteId } from "../../system/pangolin";
 
 // Private entry point of the mcp-o11y vMCP (ADR-019): reachable on o11y.mcp.chezmoi.sh only from a
 // device running the Pangolin client, never published. The vMCP still authenticates its clients

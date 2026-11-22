@@ -225,7 +225,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   Don't assume Grafana is just a dashboard the LXC serves — check the actual cluster before changing anything
   observability-related.
 - Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
-  (`fleet/clusters/akn.rhodes/pulumi/stack/pangolin/`, `sso: false` at the Pangolin layer — by design, each app
+  (`fleet/clusters/akn.rhodes/pulumi/stack/apps/*/pangolin.ts`, `sso: false` at the Pangolin layer — by design, each app
   authenticates its own users, so this isn't "no auth", just no double gate). OpenBao (`vault.chezmoi.sh`) is not
   exposed this way and stays LAN/Tailscale-only.
 

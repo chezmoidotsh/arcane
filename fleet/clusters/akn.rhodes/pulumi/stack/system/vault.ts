@@ -2,13 +2,12 @@ import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { vaultOidcClient } from "./pocket-id";
-
-const config = new pulumi.Config();
+import { vaultOidcClient } from "../apps/vault/oidc";
+import { recovery } from "../config";
 
 // Everything that configures Vault/OpenBao itself for this cluster: the cluster's own
 // auth backend + mounts, the shared/personal KV mounts, and pocket-id's SSO auth
-// backend + policies (pocket-id.ts only owns the app-level Cloudflare hardening).
+// backend + policies (apps/pocket-id/pangolin.ts only owns the app-level Cloudflare hardening).
 
 // Vault/OpenBao itself runs on this cluster, so nothing below is reachable until
 // the cluster is far enough into bring-up (or recovery) to serve Vault's own
@@ -16,7 +15,7 @@ const config = new pulumi.Config();
 // `recovery` stack config). Unlike the Cloudflare/Tailscale token files, there is
 // no "external resource" half here to create early: every resource in this file
 // is a Vault-side resource.
-if (!config.getBoolean("recovery")) {
+if (!recovery) {
 	// ---------------------------------------------------------------------------
 	// Cluster's own Vault access (KV mount + Kubernetes auth backend + ESO role)
 	// ---------------------------------------------------------------------------
@@ -67,7 +66,7 @@ if (!config.getBoolean("recovery")) {
 	// instead of provisioning separate Vault-local users or tokens. The
 	// pocket-id-default/pocket-id-admin roles further down bind this backend to
 	// the policies below based on OIDC group claims.
-	// Client ID comes from the Pocket-Id-managed resource in pocket-id.ts rather
+	// Client ID comes from the Pocket-Id-managed resource in apps/vault/oidc.ts rather
 	// than being hardcoded, so there's a single source of truth for this
 	// client's identity. The secret can't come from there too -- Pocket-Id
 	// never returns a client's secret after creation -- so it comes from

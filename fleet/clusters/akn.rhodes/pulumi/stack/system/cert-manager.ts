@@ -1,10 +1,8 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
 import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
 
+import { cloudflare } from "../config";
 import { rhodesAknProvider } from "./kubernetes";
-
-const config = new pulumi.Config();
 
 // -----------------------------------------------------------------------------
 // Cloudflare DNS-01 token for cert-manager
@@ -20,8 +18,8 @@ const config = new pulumi.Config();
 const certManagerToken = new Dns01TokenComponent("cert-manager", {
 	owner: "rhodes.akn",
 	application: "cert-manager",
-	accountId: config.requireSecret("cloudflare_account_id"),
-	zoneId: config.requireSecret("cloudflare_zone_id"),
+	accountId: cloudflare.accountId,
+	zoneId: cloudflare.zoneId,
 });
 export const certManagerDns01Token = certManagerToken.tokenValue;
 

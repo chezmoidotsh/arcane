@@ -5,8 +5,8 @@ import {
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { argocdCliOidcClient } from "./argocd-cli";
-import { adminGroupId } from "./index";
+import { adminGroupId } from "../../config";
+import { argocdCliOidcClient } from "./oidc-cli";
 
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here -- this
 // client already exists and is already in use by the live ArgoCD deployment's

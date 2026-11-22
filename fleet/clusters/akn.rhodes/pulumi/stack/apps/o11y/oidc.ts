@@ -5,7 +5,7 @@ import {
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { adminGroupId } from "./index";
+import { adminGroupId } from "../../config";
 
 // Grafana's single instance (issue 1159, deployed via the Grafana Operator on
 // rhodes.akn) reads client_id/client_secret straight from Vault
