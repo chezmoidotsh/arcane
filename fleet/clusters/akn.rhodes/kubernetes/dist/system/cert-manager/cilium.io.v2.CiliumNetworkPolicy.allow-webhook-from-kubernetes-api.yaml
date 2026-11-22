@@ -1,0 +1,28 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Kubernetes API server to reach the cert-manager admission webhook.
+      cert-manager-webhook's MutatingWebhookConfiguration and ValidatingWebhookConfiguration
+      both set failurePolicy: Fail, and allow-intra-namespace only allows intra-namespace ingress —
+      without this rule the apiserver's admission calls are dropped and all Certificate/Issuer
+      writes are rejected. Also allows remote-node: BPF masquerade SNATs the apiserver's call
+      before it reaches this cross-node webhook (control-plane is NoSchedule-tainted), so it
+      lands as remote-node instead of kube-apiserver.
+  name: allow-webhook-from-kubernetes-api
+  namespace: cert-manager-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: webhook
+      app.kubernetes.io/name: webhook
+  ingress:
+  - fromEntities:
+    - kube-apiserver
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "10250"
+        protocol: TCP

@@ -1,0 +1,19 @@
+---
+apiVersion: toolhive.stacklok.dev/v1beta1
+kind: MCPServer
+metadata:
+  name: victoriatraces
+spec:
+  # oripathy: type=oci upstream=github.com/VictoriaMetrics-Community/mcp-victoriatraces tagPrefix=v digest=false image=victoriametrics-community/mcp-victoriatraces
+  image: oci.chezmoi.sh/ghcr.io/victoriametrics-community/mcp-victoriatraces:v1.5.0
+  transport: streamable-http
+  mcpPort: 8080
+  groupRef:
+    name: o11y
+  env:
+    - name: VT_INSTANCE_ENTRYPOINT
+      value: https://data.o11y.chezmoi.sh/traces
+    - name: MCP_SERVER_MODE
+      value: http
+    - name: MCP_LISTEN_ADDR
+      value: ":8080"

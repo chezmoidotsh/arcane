@@ -1,0 +1,115 @@
+# =============================================================================
+# Rhodes.akn Cluster - Mise Configuration
+# =============================================================================
+# Mise configuration for the rhodes.akn cluster (fleet/clusters/akn.rhodes).
+# This cluster reconstructs amiya.akn as the mission-critical core-platform /
+# hub cluster (#370), provisioned via Omni on Talos-on-Proxmox-VE with ArgoCD
+# for GitOps deployment.
+#
+# Services: OpenBao, Pocket-Id, Core Infrastructure
+# Architecture: Talos Linux (Omni-provisioned) + ArgoCD
+# =============================================================================
+
+[tools]
+# Needed for CNPG object-store disaster-recovery work (finding/restoring
+# backups) — see docs/plan-de-reprise/brouillon/Restaurer-OpenBao.md and docs/plan-de-reprise/brouillon/Restaurer-Pocket-Id.md.
+"pipx:s3cmd" = "latest"
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for rhodes.akn cluster"
+dir = "{{ config_root }}"
+# Converts the D2 diagram source to PNG for documentation. PNG, not SVG:
+# GitHub renders SVGs from this repo too small to read in the README, and
+# opening one directly triggers GitHub's SVG sandboxing (no icons, security
+# warning). architecture.d2 has no tooltip:/link: fields on purpose — d2
+# appends a footnote list of every tooltip/link to PNG exports since they
+# can't be interactive there, which would clutter a static image.
+# Input: architecture.d2 (diagram-as-code source)
+# Output: assets/architecture.png (embedded in the README)
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
+
+# -----------------------------------------------------------------------------
+# Omni Cluster Template Validation
+# -----------------------------------------------------------------------------
+# Offline validation only — `omnictl cluster template validate` needs no Omni
+# connectivity or OMNICONFIG. Applying a template is an online operation (needs
+# OMNICONFIG from the root .mise.toml and an Omni login); see
+# catalog/omni/README.md for the apply workflow instead of a task here.
+
+[tasks."omni:clustertemplate:validate"]
+description = "Validate the rhodes Omni cluster template offline (no Omni connectivity)"
+dir = "{{ config_root }}"
+run = "omnictl cluster template validate -f {{ config_root }}/omni/rhodes.clustertemplate.yaml"
+
+# =============================================================================
+# Disaster recovery
+# =============================================================================
+# Convenience tasks for the mechanical, low-risk parts of
+# docs/plan-de-reprise/brouillon/Restaurer-OpenBao.md and Restaurer-Pocket-Id.md
+# (moved from projects/rhodes.akn/docs/disaster-recovery/.mise.toml). Finding the
+# latest S3 backup delegates to the repo-wide `cnpg:backup:latest` file task,
+# which runs from the repository root; `dr:cnpg:patch-recovery-source` lives in
+# .mise/tasks/ next to this file and runs from here. Deliberately NOT automated:
+# applying the patched Cluster manifest or restoring bootstrap secrets.
+
+# -----------------------------------------------------------------------------
+# OpenBao Disaster Recovery Tasks
+# -----------------------------------------------------------------------------
+
+[tasks."dr:openbao:backup:latest"]
+description = "Print the latest openbao-database backup serverName on S3."
+usage = '''
+arg "<context>" help="Kubernetes context for the target cluster"
+complete "context" run="kubectl config get-contexts -o name"
+'''
+depends = [
+  { task = "cnpg:backup:latest", args = [
+    "{{usage.context}}",
+    "vault",
+    "fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.objectstore.yaml",
+  ] },
+]
+
+[tasks."dr:openbao:patch-recovery"]
+description = "Patch cnpg.cluster.yaml's recovery source with a given serverName — does NOT apply."
+usage = '''
+arg "<server_name>" help="Server name to patch into vault/cnpg.cluster.yaml's recovery source"
+'''
+depends = [
+  { task = "dr:cnpg:patch-recovery-source", args = [
+    "kubernetes/src/apps/vault/cnpg.cluster.yaml",
+    "{{usage.server_name}}",
+  ] },
+]
+
+# -----------------------------------------------------------------------------
+# Pocket-Id Disaster Recovery Tasks
+# -----------------------------------------------------------------------------
+
+[tasks."dr:pocket-id:backup:latest"]
+description = "Print the latest Pocket-Id backup serverName on S3."
+usage = '''
+arg "<context>" help="Kubernetes context for the target cluster"
+complete "context" run="kubectl config get-contexts -o name"
+'''
+depends = [
+  { task = "cnpg:backup:latest", args = [
+    "{{usage.context}}",
+    "pocket-id",
+    "fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.objectstore.yaml",
+  ] },
+]
+
+[tasks."dr:pocket-id:patch-recovery"]
+description = "Patch cnpg.cluster.yaml's recovery source with a given serverName — does NOT apply."
+usage = '''
+arg "<server_name>" help="Server name to patch into pocket-id/cnpg.cluster.yaml's recovery source"
+'''
+depends = [
+  { task = "dr:cnpg:patch-recovery-source", args = [
+    "kubernetes/src/apps/pocket-id/cnpg.cluster.yaml",
+    "{{usage.server_name}}",
+  ] },
+]

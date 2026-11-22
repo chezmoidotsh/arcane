@@ -1,0 +1,35 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Pocket ID to send authentication codes and notifications
+      through Mailjet SMTP service on port 465 (SMTPS), access
+      MaxMind GeoIP service to download GeoIP databases, and fetch
+      OIDC client logos from selfh.st/icons (served via jsdelivr) when
+      an OIDC client's logoUrl/darkLogoUrl is set via the API.
+  labels:
+    app.kubernetes.io/instance: pocket-id
+    app.kubernetes.io/name: pocket-id
+  name: allow-pocket-id-to-internet
+  namespace: pocket-id
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: in-v3.mailjet.com
+    toPorts:
+    - ports:
+      - port: "465"
+        protocol: TCP
+  - toFQDNs:
+    - matchName: download.maxmind.com
+    - matchName: mm-prod-geoip-databases.a2649acb697e2c09b632799562c076f2.r2.cloudflarestorage.com
+    - matchName: cdn.jsdelivr.net
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: pocket-id

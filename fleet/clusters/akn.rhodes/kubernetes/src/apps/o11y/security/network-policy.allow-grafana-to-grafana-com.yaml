@@ -1,0 +1,24 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Grafana instance to install plugins at startup: a GrafanaDatasource's
+      spec.plugins (e.g. victoriametrics-logs-datasource) makes Grafana install that plugin
+      from grafana.com, and a failed install is fatal to the whole process, not just a missing
+      feature. The plugin archive itself is served from storage.googleapis.com (Grafana's
+      plugin catalog CDN), not grafana.com -- both are needed for the install to succeed.
+      The Grafana Operator's own grafana.com access lives with it, in o11y-agent-system.
+  name: allow-grafana-to-grafana-com
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  egress:
+    - toFQDNs:
+        - matchName: grafana.com
+        - matchName: storage.googleapis.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

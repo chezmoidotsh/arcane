@@ -1,0 +1,16 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the vMCP embedded authorization server to reach Pocket-Id (auth.chezmoi.sh) for the
+      OIDC login. Uses "cluster", not toFQDNs, for the same Gateway API hairpin reason as
+      apps/o11y allow-grafana-to-pocket-id.
+  name: allow-mcp-to-pocket-id
+  namespace: mcp
+spec:
+  egress:
+  - toEntities:
+    - cluster
+  endpointSelector: {}
