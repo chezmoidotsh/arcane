@@ -1,0 +1,10 @@
+encryptionsalt: v1:YAfW22E8LL0=:v1:ogzkZ/kjPdhq0IYY:zmUzKzqg+Xw/5dBYK2Qhlj1erQ1+NA==
+config:
+  pbs:endpoint: https://pbs.pve.chezmoi.sh:8007
+  pbs:insecure: "true"
+  pbs-core:cloudflare_account_id:
+    secure: v1:FWRxkFGp7Oiq4UmG:SuTYVIdSaZuDP9OV7g4EbEUukYuOXSFx2fi0FXJQwmlUMadmJBKi9Oek5jt2nyKj
+  pbs-core:cloudflare_zone_id:
+    secure: v1:/CJOZAjv+pOdKPaC:vQ71m3raPZP84U+aBlZ/zTXiu7xjTa6ZeAJXTWfjnj/owp2zMhTMO8SI7HTL4P5Y
+  pbs-core:notificationsSlackWebhookUrl:
+    secure: v1:DIzdBs29NG/ie50c:a1hInk/G9+dLpKYf23IVEnVqZby3UhyVRTXJAxFWCFrfUpbJ12YGvLC5fehHRBWJQ2+VhoWPn4LnWYiyUE16PT8XebNYoudlcWncWKULijKK61ohO0oq/QPWnVv9mQs0AQ==

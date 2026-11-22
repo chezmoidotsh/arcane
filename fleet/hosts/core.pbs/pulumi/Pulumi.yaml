@@ -1,0 +1,12 @@
+name: pbs-core
+description: >-
+  Proxmox Backup Server (pbs.pve.chezmoi.sh) as code: S3-backed datastore on Backblaze B2, prune/verify jobs,
+  notifications, the pve-backup@pbs access token and its Cloudflare DNS-01 ACME token.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

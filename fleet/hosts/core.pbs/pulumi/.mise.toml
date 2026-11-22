@@ -1,0 +1,45 @@
+# =============================================================================
+# pbs.core Pulumi stack - Mise configuration
+# =============================================================================
+# Proxmox Backup Server (pbs.pve.chezmoi.sh), managed as a Pulumi stack
+# (pbs_core.live, state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the shared secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) come from fleet/.fnox.toml and
+# the provider credentials come from ../.fnox.toml, all resolved from Bitwarden Secrets Manager
+# and only present inside that process (see `mise run bws:setup`).
+#
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version.
+#
+# pulumi:diff / pulumi:apply go through scripts/pulumi:stack, which refreshes
+# only when the last refresh is older than PULUMI_REFRESH_MAX_AGE hours
+# (default 24). Force or skip it: `mise run pulumi:apply -- --refresh` /
+# `-- --no-refresh`.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+PULUMI_STACK = "pbs_core.live"
+
+[tasks."pulumi:diff"]
+description = "Preview pending changes for the current Pulumi stack"
+dir = "{{ config_root }}"
+run = "pulumi:stack preview"
+
+[tasks."pulumi:apply"]
+depends_post = ["proxmox-backup-server:docs:generate"]
+description = "Apply pending changes to the current Pulumi stack"
+dir = "{{ config_root }}"
+interactive = true
+run = "pulumi:stack up"
+
+[tasks."proxmox-backup-server:docs:generate"]
+description = "Regenerate fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md from the live pbs_core Pulumi stack state"
+dir = "{{ config_root }}"
+run = "pnpm run proxmox-backup-server:docs"

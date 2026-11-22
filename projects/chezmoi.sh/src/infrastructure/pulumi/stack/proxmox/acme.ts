@@ -9,7 +9,7 @@ const config = new pulumi.Config();
 // -----------------------------------------------------------------------------
 // Proxmox VE's built-in ACME client supports Cloudflare as a DNS plugin
 // directly (no Caddy involved), same reasoning as
-// ../proxmox-backup-server/acme.ts and TrueNAS's cert
+// fleet/hosts/core.pbs/pulumi/stack/access/acme.ts and TrueNAS's cert
 // (../truenas/certificates.ts): the node's web UI isn't publicly reachable,
 // so HTTP-01 has no way to validate it -- DNS-01 is the only viable
 // challenge.

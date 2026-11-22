@@ -4,7 +4,7 @@ import * as pbs from "@pulumi/proxmox-backup-server";
 // -----------------------------------------------------------------------------
 // Backblaze B2 bucket + application key backing the S3 datastore
 // -----------------------------------------------------------------------------
-// No file-lock on the bucket, unlike the TrueNAS buckets (../truenas/cloudsync.ts):
+// No file-lock on the bucket, unlike the TrueNAS buckets (projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/cloudsync.ts):
 // Proxmox Backup Server's own garbage collection actively deletes unreferenced
 // chunks through plain S3 DeleteObject calls (no bypass-governance header). A
 // governance-mode retention would silently block those deletes, defeating GC
@@ -77,13 +77,13 @@ const backupsS3Endpoint = new pbs.S3Endpoint(
 // -----------------------------------------------------------------------------
 // A single S3-backed datastore as the *primary* datastore (PBS >=3.x supports
 // S3 natively) rather than a local bulk datastore synced to B2 -- see
-// ./README.md, "Datastore architecture", for the full reasoning.
+// ../README.md, "Datastore architecture", for the full reasoning.
 //
 // `path` is still required even for an S3 datastore: PBS uses it as the
 // *local* chunk cache directory on the VM's own disk before upload, sized
 // for cache headroom only, not for the full backup set. This directory must
 // already exist (on its own dedicated disk, not the OS disk -- see
-// ./README.md, "Bootstrapping") before the first `pulumi up`; the provider
+// ../README.md, "Première installation") before the first `pulumi up`; the provider
 // doesn't create it, and Datastore creation fails if it's missing.
 //
 // Retention (`keepDaily`/`keepWeekly`/`keepMonthly`) is enforced by a
@@ -97,7 +97,7 @@ export const backupsDatastore = new pbs.Datastore(
 	{
 		name: "Backblaze-B2",
 		comment: "Primary S3-backed datastore (Backblaze B2)",
-		path: "/mnt/datastore/cache", // local chunk cache on its own dedicated disk, not the full backup set -- see ./README.md, "Bootstrapping"
+		path: "/mnt/datastore/cache", // local chunk cache on its own dedicated disk, not the full backup set -- see ../README.md, "Première installation"
 		s3Client: backupsS3Endpoint.s3EndpointId,
 		s3Bucket: pbsBackupBucket.bucketName,
 		gcSchedule: "Sun 04:00", // off-peak, after the Sunday prune (03:00) + verify (03:30) window -- see ./jobs.ts

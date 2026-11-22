@@ -166,7 +166,7 @@ cluster. Isolation of _external_ traffic is unaffected — it comes from the per
 
 Retention is deliberately absent on this side. The PBS token holds no `Datastore.Prune` permission, so pruning runs
 server-side under PBS's own schedule — a compromised hypervisor cannot delete its own offsite backup history. The policy
-that actually applies is documented in [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md).
+that actually applies is documented in [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md).
 
 Backups are encrypted client-side with a key applied once at bootstrap and never re-read afterwards. That key is not
 recoverable from this host or from stack state: without a copy, existing backups cannot be restored.
@@ -304,7 +304,7 @@ pct restore <vmid> <volume>  # LXC
 Restoring requires the datastore's client-side encryption key to be configured on this host. It already is; if the host
 was rebuilt, restore that key before anything else or the backups are unreadable. The keyfile and its paperkey are
 stored in OpenBao (`vault.chezmoi.sh`) — see
-[`stack/proxmox-backup-server/README.md`](../src/infrastructure/pulumi/stack/proxmox-backup-server/README.md),
+[`fleet/hosts/core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md),
 "Bootstrapping", step 6.
 
 ### Rebuild the host
@@ -362,7 +362,7 @@ See
 ### References
 
 - [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md) — the stack managing this host
-- [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — the backup server this host pushes to
+- [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md) — the backup server this host pushes to
 - [`TRUENAS.md`](./TRUENAS.md) — the NAS guest running on this host
 - [`docs/reference/IPAM-Reference.md`](../../../docs/reference/IPAM-Reference.md) — VLAN layout and address plan (IPAM)
 - [ADR-014](../../../docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) — dual-NIC Talos
