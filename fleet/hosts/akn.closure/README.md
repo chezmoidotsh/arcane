@@ -74,7 +74,7 @@ la pile `chezmoi.sh` par `StackReference`. Ni l'un ni l'autre n'est poussé dans
 (`homeAssistantDns01Token`, `homeAssistantOidcClientId`, `homeAssistantOidcClientSecret`), à recopier à la main dans
 Home Assistant. Le `secrets.yaml` de l'hôte vit sur l'hôte, pas dans le dépôt. L'état Pulumi est stocké dans le backend
 S3 de Garage ; la phrase secrète et les identifiants de ce backend sont résolus par fnox depuis Bitwarden Secrets
-Manager (`fleet/.fnox.toml`), et `pulumi/.mise.toml` ne fixe que `PULUMI_STACK`.
+Manager (`fleet/.fnox.toml`), comme les identifiants Cloudflare et Pocket-Id (`.fnox.toml` de ce dossier), et `pulumi/.mise.toml` ne fixe que `PULUMI_STACK`.
 
 ```text
 pulumi/
