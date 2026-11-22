@@ -1,16 +1,16 @@
 # BKP-20261005-00 Restaurer Minecraft depuis Restic
 
-Cette procédure restaure l'hôte Minecraft de `exusiai.akn` (Pelican, ancien `rimbilliton.akn`) à partir de ses
+Cette procédure restaure l'hôte Minecraft de `exusiai.akn` (Pelican) à partir de ses
 sauvegardes hors site : un dépôt restic sur Backblaze B2, alimenté chaque jour par le job restic `minecraft`
 (`fleet/hosts/akn.exusiai/nix/modules/backup.nix`). Elle couvre quatre cas : inspecter les snapshots (étape 1),
 restaurer le monde d'un serveur (étape 2), restaurer les données du Panel (étape 3) et reconstruire l'hôte après la
 perte de la VM (étape 4). Compter quelques minutes pour les étapes 1 à 3 et plusieurs heures pour l'étape 4, qui inclut
-le réamorçage complet décrit dans [BOOTSTRAP](../../guides/Initialiser-Rimbilliton.md).
+le réamorçage complet décrit dans [BOOTSTRAP](../../guides/Initialiser-Exusiai.md).
 
 > [!CAUTION]\
 > Cette procédure n'a encore jamais été testée : aucune restauration n'a été rejouée sur l'hôte. Elle a seulement été
 > vérifiée contre le dépôt le 2026-10-11 (`modules/backup.nix`, `modules/pelican.nix`, `stack/backblaze.ts`,
-> `docs/guides/Initialiser-Rimbilliton.md`).
+> `docs/guides/Initialiser-Exusiai.md`).
 
 ## Cadre technique et conventions
 
@@ -24,13 +24,13 @@ Le fonctionnement des sauvegardes dicte tous les chemins de restauration :
 - **Les volumes des serveurs en cours d'exécution ne sont pas sauvegardés.** `/var/lib/pelican/volumes` (les mondes
   actifs) ne figure pas dans les chemins restic : un monde n'existe hors site qu'à travers une archive Wings. Sans
   sauvegardes Wings planifiées dans le Panel, il n'y a rien à restaurer.
-- **Dépôt** : `s3:<b2Endpoint>/<bucket>/restic`. `b2Endpoint` vaut `s3.eu-central-003.backblazeb2.com` dans
-  `modules/backup.nix` ; `bucket` y est un placeholder (`REPLACE_WITH_PULUMI_OUTPUT_backupsBucketName`) à remplacer par
-  la sortie Pulumi `backupsBucketName`. Le bucket est privé et déclaré avec `protect: true, retainOnDelete: true` dans
+- **Dépôt** : `s3:<b2Endpoint>/<bucket>/restic`, où l'endpoint S3 est celui du compte Backblaze (donné par le provider
+  Pulumi, `s3.eu-central-003.backblazeb2.com` aujourd'hui) et `bucket` la sortie Pulumi `backupsBucketName`. Pulumi écrit le dépôt complet dans `secrets/exusiai.sops.json` (`restic_repository`),
+  lu par `modules/backup.nix`. Le bucket est privé et déclaré avec `protect: true, retainOnDelete: true` dans
   Pulumi : il survit à la perte de la VM et à la suppression de la stack.
 - **Identifiants** : le mot de passe restic (`restic_password`) et les identifiants B2 (`restic_b2_env`, un fichier
   d'environnement avec `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) sont des secrets SOPS, déchiffrés sur l'hôte dans
-  `/run/secrets/`. La clé d'application B2 (`rimbilliton-minecraft-restic`) est limitée à ce bucket et peut lire, écrire
+  `/run/secrets/`. La clé d'application B2 (`exusiai-minecraft-restic`) est limitée à ce bucket et peut lire, écrire
   et supprimer des fichiers.
 - **Rétention** : 7 snapshots quotidiens, 4 hebdomadaires, 6 mensuels
   (`--keep-daily 7 --keep-weekly 4 --keep-monthly 6`).
@@ -38,9 +38,9 @@ Le fonctionnement des sauvegardes dicte tous les chemins de restauration :
   `/var/lib/pelican-panel/data`. Wings s'exécute avec `WINGS_UID=988` / `WINGS_GID=988`.
 
 > [!CAUTION]\
-> Le mot de passe restic doit être conservé **hors de la VM**. Le modèle de secrets (`secrets/rimbilliton.example.yaml`)
+> Le mot de passe restic doit être conservé **hors de la VM**. Le modèle de secrets (`secrets/manual.example.yaml`)
 > demande d'en garder une copie dans OpenBao ; ce dépôt ne permet pas de vérifier qu'elle existe. Sans ce mot de passe,
-> le dépôt est illisible et toutes les sauvegardes sont perdues. Il se trouve aussi dans `secrets/rimbilliton.sops.yaml`
+> le dépôt est illisible et toutes les sauvegardes sont perdues. Il se trouve aussi dans `secrets/manual.sops.yaml`
 > (dans Git, chiffré pour la clé age de l'administrateur et celle de l'hôte) : la clé age de l'administrateur est donc
 > le second moyen de le récupérer. Avant de compter sur cette procédure, confirmer qu'il est récupérable sans la VM
 > (voir les prérequis).
@@ -49,13 +49,13 @@ Le fonctionnement des sauvegardes dicte tous les chemins de restauration :
 
 Avant de commencer, vérifier que les outils suivants sont installés et configurés : `mise` (fournit `sops`), `pulumi`,
 `ssh`, ainsi que Docker et `nonix` pour la reconstruction complète (voir
-[BOOTSTRAP](../../guides/Initialiser-Rimbilliton.md)).
+[BOOTSTRAP](../../guides/Initialiser-Exusiai.md)).
 
 Les accès suivants sont également nécessaires :
 
 - Un accès SSH en `root` à l'hôte via Tailscale (SSH n'est joignable que par Tailscale), sauf pour la reconstruction
   complète où l'hôte n'existe pas encore.
-- Le mot de passe restic, depuis OpenBao ou avec `sops -d --extract '["restic_password"]' secrets/rimbilliton.sops.yaml`
+- Le mot de passe restic, depuis OpenBao ou avec `sops -d --extract '["restic_password"]' secrets/manual.sops.yaml`
   (exécuté depuis `fleet/hosts/akn.exusiai/nix`, avec la clé age de l'administrateur, `SOPS_AGE_KEY_FILE`).
 - Les identifiants B2, depuis `pulumi stack output backupsKeyId` et
   `pulumi stack output backupsKeySecret --show-secrets` (stack `exusiai_akn.live`), ou depuis le secret SOPS
@@ -312,8 +312,8 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
    `nonix`). Conserver le même `restic_password` qu'avant : une nouvelle valeur ne peut pas ouvrir le dépôt existant.
 
    sops-nix déchiffre avec la clé SSH de l'hôte. Si une nouvelle clé d'hôte est générée (étape 3 de BOOTSTRAP), sa clé
-   age doit être destinataire de `secrets/rimbilliton.sops.yaml` : remplacer l'ancienne clé d'hôte dans
-   `fleet/hosts/akn.exusiai/nix/.sops.yaml`, puis exécuter `sops updatekeys` sur le fichier avant l'installation.
+   age doit être destinataire de `secrets/exusiai.sops.json` et `secrets/manual.sops.yaml` : remplacer l'ancienne clé d'hôte dans
+   `fleet/hosts/akn.exusiai/nix/.sops.yaml`, puis exécuter `sops updatekeys` sur les deux fichiers avant l'installation.
    Réutiliser l'ancienne `extra/etc/ssh/ssh_host_ed25519_key`, si elle est encore disponible, évite cette opération.
 
 3. **Arrêter tout ce qui concerne Pelican, ainsi que le job de sauvegarde**, dès que l'hôte est joignable par Tailscale
@@ -359,7 +359,7 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
 
 5. **Identifiants Wings.** Les trois valeurs `wings_uuid`, `wings_token_id` et `wings_token` appartiennent au nœud
    enregistré dans la base restaurée. Elles ne sont pas dans les sauvegardes restic : elles se trouvent dans
-   `secrets/rimbilliton.sops.yaml` (dans Git).
+   `secrets/manual.sops.yaml` (dans Git).
    - Si ce fichier les contient encore, elles sont déjà en place : rien à faire.
    - Si elles sont perdues, démarrer le Panel seul (`systemctl start docker-pelican-panel`), se connecter, ouvrir
      l'onglet Configuration du nœud, réinitialiser le jeton si nécessaire, et copier uniquement `uuid`, `token_id` et
@@ -367,7 +367,7 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
 
      ```bash
      cd fleet/hosts/akn.exusiai/nix
-     sops secrets/rimbilliton.sops.yaml   # renseigner wings_uuid, wings_token_id, wings_token
+     sops secrets/manual.sops.yaml   # renseigner wings_uuid, wings_token_id, wings_token
      mise run nixos:oci:update
      # → le switch réussit (même tâche que l'étape 6.4 de BOOTSTRAP.md)
      ```
@@ -389,14 +389,14 @@ nouveau snapshot contenant les données restaurées.
 
 ### Ce qui ne figure pas dans les sauvegardes restic
 
-| Élément                                                                             | Origine                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Wings `config.yml` et jeton du nœud (`wings_uuid`, `wings_token_id`, `wings_token`) | Fichier SOPS dans Git (`secrets/rimbilliton.sops.yaml`), rendu par sops-nix ; ou réinitialisation depuis le Panel (étape 4.5)                                                                      |
-| `restic_password`, `restic_b2_env`, `tailscale_authkey`                             | Fichier SOPS dans Git ; le mot de passe restic aussi dans OpenBao (copie à tenir à jour, voir l'avertissement du cadre technique) ; clé B2 depuis les sorties Pulumi                               |
-| Volumes actifs des serveurs `/var/lib/pelican/volumes`                              | Non sauvegardés. Seules les archives Wings le sont : restaurer chaque monde avec l'étape 2. Tout ce qui est plus récent que la dernière archive est perdu                                          |
-| Logs du Panel `/var/lib/pelican-panel/logs`                                         | Non sauvegardés, inutiles                                                                                                                                                                          |
-| Groupe Pocket-ID `minecraft` et client OIDC `Minecraft`                             | Gérés par la stack Pulumi (`stack/pocket-id.ts`) et existants dans Pocket-ID, hors de cet hôte : ils survivent à la perte de la VM (étape 2 de BOOTSTRAP.md)                                       |
-| Plugin Pocket-ID et paramètres de connexion                                         | Déclarés dans NixOS : le plugin est récupéré par Nix et installé par `pelican-plugins`, l'identifiant et le secret du client sont les secrets SOPS `oauth_pocketid_*` (dans Git). Rien à restaurer |
+| Élément                                                                             | Origine                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Wings `config.yml` et jeton du nœud (`wings_uuid`, `wings_token_id`, `wings_token`) | Fichier SOPS dans Git (`secrets/manual.sops.yaml`), rendu par sops-nix ; ou réinitialisation depuis le Panel (étape 4.5)                                                                                                                                                 |
+| `restic_password`, `restic_b2_env`, `tailscale_authkey`                             | Fichiers SOPS dans Git (`restic_password` dans `manual.sops.yaml`, les autres dans `exusiai.sops.json`, écrit par Pulumi) ; le mot de passe restic aussi dans OpenBao (copie à tenir à jour, voir l'avertissement du cadre technique) ; clé B2 depuis les sorties Pulumi |
+| Volumes actifs des serveurs `/var/lib/pelican/volumes`                              | Non sauvegardés. Seules les archives Wings le sont : restaurer chaque monde avec l'étape 2. Tout ce qui est plus récent que la dernière archive est perdu                                                                                                                |
+| Logs du Panel `/var/lib/pelican-panel/logs`                                         | Non sauvegardés, inutiles                                                                                                                                                                                                                                                |
+| Groupe Pocket-ID `minecraft` et client OIDC `Minecraft`                             | Gérés par la stack Pulumi (`stack/pocket-id.ts`) et existants dans Pocket-ID, hors de cet hôte : ils survivent à la perte de la VM (étape 2 de BOOTSTRAP.md)                                                                                                             |
+| Plugin Pocket-ID et paramètres de connexion                                         | Déclarés dans NixOS : le plugin est récupéré par Nix et installé par `pelican-plugins`, l'identifiant et le secret du client sont les secrets SOPS `oauth_pocketid_*` (dans Git). Rien à restaurer                                                                       |
 
 Le plugin et ses paramètres OAuth sont rendus depuis NixOS et SOPS, pas depuis la base du Panel. Après la restauration,
 démarrer `pelican-plugins` (`systemctl restart pelican-plugins`) si Settings > OAuth n'affiche pas Pocket ID. Si le
@@ -468,7 +468,7 @@ rm -rf "${RESTORE_DIR}"
 - _2026-10-11_ : Migration vers le standard de documentation (rédaction en français, sections du gabarit de procédure).
   Correction : la référence à la tâche `mise run nixos:oci:update` pointait vers l'étape 6.3 de BOOTSTRAP.md, alors que
   la configuration du nœud et cette commande se trouvent à l'étape 6.4 (« Node »). Précision : la copie du mot de passe
-  restic dans OpenBao est une consigne de `secrets/rimbilliton.example.yaml` et non un fait vérifiable dans le dépôt ;
+  restic dans OpenBao est une consigne de `secrets/manual.example.yaml` et non un fait vérifiable dans le dépôt ;
   le groupe et le client Pocket-ID sont désormais décrits comme gérés par la stack Pulumi (`stack/pocket-id.ts`,
   BOOTSTRAP.md étape 2) et non comme « créés à la main » ; le placeholder `bucket` de `modules/backup.nix` est signalé ;
   la perte de l'état Pulumi renvoie à Garage (`backend` de `Pulumi.yaml`).
@@ -476,7 +476,7 @@ rm -rf "${RESTORE_DIR}"
 
 ## Pour aller plus loin
 
-- [BOOTSTRAP de exusiai.akn](../../guides/Initialiser-Rimbilliton.md) : provisionnement, clé d'hôte, installation de
+- [BOOTSTRAP de exusiai.akn](../../guides/Initialiser-Exusiai.md) : provisionnement, clé d'hôte, installation de
   NixOS et configuration du nœud Wings.
 - [Pulumi : état sur Garage et import](../infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   : récupération de l'état d'une stack et import de ressources existantes.

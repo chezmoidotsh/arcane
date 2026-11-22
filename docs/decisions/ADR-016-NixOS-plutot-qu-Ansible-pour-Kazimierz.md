@@ -171,7 +171,7 @@ Pangolin et les conteneurs Docker restent, et la décision de l'ADR-008 contre K
   NixOS.
 - [Archive : migration de Kazimierz vers NixOS](../archives/Migration-de-Kazimierz-vers-NixOS.md) : le compte rendu de
   la bascule d'Ansible vers NixOS.
-- [Initialiser Rimbilliton](../guides/Initialiser-Rimbilliton.md) : l'hôte OCI dont le modèle NixOS a été repris.
+- [Initialiser Exusiai](../guides/Initialiser-Exusiai.md) : l'hôte OCI dont le modèle NixOS a été repris.
 - [Notes de session de la tentative antérieure](../../.agents/sessions/20260801-kazimierz-nixos-vs-ansible.md) : la
   première tentative NixOS, abandonnée le 2026-08-01.
 - [nixos-anywhere](https://github.com/nix-community/nixos-anywhere) et [sops-nix](https://github.com/Mic92/sops-nix) :

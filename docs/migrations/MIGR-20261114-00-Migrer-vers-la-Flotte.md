@@ -422,10 +422,12 @@ remplacement garde son ancienne valeur.
     sécurité, du sous-réseau et du NSG, et les `freeformTags.project` sont modifiables sur place. Le `dnsLabel` du VCN
     ne l'est pas : `dnsLabel: "rimbillitonvcn"` **reste inchangé** (commentaire dans `stack/oci/network.ts`). Le
     sous-réseau n'a pas de `dnsLabel` et la VNIC de l'instance n'a pas de `hostnameLabel` dans le code.
-  - **Conservé volontairement** : les noms logiques (ils font partie des URN), le nom du bucket B2 et de sa clé (le
-    bucket ne se renomme pas, la clé serait remplacée), la description de la clé Tailscale (remplacement de la clé), les
-    commentaires des enregistrements DNS, le fichier `nix/secrets/rimbilliton.sops.yaml` et les libellés du schéma
-    d'architecture (les SVG ne sont pas re-rendus ; à corriger au prochain redessin).
+  - **Renommé** : les noms logiques (`pulumi state rename`, voir le runbook de la PR), le nom de la clé B2 (la clé est
+    remplacée), les commentaires des enregistrements DNS et le schéma d'architecture (re-rendu en PNG). Les secrets NixOS
+    sont répartis en `nix/secrets/exusiai.sops.json`, écrit par Pulumi (`SopsFile`), et `nix/secrets/manual.sops.yaml`
+    (mot de passe restic, nœud Wings).
+  - **Conservé volontairement** (suivi dans #1601) : le `dnsLabel` du VCN, le nom du bucket B2 et la description de la
+    clé Tailscale.
   - **Preuve côté NixOS** : `nix eval` de `…toplevel.drvPath` pour les deux sorties. Après le simple déplacement, le
     résultat est identique ; après le renommage, il est égal à celui de l'ancienne configuration avec le seul
     `networking.hostName` changé. Le nom d'hôte est la seule modification du système.

@@ -12,7 +12,7 @@
 - [Désactiver le suivi de connexion des pools LB](procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)
 - [Initialiser Lungmen](guides/Initialiser-Lungmen.md)
 - [Initialiser Kazimierz](guides/Initialiser-Kazimierz.md)
-- [Initialiser Rimbilliton](guides/Initialiser-Rimbilliton.md)
+- [Initialiser Exusiai](guides/Initialiser-Exusiai.md)
 
 ### Reprendre après une panne
 

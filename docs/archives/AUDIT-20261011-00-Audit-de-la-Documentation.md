@@ -547,7 +547,7 @@ date de cette page ; les noms viennent de l'arborescence et de la barre latéral
   pages `Incidents.md` (hub) et `Index-des-Incidents.md`.
 - **Guides** : le plan de reprise après sinistre (`Plan-de-Reprise-apres-Sinistre.md`), les guides `Restaurer-Rhodes`,
   `Restaurer-OpenBao` et `Restaurer-Pocket-Id`, ainsi que `Initialiser-Lungmen`, `Initialiser-Kazimierz` et
-  `Initialiser-Rimbilliton` sont dans `docs/guides/`.
+  `Initialiser-Exusiai` sont dans `docs/guides/`.
 - **Référence** : le réseau, l'IPAM, les passerelles et le DNS, et Renovate sont dans `docs/reference/`
   (`Reseau-Reference.md`, `IPAM-Reference.md`, `Passerelles-et-DNS-Reference.md`, `Renovate-Reference.md`).
 - **Expériences** : les cinq récits sont des pages `Experiment-<date>-<Titre>.md` dans `docs/experiments/`. Le code

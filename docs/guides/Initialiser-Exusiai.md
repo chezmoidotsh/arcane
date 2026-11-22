@@ -1,6 +1,6 @@
-# Initialiser Rimbilliton
+# Initialiser Exusiai
 
-Ce guide monte l'hôte Minecraft de `exusiai.akn` (ancien `rimbilliton.akn`) depuis rien jusqu'à un NixOS qui exécute
+Ce guide monte l'hôte Minecraft de `exusiai.akn` depuis rien jusqu'à un NixOS qui exécute
 Pelican (Panel et Wings), avec l'authentification Pocket-Id et des sauvegardes restic vers Backblaze B2. Il couvre le
 provisionnement Pulumi, l'installation de NixOS avec `nixos-anywhere` et la configuration de Pelican.
 
@@ -8,10 +8,9 @@ provisionnement Pulumi, l'installation de NixOS avec `nixos-anywhere` et la conf
 > Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
 
 > [!NOTE]\
-> L'hôte a été renommé sur place de `rimbilliton.akn` en `exusiai.akn` (projet Pulumi `exusiai-akn`, nom d'hôte
-> `exusiai-akn`), sans réinstallation : voir la
-> [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le nom de ce guide, le fichier
-> `secrets/rimbilliton.sops.yaml`, le `dnsLabel` du VCN et les noms de ressources B2 gardent l'ancien nom.
+> L'hôte a été renommé sur place, sans réinstallation : voir la
+> [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le `dnsLabel` du VCN, le nom du
+> bucket B2 et la description de la clé Tailscale gardent l'ancien nom, car les changer remplacerait la ressource.
 
 ## Vue d'ensemble
 
@@ -30,9 +29,7 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
 
 ## Avant de commencer
 
-- **Outils** : `mise install` (fournit `sops`) et Docker. Nix n'est pas installé en local : toute commande Nix passe par
-  `nonix` (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur, y compris
-  `ssh-to-age`.
+- **Outils** : `mise install` (fournit `sops`) et Nix, exécuté en natif (`nix run`), y compris pour `ssh-to-age`.
 - **Identifiants** : OCI sous la forme `TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`,
   `TF_VAR_private_key` et `TF_VAR_region` (à exporter dans le shell, comme pour `kazimierz.akn`), puis ceux des
   providers Backblaze, Cloudflare et Tailscale.
@@ -89,8 +86,7 @@ remplacement (`replace`) du client ou du groupe, s'arrêter : un UUID ou un cham
 
 1. Exécuter `pulumi up`. Le nouveau secret **remplace** l'ancien dans Pocket-Id ; si Pelican tourne déjà, sa
    connexion est cassée à partir de cet instant.
-2. Placer la sortie de `pulumi stack output --show-secrets minecraftOidcClientSecret` dans le fichier SOPS sous la clé
-   `oauth_pocketid_client_secret` (étape 3). Si l'hôte tourne déjà, le redéployer avec `mise run nixos:oci:update` ;
+2. `pulumi up` a réécrit `secrets/exusiai.sops.json` avec le nouveau secret (étape 3). Si l'hôte tourne déjà, le redéployer avec `mise run nixos:oci:update` ;
    lors d'un premier amorçage, l'installation (étape 4) reprend le secret.
 3. Une fois Pelican démarré, vérifier que la connexion à `https://minecraft.chezmoi.sh/` avec Pocket-Id fonctionne.
 
@@ -104,38 +100,34 @@ sops-nix déchiffre les secrets avec la clé SSH de l'hôte, qui doit donc exist
 ```sh
 cd ../nixos
 mkdir -p extra/etc/ssh && ssh-keygen -t ed25519 -N '' -f extra/etc/ssh/ssh_host_ed25519_key
-nonix run nixpkgs#ssh-to-age -- -i extra/etc/ssh/ssh_host_ed25519_key.pub   # clé age de l'hôte, déjà dans la règle de .sops.yaml
+nix run nixpkgs#ssh-to-age -- -i extra/etc/ssh/ssh_host_ed25519_key.pub   # clé age de l'hôte, déjà dans la règle de .sops.yaml
 
-cp secrets/rimbilliton.example.yaml secrets/rimbilliton.sops.yaml   # à remplir depuis `pulumi stack output --show-secrets`
-sops --encrypt --in-place secrets/rimbilliton.sops.yaml
+cp secrets/manual.example.yaml secrets/manual.sops.yaml   # restic_password (et wings_* plus tard)
+sops --encrypt --in-place secrets/manual.sops.yaml
 ```
 
-Renseigner `tailscale_authkey`, `restic_password`, `restic_b2_env` et le client Pocket-Id (`oauth_pocketid_client_id` et
-`oauth_pocketid_client_secret`, tous deux issus des sorties de la stack) ; les trois valeurs `wings_*` n'existent qu'une
+`secrets/exusiai.sops.json` (clé Tailscale, identifiants B2, client Pocket-Id) est écrit par `pulumi up` : rien à
+renseigner. Dans `manual.sops.yaml`, ne mettre que `restic_password` ; les trois valeurs `wings_*` n'existent qu'une
 fois le nœud créé dans le Panel (étape 6), donc les ajouter à ce moment-là. La clé Tailscale (`tailscaleAuthKey`) est à
 usage unique et expire 7 jours après sa création (`stack/tailscale.ts`) : installer l'hôte dans ce délai.
 
-Le fichier doit s'appeler `rimbilliton.sops.yaml` : c'est le nom que cible la règle de
-`src/infrastructure/nixos/.sops.yaml` (clé de l'administrateur et clé de l'hôte comme destinataires) et que lit
-`configuration.nix`. Exécuter sops depuis ce répertoire, car il cherche `.sops.yaml` vers le haut sans jamais fusionner
+Les deux fichiers sont ciblés par la règle de `nix/.sops.yaml` (clé de l'administrateur et clé de l'hôte comme destinataires) et lus par
+`configuration.nix` et les modules. Exécuter sops depuis ce répertoire, car il cherche `.sops.yaml` vers le haut sans jamais fusionner
 les fichiers, et conserver la clé de l'administrateur dans toute nouvelle règle. `secrets/*.yaml` est ignoré par Git,
 sauf `*.example.yaml` et `*.sops.yaml`.
 
 `flake.lock` est versionné pour que chaque build utilise les mêmes révisions d'entrées (le rafraîchir avec
-`nonix flake update`). Ensuite :
+`nix flake update`). Ensuite :
 
-- renseigner `bucket` dans `modules/backup.nix` avec la sortie Pulumi `backupsBucketName`
-  (`pulumi -C ../pulumi stack output backupsBucketName`) ;
 - vérifier les tags d'image Pelican dans `modules/pelican.nix` (le Panel et Wings sont des bêtas à mettre à jour
   ensemble) ;
 - ajouter la clé publique SSH de l'administrateur dans `configuration.nix` (`users.users.root.openssh.authorizedKeys`).
 
 Ne pas committer `extra/`.
 
-> [!WARNING]\
-> Au 2026-10-11, `bucket` vaut toujours le placeholder `REPLACE_WITH_PULUMI_OUTPUT_backupsBucketName` dans
-> `modules/backup.nix`. Tant qu'il n'est pas remplacé, le dépôt restic pointe vers un bucket inexistant et aucune
-> sauvegarde ne part vers B2.
+> [!NOTE]\
+> Le dépôt restic (`restic_repository`) est écrit par Pulumi dans `secrets/exusiai.sops.json` avec le nom du bucket :
+> il n'y a rien à renseigner à la main dans `modules/backup.nix`.
 
 ### 4. Installer NixOS
 
@@ -151,8 +143,7 @@ export IP=$(pulumi -C ../pulumi stack output publicIp)
 ssh ubuntu@"$IP" 'sudo apt-get update -qq && sudo apt-get install -y cpio'
 ```
 
-`nixos-anywhere` s'exécute dans le conteneur `nonix`, qui relaie l'agent SSH (voir l'encadré ci-dessous). Cet agent doit
-contenir la clé privée correspondant à `ssh_authorized_keys` de la configuration Pulumi, que cloud-init installe pour
+`nixos-anywhere` utilise l'agent SSH de la session. Cet agent doit contenir la clé privée correspondant à `ssh_authorized_keys` de la configuration Pulumi, que cloud-init installe pour
 l'utilisateur `ubuntu` :
 
 ```sh
@@ -162,25 +153,6 @@ mise run nixos:oci:install ubuntu@"$IP"
 La tâche lance `nixos-anywhere` (épinglé par commit) avec
 `--flake .#exusiai-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`. Elle **repartitionne le volume
 de démarrage**.
-
-> [!IMPORTANT]\
-> **macOS (OrbStack, Docker Desktop) : les conteneurs s'exécutent dans une VM Linux.** `nonix` ne peut donc pas monter
-> directement le socket de l'agent (le fichier apparaît, mais la connexion échoue avec `Connection refused`). Il utilise
-> le relais fourni par le runtime, `/run/host-services/ssh-auth.sock`, qui transmet l'agent de la **session de login
-> macOS** (le `SSH_AUTH_SOCK` connu de `launchd`), pas celui du shell courant. Avec l'agent macOS par défaut, rien à
-> faire. Avec un agent personnalisé (Bitwarden, Secretive, 1Password, ...), pointer `launchd` vers son socket et
-> redémarrer le runtime :
->
-> ```sh
-> launchctl getenv SSH_AUTH_SOCK                                  # ce que le relais transmet
-> launchctl setenv SSH_AUTH_SOCK "<chemin du socket de l'agent>"  # par exemple $HOME/.bitwarden-ssh-agent.sock
-> orb stop && orb start                                           # OrbStack ; redémarrer Docker Desktop sinon
-> ```
->
-> `launchctl setenv` ne survit pas à un redémarrage. Avant une installation, vérifier ce que voit le conteneur : la clé
-> doit apparaître dans la sortie de
-> `docker run --rm -v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent nixos/nix ssh-add -l`.
-> Sous Linux, le socket est monté directement depuis `$SSH_AUTH_SOCK`.
 
 `nixos-anywhere` ne détecte pas l'architecture de la cible : le flake expose donc une sortie par architecture
 (`platforms/`). `.#exusiai-akn-aarch64` correspond à l'OCI A1 (UEFI, production) et `.#exusiai-akn-x86_64` à une VM
@@ -199,30 +171,23 @@ Si l'exécution échoue après l'étape kexec, l'instance n'est plus Ubuntu : el
 l'étape disque, en `root` :
 
 ```sh
-nonix run github:nix-community/nixos-anywhere -- --flake .#exusiai-akn-aarch64 \
+nix run github:nix-community/nixos-anywhere -- --flake .#exusiai-akn-aarch64 \
   --extra-files extra --phases disko,install,reboot --target-host root@"$IP"
 ```
 
 Un flake ne voit que les fichiers connus de Git : si le build signale un chemin non suivi, exécuter
-`git add -N flake.lock secrets/rimbilliton.sops.yaml`.
-
-Pour une configuration que `nonix` ne couvre pas (pas d'agent, clé dans un fichier), passer soi-même les arguments
-Docker :
-`nonix --docker '-v "$HOME/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro"' run github:nix-community/nixos-anywhere -- ... -i /root/.ssh/id_ed25519`.
-Dès que `SSH_AUTH_SOCK` est passé avec `-e`, ou que `/ssh-agent` est monté avec `--docker`, `nonix` laisse l'agent
-tranquille.
+`git add -N flake.lock secrets/manual.sops.yaml secrets/exusiai.sops.json`.
 
 ### Dépanner l'installation
 
-| Symptôme                                                            | Cause et correction                                                                                                           |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `Permission denied (publickey)`, `Identity file ... not accessible` | Le conteneur n'a pas d'agent, ou l'agent n'a pas la clé de `ssh_authorized_keys`. Vérifier avec `ssh-add -l` (voir ci-dessus) |
-| `Connection closed by <ip> port 22`                                 | sshd ralentit après des échecs répétés. Corriger la cause, attendre une à deux minutes, réessayer                             |
-| `no cpio command found, but required to build the new initrd`       | Installer `cpio` sur l'instance (voir ci-dessus)                                                                              |
-| `kexec_file_load failed: Address not available`                     | Utiliser `mise run nixos:oci:install`, qui passe `--kexec-syscall` (voir ci-dessus)                                           |
-| `ubuntu@...` demande un mot de passe après un échec                 | Le kexec a déjà eu lieu : l'hôte est l'installeur NixOS. Reprendre avec `root@` et `--phases disko,install,reboot`            |
-| `Connection refused` pour `ssh-add -l` dans le conteneur            | Le socket de l'agent a été monté depuis macOS. Utiliser le relais (voir l'encadré macOS)                                      |
-| `ssh-add -l` liste les clés d'un autre agent, ou « no identities »  | `launchd` pointe vers un autre agent : voir `launchctl getenv SSH_AUTH_SOCK` ci-dessus                                        |
+| Symptôme                                                                            | Cause et correction                                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Permission denied (publickey)`, `Identity file ... not accessible`                 | L'agent SSH n'a pas la clé de `ssh_authorized_keys`. Vérifier avec `ssh-add -l` (voir ci-dessus)                                                                                                                                                                                           |
+| `Connection closed by <ip> port 22`                                                 | sshd ralentit après des échecs répétés. Corriger la cause, attendre une à deux minutes, réessayer                                                                                                                                                                                          |
+| `no cpio command found, but required to build the new initrd`                       | Installer `cpio` sur l'instance (voir ci-dessus)                                                                                                                                                                                                                                           |
+| `pulumi preview` planifie le remplacement de `TailnetKey` (`exusiai-tailscale-key`) | La clé de premier démarrage expire 7 jours après sa création (`expiry` dans `stack/tailscale.ts`). Sans danger pour un hôte déjà dans le tailnet : le remplacement réécrit `tailscale_authkey` dans `secrets/exusiai.sops.json`. Pour couper le bruit, ajouter `ignoreChanges: ["expiry"]` |
+| `kexec_file_load failed: Address not available`                                     | Utiliser `mise run nixos:oci:install`, qui passe `--kexec-syscall` (voir ci-dessus)                                                                                                                                                                                                        |
+| `ubuntu@...` demande un mot de passe après un échec                                 | Le kexec a déjà eu lieu : l'hôte est l'installeur NixOS. Reprendre avec `root@` et `--phases disko,install,reboot`                                                                                                                                                                         |
 
 ### 5. Vérifier le déploiement
 
@@ -277,7 +242,7 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
 
    ```sh
    cd fleet/hosts/akn.exusiai/nix
-   sops secrets/rimbilliton.sops.yaml   # ajouter wings_uuid, wings_token_id, wings_token (voir secrets/rimbilliton.example.yaml)
+   sops secrets/manual.sops.yaml   # ajouter wings_uuid, wings_token_id, wings_token (voir secrets/manual.example.yaml)
    mise run nixos:oci:update
    ```
 
@@ -307,7 +272,7 @@ Le `config.yml` de Wings est rendu au démarrage à partir des secrets SOPS (mon
    [BKP-20261005-00](../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md).
 
 Les changements ultérieurs se déploient par Tailscale avec `mise run nixos:oci:update`, qui exécute
-`nixos-rebuild switch --flake .#exusiai-akn-aarch64 --target-host root@exusiai-akn` via `nonix`. Il n'y a pas de mise à
+`nixos-rebuild switch --flake .#exusiai-akn-aarch64 --target-host root@exusiai-akn` via `nix run`. Il n'y a pas de mise à
 jour automatique, volontairement : l'instance n'est pas encore supervisée et un retour arrière propre est difficile
 (voir [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md), qui traite de `kazimierz.akn` et
 s'applique ici aussi, et [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).
@@ -320,7 +285,7 @@ s'applique ici aussi, et [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-
   (`restic_password`, `restic_b2_env`), durée de vie de la clé Tailscale (usage unique, 7 jours) et placeholder
   `REPLACE_WITH_PULUMI_OUTPUT_backupsBucketName` de `modules/backup.nix` signalés. La clé `oauth2_proxy_env` du fichier
   SOPS, que plus aucun module ne lit, n'est pas mentionnée, et le guide suit `stack/pocket-id.ts` (client géré par
-  import) plutôt que le commentaire de `secrets/rimbilliton.example.yaml`.
+  import) plutôt que le commentaire de `secrets/manual.example.yaml`.
 
 - _2026-11-15_ : chemins du flake et de la stack déplacés sous `fleet/hosts/akn.exusiai/` (`nix/`, `pulumi/`), sorties
   du flake `exusiai-akn-*`, nom d'hôte et projet Pulumi `exusiai-akn` (étape 7, tour B de la migration vers la flotte).

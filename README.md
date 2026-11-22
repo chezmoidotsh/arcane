@@ -98,7 +98,6 @@ fnox exec -- bws project list
 │   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
 │   ├── rhodes.akn                  # Rhodes cluster configuration
-│   ├── rimbilliton.akn             # Rimbilliton Minecraft host (OCI VPS, NixOS)
 │   └── shodan.akn                  # Shodan cluster configuration
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration

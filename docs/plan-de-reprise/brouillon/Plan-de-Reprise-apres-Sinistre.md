@@ -112,7 +112,7 @@ dépendances d'exécution (le service tourne, mais une fonction manque).
 | `rhodes.akn`    | `chezmoi.sh` (Secret `kube-system/rhodes-akn-bootstrap-pve`, groupes Pocket-Id) ; Garage ; Omni ; Zot                                                                                                   | [Restaurer Rhodes](Restaurer-Rhodes.md), étape 3                                                                                                                                                                                                         |
 | `lungmen.akn`   | `rhodes.akn` : OpenBao (ESO), Pocket-Id (OIDC), ArgoCD hub ; `chezmoi.sh` (Secret Proxmox, groupes Pocket-Id, mots de passe SMB dans OpenBao) ; Garage                                                  | [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md), [`stack/velero.ts`](../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/velero.ts)                                                                                                 |
 | `kazimierz.akn` | Pocket-Id (fournisseur d'identité de Pangolin) ; groupes de `chezmoi.sh` ; Tailscale. Aucune dépendance à OpenBao dans le code                                                                          | [Initialiser Kazimierz](../../guides/Initialiser-Kazimierz.md), [`stack/pocket-id/`](../../../projects/kazimierz.akn/src/infrastructure/pulumi/stack/pocket-id/index.ts)                                                                                 |
-| `exusiai.akn`   | Stack `chezmoi.sh` (compartiment parent et groupes), Pocket-Id, Tailscale, B2. OpenBao seulement comme copie conseillée du mot de passe restic                                                          | [Initialiser Rimbilliton](../../guides/Initialiser-Rimbilliton.md), [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)                                                                           |
+| `exusiai.akn`   | Stack `chezmoi.sh` (compartiment parent et groupes), Pocket-Id, Tailscale, B2. OpenBao seulement comme copie conseillée du mot de passe restic                                                          | [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)                                                                                   |
 
 Le projet `hass` lit lui aussi les groupes Pocket-Id de `chezmoi.sh` ; ce plan ne le couvre pas.
 
@@ -268,8 +268,8 @@ Les deux VPS ne dépendent pas de `pve-01` pour tourner ; ils ne se reconstruise
 
 - **`kazimierz.akn`** : exige Pocket-Id, Tailscale et la stack `chezmoi.sh` (groupes). Voir
   [Initialiser Kazimierz](../../guides/Initialiser-Kazimierz.md), y compris la restauration de l'état de Pangolin.
-- **`exusiai.akn` (ancien `rimbilliton.akn`)** : exige la stack `chezmoi.sh` (compartiment parent), Pocket-Id, Tailscale
-  et B2. Voir [Initialiser Rimbilliton](../../guides/Initialiser-Rimbilliton.md), puis la
+- **`exusiai.akn`** : exige la stack `chezmoi.sh` (compartiment parent), Pocket-Id, Tailscale
+  et B2. Voir [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), puis la
   [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md) pour les
   mondes.
 
