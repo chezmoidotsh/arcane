@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2312  # a failing find/rg/sort in a process substitution only shortens the list, the callers handle an empty one
 # discover-cnpg.sh — Discover CNPG candidates from rendered dist/ manifests.
 #
 # Scans projects/*/dist/ and fleet/clusters/*/kubernetes/dist/ for postgresql.cnpg.io/v1 Cluster objects (the
