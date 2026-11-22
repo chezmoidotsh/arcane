@@ -29,7 +29,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - image: oci.chezmoi.sh/ghcr.io/immich-app/immich-machine-learning:v3.1.0
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
           httpGet:
