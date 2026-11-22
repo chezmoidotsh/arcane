@@ -665,7 +665,6 @@ result-*
 
 ### Project ###
 # Kustomize: charts pulled in by helmChartInflationGenerator are not vendored
-projects/*/src/**/charts/
 fleet/clusters/*/kubernetes/src/**/charts/
 
 # Local git worktrees (never tracked)
@@ -696,8 +695,6 @@ opencode.json
 **/.claude/settings.local.json
 
 # Un-ignore pre-rendered manifests — overrides the global gitignore 'dist' pattern
-!projects/*/dist/
-!projects/*/dist/**
 !fleet/clusters/*/kubernetes/dist/
 !fleet/clusters/*/kubernetes/dist/**
 

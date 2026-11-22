@@ -397,6 +397,58 @@ importers:
         specifier: "catalog:"
         version: 5.9.3
 
+  fleet/clusters/akn.rhodes/pulumi:
+    dependencies:
+      "@axnic/pulumi-garage":
+        specifier: "catalog:"
+        version: 1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@axnic/pulumi-pocket-id":
+        specifier: "catalog:"
+        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@chezmoi.sh/pulumi-cloudflare-dns01-token":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/components/cloudflare-dns01-token
+      "@chezmoi.sh/pulumi-cluster-vault":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/components/cluster-vault
+      "@chezmoi.sh/pulumi-garage-cnpg-backup":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/components/garage-cnpg-backup
+      "@chezmoi.sh/pulumi-lib":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/lib
+      "@chezmoi.sh/pulumi-proxmox-cluster-identity":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/components/proxmox-cluster-identity
+      "@pulumi/cloudflare":
+        specifier: "catalog:"
+        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@pulumi/kubernetes":
+        specifier: "catalog:"
+        version: 4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@pulumi/pangolin":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/sdks/pangolin
+      "@pulumi/proxmox":
+        specifier: workspace:*
+        version: link:../../../../catalog/pulumi/sdks/proxmox
+      "@pulumi/pulumi":
+        specifier: "catalog:"
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@pulumi/random":
+        specifier: "catalog:"
+        version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@pulumi/vault":
+        specifier: "catalog:"
+        version: 7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      "@pulumiverse/grafana":
+        specifier: "catalog:"
+        version: 2.39.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      typescript:
+        specifier: "catalog:"
+        version: 5.9.3
+
   fleet/hosts/akn.closure/pulumi:
     dependencies:
       '@axnic/pulumi-pocket-id':
@@ -595,58 +647,6 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.20.0)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  projects/rhodes.akn/src/infrastructure/pulumi:
-    dependencies:
-      '@axnic/pulumi-garage':
-        specifier: 'catalog:'
-        version: 1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@axnic/pulumi-pocket-id':
-        specifier: 'catalog:'
-        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
-      '@chezmoi.sh/pulumi-cluster-vault':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/cluster-vault
-      '@chezmoi.sh/pulumi-garage-cnpg-backup':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/garage-cnpg-backup
-      '@chezmoi.sh/pulumi-lib':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/lib
-      '@chezmoi.sh/pulumi-proxmox-cluster-identity':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/proxmox-cluster-identity
-      '@pulumi/cloudflare':
-        specifier: 'catalog:'
-        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/kubernetes':
-        specifier: 'catalog:'
-        version: 4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pangolin':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pangolin
-      '@pulumi/proxmox':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/proxmox
-      '@pulumi/pulumi':
-        specifier: 'catalog:'
-        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/random':
-        specifier: 'catalog:'
-        version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/vault':
-        specifier: 'catalog:'
-        version: 7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumiverse/grafana':
-        specifier: 'catalog:'
-        version: 2.39.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-    devDependencies:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

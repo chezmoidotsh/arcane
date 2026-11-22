@@ -171,9 +171,8 @@ export interface GarageCloudNativePGObjectStoreArgs {
 
 ## References
 
-- Live consumers: [`rhodes.akn`](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/cloudnative-pg.ts)
-  (direct Secret), [`lungmen.akn`](../../../../fleet/clusters/akn.lungmen/pulumi/stack/system/cloudnative-pg.ts) (Vault
-  secret)
+- Live consumers: [`rhodes.akn`](../../../../fleet/clusters/akn.rhodes/pulumi/stack/cloudnative-pg.ts) (direct Secret),
+  [`lungmen.akn`](../../../../fleet/clusters/akn.lungmen/pulumi/stack/system/cloudnative-pg.ts) (Vault secret)
 
 ## License
 

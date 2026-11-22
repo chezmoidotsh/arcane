@@ -29,18 +29,13 @@ console = Console()
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
-PATH_REGEX = re.compile(r'^projects/([^/]+)/src/(apps|infrastructure/kubernetes)/(.+)$')
-YAML_PATH_REGEX = re.compile(r'^projects/([^/]+)/src/(apps|infrastructure/kubernetes)/(.+)\.ya?ml$')
-# Fleet layout (MIGR-20261114-00): fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>
+# fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>
 FLEET_PATH_REGEX = re.compile(r'^fleet/clusters/([^/.]+)\.([^/]+)/kubernetes/src/(apps|system)/(.+)$')
 FLEET_YAML_PATH_REGEX = re.compile(r'^fleet/clusters/([^/.]+)\.([^/]+)/kubernetes/src/(apps|system)/(.+)\.ya?ml$')
 
 
 def match_app_path(norm_path: str, yaml_file: bool) -> tuple[str, str, str] | None:
-    """(cluster, app_type, rest) for both layouts; app_type is "apps" or "infrastructure/kubernetes"."""
-    match = (YAML_PATH_REGEX if yaml_file else PATH_REGEX).match(norm_path)
-    if match:
-        return match.groups()
+    """(cluster, app_type, rest); app_type is "apps" or "infrastructure/kubernetes"."""
     match = (FLEET_YAML_PATH_REGEX if yaml_file else FLEET_PATH_REGEX).match(norm_path)
     if match:
         family, name, kind, rest = match.groups()
@@ -122,7 +117,6 @@ def parse_yaml_path(yaml_path: str) -> dict:
     if not match:
         console.print("[bold red]Invalid path format.[/bold red]")
         console.print("Expected: fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>/<file>.yaml")
-        console.print("Or: projects/<cluster>/src/{apps,infrastructure/kubernetes}/<app>/<file>.yaml")
         console.print(f"Resolved path: '{norm_path}'")
         sys.exit(1)
 
@@ -152,7 +146,6 @@ def parse_app_path(app_path: str) -> dict:
     if not match:
         console.print("[bold red]Invalid path format.[/bold red]")
         console.print("Expected: fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>")
-        console.print("Or: projects/<cluster>/src/{apps,infrastructure/kubernetes}/<app>")
         console.print(f"Resolved path: '{norm_path}'")
         sys.exit(1)
 

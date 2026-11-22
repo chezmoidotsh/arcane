@@ -58,7 +58,7 @@ Two service identities, each scoped to the minimum the manual `pveum`/`pvesh` re
 
 - **`rhodes-akn-bootstrap@pve`** — `Administrator` scoped to `/access` only (users, roles, ACLs, tokens — nothing on
   VMs, storage or SDN). A delegation credential, not a service identity for a workload: `rhodes.akn`'s own Pulumi
-  program (`projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts`) uses it to self-provision its own
+  program (`fleet/clusters/akn.rhodes/pulumi/stack/proxmox.ts`) uses it to self-provision its own
   `kubernetes-cloud-provider@pve` identity (CCM+CSI, merged) directly against `pve-01`, via
   `catalog/pulumi/components/proxmox-cluster-identity`, instead of this stack minting that token on its behalf. This
   stack no longer owns any Kubernetes CCM/CSI identity for that reason — see that component's README for the full

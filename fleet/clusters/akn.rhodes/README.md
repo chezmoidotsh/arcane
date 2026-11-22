@@ -26,12 +26,6 @@
 
 ---
 
-> [!IMPORTANT]
->
-> **Migration in progress** ([MIGR-20261114-00](../../../docs/migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md),
-> step 8): this folder is a copy of `projects/rhodes.akn/`, which ArgoCD still syncs and which stays the reference
-> until it is removed. Apply every change to both copies in the meantime.
-
 > [!NOTE]
 >
 > **Why Rhodes?**
@@ -43,8 +37,8 @@
 ## About
 
 Rhodes·AKN is the homelab's core-platform cluster: Talos Linux on Proxmox VE, provisioned via Omni
-(`omni/rhodes.clustertemplate.yaml`). It integrates the essential components that let other projects
-be deployed and managed securely, without[^1] the need of third-party services.
+(`omni/rhodes.clustertemplate.yaml`). It integrates the essential components that let other projects be deployed and
+managed securely, without[^1] the need of third-party services.
 
 ## Services Overview
 
@@ -119,13 +113,13 @@ already running instead of being a dependency those earlier steps would otherwis
 
 **This project**:
 
-- [`omni/rhodes.clustertemplate.yaml`](./omni/rhodes.clustertemplate.yaml) — this
-  cluster's Omni template
+- [`omni/rhodes.clustertemplate.yaml`](./omni/rhodes.clustertemplate.yaml) — this cluster's Omni template
 - [`docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`](../../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md) —
   full cluster disaster-recovery procedure
-- [`kubernetes/src/argocd/README.md`](./kubernetes/src/argocd/README.md) — how the ApplicationSets discover and sync apps
-- [`projects/rhodes.akn/src/infrastructure/pulumi/`](../../../projects/rhodes.akn/src/infrastructure/pulumi/) — cloud resources managed out-of-cluster (Cloudflare
-  DNS-01 tokens, Vault KV secrets, database credentials)
+- [`kubernetes/src/argocd/README.md`](./kubernetes/src/argocd/README.md) — how the ApplicationSets discover and sync
+  apps
+- [`pulumi/`](./pulumi/) — cloud resources managed out-of-cluster (Cloudflare DNS-01 tokens, Vault KV secrets, database
+  credentials)
 - [`architecture.d2`](./architecture.d2) — source for the diagram above
 
 [^1]:

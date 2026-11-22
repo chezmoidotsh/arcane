@@ -16,8 +16,8 @@
 # mise alias="oripathy:inventory"
 # mise description="List the software versions deployed from this repository as one CycloneDX BOM per application (Oripathy input)."
 #
-# An application is a Kubernetes product directory (`projects/*/src/apps/<app>`, `projects/*/src/infrastructure/kubernetes/<app>`,
-# `projects/*/src/argocd`) or a NixOS flake (the directory of a `flake.nix`). For each one this script lists what runs, from what
+# An application is a Kubernetes product directory (`fleet/clusters/*/kubernetes/src/apps/<app>`, `fleet/clusters/*/kubernetes/src/system/<app>`,
+# `fleet/clusters/*/kubernetes/src/argocd`) or a NixOS flake (the directory of a `flake.nix`). For each one this script lists what runs, from what
 # is deployed (`dist/` is generated, so the versions are annotated in `src/`) and from the `# oripathy:` annotations that say what
 # to follow. `--bundle` writes the BOMs (CycloneDX 1.6, one per application, no date, no commit: the same repository content gives
 # the same bytes) that `scripts/oripathy:seal` encrypts for n8n; `--output` writes the flat inventory the checks run on.
@@ -214,21 +214,16 @@ def component(cluster, name, source, kind, version, path, **extra):
 
 
 def kube_root(root, cluster):
-    """The Kubernetes tree of a cluster (it holds `src/` and `dist/`): `projects/<cluster>` while it exists, since it stays the
-    reference during step 8 of MIGR-20261114-00 and its copy under fleet/ is not scanned twice; then
-    `fleet/clusters/<family>.<name>/kubernetes`."""
-    if (root / "projects" / cluster).is_dir():
-        return f"projects/{cluster}"
+    """The Kubernetes tree of a cluster (it holds `src/` and `dist/`): `fleet/clusters/<family>.<name>/kubernetes`."""
     name, _, family = cluster.rpartition(".")
     return f"fleet/clusters/{family}.{name}/kubernetes"
 
 
 def product_dir(rel):
-    """projects/<cluster>/{dist,src}/apps/n8n/x.yaml -> ('apps/n8n', 'n8n'); infrastructure/kubernetes/<name> and top-level dirs likewise.
-    fleet/clusters/<family>.<name>/kubernetes/{dist,src}/{apps,system}/<name>/x.yaml -> ('apps/<name>' or 'system/<name>', '<name>')."""
-    parts = Path(rel).parts
-    parts = parts[5:-1] if parts[:2] == ("fleet", "clusters") else parts[3:-1]
-    depth = 2 if parts[:1] in (("apps",), ("system",)) else 3 if parts[:1] == ("infrastructure",) else 1
+    """fleet/clusters/<family>.<name>/kubernetes/{dist,src}/{apps,system}/<name>/x.yaml -> ('apps/<name>' or 'system/<name>', '<name>');
+    top-level dirs (argocd) likewise."""
+    parts = Path(rel).parts[5:-1]
+    depth = 2 if parts[:1] in (("apps",), ("system",)) else 1
     parts = parts[:depth]
     return ("/".join(parts), parts[-1]) if parts else (None, None)
 
@@ -932,9 +927,8 @@ def self_test():
     assert MIRROR_VALUE.search('      value: "1.20.0"').group(1) == "1.20.0" and MIRROR_VALUE.search("  - value: v2.7.0 # x").group(1) == "v2.7.0"
     assert versions_of(component("c", "x", "dist", "helm", "1.0", "f", chart={"version": "0.5", "appVersion": "v1.0"}, images=[{"tag": "v1.0"}])) == {"1.0", "0.5"}
     assert cluster_of("projects/lungmen.akn/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
-    assert product_dir("projects/lungmen.akn/dist/infrastructure/kubernetes/cilium/x.yaml") == ("infrastructure/kubernetes/cilium", "cilium")
     assert product_dir("fleet/clusters/akn.lungmen/kubernetes/src/system/cilium/x.yaml") == ("system/cilium", "cilium")
-    assert product_dir("fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n/x.yaml") == ("apps/n8n", "n8n") and product_dir("projects/rhodes.akn/src/argocd/x.yaml") == ("argocd", "argocd")
+    assert product_dir("fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n/x.yaml") == ("apps/n8n", "n8n") and product_dir("fleet/clusters/akn.rhodes/kubernetes/src/argocd/x.yaml") == ("argocd", "argocd")
     assert kube_root(Path("/nonexistent"), "lungmen.akn") == "fleet/clusters/akn.lungmen/kubernetes"
     assert cluster_of("catalog/kubernetes/cloudnative-pg/helm/default.helmvalues.yaml") == "catalog" and cluster_of("docs/reference/Oripathy-Reference.md") is None
     assert cluster_of("fleet/hosts/core.omni/nix/modules/caddy.nix") == "omni.core" and cluster_of("fleet/hosts/core.omni-infra-provider-proxmox/nix/flake.lock") == "omni-infra-provider-proxmox.core"

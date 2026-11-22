@@ -17,9 +17,8 @@ guides propres aux composants, [Restaurer OpenBao](Restaurer-OpenBao.md) et
 
 Outils : `omnictl`, `kubectl`, `s3cmd`, `kustomize`, `ksops`, `cilium` et `pulumi`. `mise install`, lancé dans
 `projects/rhodes.akn/`, installe ceux que `mise` gère. Les tâches `dr:openbao:*` et `dr:pocket-id:*` utilisées par les
-deux guides de composants sont définies dans
-[`.mise.toml`](../../../projects/rhodes.akn/docs/disaster-recovery/.mise.toml) de
-`projects/rhodes.akn/docs/disaster-recovery/` : elles ne sont disponibles que depuis ce dossier.
+deux guides de composants sont définies dans [`.mise.toml`](../../../fleet/clusters/akn.rhodes/.mise.toml) de
+`fleet/clusters/akn.rhodes/` : elles ne sont disponibles que depuis ce dossier.
 
 Accès et états requis :
 

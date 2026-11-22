@@ -4,7 +4,7 @@ description:
   Use this skill whenever the user wants an on-demand CloudNative-PG (CNPG) backup in this Arcane repository — phrases
   like "backup pocket-id", "backup openbao", "backup atuin", "backup paperless", "backup the apps database", or "backup
   all postgres in lungmen". Also use it when the user names a logical database (atuin, n8n, immich, paperless, forgejo,
-  linkding, …) without knowing which CNPG cluster owns it. Discover the matching cluster from `projects/` via the
+  linkding, …) without knowing which CNPG cluster owns it. Discover the matching cluster from `fleet/clusters/` via the
   bundled discovery script, map it to a kubectl context, require explicit confirmation, then create and verify a
   plugin-based Backup.
 compatibility:

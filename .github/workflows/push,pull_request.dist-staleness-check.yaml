@@ -7,7 +7,7 @@
 # edited by hand. Re-renders every dist/ with `scripts/dist:render --all` and fails when the
 # result differs from what is committed.
 #
-# Events:      push, pull_request, merge_group (on projects/, fleet/clusters/, catalog/helm/ and this workflow)
+# Events:      push, pull_request, merge_group (on fleet/clusters/, catalog/helm/ and this workflow)
 # Permissions: contents: read
 # =============================================================================
 
@@ -15,13 +15,11 @@ name: 🏗️ dist/ Staleness Check
 on:
   push:
     paths:
-      - "projects/*/**"
       - "fleet/clusters/**"
       - "catalog/helm/**"
       - ".github/workflows/push,pull_request.dist-staleness-check.yaml"
   pull_request:
     paths:
-      - "projects/*/**"
       - "fleet/clusters/**"
       - "catalog/helm/**"
       - ".github/workflows/push,pull_request.dist-staleness-check.yaml"
@@ -61,7 +59,7 @@ jobs:
 
       - name: 🔍 Fail if any dist/ file is stale
         run: |
-          if ! git diff --exit-code -- 'projects/*/dist/**' 'fleet/clusters/*/kubernetes/dist/**'; then
+          if ! git diff --exit-code -- 'fleet/clusters/*/kubernetes/dist/**'; then
             echo ""
             echo "::error ::One or more dist/ directories are out of sync with their src/ sources."
             echo "::error ::Run 'scripts/dist:render --all' locally and commit the result."

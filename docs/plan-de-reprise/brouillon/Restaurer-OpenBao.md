@@ -38,8 +38,7 @@ de ces backends.
 
 Outils : `kubectl`, `s3cmd`, `kustomize`, `ksops`. Lancer `mise install` depuis `projects/rhodes.akn/` pour les
 provisionner tous. Les tâches `dr:openbao:*` citées plus bas ne sont visibles que depuis
-[`projects/rhodes.akn/docs/disaster-recovery/`](../../../projects/rhodes.akn/docs/disaster-recovery), qui contient leur
-`.mise.toml`.
+[`fleet/clusters/akn.rhodes/`](../../../fleet/clusters/akn.rhodes), qui contient leur `.mise.toml`.
 
 Accès et état requis :
 
