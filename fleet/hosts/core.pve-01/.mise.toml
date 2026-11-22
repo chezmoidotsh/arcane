@@ -1,10 +1,11 @@
 # =============================================================================
-# Proxmox VE host — Task Automation
+# pve-01.core (Proxmox VE host) — Task Automation
 # =============================================================================
 # Files installed on the Proxmox VE nodes themselves (configured by hand, see
 # docs/reference/Infrastructure-Manuelle-Reference.md). They live under fs/
 # with a dot-encoded target directory, e.g. fs/etc.otelcol-contrib/config.yaml
-# → /etc/otelcol-contrib/config.yaml.
+# → /etc/otelcol-contrib/config.yaml. The Pulumi project (pve-01-core) and its
+# tasks are in pulumi/ (own .mise.toml).
 #
 # Usage:
 #   mise run host:otelcol:install -- <pve-host>   # Install the otelcol-contrib package (first time / bump)

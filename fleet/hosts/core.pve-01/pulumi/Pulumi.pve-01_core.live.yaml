@@ -1,0 +1,12 @@
+encryptionsalt: v1:8Cgq3MDyLgU=:v1:yfxyEOksRISqAxF0:CEsFjF0CxkBLcYWbY/dWj1dKNRZmog==
+config:
+  proxmox:endpoint: https://pve-01.pve.chezmoi.sh:8006/api2/json
+  proxmox:insecure: "true"
+  pve-01-core:rhodesAknKubernetesContext: omni-rhodes-akn
+  pve-01-core:lungmenAknKubernetesContext: omni-lungmen-akn
+  pve-01-core:cloudflare_account_id:
+    secure: v1:1xWAWIsmSLye+VMB:jJzSDYQ+Df/JjJKP71Zm9W9KU/EWttPxejyEfJpsB2LLoTQ36uZqEr7860wYl0E8
+  pve-01-core:cloudflare_zone_id:
+    secure: v1:rtIigRqkqYZ9F5u8:cz3K2VKsbTSA97W3h2dxfphxiktK6D+SCHox0/iC1GYIB5iiHTC8ul0KVP1iUAfI
+  pve-01-core:pveBackupTokenSecret:
+    secure: v1:9ZUl1cY7O6Q7mcj1:5wto7MDaobOyLW+9yI0uOo5JM3VlhoKsIll0mwESLRzUzltHn/AjOAi08uI2b6+BpW0PBA==

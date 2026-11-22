@@ -14,7 +14,7 @@ export interface ProxmoxClusterIdentityArgs {
 	/**
 	 * One ACL grant per path, all bound to `role.roleId`. Keep every path as
 	 * narrow as it can be (a resource pool, a specific node) rather than `/` —
-	 * see stack/proxmox/README.md, "Adding a new identity or ACL binding".
+	 * see fleet/hosts/core.pve-01/README.md, "Adding a new identity or ACL binding".
 	 */
 	aclPaths: string[];
 	/** API token name (e.g. "ccm"). Always created with privilegesSeparation
@@ -28,12 +28,12 @@ export interface ProxmoxClusterIdentityArgs {
 /**
  * Provisions a single Proxmox VE service identity for a Kubernetes cluster
  * integration: a custom role, a user, an API token, and one ACL grant per
- * path. Mirrors the per-identity pattern hand-rolled in chezmoi.sh's
- * stack/proxmox/access.ts, packaged for reuse by cluster-owned Pulumi
+ * path. Mirrors the per-identity pattern hand-rolled in pve-01.core's
+ * pulumi/access/, packaged for reuse by cluster-owned Pulumi
  * programs that provision their own Proxmox identities directly (via a
  * delegated token — see that stack's rhodes-akn-bootstrap@pve, its
  * README.md's "Bootstrapping" section) instead of consuming one minted by
- * chezmoi.sh's stack.
+ * the pve-01-core stack.
  */
 export class ProxmoxClusterIdentityComponent extends pulumi.ComponentResource {
 	public readonly tokenId: pulumi.Output<string>;

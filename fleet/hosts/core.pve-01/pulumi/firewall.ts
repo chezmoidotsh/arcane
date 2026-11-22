@@ -11,7 +11,7 @@ import * as proxmox from "@pulumi/proxmox";
 // consistent, reviewable baseline to opt into (`GROUP talos` in its own
 // `.fw`) instead of a hand-written ruleset per VM -- attaching a VM's `.fw`
 // to this group stays a manual step (VM/LXC config is out of scope, see
-// ./README.md), same as the VM itself.
+// ../README.md), same as the VM itself.
 //
 // Deliberately minimal: only the two fixed, well-known ports every Talos
 // node needs regardless of cluster topology or workload --

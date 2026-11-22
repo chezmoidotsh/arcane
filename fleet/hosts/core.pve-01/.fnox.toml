@@ -1,0 +1,11 @@
+# core.pve-01 Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+
+[secrets]
+# Cloudflare provider of the Dns01TokenComponent (ACME DNS-01 token): email + global API key.
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }
+
+# Proxmox VE provider: `root@pam` password session, mandatory (an API token is refused by the ACME endpoints).
+PROXMOX_VE_USERNAME = { default = "root@pam" }
+PROXMOX_VE_PASSWORD = { provider = "bws", value = "pulumi-proxmox-ve-root-password" }

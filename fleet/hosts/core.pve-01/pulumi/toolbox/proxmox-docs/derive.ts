@@ -27,7 +27,7 @@ import type {
 
 export interface IdentityDoc {
 	userId: string;
-	/** From the user's `comment` in `stack/proxmox/access.ts`. Empty means the code is missing a comment. */
+	/** From the user's `comment` in `access/`. Empty means the code is missing a comment. */
 	purpose?: string;
 	enabled?: boolean;
 	/** Grants held by this identity, most-privileged scope first. */

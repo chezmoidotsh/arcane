@@ -13,7 +13,7 @@ export const corePool = new proxmox.VirtualEnvironmentPool("pve-pool-core", {
 // -----------------------------------------------------------------------------
 // talos -- Omni-managed Talos VMs; the ACL boundary omni@pve is scoped to
 // (see ./access.ts), and that rhodes.akn's own kubernetes-cloud-provider@pve
-// identity (self-provisioned, see stack/proxmox.ts in that project) is
+// identity (self-provisioned, see fleet/clusters/akn.rhodes/pulumi/stack/proxmox.ts) is
 // scoped to as well. Never add a non-Kubernetes VM/LXC to this pool -- pool
 // membership is exactly what grants those identities access.
 // -----------------------------------------------------------------------------
@@ -24,7 +24,7 @@ export const talosPool = new proxmox.VirtualEnvironmentPool("pve-pool-talos", {
 
 // Storage membership only -- VM/LXC membership is a side effect of VM
 // creation (Omni machine classes set `pool: talos` in their provider data;
-// see omni-infra-provider-proxmox/README.md, "Machine classes"), which stays
+// see fleet/hosts/core.omni-infra-provider-proxmox/README.md, "Machine classes"), which stays
 // manual along with the rest of VM/LXC lifecycle (see
 // docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md, "Non-Goals").
 // Declaring per-VM pool membership here would make this stack reachable from

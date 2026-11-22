@@ -41,7 +41,7 @@ export function readStackExport(cwd: string): StackExport {
  * returns its real value. Only used for non-secret connection details --
  * this stack's actual credentials never live in Pulumi config at all (they are
  * supplied as environment variables per invocation, see
- * `../../stack/proxmox/README.md`).
+ * `../../../README.md`).
  */
 export function readConfig(cwd: string, key: string): string {
 	return execFileSync("pulumi", ["config", "get", key], {
@@ -53,9 +53,8 @@ export function readConfig(cwd: string, key: string): string {
 /**
  * Same as `readConfig`, but returns `undefined` instead of throwing when `key`
  * isn't set -- lets `../index.ts` skip cleanly if `proxmox:endpoint` is ever
- * unset, instead of crashing `mise run pulumi:apply`, whose post-task chain
- * covers the whole shared stack (observability/omni/truenas/zot-registry), not
- * just Proxmox VE.
+ * unset, instead of crashing `mise run pulumi:apply`'s post-task after a
+ * successful apply.
  */
 export function readOptionalConfig(
 	cwd: string,

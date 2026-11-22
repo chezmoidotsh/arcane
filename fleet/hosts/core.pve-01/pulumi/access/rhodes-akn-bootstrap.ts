@@ -81,7 +81,7 @@ export const rhodesAknBootstrapAcl = new proxmox.Acl(
 // -----------------------------------------------------------------------------
 // Delegation rights: rhodes.akn's Pulumi program uses this identity to grant
 // its own kubernetes-cloud-provider@pve identity ACLs at /nodes/pve-01 and
-// /pool/talos (see rhodes.akn/stack/proxmox.ts). Proxmox rejects an ACL grant
+// /pool/talos (see fleet/clusters/akn.rhodes/pulumi/stack/proxmox.ts). Proxmox rejects an ACL grant
 // at a path the granting user has no rights on itself ("403 Permission check
 // failed"), so this identity needs Permissions.Modify (+ Pool.Allocate for
 // the pool path) at exactly those two paths. Deliberately NOT Administrator

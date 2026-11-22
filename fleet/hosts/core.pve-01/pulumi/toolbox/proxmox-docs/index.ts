@@ -28,8 +28,8 @@ import { render } from "./render";
 import { readOptionalConfig, readStackExport } from "./stack-export";
 
 // -----------------------------------------------------------------------------
-// Regenerates `projects/chezmoi.sh/docs/PROXMOX-VE.md` from the *deployed*
-// `chezmoi_sh.live` stack state -- run standalone (`mise run
+// Regenerates `fleet/hosts/core.pve-01/PROXMOX-VE.md` from the *deployed*
+// `pve-01_core.live` stack state -- run standalone (`mise run
 // proxmox:docs:generate`, chained onto `pulumi:apply`), not as part of `pulumi
 // up`/`preview` itself.
 //
@@ -105,14 +105,13 @@ async function main(): Promise<void> {
 	const projectRoot = path.resolve(__dirname, "../..");
 
 	// `proxmox:endpoint` is normally always set (see
-	// stack/proxmox/README.md, "Bootstrapping"). This guard is a safety net
-	// for the rare case it isn't: skip gracefully rather than failing
-	// `mise run pulumi:apply`'s post-task, which covers the entire shared
-	// stack (observability/omni/truenas/zot-registry), not just Proxmox VE.
+	// fleet/hosts/core.pve-01/README.md, "Bootstrapping"). This guard is a
+	// safety net for the rare case it isn't: skip gracefully rather than
+	// failing `mise run pulumi:apply`'s post-task after a successful apply.
 	const endpoint = readOptionalConfig(projectRoot, "proxmox:endpoint");
 	if (!endpoint) {
 		console.log(
-			"proxmox:endpoint is not set -- skipping docs/PROXMOX-VE.md regeneration.",
+			"proxmox:endpoint is not set -- skipping PROXMOX-VE.md regeneration.",
 		);
 		return;
 	}
@@ -120,7 +119,7 @@ async function main(): Promise<void> {
 	const exported = readStackExport(projectRoot);
 	const context = buildContext(exported.deployment.resources, endpoint);
 
-	const docPath = path.resolve(projectRoot, "../../../docs/PROXMOX-VE.md");
+	const docPath = path.resolve(projectRoot, "../PROXMOX-VE.md");
 	fs.writeFileSync(docPath, render(context));
 	console.log(`Wrote ${docPath}`);
 }

@@ -18,7 +18,7 @@ export interface AcmeDnsPluginDoc {
  * The provider's schema does *not* list `data` as a secret output (only
  * `dataWo`), so its encryption in state is not guaranteed by the resource
  * type: it depends on the declaration feeding it secret Outputs, which
- * `../../stack/proxmox/acme.ts` now pins with `additionalSecretOutputs`.
+ * `../../../acme.ts` now pins with `additionalSecretOutputs`.
  * Not reading the field at all is the second, independent layer -- a future
  * declaration that loses the secret marking still cannot leak through this
  * document. `../render.test.ts` asserts a fixture token never reaches the

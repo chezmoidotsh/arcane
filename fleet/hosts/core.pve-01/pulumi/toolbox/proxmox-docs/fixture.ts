@@ -11,7 +11,7 @@ import type { ExportedResource } from "./stack-export";
  * `child_process`.
  */
 const STACK =
-	"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pulumi:pulumi:Stack::chezmoi-sh-infra-chezmoi_sh.live";
+	"urn:pulumi:pve-01_core.live::pve-01-core::pulumi:pulumi:Stack::pve-01-core-pve-01_core.live";
 
 /** The Cloudflare token an `AcmeDnsPlugin`'s `data` map carries in plaintext. Must never reach rendered output. */
 export const SECRET_DNS_TOKEN = "cf-token-should-never-appear-in-doc";

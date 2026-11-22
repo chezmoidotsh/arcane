@@ -25,7 +25,7 @@ const pveBackupTokenSecret = config.requireSecret("pveBackupTokenSecret");
 // create` on the PBS VM, with no Pulumi-managed origin). Sourced *only* from
 // PVE_PBS_STORE_ENCRYPTION_KEY, a path to a local keyfile -- deliberately no
 // Pulumi-config fallback: a credential this sensitive never gets an option
-// that would write it into the git-tracked Pulumi.chezmoi_sh.live.yaml, even
+// that would write it into the git-tracked Pulumi.pve-01_core.live.yaml, even
 // as `--secret`. Not required on every run: once the resource exists, the
 // key is applied at creation and then ignored (see `ignoreChanges` below),
 // so a normal `pulumi up` with the env var unset shows no diff --
