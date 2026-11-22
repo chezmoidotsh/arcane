@@ -447,7 +447,7 @@ le retour arrière est complexe. À réexaminer une fois les instances supervis�
 
 - [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](./ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : l'ADR qui
   supplante le choix de gestion de configuration de cette décision.
-- [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : la mise en place actuelle du serveur, sous NixOS.
+- [Initialiser Horn](../guides/Initialiser-Horn.md) : la mise en place actuelle du serveur, sous NixOS.
 - [Initialiser Exusiai](../guides/Initialiser-Exusiai.md) : l'hôte OCI de référence dont le modèle NixOS a été
   repris.
 - [Archive : migration de Kazimierz vers NixOS](../archives/Migration-de-Kazimierz-vers-NixOS.md) : le compte rendu de

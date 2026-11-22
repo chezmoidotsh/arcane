@@ -15,14 +15,14 @@ Elle s'applique à tous les projets Pulumi du dépôt, dont les `Pulumi.yaml` po
 Les six projets Pulumi du dépôt déclarent le même backend dans leur `Pulumi.yaml`
 (`projects/<projet>/src/infrastructure/pulumi/`, ou `fleet/hosts/<hôte>/pulumi/` pour les hôtes déjà déplacés) :
 
-| Projet          | Nom Pulumi            |
-| --------------- | --------------------- |
-| `chezmoi.sh`    | `chezmoi-sh-infra`    |
-| `closure.akn`   | `closure-akn`         |
-| `exusiai.akn`   | `exusiai-akn`         |
-| `kazimierz.akn` | `kazimierz-akn-infra` |
-| `lungmen.akn`   | `lungmen-akn-infra`   |
-| `rhodes.akn`    | `rhodes-akn-infra`    |
+| Projet        | Nom Pulumi          |
+| ------------- | ------------------- |
+| `chezmoi.sh`  | `chezmoi-sh-infra`  |
+| `closure.akn` | `closure-akn`       |
+| `exusiai.akn` | `exusiai-akn`       |
+| `horn.akn`    | `horn-akn`          |
+| `lungmen.akn` | `lungmen-akn-infra` |
+| `rhodes.akn`  | `rhodes-akn-infra`  |
 
 ```yaml
 backend:

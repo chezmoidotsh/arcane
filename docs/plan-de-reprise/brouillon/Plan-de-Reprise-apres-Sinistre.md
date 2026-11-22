@@ -20,7 +20,7 @@ commencer et les cinq circularités de bootstrap encore présentes sont connus.
 | Le cluster `lungmen.akn`                             | [Étape 9](#9-reconstruire-lungmenakn)                                              |
 | Le cluster `rhodes.akn`                              | [Étape 7](#7-reconstruire-rhodesakn), puis l'étape 8                               |
 | Un LXC de plateforme (Omni, Zot, DNS, observabilité) | [Étape 6](#6-restaurer-les-lxc-de-plateforme)                                      |
-| Le VPS `kazimierz.akn` ou `exusiai.akn`              | [Étape 11](#11-reconstruire-les-vps-hors-chaîne)                                   |
+| Le VPS `horn.akn` ou `exusiai.akn`                   | [Étape 11](#11-reconstruire-les-vps-hors-chaîne)                                   |
 | La VM du NAS ou Garage                               | [Étape 4](#4-restaurer-le-nas)                                                     |
 | L'hôte `pve-01` entier                               | [Étape 0](#0-réunir-ce-qui-vit-hors-du-dépôt), puis toutes les étapes dans l'ordre |
 
@@ -94,7 +94,7 @@ flowchart LR
   RH["rhodes.akn : OpenBao, Pocket-Id, ArgoCD hub"] -->|"secrets ESO, OIDC, ArgoCD"| LG["lungmen.akn : applications"]
   RH -->|"OpenBao : mots de passe SMB"| CZ
   RH -->|"Pocket-Id : groupes"| CZ
-  RH -.->|"OIDC Pocket-Id"| KZ["kazimierz.akn : VPS NixOS, Pangolin"]
+  RH -.->|"OIDC Pocket-Id"| KZ["horn.akn : VPS NixOS, Pangolin"]
   RH -.->|"OIDC Pocket-Id"| RB["exusiai.akn : VPS NixOS, Pelican"]
   CZ -->|"compartiment OCI (StackReference)"| RB
   KZ -.->|"accès public par Newt"| RH
@@ -106,13 +106,13 @@ flowchart LR
 Les flèches pleines sont des dépendances de provisionnement (un `pulumi up` échoue sans elles), les pointillés des
 dépendances d'exécution (le service tourne, mais une fonction manque).
 
-| Projet          | Exige des autres projets                                                                                                                                                                                | Source                                                                                                                                                                                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `chezmoi.sh`    | Garage pour son état ; et, depuis que la stack écrit dans OpenBao, dans Pocket-Id et dans les clusters : `rhodes.akn` (OpenBao, Pocket-Id) et les contextes Kubernetes de `rhodes.akn` et `lungmen.akn` | [`stack/truenas/users/`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/users/README.md), [`stack/pocket-id.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/pocket-id.ts), `stack/proxmox/access/*-bootstrap.ts` |
-| `rhodes.akn`    | `chezmoi.sh` (Secret `kube-system/rhodes-akn-bootstrap-pve`, groupes Pocket-Id) ; Garage ; Omni ; Zot                                                                                                   | [Restaurer Rhodes](Restaurer-Rhodes.md), étape 3                                                                                                                                                                                                         |
-| `lungmen.akn`   | `rhodes.akn` : OpenBao (ESO), Pocket-Id (OIDC), ArgoCD hub ; `chezmoi.sh` (Secret Proxmox, groupes Pocket-Id, mots de passe SMB dans OpenBao) ; Garage                                                  | [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md), [`stack/velero.ts`](../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/velero.ts)                                                                                                 |
-| `kazimierz.akn` | Pocket-Id (fournisseur d'identité de Pangolin) ; groupes de `chezmoi.sh` ; Tailscale. Aucune dépendance à OpenBao dans le code                                                                          | [Initialiser Kazimierz](../../guides/Initialiser-Kazimierz.md), [`stack/pocket-id/`](../../../projects/kazimierz.akn/src/infrastructure/pulumi/stack/pocket-id/index.ts)                                                                                 |
-| `exusiai.akn`   | Stack `chezmoi.sh` (compartiment parent et groupes), Pocket-Id, Tailscale, B2. OpenBao seulement comme copie conseillée du mot de passe restic                                                          | [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)                                                                                   |
+| Projet                              | Exige des autres projets                                                                                                                                                                                | Source                                                                                                                                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `chezmoi.sh`                        | Garage pour son état ; et, depuis que la stack écrit dans OpenBao, dans Pocket-Id et dans les clusters : `rhodes.akn` (OpenBao, Pocket-Id) et les contextes Kubernetes de `rhodes.akn` et `lungmen.akn` | [`stack/truenas/users/`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/users/README.md), [`stack/pocket-id.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/pocket-id.ts), `stack/proxmox/access/*-bootstrap.ts` |
+| `rhodes.akn`                        | `chezmoi.sh` (Secret `kube-system/rhodes-akn-bootstrap-pve`, groupes Pocket-Id) ; Garage ; Omni ; Zot                                                                                                   | [Restaurer Rhodes](Restaurer-Rhodes.md), étape 3                                                                                                                                                                                                         |
+| `lungmen.akn`                       | `rhodes.akn` : OpenBao (ESO), Pocket-Id (OIDC), ArgoCD hub ; `chezmoi.sh` (Secret Proxmox, groupes Pocket-Id, mots de passe SMB dans OpenBao) ; Garage                                                  | [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md), [`stack/velero.ts`](../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/velero.ts)                                                                                                 |
+| `horn.akn` (ancien `kazimierz.akn`) | Pocket-Id (fournisseur d'identité de Pangolin) ; groupes de `chezmoi.sh` ; Tailscale. Aucune dépendance à OpenBao dans le code                                                                          | [Initialiser Horn](../../guides/Initialiser-Horn.md), [`stack/access/`](../../../fleet/hosts/akn.horn/pulumi/stack/access/pocket-id.ts)                                                                                                                  |
+| `exusiai.akn`                       | Stack `chezmoi.sh` (compartiment parent et groupes), Pocket-Id, Tailscale, B2. OpenBao seulement comme copie conseillée du mot de passe restic                                                          | [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)                                                                                   |
 
 Le projet `hass` lit lui aussi les groupes Pocket-Id de `chezmoi.sh` ; ce plan ne le couvre pas.
 
@@ -266,8 +266,8 @@ Les clusters CNPG de `rhodes.akn` (OpenBao, Pocket-Id) sont restaurés à l'éta
 
 Les deux VPS ne dépendent pas de `pve-01` pour tourner ; ils ne se reconstruisent que s'ils sont perdus eux-mêmes.
 
-- **`kazimierz.akn`** : exige Pocket-Id, Tailscale et la stack `chezmoi.sh` (groupes). Voir
-  [Initialiser Kazimierz](../../guides/Initialiser-Kazimierz.md), y compris la restauration de l'état de Pangolin.
+- **`horn.akn`** : exige Pocket-Id, Tailscale et la stack `chezmoi.sh` (groupes). Voir
+  [Initialiser Horn](../../guides/Initialiser-Horn.md), y compris la restauration de l'état de Pangolin.
 - **`exusiai.akn`** : exige la stack `chezmoi.sh` (compartiment parent), Pocket-Id, Tailscale
   et B2. Voir [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), puis la
   [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md) pour les

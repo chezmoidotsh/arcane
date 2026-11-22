@@ -475,7 +475,7 @@ def scan_nix(root, problems, unit):
         return next((d for d in path.parents if (d / "flake.lock").exists()), root / NIX_FALLBACK)
 
     def app_of(path):
-        """The flake the file belongs to (nearest `flake.nix`): `projects/kazimierz.akn/src/infrastructure/nixos`."""
+        """The flake the file belongs to (nearest `flake.nix`): `fleet/hosts/akn.horn/nix`."""
         d = next((d for d in path.parents if (d / "flake.nix").exists()), path.parent)
         return d.relative_to(root).as_posix()
 

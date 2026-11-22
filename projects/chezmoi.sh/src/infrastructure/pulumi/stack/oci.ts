@@ -1,7 +1,7 @@
 import * as oci from "@pulumi/oci";
 
 // The parent OCI compartment of every chezmoi.sh project on Oracle Cloud: the
-// compartments `kazimierz.akn` and `exusiai.akn` are its children (each
+// compartments `horn.akn` and `exusiai.akn` are its children (each
 // declared in its own project, which reads the id below by StackReference).
 // It lives here, not in one of the children, so that destroying or rebuilding
 // one child stack can never take the other one's parent with it.
@@ -36,6 +36,6 @@ export const chezmoiSh = new oci.identity.Compartment("chezmoiSh", {
 	description: "All resources used by chezmoi.sh project (arcane)",
 });
 
-// Plain string output for the StackReference of kazimierz.akn and
+// Plain string output for the StackReference of horn.akn and
 // exusiai.akn: a non-secret id (ADR-017).
 export const chezmoiShCompartmentId = chezmoiSh.id;

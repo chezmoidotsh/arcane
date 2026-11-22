@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#MISE description="Back up Pangolin's state from the running host (hot copy, no downtime) into a local tarball"
+#USAGE arg "[host]" default="root@horn-akn" help="SSH target of the running host (NixOS)"
+#
+# Content: db/ (SQLite, copied through the SQLite backup API so it is consistent while Pangolin runs), key (Gerbil's
+# WireGuard key), letsencrypt/, config.yml, traefik/*.yml. geoip/, logs/ and openapi.yaml are regenerated.
+# The tarball holds secrets in clear text: it lands OUTSIDE the repo, 0600, in $KAZIMIERZ_BACKUP_DIR
+# (default ~/.local/share/kazimierz.akn/backups). Keep it encrypted at rest once moved elsewhere.
+set -euo pipefail
+umask 077
+
+dir="${KAZIMIERZ_BACKUP_DIR:-${HOME}/.local/share/kazimierz.akn/backups}"
+out="${dir}/kazimierz-pangolin-$(date +%Y%m%d-%H%M%S).tgz"
+mkdir -p "${dir}"
+
+ssh "${usage_host}" 'set -eu
+C=/var/lib/pangolin/config
+[ -f "$C/db/db.sqlite" ] || { echo "no Pangolin state found in /var/lib/pangolin/config" >&2; exit 1; }
+T=$(mktemp -d); trap "rm -rf $T" EXIT
+mkdir "$T/db" "$T/traefik"
+sqlite3 -readonly "$C/db/db.sqlite" ".backup $T/db/db.sqlite"
+ok=$(sqlite3 "$T/db/db.sqlite" "pragma integrity_check")
+[ "$ok" = ok ] || { echo "integrity_check: $ok" >&2; exit 1; }
+cp -a "$C/key" "$C/config.yml" "$C/letsencrypt" "$T/"
+cp -a "$C"/traefik/*.yml "$T/traefik/"
+tar -C "$T" -czf - .' >"${out}.part"
+
+tar -tzf "${out}.part" ./db/db.sqlite ./key >/dev/null
+mv "${out}.part" "${out}"
+# shellcheck disable=SC2312  # cosmetic size in a message, a failing du must not abort
+echo "backup written: ${out} ($(du -h "${out}" | cut -f1))"

@@ -167,7 +167,7 @@ Pangolin et les conteneurs Docker restent, et la décision de l'ADR-008 contre K
   décision supplantée en partie, sur la gestion de configuration.
 - [ADR-001 Gestion centralisée des secrets](./ADR-001-Gestion-Centralisee-des-Secrets.md) : le cadre des secrets (SOPS +
   age pour ceux qui vivent dans Git).
-- [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : la procédure d'installation et de mise à jour sous
+- [Initialiser Horn](../guides/Initialiser-Horn.md) : la procédure d'installation et de mise à jour sous
   NixOS.
 - [Archive : migration de Kazimierz vers NixOS](../archives/Migration-de-Kazimierz-vers-NixOS.md) : le compte rendu de
   la bascule d'Ansible vers NixOS.

@@ -11,7 +11,7 @@
 - [Gérer l'état Pulumi et importer des ressources](procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
 - [Désactiver le suivi de connexion des pools LB](procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)
 - [Initialiser Lungmen](guides/Initialiser-Lungmen.md)
-- [Initialiser Kazimierz](guides/Initialiser-Kazimierz.md)
+- [Initialiser Horn](guides/Initialiser-Horn.md)
 - [Initialiser Exusiai](guides/Initialiser-Exusiai.md)
 
 ### Reprendre après une panne

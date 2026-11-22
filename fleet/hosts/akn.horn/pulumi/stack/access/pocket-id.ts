@@ -1,0 +1,39 @@
+import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
+
+// Group membership (maison/famille) is managed by the chezmoi.sh stack, the single source of truth: the groups are
+// looked up by name instead of being read from that stack.
+const maisonGroupId = pocketid.getUserGroupOutput({ name: "maison" }).userGroupId;
+const familleGroupId = pocketid.getUserGroupOutput({ name: "famille" }).userGroupId;
+
+// The Pocket-Id side of Pangolin's SSO login only (Pangolin dashboard IDP
+// id 1, "https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"). Imported
+// from Pocket-Id (auth.chezmoi.sh) rather than created here -- this client
+// already exists and is already in use by the live Pangolin deployment.
+//
+// Pangolin's own side of this integration (the OrgIdp resource, binding this
+// client to the chezmoi.sh org) lives in ../pangolin/idp.ts.
+export const pangolinOidcClient = new pocketid.OidcClient(
+	"pangolin",
+	{
+		clientId: "21519457-da30-4184-9c99-cd27497bf48a",
+		allowedUserGroupIds: [maisonGroupId, familleGroupId],
+		name: "Pangolin",
+		description: "Tunnel / reverse-proxy d'accès public",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-light.svg"),
+		launchUrl: "https://pangolin.chezmoi.sh/",
+		callbackUrls: ["https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"], // TODO: use idp callback value to configure it
+		isPublic: false,
+		pkceEnabled: true,
+		logoutCallbackUrls: [],
+		requiresPushedAuthorizationRequests: false,
+		requiresReauthentication: false,
+		skipConsent: false,
+	},
+);
+
+export const pangolinOidcClientSecret = new pocketid.OidcClientSecret(
+	"pangolin-secret",
+	{ clientId: pangolinOidcClient.id },
+);

@@ -6,7 +6,7 @@ const config = new pulumi.Config();
 
 // Everything the observability LXC (data.o11y.chezmoi.sh) needs: a Caddy DNS-01 token for its
 // own TLS certificate, and a Tailscale identity to join the tailnet (kernel TUN mode) so
-// off-LAN sources (notably the kazimierz.akn VPS) can reach the appliance over the tailnet.
+// off-LAN sources (notably the horn.akn VPS) can reach the appliance over the tailnet.
 //
 // This stack runs upstream of any Kubernetes cluster — it provisions the LXC appliances
 // clusters later depend on — so neither secret is pushed to Vault here; Vault itself runs

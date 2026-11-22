@@ -18,15 +18,15 @@ import * as pulumi from "@pulumi/pulumi";
 // behind a VPN, iCloud Private Relay or a cloud-hosted device is dropped too.
 
 /** Our own egress, accepted before every deny rule. The OCI ASN is denied,
- * yet Pangolin on kazimierz calls the identity provider through its own public
+ * yet Pangolin on horn.akn calls the identity provider through its own public
  * edge (OIDC token exchange), so it would otherwise be blocked. Read from the
- * kazimierz.akn stack output, one StackReference shared by every caller. */
-let kazimierzEgressIp: pulumi.Output<string> | undefined;
-function getKazimierzEgressIp(): pulumi.Output<string> {
-	kazimierzEgressIp ??= new pulumi.StackReference("kazimierz.akn", {
-		name: "organization/kazimierz-akn-infra/kazimierz_akn.live",
+ * horn.akn stack output, one StackReference shared by every caller. */
+let hornEgressIp: pulumi.Output<string> | undefined;
+function getHornEgressIp(): pulumi.Output<string> {
+	hornEgressIp ??= new pulumi.StackReference("horn.akn", {
+		name: "organization/horn-akn/horn_akn.live",
 	}).getOutput("egressIp") as pulumi.Output<string>;
-	return kazimierzEgressIp;
+	return hornEgressIp;
 }
 
 /** Countries dropped right after the trusted IPs, hostile to the West or sources of
@@ -238,7 +238,7 @@ function applyEdgeAccessRules(
 	opts?: pulumi.CustomResourceOptions,
 ): pangolin.ResourceRule[] {
 	const { trustedIps, denyCountries, denyAsns, allowCountries } =
-		edgeRuleArgs(resourceId, [getKazimierzEgressIp()]);
+		edgeRuleArgs(resourceId, [getHornEgressIp()]);
 	const create = ({ name, args }: NamedRuleArgs) =>
 		new pangolin.ResourceRule(`${namePrefix}-${name}`, args, opts);
 	const trusted = trustedIps.map(create);
