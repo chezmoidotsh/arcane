@@ -23,7 +23,7 @@ import * as path from "path";
 export interface VaultSecretMetadata {
 	/** Repo-relative path of the file that pushed the secret (auto-detected). */
 	"created-by": string;
-	/** Second path segment of the caller's repo-relative path (e.g. `amiya.akn`). */
+	/** Canonical machine or project name derived from the caller's repo-relative path (e.g. `lungmen.akn`). */
 	owner: string;
 	/** The single fixed sentence describing what rotation does. */
 	"renewal-process": string;
@@ -72,13 +72,21 @@ function isInsideNodeModules(filePath: string): boolean {
 /**
  * Derives the owner token from a repo-relative path.
  *
- * Rule: take the second path segment (index 1). For `projects/<project>/…`
- * this yields the project name (e.g. `amiya.akn`). For other paths such as
- * `catalog/pulumi/…` it yields the second-level directory (e.g. `pulumi`).
- * Falls back to the first segment when the path is a single component.
+ * Rules, first match wins:
+ * - `fleet/<kind>/<family>.<name>/…` yields `<name>.<family>`, the canonical
+ *   name of the machine (e.g. `fleet/clusters/akn.lungmen/…` gives
+ *   `lungmen.akn`, `fleet/hosts/core.omni/…` gives `omni.core`).
+ * - Any other path yields its second segment: for `projects/<project>/…` the
+ *   project name (e.g. `chezmoi.sh`), for `catalog/pulumi/…` the
+ *   second-level directory (e.g. `pulumi`). Falls back to the first segment
+ *   when the path is a single component.
  */
-function ownerFromRepoRelativePath(repoRelativePath: string): string {
+export function ownerFromRepoRelativePath(repoRelativePath: string): string {
 	const parts = repoRelativePath.split("/");
+	if (parts[0] === "fleet" && parts.length >= 3) {
+		const [family, ...name] = parts[2].split(".");
+		if (family && name.length > 0) return `${name.join(".")}.${family}`;
+	}
 	return parts.length >= 2 ? parts[1] : parts[0];
 }
 

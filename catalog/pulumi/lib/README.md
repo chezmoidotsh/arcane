@@ -24,7 +24,7 @@ are identical across every call site or derivable from the credential resource i
 | Field             | Value                                                                                            | Source                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `created-by`      | Repo-relative path of the file that pushed the secret, e.g. `projects/amiya.akn/.../platform.ts` | Auto-detected from the V8 call stack at call time (see [Assumptions](#assumptions)). |
-| `owner`           | Second path segment of the caller's path, e.g. `amiya.akn`.                                      | Derived from `created-by` at call time.                                              |
+| `owner`           | Machine name from `fleet/<kind>/<family>.<name>/` (`lungmen.akn`), else the second path segment. | Derived from `created-by` at call time.                                              |
 | `renewal-process` | A single fixed sentence describing what rotation does.                                           | Hard-coded constant — identical for every secret.                                    |
 | `x-renewal-cmd`   | The exact `pulumi up --replace '<urn>'` command that rotates the credential.                     | `opts.renewalUrn ?? source.urn`, wrapped in `pulumi.interpolate`.                    |
 
