@@ -1,0 +1,24 @@
+# =============================================================================
+# closure.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Cloudflare API token and Pocket-Id OIDC client for Home Assistant, managed as a Pulumi stack
+# (closure_akn.live, state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the root secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) are resolved from
+# Bitwarden Secrets Manager (fleet/.fnox.toml, with the token and project ID of the
+# Keychain, see `mise run bws:setup`) and exist only inside that process.
+# The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
+#
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+PULUMI_STACK = "closure_akn.live"

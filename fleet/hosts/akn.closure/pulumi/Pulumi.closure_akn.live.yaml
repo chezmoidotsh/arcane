@@ -1,0 +1,7 @@
+encryptionsalt: v1:RgvH+bS0Pvo=:v1:5SjgBRT4gfJlV6ky:oEb2gUqcM0ses596ComGqyCFgTO4Jg==
+config:
+  closure-akn:cloudflare_account_id:
+    secure: v1:C3MH/mSuUGpcyngw:lxjC4XOwzIFOw3TFcaVbLXhi/E9GGa0OsGlGI/9cJIHWi6AJBeGqNdf2m+eqACbL
+  closure-akn:cloudflare_zone_id:
+    secure: v1:Geg9MzNZEJoY/Gz1:MWLGlPjSrOCEnv36mwqilqmXN3sa35/sI82Dxl6gMJZzebpuM2gcU0shOb77bkDE
+  pocket-id:baseUrl: https://auth.chezmoi.sh

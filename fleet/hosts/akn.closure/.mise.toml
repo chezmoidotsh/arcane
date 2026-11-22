@@ -1,5 +1,5 @@
 # =============================================================================
-# hass Project Development Environment Configuration
+# closure.akn (Home Assistant) Development Environment Configuration
 # =============================================================================
 # This mise configuration provides task automation for retrieving
 # Pulumi-provisioned secrets Home Assistant needs.
@@ -9,15 +9,16 @@
 #   mise run pulumi:oidc-client       # Print the Pocket-Id OIDC client_id/client_secret for manual setup
 #
 # Prerequisites:
-#   - Pulumi CLI configured for the hass stack (see
-#     src/infrastructure/pulumi/.mise.toml)
+#   - `pnpm install` and the Bitwarden Secrets Manager setup (`mise run bws:setup`): `mise exec`
+#     runs pulumi from pulumi/ so that its PULUMI_STACK is set, and `fnox exec` resolves the
+#     passphrase and the Garage credentials (fleet/.fnox.toml)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Cloudflare Token Retrieval — Pulumi to Home Assistant secrets.yaml
 # -----------------------------------------------------------------------------
 # Home Assistant's Cloudflare DNS-01 token is created by the Pulumi stack in
-# src/infrastructure/pulumi/, not pushed to Vault: hass isn't a Kubernetes
+# pulumi/, not pushed to Vault: hass isn't a Kubernetes
 # cluster and doesn't depend on one to run, so Vault (which itself lives
 # inside rhodes.akn) can't be a dependency here. The token only exists as a
 # Pulumi stack output.
@@ -29,10 +30,10 @@
 
 [tasks."pulumi:cloudflare-token"]
 description = "Print the Home Assistant Cloudflare token from Pulumi for manual copy into secrets.yaml"
-dir = "{{ config_root }}/src/infrastructure/pulumi"
+dir = "{{ config_root }}/pulumi"
 run = '''
   set -euo pipefail
-  TOKEN=$(pulumi stack output homeAssistantDns01Token --show-secrets)
+  TOKEN=$(mise exec -- fnox exec -- pulumi stack output homeAssistantDns01Token --show-secrets)
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
   echo "${TOKEN}"
 '''
@@ -48,13 +49,25 @@ run = '''
 
 [tasks."pulumi:oidc-client"]
 description = "Print the Home Assistant Pocket-Id OIDC client_id/client_secret for manual setup in the hass-oidc-auth integration"
-dir = "{{ config_root }}/src/infrastructure/pulumi"
+dir = "{{ config_root }}/pulumi"
 run = '''
   set -euo pipefail
-  CLIENT_ID=$(pulumi stack output homeAssistantOidcClientId)
-  CLIENT_SECRET=$(pulumi stack output homeAssistantOidcClientSecret --show-secrets)
+  CLIENT_ID=$(mise exec -- fnox exec -- pulumi stack output homeAssistantOidcClientId)
+  CLIENT_SECRET=$(mise exec -- fnox exec -- pulumi stack output homeAssistantOidcClientSecret --show-secrets)
   [[ -n "${CLIENT_ID}" && -n "${CLIENT_SECRET}" ]] || { echo "[ERROR] Empty output — did 'pulumi up' run?" >&2; exit 1; }
   echo "client_id: ${CLIENT_ID}"
   echo "client_secret: ${CLIENT_SECRET}"
   echo "discovery URL: https://auth.chezmoi.sh/.well-known/openid-configuration"
 '''
+
+# -----------------------------------------------------------------------------
+# Architecture diagram
+# -----------------------------------------------------------------------------
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of closure.akn"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]

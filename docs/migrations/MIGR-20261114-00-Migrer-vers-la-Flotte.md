@@ -35,7 +35,7 @@ chaque élément ayant son README.
 | 4     | Déplacer le catalogue                                               | faite                             |
 | 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer |
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer |
-| 7     | Les hôtes du groupe `akn`                                           | à faire                           |
+| 7     | Les hôtes du groupe `akn`                                           | en cours (A prêt, B et C à faire) |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | à faire                           |
 | 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                           |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                           |
@@ -159,11 +159,11 @@ confirmer** par un essai sur une copie de l'état :
 
 `StackReference` à mettre à jour (vérifié le 2026-11-15, `grep -rn "organization/" --include='*.ts' projects catalog`) :
 
-| Cible lue                                             | Lue par                                                                                                                                                                                                       |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `organization/chezmoi-sh-infra/chezmoi_sh.live`       | `hass`, `kazimierz.akn`, `lungmen.akn`, `rhodes.akn` (`stack/pocket-id/index.ts`), `rimbilliton.akn` (`stack/pocket-id.ts`), `kazimierz.akn` et `rimbilliton.akn` (`chezmoiShCompartmentId`, après l'étape 6) |
-| `organization/kazimierz-akn-infra/kazimierz_akn.live` | `catalog/pulumi/lib/src/pangolin.ts` (règles `edgeAccess`, lues par `rhodes.akn` et `lungmen.akn`)                                                                                                            |
-| `organization/amiya-akn-infra/amiya_akn.live`         | `rhodes.akn` (`stack/cloudnative-pg.ts`) : référence vers un projet qui n'existe plus, à supprimer plutôt qu'à renommer (à confirmer)                                                                         |
+| Cible lue                                             | Lue par                                                                                                                                                                                                                           |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `organization/chezmoi-sh-infra/chezmoi_sh.live`       | `akn.closure` (`index.ts`), `kazimierz.akn`, `lungmen.akn`, `rhodes.akn` (`stack/pocket-id/index.ts`), `rimbilliton.akn` (`stack/pocket-id.ts`), `kazimierz.akn` et `rimbilliton.akn` (`chezmoiShCompartmentId`, après l'étape 6) |
+| `organization/kazimierz-akn-infra/kazimierz_akn.live` | `catalog/pulumi/lib/src/pangolin.ts` (règles `edgeAccess`, lues par `rhodes.akn` et `lungmen.akn`)                                                                                                                                |
+| `organization/amiya-akn-infra/amiya_akn.live`         | `rhodes.akn` (`stack/cloudnative-pg.ts`) : référence vers un projet qui n'existe plus, à supprimer plutôt qu'à renommer (à confirmer)                                                                                             |
 
 Ordre : mettre à jour les lecteurs et la cible dans la même fenêtre, et rejouer un `pulumi preview` sur chaque lecteur.
 
@@ -252,16 +252,15 @@ Concerne `core.omni`, `core.oci-registry`, `core.talosnet-dns`, `core.omni-infra
 
 - **Déplacement simple** : le dossier du LXC (`flake.nix`, `configuration.nix`, `modules/`, `secrets/`) vers
   `fleet/hosts/core.<nom>/nix/` ; le README, le `.mise.toml` et `.mise/` du LXC vont à la racine de
-  `fleet/hosts/core.<nom>/`, comme dans la
-  [page de référence](../reference/Architecture-du-Depot-Reference.md).
+  `fleet/hosts/core.<nom>/`, comme dans la [page de référence](../reference/Architecture-du-Depot-Reference.md).
 - **Reconstruction** : chacun de ces flakes déclare `inputs.arcane.url = "path:../../../../../../../catalog/nix"` et son
   `flake.lock` enregistre ce chemin relatif. Le chemin change avec la profondeur : mettre à jour l'entrée, puis
   `nix flake lock` et reconstruire l'image avec `nix:build:lxc`. Le conteneur déjà déployé n'est pas touché ; la
   reconstruction sert au prochain déploiement. Le résultat est comparé à l'image précédente (voir **Constaté**).
 - **Manuel (Pulumi, `core.omni` et `core.oci-registry` seulement)** : scinder `stack/omni.ts` et `stack/zot-registry.ts`
   hors de `chezmoi_sh`, dans de nouveaux projets `omni-core` et `oci-registry-core` (motif `<nom>-<famille>`). Chaque
-  nouveau projet a son `Pulumi.yaml` (même backend S3 que les autres), sa pile (`<nom>_core.live`), sa
-  propre `PULUMI_CONFIG_PASSPHRASE` dans un `.mise/env.yaml` chiffré par SOPS
+  nouveau projet a son `Pulumi.yaml` (même backend S3 que les autres), sa pile (`<nom>_core.live`), sa propre
+  `PULUMI_CONFIG_PASSPHRASE` dans un `.mise/env.yaml` chiffré par SOPS
   ([ADR-017](../decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md))
   et son entrée dans `pnpm-workspace.yaml`. Le transfert de l'état se fait avec `pulumi state move` (**à confirmer** :
   comportement entre deux piles dont les phrases secrètes diffèrent ; la commande existe dans la version épinglée par
@@ -362,6 +361,41 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
 - **Manuel, noms d'hôte** : le nom d'hôte NixOS et le nom du nœud Tailscale sont alignés sur le nom canonique
   (`horn.akn`, `exusiai.akn`) pendant la migration. Vérifier avant les références au nom actuel dans les ACL Tailscale,
   les enregistrements DNS et Pangolin (**à confirmer**).
+- **Constaté** (tour A, `closure.akn`) : `projects/hass` est devenu `fleet/hosts/akn.closure` (`.mise.toml`
+  et `README.md` à la racine, code Pulumi dans `pulumi/`), le projet `closure-akn` et la pile
+  `closure_akn.live` (fichier `Pulumi.closure_akn.live.yaml`). Aucune `StackReference` ne lit `hass-infra` ; il n'y a ni
+  schéma d'architecture ni Nix à rendre (`hass` n'a aucune configuration de machine dans le dépôt). Le propriétaire du
+  jeton Cloudflare reste `hass` : le nom du jeton, `(hass) - Home Assistant`, ne change pas. Aucun nom côté cloud ne
+  dérive du nom du projet ou de la pile : l'aperçu attendu après le renommage est vide. Le fichier `.mise/env.yaml` (sops) est
+  supprimé : la phrase secrète et les identifiants Garage viennent de fnox (`fleet/.fnox.toml`), le `.mise.toml` Pulumi
+  ne fixe que `PULUMI_STACK`. Les tours B (`rimbilliton.akn` vers `exusiai.akn`) et C (`kazimierz.akn` vers
+  `horn.akn`) restent à faire.
+- **Manuel, avant la fusion** (tour A), depuis l'ancienne arborescence (celle de l'étape 6) :
+  1. sauvegarder l'état (`pulumi stack export`) ;
+  2. répéter l'opération sur un backend `file://` (import de la sauvegarde, puis le renommage ci-dessous) ;
+  3. `pulumi stack rename organization/closure-akn/closure_akn.live` ; à défaut, export, réécriture des URN
+     (`hass-infra` vers `closure-akn`, `hass.live` vers `closure_akn.live`), `pulumi stack init` puis
+     `pulumi stack import` ;
+  4. `pulumi stack change-secrets-provider` vers la phrase secrète de fnox, puis vérifier les secrets de config
+     (`cloudflare_account_id`, `cloudflare_zone_id`). La pile `hass` n'utilisait pas la phrase secrète de fnox : la
+     sienne était dans le `.mise/env.yaml` (sops) supprimé, à lire dans `main` avant de le perdre. Il faut la passer
+     dans `PULUMI_CONFIG_PASSPHRASE` pour le renommage et pour `change-secrets-provider`, dont la nouvelle phrase
+     secrète est demandée de façon interactive (deux invites) ;
+  5. `pulumi preview` depuis `pulumi/` : l'aperçu doit être vide (tout `create` ou `delete` arrête l'opération). Le
+     provider Pocket-Id exige `POCKET_ID_API_KEY` (clé d'API de Pocket-Id, secret `pulumi-pocket-id-api-key` de
+     Bitwarden Secrets Manager, fourni par `fleet/.fnox.toml`) dans l'environnement ;
+  6. fusionner.
+- **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : cela
+  créerait un second jeton Cloudflare et un second client Pocket-Id. Entre le renommage et la fusion, la pile référencée
+  par `main` n'existe plus : ses commandes échouent, sans rien planifier. Le tour A dépend de la pull request #1514
+  (`feat/pulumi-operator-prep`, qui modifie le `.mise.toml` Pulumi de `hass` et ajoute `scripts/pulumi:stack`) et ne
+  peut pas être fusionné avant elle.
+- **À confirmer** : le comportement de `pulumi stack rename` entre deux projets sur le backend S3 maison ; l'emplacement
+  des états dans le bucket (`.pulumi/stacks/<projet>/<pile>.json`) ; la validité de la phrase secrète et du sel après le
+  renommage.
+- **À corriger ensuite** (défaut antérieur, non traité ici) : les tâches `pulumi:cloudflare-token` et
+  `pulumi:oidc-client` de l'hôte ne définissent que `dir` et ne chargent pas `pulumi/.mise/env.yaml` ; `core.omni` passe
+  par `mise exec --`.
 - **Vérification** : `pulumi preview` vide dans chaque pile renommée ; `nix eval` du flake (la tâche `nixos/oci/install`
   évalue déjà le système avant d'agir) ; les piles qui lisent les sorties d'`horn.akn` ont un `pulumi preview` vide.
 - **Retour arrière** : l'état exporté avant renommage est la référence ; renommer en sens inverse ou le réimporter.

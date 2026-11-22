@@ -41,7 +41,6 @@ docs/           Documentation, source of the GitHub Wiki: guides/, reference/, p
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
-├── hass/           Home Assistant app project (not a cluster)
 ├── kazimierz.akn/  VPS public-access gateway — NixOS (flake), deliberately not Kubernetes (ADR-008, ADR-016)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
 ├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
