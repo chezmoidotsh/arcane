@@ -45,6 +45,6 @@ Le texte d'origine, en anglais, est figé à
 
 ## Pour aller plus loin
 
-- [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : la mise en place actuelle de `kazimierz.akn`.
+- [Initialiser Horn](../guides/Initialiser-Horn.md) : la mise en place actuelle de `kazimierz.akn`.
 - [ADR-016 Kazimierz NixOS plutôt qu'Ansible](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : la
   décision qui a remplacé la configuration Ansible.

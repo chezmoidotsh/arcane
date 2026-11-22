@@ -20,7 +20,7 @@ git add -f -N extra/etc/pangolin/binding-ip
 
 # The SOPS file is not committed until the real host key is a recipient; a flake only sees files known to git.
 [[ -f secrets/kazimierz.sops.yaml ]] || {
-	echo "missing secrets/kazimierz.sops.yaml: see docs/guides/Initialiser-Kazimierz.md, step 1" >&2
+	echo "missing secrets/kazimierz.sops.yaml: see docs/guides/Initialiser-Horn.md, step 1" >&2
 	exit 1
 }
 

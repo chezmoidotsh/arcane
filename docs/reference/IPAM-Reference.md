@@ -89,7 +89,7 @@ autres appareils.
 | 10.0.0.31 | NAS (applications)                     |                                                            | IP dédiée aux applications (Garage, etc.)                                                                                                                                                                                                                                                |
 | 10.0.0.32 | Mac Studio ptilopsis (`akn.ptilopsis`) | data.o11y.chezmoi.sh (après la bascule)                    | Appliance d'observabilité (stack Victoria). L'enregistrement DNS local UniFi `data.o11y` passe à la main de `10.0.0.22` à `10.0.0.32`. Pas d'interface talosnet : l'enregistrement statique `data.o11y` de BIND (talosnet-dns) vise aussi `10.0.0.32`, joint à travers le SNAT de pve-01 |
 
-Le wildcard `*.omni.chezmoi.sh` pointe vers la gateway Pangolin publique (`195.201.114.83`, kazimierz.akn) : il se
+Le wildcard `*.omni.chezmoi.sh` pointe vers la gateway Pangolin publique (`195.201.114.83`, horn.akn) : il se
 résout hors du VLAN 5 et n'est lié à aucune IP de ce tableau.
 
 Résolveurs DNS : la gateway UDM Pro (`10.0.0.1`) ne répond pas aux requêtes DNS du VLAN 5 et aucun relais DNS interne
@@ -271,9 +271,9 @@ Aucun recouvrement avec les plages existantes :
 | 192.168.10.128/25 | VLAN 3 (Guest)    |
 | 192.168.3.0/25    | VLAN 4 (IoT)      |
 
-## Cloud OCI : kazimierz.akn
+## Cloud OCI : horn.akn
 
-kazimierz.akn (Oracle Cloud Infrastructure Free Tier) est hors de la topologie L3 du homelab : aucune route vers un
+horn.akn (Oracle Cloud Infrastructure Free Tier) est hors de la topologie L3 du homelab : aucune route vers un
 VLAN, un VNet SDN ou un CIDR Kubernetes ci-dessus. Il n'est joignable que par WireGuard (tunnels Pangolin/Newt), jamais
 par routage natif. Son espace d'adresses peut donc recouvrir le bloc `172.16.0.0/12` réservé à Kubernetes ; ce
 recouvrement n'est sûr que tant qu'OCI reste accessible uniquement par tunnel, et il est à revoir si un chemin de
@@ -281,13 +281,13 @@ routage natif (par exemple un futur pair ClusterMesh) est ajouté.
 
 | Ressource                     | CIDR            | Usage                                                            |
 | ----------------------------- | --------------- | ---------------------------------------------------------------- |
-| VCN `kazimierz-akn-vcn`       | `172.16.0.0/26` | VCN OCI de kazimierz.akn (dual-stack : IPv4 et GUA Oracle `/56`) |
-| Subnet `kazimierz-akn-subnet` | `172.16.0.0/28` | Instance gateway Pangolin                                        |
+| VCN `horn-akn-vcn`            | `172.16.0.0/26` | VCN OCI de horn.akn      (dual-stack : IPv4 et GUA Oracle `/56`) |
+| Subnet `horn-akn-subnet`      | `172.16.0.0/28` | Instance gateway Pangolin                                        |
 
 Provisionné par Pulumi : `fleet/hosts/akn.horn/pulumi/stack/oci/network.ts`. Le `/56` IPv6 du VCN est attribué par
 Oracle à la création ; le `/64` du subnet se lit sur le VCN réel après provisionnement.
 
-Overlay de l'organisation Pangolin (adressage WireGuard applicatif hébergé sur kazimierz, pas une ressource OCI) :
+Overlay de l'organisation Pangolin (adressage WireGuard applicatif hébergé sur horn, pas une ressource OCI) :
 
 | Ressource                                    | CIDR            | Usage                                  |
 | -------------------------------------------- | --------------- | -------------------------------------- |

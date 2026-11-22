@@ -39,9 +39,11 @@ docs/           Documentation, source of the GitHub Wiki: guides/, reference/, p
                 migrations/ (plans of one-off migrations in progress), incidents/, experiments/, archives/,
                 plan-de-reprise/ (draft, being reworked) (see "Documentation" below)
 
+fleet/hosts/    One directory per machine of the fleet (ADR-021). akn.horn is the VPS public-access gateway — NixOS (flake),
+                deliberately not Kubernetes (ADR-008, ADR-016)
+
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
-├── kazimierz.akn/  VPS public-access gateway — NixOS (flake), deliberately not Kubernetes (ADR-008, ADR-016)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
 ├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
 └── shodan.akn/     Future AI stack cluster (planning only — README + architecture diagram, no manifests yet)
@@ -62,12 +64,12 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                |
 | Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                            |
 | Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                           |
-| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `exusiai.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                                |
+| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`horn.akn`     , `exusiai.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                                |
 | CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                      |
 | Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use; Envoy Gateway is gone from `projects/*/src` (an unused base remains in `catalog/kubernetes/envoy-gateway/`)   |
 | Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                    |
 | TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                  |
-| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                              |
+| Public access         | Pangolin + Gerbil + Traefik on `horn.akn`      (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                              |
 | Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                         |
 | Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`)                                 |
 | Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                              |
@@ -150,7 +152,7 @@ clusters.
 `lungmen.akn` is the home applications cluster and is under active development — apps are added and bumped frequently.
 See `projects/lungmen.akn/src/apps/` for the current app inventory; do not enumerate it here.
 
-`kazimierz.akn` and `shodan.akn` are **not** part of the ArgoCD fleet: `kazimierz.akn` is a NixOS VPS (Pangolin stack as
+`horn.akn` and `shodan.akn` are **not** part of the ArgoCD fleet: `horn.akn` is a NixOS VPS (Pangolin stack as
 containers) by deliberate choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016), and
 `shodan.akn` has no manifests yet (planning stage only).
 
@@ -186,7 +188,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   live in the `kube-system` namespace (`projects/*/src/infrastructure/kubernetes/cilium/*.gateway.yaml`).
 - **cert-manager** with DNS-01 validation. **external-dns** manages internal-only DNS records via the UniFi and
   BIND/rfc2136 providers — there is no public/Cloudflare-managed DNS zone in this repo.
-- **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with Newt tunnel clients running in
+- **Public access** to home services goes through Pangolin (`horn.akn` VPS) with Newt tunnel clients running in
   both `lungmen.akn` and `rhodes.akn`. Pocket-Id and Grafana on `rhodes.akn` are deliberately exposed this way with
   `sso: false` at the Pangolin layer (each app gates its own login instead of a double auth check) — see the
   Observability section. **Tailscale** is mandatory for cluster-to-cluster connectivity outside the homelab.
@@ -229,7 +231,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Important paths
 
 - Documentation: `docs/` — see "Documentation" below
-- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `kazimierz.akn`, `exusiai.akn`); disaster
+- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `horn.akn`, `exusiai.akn`); disaster
   recovery: `docs/plan-de-reprise/brouillon/Plan-de-Reprise-apres-Sinistre.md`, and for `rhodes.akn`
   `docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`

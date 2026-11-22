@@ -16,7 +16,7 @@ documentation du dépôt. Il fait foi, se lit directement dans Git et est reflé
 | [Provisionner le SDN Proxmox](procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)                                       | Réseau défini par logiciel des clusters Talos                                     |
 | [Gérer l'état Pulumi et importer des ressources](procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) | Backend d'état Pulumi et import de ressources existantes                          |
 | [Initialiser Lungmen](guides/Initialiser-Lungmen.md)                                                                                          | Création, configuration et amorçage du cluster des applications domestiques       |
-| [Initialiser Kazimierz](guides/Initialiser-Kazimierz.md)                                                                                      | Création et installation de la passerelle d'accès public (Gateway)                |
+| [Initialiser Horn](guides/Initialiser-Horn.md)                                                                                                | Création et installation de la passerelle d'accès public (Gateway)                |
 | [Initialiser Exusiai](guides/Initialiser-Exusiai.md)                                                                                          | Création et installation du serveur Pelican (gaming)                              |
 
 ## Reprendre après une panne

@@ -18,8 +18,8 @@ La stack Pulumi de `pulumi/` provisionne les ressources OCI (compartiment, VCN, 
 enregistrements DNS, le bucket B2, la clé Tailscale ainsi que le groupe `minecraft`, le client OIDC et le secret du
 client dans Pocket-Id (`stack/access/pocket-id.ts`). L'instance démarre sur une image Ubuntu standard, avec uniquement une clé
 SSH injectée par cloud-init (configuration Pulumi `ssh_authorized_keys`). NixOS est ensuite installé par-dessus avec
-`nixos-anywhere`, la seule étape manuelle. Le guide jumeau [Initialiser Kazimierz](Initialiser-Kazimierz.md) suit le
-même schéma pour le VPS `kazimierz.akn`.
+`nixos-anywhere`, la seule étape manuelle. Le guide jumeau [Initialiser Horn](Initialiser-Horn.md) suit le
+même schéma pour le VPS `horn.akn`.
 
 Le flake NixOS vit dans `fleet/hosts/akn.exusiai/nix/` : `flake.nix` expose une sortie par architecture
 (`exusiai-akn-aarch64` pour l'OCI A1, `exusiai-akn-x86_64` pour un test), `configuration.nix` porte la base (réseau,
@@ -299,4 +299,4 @@ s'applique ici aussi, et [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-
   reconstruire l'hôte ou restaurer un monde depuis B2.
 - [Gérer l'état Pulumi et importer des ressources](../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   : le backend S3 de la stack et l'import de ressources existantes.
-- [Initialiser Kazimierz](Initialiser-Kazimierz.md) : le même schéma d'installation NixOS pour le VPS `kazimierz.akn`.
+- [Initialiser Horn](Initialiser-Horn.md) : le même schéma d'installation NixOS pour le VPS `horn.akn`.

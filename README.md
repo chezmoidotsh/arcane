@@ -95,7 +95,6 @@ fnox exec -- bws project list
 │   └── hosts                       # One directory per host (Home Assistant, observability, …)
 ├── projects                        # Infrastructure projects
 │   ├── chezmoi.sh                  # Shared resources
-│   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
 │   ├── rhodes.akn                  # Rhodes cluster configuration
 │   └── shodan.akn                  # Shodan cluster configuration

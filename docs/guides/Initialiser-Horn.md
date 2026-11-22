@@ -1,4 +1,4 @@
-# Initialiser Kazimierz
+# Initialiser Horn
 
 Ce guide installe NixOS sur une instance OCI neuve, jusqu'à la passerelle Pangolin de `horn.akn` (ancien
 `kazimierz.akn`) : Pangolin, Gerbil et Traefik tournent et l'hôte a rejoint le tailnet. L'installation passe par
@@ -11,7 +11,7 @@ Ce guide installe NixOS sur une instance OCI neuve, jusqu'à la passerelle Pango
 > [!NOTE]\
 > L'hôte a été renommé sur place de `kazimierz.akn` en `horn.akn` (projet Pulumi `horn-akn`, pile `horn_akn.live`, nom
 > d'hôte NixOS et nœud Tailscale `horn-akn`), sans réinstallation : voir la
-> [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le nom de ce guide, le `dnsLabel`
+> [migration vers la flotte](../migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md). Le `dnsLabel`
 > du VCN, les enregistrements DNS `kazimierz.akn` et les noms des sauvegardes gardent l'ancien nom.
 
 L'hôte est passé d'Ubuntu, Ansible et Docker Compose à NixOS le 2026-10-10 :
@@ -37,10 +37,12 @@ error-pages.
 
 ## Avant de commencer
 
-1. **Outils** : `mise install`, Docker (OrbStack ou Docker Desktop sur macOS) et toute commande Nix passée par `nonix`
-   (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur.
-2. **Instance OCI** : provisionnée par la stack Pulumi (`mise run pulumi:diff && mise run pulumi:apply` dans
-   `fleet/hosts/akn.horn/pulumi/`), une instance Always Free `VM.Standard.A1.Flex` en `eu-paris-1`, sous Ubuntu.
+1. **Outils** : `mise install` et Nix, exécuté en natif (`nix run`). Les outils des tâches (`nixos-anywhere`,
+   `nixos-rebuild`) sont des paquets de `nix/flake.nix`, épinglés par `nix/flake.lock`.
+2. **Instance OCI** : provisionnée par la stack Pulumi (`pulumi preview && pulumi up` dans
+   `fleet/hosts/akn.horn/pulumi/`), une instance Always Free `VM.Standard.A1.Flex` en `eu-paris-1`, sous Ubuntu. Sur
+   une installation neuve, lancer d'abord `pulumi config set pangolin false` : les ressources Pangolin (organisation,
+   fournisseur d'identité, rôle) passent par l'API de l'instance, qui n'existe pas encore.
 3. **Accès SSH public** : fermé au niveau du NSG OCI. Activer temporairement l'option Pulumi `unsecure` pour
    l'installation (`pulumi config set unsecure true && pulumi up`), puis la remettre à `false`.
 4. **Tailnet** : `tag:svc-pangolin` doit exister dans les `tagOwners` de l'ACL, et aucune machine nommée `horn-akn` ne
@@ -55,7 +57,7 @@ error-pages.
 ```sh
 cd fleet/hosts/akn.horn/nix
 mkdir -p extra/etc/ssh && ssh-keygen -t ed25519 -N '' -f extra/etc/ssh/ssh_host_ed25519_key
-nonix run nixpkgs#ssh-to-age -- -i extra/etc/ssh/ssh_host_ed25519_key.pub   # clé age de l'hôte
+nix run nixpkgs#ssh-to-age -- -i extra/etc/ssh/ssh_host_ed25519_key.pub   # clé age de l'hôte
 ```
 
 Ajouter cette clé age comme second destinataire de la règle `kazimierz.akn` dans `fleet/hosts/akn.horn/nix/.sops.yaml`
@@ -87,18 +89,16 @@ L'instance exécute encore l'image Ubuntu d'origine, qui n'a pas `cpio` ; `nixos
 l'initrd kexec :
 
 ```sh
-export IP=<IP publique de kazimierz-pangolin>   # console OCI ; la stack Pulumi ne l'exporte pas
+export IP=<IP publique de horn-pangolin>   # console OCI ; la stack Pulumi ne l'exporte pas
 ssh ubuntu@"$IP" 'sudo apt-get update -qq && sudo apt-get install -y cpio'
 mise run nixos:oci:install ubuntu@"$IP"
 ```
 
 La tâche évalue le système complet avant de toucher l'instance, affiche la dernière sauvegarde de Pangolin et son âge,
 propose d'en prendre une si elle manque ou date de plus de 24 h, puis demande `y/N` avant l'effacement. Elle lance
-`nixos-anywhere` (épinglé par commit) via `nonix`, avec `--flake .#horn-akn-aarch64 --extra-files extra` et
-`--kexec-extra-flags --kexec-syscall` (le noyau arm64 d'Oracle exige l'appel système historique `kexec_load`).
-
-Sur macOS, `nonix` ne peut pas monter directement le socket de l'agent SSH : voir l'encadré de
-[Initialiser Exusiai](Initialiser-Exusiai.md#4-installer-nixos), qui s'applique tel quel.
+`nixos-anywhere` (épinglé par `nix/flake.lock`), avec `--flake .#horn-akn-aarch64 --extra-files extra --build-on remote`
+et `--kexec-extra-flags --kexec-syscall` (le noyau arm64 d'Oracle exige l'appel système historique `kexec_load`).
+L'agent SSH de la session doit contenir la clé de la cible.
 
 `nixos-anywhere` ne peut pas détecter l'architecture cible : toujours passer le suffixe (`aarch64` ici). Si l'exécution
 échoue après l'étape kexec, l'instance exécute déjà l'installeur NixOS, où seul `root` existe : reprendre à l'étape du
@@ -106,12 +106,12 @@ disque, en `root` :
 
 ```sh
 cd fleet/hosts/akn.horn/nix
-nonix run github:nix-community/nixos-anywhere -- --flake .#horn-akn-aarch64 \
+nix run .#nixos-anywhere -- --flake .#horn-akn-aarch64 \
   --extra-files extra --phases disko,install,reboot --target-host root@"$IP"
 ```
 
-Le tableau de [dépannage de l'installation d'Exusiai](Initialiser-Exusiai.md#dépanner-linstallation) s'applique
-tel quel. Pour répéter toute la procédure d'abord sur une VM de test Proxmox KVM :
+Le tableau de [dépannage de l'installation d'Exusiai](Initialiser-Exusiai.md#dépanner-linstallation) s'applique tel
+quel. Pour répéter toute la procédure d'abord sur une VM de test Proxmox KVM :
 
 ```sh
 mise run nixos:e2e <user@host>   # la cible est obligatoire ; son adresse devient l'IP de liaison
@@ -131,6 +131,8 @@ curl -sI https://pangolin.chezmoi.sh | head -n1
   d'initialisation est affiché une seule fois dans les logs du conteneur : `docker logs pangolin`).
 - Les sites (Newt sur `lungmen.akn` et `rhodes.akn`) apparaissent en ligne dans le tableau de bord.
 - `pulumi preview` dans `rhodes.akn` et `lungmen.akn` n'affiche aucun diff sur les ressources `pangolin`.
+- Sur une installation neuve, une fois le compte administrateur créé et la clé d'API Pangolin renseignée :
+  `pulumi config rm pangolin && pulumi up` crée les ressources Pangolin.
 - Refermer le SSH : `pulumi config set unsecure false && pulumi up`.
 
 ## Réinstaller et restaurer l'état
@@ -159,8 +161,7 @@ l'efface s'il n'est pas restauré :
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Please login as the user ubuntu` en se connectant en `root`         | Les images Ubuntu d'OCI préfixent `/root/.ssh/authorized_keys` d'une restriction `command="echo 'Please login as the user ubuntu'..."`. Copier le `authorized_keys` de l'utilisateur `ubuntu` vers root avant `nixos-anywhere`, ou installer en `ubuntu@<ip>`.                                                                                                                                                            |
 | `Too many authentication failures`                                   | Le sshd de l'hôte a `MaxAuthTries 3` ; un agent qui propose plusieurs clés l'épuise. Utiliser `IdentitiesOnly yes` (avec `-i <clé>`) ou un agent dédié qui ne contient que la bonne clé.                                                                                                                                                                                                                                  |
-| `Connection refused` sur le socket de l'agent depuis `nonix` (macOS) | Le conteneur ne voit que l'agent de la session `launchd` : `launchctl setenv SSH_AUTH_SOCK ...` puis redémarrer OrbStack (voir l'[encadré macOS d'Exusiai](Initialiser-Exusiai.md#4-installer-nixos)).                                                                                                                                                                                                           |
-| Tailscale ne s'enregistre pas, ou le nœud s'appelle `horn-akn-1`     | La `tailscaleAuthKey` (`TailnetKey` Pulumi, usage unique, 7 jours) est consommée par un premier boot : une installation refaite ou une vieille clé exige d'en générer une nouvelle avec `pulumi up --replace <urn de kazimierz-tailscale-key>`, puis de mettre à jour `tailscale_authkey` dans le fichier SOPS. Supprimer l'ancien nœud de la console Tailscale **avant** le premier boot, sinon il devient `horn-akn-1`. |
+| Tailscale ne s'enregistre pas, ou le nœud s'appelle `horn-akn-1`     | La `tailscaleAuthKey` (`TailnetKey` Pulumi, usage unique, 7 jours) est consommée par un premier boot : une installation refaite ou une vieille clé exige d'en générer une nouvelle avec `pulumi up --replace <urn de horn-tailscale-key>`, puis de mettre à jour `tailscale_authkey` dans le fichier SOPS. Supprimer l'ancien nœud de la console Tailscale **avant** le premier boot, sinon il devient `horn-akn-1`.      |
 | `pulumi stack output` échoue ou vise la mauvaise stack               | La stack en service est `horn_akn.live` : passer `--stack horn_akn.live` (les tâches `nixos:*` le font déjà).                                                                                                                                                                                                                                                                                                             |
 
 ## Appliquer une modification après l'amorçage
@@ -177,7 +178,7 @@ La tâche rafraîchit l'IP de liaison, puis lance
 revient à la génération précédente. Il n'y a volontairement aucune mise à jour automatique : l'instance n'est pas encore
 supervisée et un rollback est difficile à faire proprement (voir
 l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)). Rafraîchir les entrées avec
-`nonix flake update`, puis déployer.
+`nix flake update`, puis déployer.
 
 ## Historique
 
@@ -187,8 +188,8 @@ l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md
 
 ## Pour aller plus loin
 
-- [Initialiser Exusiai](Initialiser-Exusiai.md) : le même schéma d'installation NixOS pour l'hôte Minecraft,
-  avec le dépannage de `nixos-anywhere`.
+- [Initialiser Exusiai](Initialiser-Exusiai.md) : le même schéma d'installation NixOS pour l'hôte Minecraft, avec le
+  dépannage de `nixos-anywhere`.
 - [Vue d'ensemble de `horn.akn`](../../fleet/hosts/akn.horn/README.md) : rôle du VPS et architecture de la passerelle
   Pangolin.
 - [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : pourquoi NixOS remplace Ansible et Docker

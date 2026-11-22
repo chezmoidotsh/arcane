@@ -207,7 +207,7 @@ in
   config = {
   assertions = [{
     assertion = bindIp != "";
-    message = "pangolin.bindIp is empty: run `mise run nixos:binding-ip` (or nixos:oci:*, nixos:e2e) to write extra/etc/pangolin/binding-ip (see docs/guides/Initialiser-Kazimierz.md).";
+    message = "pangolin.bindIp is empty: run `mise run nixos:binding-ip` (or nixos:oci:*, nixos:e2e) to write extra/etc/pangolin/binding-ip (see docs/guides/Initialiser-Horn.md).";
   }];
 
   virtualisation.docker.enable = true;

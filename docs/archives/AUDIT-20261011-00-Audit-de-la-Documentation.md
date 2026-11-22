@@ -546,7 +546,7 @@ date de cette page ; les noms viennent de l'arborescence et de la barre latéral
 - **Post-mortems** : les dix post-mortems sont renommés `Incident-<date>-<Titre>.md` dans `docs/incidents/`, avec les
   pages `Incidents.md` (hub) et `Index-des-Incidents.md`.
 - **Guides** : le plan de reprise après sinistre (`Plan-de-Reprise-apres-Sinistre.md`), les guides `Restaurer-Rhodes`,
-  `Restaurer-OpenBao` et `Restaurer-Pocket-Id`, ainsi que `Initialiser-Lungmen`, `Initialiser-Kazimierz` et
+  `Restaurer-OpenBao` et `Restaurer-Pocket-Id`, ainsi que `Initialiser-Lungmen`, `Initialiser-Horn` et
   `Initialiser-Exusiai` sont dans `docs/guides/`.
 - **Référence** : le réseau, l'IPAM, les passerelles et le DNS, et Renovate sont dans `docs/reference/`
   (`Reseau-Reference.md`, `IPAM-Reference.md`, `Passerelles-et-DNS-Reference.md`, `Renovate-Reference.md`).

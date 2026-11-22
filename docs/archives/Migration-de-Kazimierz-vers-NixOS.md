@@ -41,7 +41,7 @@ macOS, clé d'authentification Tailscale à usage unique.
 
 La migration est terminée et le code Ansible qu'elle mentionnait a été retiré de l'arbre (le dossier
 `src/infrastructure/ansible/` n'existe plus dans `projects/kazimierz.akn/`). Le guide courant pour une (ré)installation
-est [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md). La décision est portée par
+est [Initialiser Horn](../guides/Initialiser-Horn.md). La décision est portée par
 l'[ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md), qui remplace le choix de gestion de
 configuration de l'ADR-008.
 
@@ -54,7 +54,7 @@ Le texte d'origine, en anglais, est figé à
 
 ## Pour aller plus loin
 
-- [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : le guide courant d'installation et de réinstallation.
+- [Initialiser Horn](../guides/Initialiser-Horn.md) : le guide courant d'installation et de réinstallation.
 - [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : la
   décision qui a motivé la migration.
 - [Initialiser Exusiai](../guides/Initialiser-Exusiai.md) : le modèle NixOS + `nixos-anywhere` suivi par la
