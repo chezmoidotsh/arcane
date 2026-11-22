@@ -1,0 +1,23 @@
+# =============================================================================
+# exusiai.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Minecraft server on OCI Always Free (see ../README.md), stack exusiai_akn.live
+# (state in the Garage S3 backend, see Pulumi.yaml).
+#
+# First run: see docs/guides/Initialiser-Exusiai.md (Pulumi configuration).
+#
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the root secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) are resolved from
+# Bitwarden Secrets Manager (fleet/.fnox.toml, with the token and project ID of the
+# Keychain, see `mise run bws:setup`) and exist only inside that process.
+# The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
+#
+# The other provider credentials (OCI TF_VAR_*, Backblaze, Tailscale, Pocket-Id) come from the same fnox file;
+# they are created by hand in the Bitwarden project under the names listed there.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+PULUMI_STACK = "exusiai_akn.live"

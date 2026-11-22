@@ -44,7 +44,6 @@ projects/       One subdirectory per cluster or standalone app
 ├── kazimierz.akn/  VPS public-access gateway — NixOS (flake), deliberately not Kubernetes (ADR-008, ADR-016)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
 ├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
-├── rimbilliton.akn/ Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS, not Kubernetes
 └── shodan.akn/     Future AI stack cluster (planning only — README + architecture diagram, no manifests yet)
 
 scripts/        Operational scripts (added to PATH by mise)
@@ -63,7 +62,7 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                |
 | Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                            |
 | Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                           |
-| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                            |
+| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `exusiai.akn`); the Proxmox host is configured by hand (see `docs/procedures/infrastructure/`)                                |
 | CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                      |
 | Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use; Envoy Gateway is gone from `projects/*/src` (an unused base remains in `catalog/kubernetes/envoy-gateway/`)   |
 | Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                    |
@@ -230,7 +229,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Important paths
 
 - Documentation: `docs/` — see "Documentation" below
-- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn`); disaster
+- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `kazimierz.akn`, `exusiai.akn`); disaster
   recovery: `docs/plan-de-reprise/brouillon/Plan-de-Reprise-apres-Sinistre.md`, and for `rhodes.akn`
   `docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`

@@ -1,0 +1,20 @@
+{
+	"name": "exusiai-akn",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"dependencies": {
+		"@axnic/pulumi-pocket-id": "catalog:",
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@chezmoi.sh/pulumi-sops-file": "workspace:*",
+		"@pulumi/b2": "workspace:*",
+		"@pulumi/cloudflare": "catalog:",
+		"@pulumi/oci": "catalog:",
+		"@pulumi/pulumi": "catalog:",
+		"@pulumi/random": "catalog:",
+		"@pulumi/tailscale": "catalog:"
+	},
+	"devDependencies": {
+		"typescript": "catalog:"
+	}
+}

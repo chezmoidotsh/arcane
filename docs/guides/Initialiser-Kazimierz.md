@@ -1,9 +1,9 @@
 # Initialiser Kazimierz
 
 Ce guide installe NixOS sur une instance OCI neuve, jusqu'à la passerelle Pangolin de `kazimierz.akn` : Pangolin, Gerbil
-et Traefik tournent et l'hôte a rejoint le tailnet. L'installation passe par `nixos-anywhere`, comme pour
-`rimbilliton.akn` (voir [Initialiser Rimbilliton](Initialiser-Rimbilliton.md)) ; ensuite, `mise run nixos:oci:update`
-applique chaque modification.
+et Traefik tournent et l'hôte a rejoint le tailnet. L'installation passe par `nixos-anywhere`, comme pour `exusiai.akn`
+(voir [Initialiser Exusiai](Initialiser-Exusiai.md)) ; ensuite, `mise run nixos:oci:update` applique chaque
+modification.
 
 > [!WARNING]\
 > Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
@@ -93,8 +93,24 @@ propose d'en prendre une si elle manque ou date de plus de 24 h, puis demande `y
 `nixos-anywhere` (épinglé par commit) via `nonix`, avec `--flake .#kazimierz-akn-aarch64 --extra-files extra` et
 `--kexec-extra-flags --kexec-syscall` (le noyau arm64 d'Oracle exige l'appel système historique `kexec_load`).
 
-Sur macOS, `nonix` ne peut pas monter directement le socket de l'agent SSH : voir l'encadré de
-[Initialiser Rimbilliton](Initialiser-Rimbilliton.md#4-installer-nixos), qui s'applique tel quel.
+> [!IMPORTANT]\
+> **macOS (OrbStack, Docker Desktop) : les conteneurs s'exécutent dans une VM Linux.** `nonix` ne peut donc pas monter
+> directement le socket de l'agent (le fichier apparaît, mais la connexion échoue avec `Connection refused`). Il utilise
+> le relais fourni par le runtime, `/run/host-services/ssh-auth.sock`, qui transmet l'agent de la **session de login
+> macOS** (le `SSH_AUTH_SOCK` connu de `launchd`), pas celui du shell courant. Avec l'agent macOS par défaut, rien à
+> faire. Avec un agent personnalisé (Bitwarden, Secretive, 1Password, ...), pointer `launchd` vers son socket et
+> redémarrer le runtime :
+>
+> ```sh
+> launchctl getenv SSH_AUTH_SOCK                                  # ce que le relais transmet
+> launchctl setenv SSH_AUTH_SOCK "<chemin du socket de l'agent>"  # par exemple $HOME/.bitwarden-ssh-agent.sock
+> orb stop && orb start                                           # OrbStack ; redémarrer Docker Desktop sinon
+> ```
+>
+> `launchctl setenv` ne survit pas à un redémarrage. Avant une installation, vérifier ce que voit le conteneur : la clé
+> doit apparaître dans la sortie de
+> `docker run --rm -v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent nixos/nix ssh-add -l`.
+> Sous Linux, le socket est monté directement depuis `$SSH_AUTH_SOCK`.
 
 `nixos-anywhere` ne peut pas détecter l'architecture cible : toujours passer le suffixe (`aarch64` ici). Si l'exécution
 échoue après l'étape kexec, l'instance exécute déjà l'installeur NixOS, où seul `root` existe : reprendre à l'étape du
@@ -106,8 +122,8 @@ nonix run github:nix-community/nixos-anywhere -- --flake .#kazimierz-akn-aarch64
   --extra-files extra --phases disko,install,reboot --target-host root@"$IP"
 ```
 
-Le tableau de [dépannage de l'installation de Rimbilliton](Initialiser-Rimbilliton.md#dépanner-linstallation) s'applique
-tel quel. Pour répéter toute la procédure d'abord sur une VM de test Proxmox KVM :
+Le tableau de [dépannage de l'installation d'Exusiai](Initialiser-Exusiai.md#dépanner-linstallation) s'applique,
+sauf les points propres au conteneur `nonix`, couverts plus bas. Pour répéter toute la procédure d'abord sur une VM de test Proxmox KVM :
 
 ```sh
 mise run nixos:e2e <user@host>   # la cible est obligatoire ; son adresse devient l'IP de liaison
@@ -155,7 +171,7 @@ l'efface s'il n'est pas restauré :
 | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Please login as the user ubuntu` en se connectant en `root`          | Les images Ubuntu d'OCI préfixent `/root/.ssh/authorized_keys` d'une restriction `command="echo 'Please login as the user ubuntu'..."`. Copier le `authorized_keys` de l'utilisateur `ubuntu` vers root avant `nixos-anywhere`, ou installer en `ubuntu@<ip>`.                                                                                                                                                                 |
 | `Too many authentication failures`                                    | Le sshd de l'hôte a `MaxAuthTries 3` ; un agent qui propose plusieurs clés l'épuise. Utiliser `IdentitiesOnly yes` (avec `-i <clé>`) ou un agent dédié qui ne contient que la bonne clé.                                                                                                                                                                                                                                       |
-| `Connection refused` sur le socket de l'agent depuis `nonix` (macOS)  | Le conteneur ne voit que l'agent de la session `launchd` : `launchctl setenv SSH_AUTH_SOCK ...` puis redémarrer OrbStack (voir l'[encadré macOS de Rimbilliton](Initialiser-Rimbilliton.md#4-installer-nixos)).                                                                                                                                                                                                                |
+| `Connection refused` sur le socket de l'agent depuis `nonix` (macOS)  | Le conteneur ne voit que l'agent de la session `launchd` : `launchctl setenv SSH_AUTH_SOCK ...` puis redémarrer OrbStack (voir l'encadré macOS plus haut).                                                                                                                                                                                                                                                                     |
 | Tailscale ne s'enregistre pas, ou le nœud s'appelle `kazimierz-akn-1` | La `tailscaleAuthKey` (`TailnetKey` Pulumi, usage unique, 7 jours) est consommée par un premier boot : une installation refaite ou une vieille clé exige d'en générer une nouvelle avec `pulumi up --replace <urn de kazimierz-tailscale-key>`, puis de mettre à jour `tailscale_authkey` dans le fichier SOPS. Supprimer l'ancien nœud de la console Tailscale **avant** le premier boot, sinon il devient `kazimierz-akn-1`. |
 | `pulumi stack output` échoue ou vise la mauvaise stack                | La stack en service est `kazimierz_akn.live` : passer `--stack kazimierz_akn.live` (les tâches `nixos:*` le font déjà).                                                                                                                                                                                                                                                                                                        |
 
@@ -183,7 +199,7 @@ l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md
 
 ## Pour aller plus loin
 
-- [Initialiser Rimbilliton](Initialiser-Rimbilliton.md) : le même schéma d'installation NixOS pour l'hôte Minecraft,
+- [Initialiser Exusiai](Initialiser-Exusiai.md) : le même schéma d'installation NixOS pour l'hôte Minecraft,
   avec le dépannage de `nixos-anywhere`.
 - [Vue d'ensemble de `kazimierz.akn`](../../projects/kazimierz.akn/README.md) : rôle du VPS et architecture de la
   passerelle Pangolin.

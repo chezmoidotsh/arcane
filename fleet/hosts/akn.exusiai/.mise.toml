@@ -1,0 +1,73 @@
+# =============================================================================
+# exusiai.akn — Task Automation
+# =============================================================================
+# Tasks for the NixOS host of the Minecraft server (Pelican) on OCI Always Free, and for its diagram.
+# The infrastructure around it (OCI, DNS, B2, Tailscale, Pocket-Id) is Pulumi, in pulumi/.
+#
+# Usage:
+#   mise run nixos:oci:update [-- <target>]    # Apply nix/ to the running host over the tailnet (default root@exusiai-akn)
+#   mise run nixos:oci:install -- <target>     # (Re)install with nixos-anywhere (DESTRUCTIVE: repartitions the boot volume)
+#   mise run nixos:e2e -- <target>             # Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for it)
+#   mise run diagram:generate                  # Render architecture.d2 to assets/architecture.png
+#
+# Typical workflow (change to the host):
+#   mise run nixos:oci:update
+#
+# Typical workflow (first install, see docs/guides/Initialiser-Exusiai.md):
+#   (cd pulumi && pulumi up)                   # Provisions the instance and writes nix/secrets/exusiai.sops.json
+#   mise run nixos:oci:install -- ubuntu@<ip>  # Needs `unsecure=true` on the stack (SSH is closed otherwise)
+#
+# Prerequisites:
+#   - nix, run natively (no container). The tools are the packages of nix/flake.nix, pinned by nix/flake.lock
+#     (`nix flake update nixos-anywhere` to bump the installer)
+#   - the SSH key of the target in your agent (nixos-anywhere forwards it)
+#   - the target is built on the host itself (--build-on / --build-host remote): this machine is not an
+#     aarch64-linux builder
+# =============================================================================
+
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram of exusiai.akn"
+dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
+
+[tasks."nixos:_require-nix"]
+hide = true
+description = "Fail with a clear message when nix is not installed"
+# No fallback on purpose: these tasks are destructive, they must not run through another path.
+run = 'command -v nix >/dev/null || { echo "nix is required (https://nixos.org/download), see docs/guides/Initialiser-Exusiai.md" >&2; exit 1; }'
+
+[tasks."nixos:oci:update"]
+description = "Apply the configuration to the running OCI A1 host over the tailnet"
+depends = ["nixos:_require-nix"]
+dir = "{{ config_root }}/nix"
+usage = 'arg "[target]" default="root@exusiai-akn" help="SSH target on the tailnet"'
+run = '''
+nix run .#nixos-rebuild -- switch \
+  --flake ".#exusiai-akn-aarch64" --target-host "${usage_target}" --build-host "${usage_target}"
+'''
+
+[tasks."nixos:oci:install"]
+description = "(Re)install the OCI A1 host with nixos-anywhere (DESTRUCTIVE: repartitions the boot volume)"
+depends = ["nixos:_require-nix"]
+dir = "{{ config_root }}/nix"
+usage = 'arg "<target>" help="SSH target of the stock Ubuntu instance, user@host (needs unsecure=true on the Pulumi stack)"'
+confirm = "Repartition the boot volume of the target with nixos-anywhere (worlds included)?"
+run = '''
+nix run .#nixos-anywhere -- \
+  --flake ".#exusiai-akn-aarch64" --extra-files extra --build-on remote \
+  --kexec-extra-flags --kexec-syscall --target-host "${usage_target}"
+'''
+
+[tasks."nixos:e2e"]
+description = "Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for the target)"
+depends = ["nixos:_require-nix"]
+dir = "{{ config_root }}/nix"
+usage = 'arg "<target>" help="SSH target of the test VM, user@host"'
+confirm = "Repartition the test VM with nixos-anywhere?"
+run = '''
+nix run .#nixos-anywhere -- \
+  --flake ".#exusiai-akn-x86_64" --extra-files extra --build-on remote --target-host "${usage_target}"
+'''
