@@ -16,5 +16,9 @@ AWS_SECRET_ACCESS_KEY = { provider = "bws", value = "pulumi-garage-secret-access
 CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email", if_missing = "warn" }
 CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key", if_missing = "warn" }
 
+# Admin API key of Pocket-Id (auth.chezmoi.sh), read by the pocket-id provider of the stacks that
+# manage OIDC clients (akn.closure, ...). `warn` so the stacks that don't use it keep working.
+POCKET_ID_API_KEY = { provider = "bws", value = "pulumi-pocket-id-api-key", if_missing = "warn" }
+
 # Shared passphrase of the fleet stacks' Pulumi secrets.
 PULUMI_CONFIG_PASSPHRASE = { provider = "bws", value = "pulumi-config-passphrase" }
