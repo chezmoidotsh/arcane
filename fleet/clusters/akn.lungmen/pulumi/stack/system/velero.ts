@@ -6,7 +6,7 @@ import * as vault from "@pulumi/vault";
 // ---------------------------------------------------------------------------
 // Garage S3 bucket + credentials for Velero backups (lungmen.akn)
 // ---------------------------------------------------------------------------
-// Dedicated bucket/key, separate from the CNPG backup bucket (stack/cloudnative-pg.ts):
+// Dedicated bucket/key, separate from the CNPG backup bucket (system/cloudnative-pg.ts):
 // Velero's PVC-backup scope is cluster-wide and shouldn't share credentials with
 // CNPG's WAL-archiving bucket.
 const bucketName = "velero-lungmen-akn";
@@ -51,5 +51,3 @@ new vault.kv.SecretV2(
 	{ parent: key },
 );
 
-export const veleroBackupBucket = pulumi.output(bucketName);
-export const veleroBackupAccessKeyId = key.accessKeyId;

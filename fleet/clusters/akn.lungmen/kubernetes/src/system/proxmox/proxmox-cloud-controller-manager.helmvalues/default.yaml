@@ -11,7 +11,7 @@
 # privileged kubeconfig access to deliver it, so routing it through
 # Vault/ESO would add indirection with no confidentiality benefit. That
 # Secret is created directly by
-# fleet/clusters/akn.lungmen/pulumi/stack/proxmox.ts, which
+# fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts, which
 # self-provisions the kubernetes-cloud-provider-lungmen@pve identity against
 # pve-01 (via catalog/pulumi/components/proxmox-cluster-identity,
 # authenticated with a delegated credential minted by chezmoi.sh's

@@ -42,7 +42,7 @@ spec:
       users:
         # -- Owner: n8n creates and fills the tables. Its credentials go to the n8n.chezmoi.sh mount,
         # the one n8n reads through its External Secrets feature (see
-        # infrastructure/pulumi/stack/n8n/external-secrets.ts), so a Postgres credential can use them.
+        # pulumi/stack/apps/n8n/external-secrets.ts), so a Postgres credential can use them.
         - name: n8n
           # -- Reads and writes the tables dataiku creates in mig_goog_infk (it only owns its own).
           inRoles:

@@ -1,7 +1,7 @@
 import { must } from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
-import { lungmenSiteId } from "./index";
+import { lungmenSiteId } from "../../system/pangolin";
 
 const chezmoiShDomainId = pangolin.getDomainsOutput().apply(
 	(r) =>
@@ -17,7 +17,7 @@ const chezmoiShDomainId = pangolin.getDomainsOutput().apply(
 // webhooks/forms/MCP (webhook processor) from the rest (main): a private resource
 // has a single destination, and the Cilium Gateway fails (Envoy answers 403 to
 // any client outside the n8n namespace).
-export const n8nPrivateResource = new pangolin.SiteResource(
+new pangolin.SiteResource(
 	"n8n-private-chezmoi-sh",
 	{
 		name: "n8n (private)",

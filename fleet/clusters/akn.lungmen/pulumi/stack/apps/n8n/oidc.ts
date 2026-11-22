@@ -3,9 +3,9 @@ import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { adminGroupId, maisonGroupId } from "./index";
+import { adminGroupId, maisonGroupId } from "../../config";
 
-export const n8nOidcClient = new pocketid.OidcClient("n8n", {
+const n8nOidcClient = new pocketid.OidcClient("n8n", {
   allowedUserGroupIds: [adminGroupId, maisonGroupId],
   name: "Automatisation",
   description: "Workflows et automatisations",

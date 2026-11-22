@@ -5,13 +5,13 @@ import {
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { maisonGroupId } from "./index";
+import { maisonGroupId } from "../../config";
 
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here -- this
 // client already exists and is already in use by the live Linkding
 // deployment, whose ExternalSecret reads client_id/client_secret straight
 // from Vault (lungmen.akn/linkding/auth/oidc-client).
-export const linkdingOidcClient = new pocketid.OidcClient(
+const linkdingOidcClient = new pocketid.OidcClient(
 	"linkding",
 	{
 		clientId: "c296c34a-f7d8-420b-9d19-4bbfaae966a8",

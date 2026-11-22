@@ -5,13 +5,13 @@ import {
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { maisonGroupId } from "./index";
+import { maisonGroupId } from "../../config";
 
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here -- this
 // client already exists and is already in use by the live Actual-budget
 // deployment, whose ExternalSecret reads client_id/client_secret straight
 // from Vault (lungmen.akn/actual-budget/auth/oidc-client).
-export const actualBudgetOidcClient = new pocketid.OidcClient(
+const actualBudgetOidcClient = new pocketid.OidcClient(
 	"actual-budget",
 	{
 		clientId: "afc54ffc-425f-4806-82d8-4a3f4ecaddc6",

@@ -1,13 +1,13 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 
-import { familleGroupId, maisonGroupId } from "./index";
+import { familleGroupId, maisonGroupId } from "../../config";
 
 // Jellyfin's client only -- the SSO-Auth plugin that would actually consume
 // it isn't deployed yet (jellyfin.statefulset.yaml has no plugin mechanism at
 // all), so this client sits unused until that's built out separately.
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here.
-export const jellyfinOidcClient = new pocketid.OidcClient(
+new pocketid.OidcClient(
 	"jellyfin",
 	{
 		clientId: "dd81ad1f-ab38-4e99-9b1e-fb5572275edf",

@@ -5,9 +5,9 @@ import {
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { maisonGroupId } from "./index";
+import { maisonGroupId } from "../../config";
 
-export const homeboxOidcClient = new pocketid.OidcClient(
+const homeboxOidcClient = new pocketid.OidcClient(
 	"homebox",
 	{
 		clientId: "737ecc0b-e9c1-426c-aa68-873047dac113",

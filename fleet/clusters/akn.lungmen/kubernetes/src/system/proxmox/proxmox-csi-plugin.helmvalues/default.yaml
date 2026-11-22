@@ -15,7 +15,7 @@
 # rationale and the exact Secret shape Pulumi creates). CCM and CSI
 # deliberately share the same kubernetes-cloud-provider-lungmen@pve
 # identity/token and the same Secret here — a simplification over having two
-# separate least-privilege identities; see stack/proxmox.ts's header comment
+# separate least-privilege identities; see pulumi/stack/system/proxmox.ts's header comment
 # for the trade-off. existingConfigSecret/existingConfigSecretKey below
 # point this chart's controller and node pods at that shared, Pulumi-owned
 # Secret.

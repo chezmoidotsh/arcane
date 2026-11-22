@@ -78,8 +78,8 @@ Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lu
 - **Application du template** (étape 6) : `omnictl cluster template sync`, détaillé à
   l'[étape 6 de la procédure](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#étape-6--appliquer-le-template-de-cluster).
 - **Identité Proxmox CCM/CSI** (étape 9) : ce n'est pas une étape manuelle. La stack Pulumi du projet
-  ([`pulumi/stack/proxmox.ts`](../../fleet/clusters/akn.lungmen/pulumi/stack/proxmox.ts)) la livre ; elle s'applique
-  quand le cluster est `Ready`, avant le déploiement de `dist/infrastructure/kubernetes/proxmox/` (étape 10).
+  ([`pulumi/stack/system/proxmox.ts`](../../fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts)) la livre ; elle
+  s'applique quand le cluster est `Ready`, avant le déploiement de `dist/infrastructure/kubernetes/proxmox/` (étape 10).
 - **Enregistrement en spoke** (étape 11) : `argocd cluster add`, dans le hub de `rhodes.akn`. Ensuite, les
   ApplicationSets d'ArgoCD prennent en charge tout `fleet/clusters/akn.lungmen/kubernetes/dist/apps/` et
   `…/dist/system/` (voir l'ApplicationSet `seed` de `rhodes.akn`,

@@ -5,13 +5,13 @@ import {
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
-import { maisonGroupId } from "./index";
+import { maisonGroupId } from "../../config";
 
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here -- this
 // client already exists and is already in use by the live Paperless-ngx
 // deployment, whose ExternalSecret reads client_id/client_secret straight
 // from Vault (lungmen.akn/paperless-ngx/auth/oidc-client).
-export const paperlessNgxOidcClient = new pocketid.OidcClient(
+const paperlessNgxOidcClient = new pocketid.OidcClient(
 	"paperless-ngx",
 	{
 		clientId: "10a5c5ba-ef7e-4385-b826-fd87d0b4fc40",

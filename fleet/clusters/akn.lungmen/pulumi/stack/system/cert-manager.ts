@@ -17,7 +17,6 @@ const certManagerToken = new Dns01TokenComponent("cert-manager", {
 	accountId: config.cloudflare.accountId,
 	zoneId: config.cloudflare.zoneId,
 });
-export const certManagerDns01Token = certManagerToken.tokenValue;
 
 new vault.kv.SecretV2(
 	"cert-manager-token",

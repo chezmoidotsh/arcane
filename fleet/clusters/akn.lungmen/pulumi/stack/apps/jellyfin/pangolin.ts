@@ -5,14 +5,14 @@ import {
 } from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
-import { lungmenSiteId } from "./index";
+import { lungmenSiteId } from "../../system/pangolin";
 
 // Full public bypass, per the org's security policy: no SSO in front of any
 // app behind this org (each app handles its own auth, Pangolin just
 // proxies). The only edge protection is the country/ASN rules below
 // (see edgeAccess.apply).
-export const photosResource = new pangolin.Resource("photos-chezmoi-sh", {
-	name: "Photos",
+const streamingResource = new pangolin.Resource("streaming-chezmoi-sh", {
+	name: "Streaming",
 	mode: "http",
 	domainId: pangolin.getDomainsOutput().apply(
 		(r) =>
@@ -21,7 +21,7 @@ export const photosResource = new pangolin.Resource("photos-chezmoi-sh", {
 				"chezmoi.sh base domain not found in Pangolin",
 			).domainId,
 	),
-	subdomain: "photos",
+	subdomain: "streaming",
 	sso: false,
 	applyRules: true,
 	maintenanceModeEnabled: true,
@@ -32,19 +32,19 @@ export const photosResource = new pangolin.Resource("photos-chezmoi-sh", {
 });
 
 new pangolin.Target(
-	"photos-chezmoi-sh-target",
+	"streaming-chezmoi-sh-target",
 	withHealthcheck.http(
 		{
-			resourceId: photosResource.resourceId,
+			resourceId: streamingResource.resourceId,
 			siteId: lungmenSiteId,
-			ip: "immich-server.immich.svc.cluster.local",
-			port: 2283,
+			ip: "jellyfin.jellyfin.svc.cluster.local",
+			port: 80,
 		},
-		{ path: "/api/server/ping" },
+		{ path: "/health" },
 	),
-	{ parent: photosResource },
+	{ parent: streamingResource },
 );
 
-edgeAccess.apply("photos-chezmoi-sh", photosResource.resourceId, {
-	parent: photosResource,
+edgeAccess.apply("streaming-chezmoi-sh", streamingResource.resourceId, {
+	parent: streamingResource,
 });

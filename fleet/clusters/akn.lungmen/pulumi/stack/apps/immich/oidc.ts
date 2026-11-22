@@ -9,7 +9,7 @@ import * as vault from "@pulumi/vault";
 // client already exists and is already in use by the live Immich deployment,
 // whose ExternalSecret reads client_id/client_secret straight from Vault
 // (lungmen.akn/immich/auth/oidc-client). Not group-restricted.
-export const immichOidcClient = new pocketid.OidcClient(
+const immichOidcClient = new pocketid.OidcClient(
 	"immich",
 	{
 		clientId: "b0b33757-fe5e-4e9b-be42-9fec81d2affb",

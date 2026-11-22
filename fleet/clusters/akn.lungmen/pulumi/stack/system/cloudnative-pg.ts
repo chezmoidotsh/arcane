@@ -34,5 +34,3 @@ new vault.kv.SecretV2(
 	{ parent: component },
 );
 
-export const garageBackupBucket = component.bucketName;
-export const garageBackupAccessKeyId = component.accessKeyId;

@@ -9,7 +9,7 @@ import * as vault from "@pulumi/vault";
 // client already exists and is already in use by the live Forgejo deployment,
 // whose ExternalSecret reads client_id/client_secret straight from Vault
 // (lungmen.akn/forgejo/auth/oidc-client). Not group-restricted.
-export const forgejoOidcClient = new pocketid.OidcClient(
+const forgejoOidcClient = new pocketid.OidcClient(
 	"forgejo",
 	{
 		clientId: "624217ac-b163-4f25-847a-9a2c645dc22d",
