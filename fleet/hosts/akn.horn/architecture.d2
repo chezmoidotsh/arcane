@@ -5,262 +5,137 @@ vars: {
   }
 }
 
-...@"../../../docs/assets/d2/styles.architecture.d2"
+...@"../../../docs/assets/d2/styles.blueprint.d2"
 
-explanation: |md
-  # kazimierz.akn Architecture
-
-  This document describes the architecture \
-  of the kazimierz.akn platform in a visual way \
-  with all the components and how they \
-  interact with each other.
-
-  kazimierz.akn is a **VPS-based public access gateway** \
-  powered by Pangolin that provides secure, easy-to-use \
-  access to selected homelab services. It is designed as a \
-  sacrificial edge layer that can be compromised without \
-  impacting internal infrastructure.
-| {
-  near: top-left
-}
+direction: right
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
 # │                              External Objects                              │
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
-# │   These objects represent resources external to the kazimierz.akn VPS     │
-# │   but which interact with or are used by it.                               │
-# │   They include networks, backend clusters, and third-party services        │
-# │   essential for the proper functioning, connectivity, security,            │
-# │   or management of the gateway.                                            │
+# │   Who reaches horn.akn (visitors, the tailnet), what it tunnels to (the    │
+# │   Kubernetes clusters), and the external services it depends on.           │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Networks
+internet: {
+  class: network
+  label.near: bottom-center
 
-internet: {class: network}
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# External Services
-
-pocket-id: {
-  class: [application]
-  label: Pocket-ID\n(auth.chezmoi.sh)
-  icon: assets/icons/apps/pocket-id.svg
-  link: https://pocket-id.org/
-  tooltip: OIDC/OAuth2 SSO provider for authentication
-}
-
-mailjet: {
-  class: [application]
-  label: Mailjet
-  icon: assets/icons/platform/mailjet.svg
-  link: https://www.mailjet.com/
-  tooltip: Transactional email service for notifications
-}
-
-
-cloudflare: {
-  class: [application]
-  label: Cloudflare
-  icon: assets/icons/platform/cloudflare.svg
-  link: https://www.cloudflare.com/
-  tooltip: DNS API used only for ACME DNS-01 validation (wildcard certificate)
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Backend Clusters
-
-rhodes·akn: {
-  class: namespace
-  label: rhodes·akn
-
-  style.fill-pattern: none
-
-  newt: {
-    class: [application]
-    label: Newt
-    icon: assets/icons/system/pangolin.svg
-    link: https://pangolin.net/
-    tooltip: Pangolin site node (Kubernetes pod) providing secure tunnel to Pocket-ID and Grafana
+  visitors: {
+    class: platform
+    label: Visitors
   }
 
-  services: {
-    class: [application]
-    label: Backend Services\n(Pocket-ID, Grafana)
-    icon: assets/icons/platform/kubernetes.svg
-    tooltip: Services exposed through Newt
+  pocketid: {
+    class: platform
+    label: "Pocket-Id\n(auth.chezmoi.sh)"
+    icon: assets/icons/apps/pocket-id.blueprint.svg
+  }
+
+  mailjet: {
+    class: platform
+    label: Mailjet
+    icon: assets/icons/platform/mailjet.blueprint.svg
+  }
+
+  letsencrypt: {
+    class: platform
+    label: Let's Encrypt
+    icon: assets/icons/platform/letsencrypt.blueprint.svg
+  }
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
   }
 }
 
-lungmen·akn: {
-  class: namespace
-  label: lungmen·akn
+tailnet: {
+  class: network
+  label.near: bottom-center
 
-  style.fill-pattern: none
-
-  newt: {
-    class: [application]
-    label: Newt
-    icon: assets/icons/system/pangolin.svg
-    link: https://pangolin.net/
-    tooltip: Pangolin service node providing secure tunnel to backend services
+  operator: {
+    class: hardware
+    label: "Operator machine\n(deploys, SSH)"
+    icon: assets/icons/platform/tailscale.blueprint.svg
   }
 
-  services: {
-    class: [application]
-    label: Backend Services\n(Jellyfin, Immich, etc.)
-    icon: assets/icons/platform/kubernetes.svg
-    tooltip: Home applications exposed through Newt
+  pulumi: {
+    class: hardware
+    label: "Pulumi stacks\n(clusters)"
+    icon: assets/icons/platform/tailscale.blueprint.svg
   }
 }
 
-
+clusters: {
+  class: hardware
+  label: "Kubernetes clusters\n(Newt + services)"
+  icon: assets/icons/system/kubernetes.blueprint.svg
+}
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
-# │                           kazimierz.akn VPS                                │
+# │                                  horn.akn                                  │
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
-# │   This section describes the VPS-based gateway running Pangolin,           │
-# │   serving as a sacrificial edge layer for secure internet access to        │
-# │   homelab services. The VPS is designed to be compromisable without        │
-# │   affecting critical infrastructure.                                       │
+# │   The Pangolin stack. Traefik shares the network namespace of Gerbil, so   │
+# │   Gerbil owns the public ports 80 and 443.                                 │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
-vps: {
-  label: kazimierz.akn\n(OCI A1 · NixOS)
-  class: namespace
+horn·akn: {
+  class: project
+  label: horn.akn
 
-  style.fill-pattern: none
-
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # Proxy Stack Components
-
-  proxy-stack: {
-    label: Proxy Stack
-    class: namespace
-    style.fill-pattern: none
-
-    pangolin: {
-      class: [application]
-      label: Pangolin
-      icon: assets/icons/system/pangolin.svg
-      link: https://pangolin.net/
-      tooltip: Tunneled reverse proxy controller with web dashboard
-    }
-
-    gerbil: {
-      class: [application]
-      label: Gerbil
-      icon: assets/icons/system/pangolin.svg
-      link: https://pangolin.net/
-      tooltip: WireGuard tunnel manager (site/client tunnels)
-    }
-
-    traefik: {
-      class: [application]
-      label: Traefik
-      icon: assets/icons/system/traefik.svg
-      link: https://traefik.io/
-      tooltip: HTTP reverse proxy with automatic Let's Encrypt SSL
-    }
-
-    error-pages: {
-      class: [application]
-      label: error-pages
-      tooltip: Branded HTTP error pages served through Traefik
-    }
+  traefik: {
+    class: application-system
+    label: Traefik
+    icon: assets/icons/system/traefik.blueprint.svg
   }
 
+  gerbil: {
+    class: application
+    label: Gerbil
+    icon: assets/icons/system/pangolin.blueprint.svg
+  }
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # Infrastructure Components
+  pangolin: {
+    class: application
+    label: Pangolin
+    icon: assets/icons/system/pangolin.blueprint.svg
+  }
+
+  errorpages: {
+    class: application-system
+    label: error-pages
+  }
 
   tailscale: {
-    class: [application-system]
-    label: Tailscale
-    icon: assets/icons/platform/tailscale.svg
-    link: https://tailscale.com/
-    tooltip: Mesh VPN for secure SSH access and VPS administration
-  }
-
-  nixos: {
-    class: [application-system]
-    label: NixOS
-    link: https://nixos.org/
-    tooltip: Declarative OS installed with nixos-anywhere, deployed with nixos-rebuild from an operator machine
+    class: application-system
+    label: "Tailscale\n(serve)"
+    icon: assets/icons/platform/tailscale.blueprint.svg
   }
 }
-
-
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
 # │                                Connections                                 │
-# ├────────────────────────────────────────────────────────────────────────────┤
-# │ Desc:                                                                      │
-# │   This section describes the various connections between the VPS           │
-# │   and external systems (internet, backend cluster, external services).     │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Internet to VPS Flow
+# Public traffic.
+internet.visitors -> horn·akn.traefik: "Browse exposed services (HTTPS)" {target-arrowhead: 443; class: [connect-from-internet]}
+horn·akn.traefik -> horn·akn.pangolin: "Route and authorize (HTTP)" {target-arrowhead: 3001; class: [connect-local]}
+horn·akn.traefik -> horn·akn.errorpages: "Themed error pages (HTTP)" {target-arrowhead: 8080; class: [connect-local]}
 
-internet -> vps.proxy-stack.traefik: |md
-    HTTP (80)
-    HTTPS (443)
-  | { class: [connect-from-internet] }
+# Tunnels.
+horn·akn.gerbil -> horn·akn.pangolin: "Sync configuration (HTTP)" {target-arrowhead: 3001; class: [connect-local]}
+clusters -> horn·akn.gerbil: "WireGuard site tunnel" {target-arrowhead: "51820/udp"; class: [connect-vpn]}
 
+# Dependencies.
+horn·akn.pangolin -> internet.pocketid: "Authenticate users (OIDC)" {target-arrowhead: 443; class: [connect-to-internet]}
+horn·akn.pangolin -> internet.mailjet: "Send emails (SMTP)" {target-arrowhead: 465; class: [connect-to-internet]}
+horn·akn.traefik -> internet.letsencrypt: "Get certificate (ACME)" {target-arrowhead: 443; class: [connect-to-internet]}
+horn·akn.traefik -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}
 
-# ──────────────────────────────────────────────────────────────────────────────
-# VPS to External Services
-
-vps.proxy-stack.pangolin -> pocket-id: "OIDC Authentication\n(auth.chezmoi.sh:443)" {class: [connect-to-internet]}
-
-vps.proxy-stack.pangolin -> mailjet: "SMTP\n(in-v3.mailjet.com:465)" {class: [connect-to-internet]}
-
-vps.proxy-stack.traefik -> internet: |md
-    Let's Encrypt
-    (acme-v02.api.letsencrypt.org:443)
-  | {class: [connect-to-internet]}
-
-vps.proxy-stack.traefik -> cloudflare: |md
-    DNS-01 wildcard (*.chezmoi.sh)
-    (api.cloudflare.com:443)
-  | {class: [connect-to-internet]}
-
-vps.proxy-stack.traefik -> vps.proxy-stack.error-pages: "Error pages"
-
-vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [connect-to-internet]}
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Proxy Stack Internal Connections
-
-vps.proxy-stack.traefik -> vps.proxy-stack.gerbil: "Proxied Traffic"
-
-vps.proxy-stack.gerbil -> vps.proxy-stack.pangolin: "Configuration Sync\n(API)"
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Infrastructure Connections
-
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Pangolin to Backend Cluster (WireGuard Tunnel)
-
-vps.proxy-stack.gerbil -> lungmen·akn.newt: |md
-    WireGuard Site Tunnel
-    (UDP 51820)
-  | { class: [connect-from-vpn-backbone] }
-
-vps.proxy-stack.gerbil -> rhodes·akn.newt: |md
-    WireGuard Site Tunnel
-    (UDP 51820)
-  | { class: [connect-from-vpn-backbone] }
-
-rhodes·akn.newt -> rhodes·akn.services: "Proxied Requests"
-
-lungmen·akn.newt -> lungmen·akn.services: "Proxied Requests"
+# Administration over the tailnet.
+tailnet.pulumi -> horn·akn.tailscale: "Manage resources (Integration API)" {target-arrowhead: 443; class: [connect-management]}
+horn·akn.tailscale -> horn·akn.pangolin: "Forward (HTTP)" {target-arrowhead: 3003; class: [connect-local]}
+tailnet.operator -> horn·akn: "Deploy and administer (SSH)" {target-arrowhead: 22; class: [connect-management]}

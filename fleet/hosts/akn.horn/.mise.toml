@@ -21,19 +21,16 @@
 #     aarch64-linux builder
 # =============================================================================
 
+# PNG, not SVG: GitHub renders repository SVGs too small and sandboxes them (no icons).
 [tasks."diagram:generate"]
-description = "Generate the architecture diagram for horn.akn"
-# Converts the D2 diagram source to SVG format for documentation
-# Input: architecture.d2 (diagram-as-code source)
-# Output: assets/architecture-{light,dark}.svg (embedded in the README)
-run = [
-  "d2 --theme 0 architecture.d2 assets/architecture-light.svg",
-  "d2 --theme 200 architecture.d2 assets/architecture-dark.svg",
-]
+description = "Generate the architecture diagram of horn.akn"
 dir = "{{ config_root }}"
+outputs = ["assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 assets/architecture.png"
+sources = ["architecture.d2"]
 
 [tasks."nixos:_require-nix"]
 hide = true
 description = "Fail with a clear message when nix is not installed"
 # No fallback on purpose: these tasks are destructive, they must not run through another path.
-run = 'command -v nix >/dev/null || { echo "nix is required (https://nixos.org/download), see docs/guides/Initialiser-Kazimierz.md" >&2; exit 1; }'
+run = 'command -v nix >/dev/null || { echo "nix is required (https://nixos.org/download), see docs/guides/Initialiser-Horn.md" >&2; exit 1; }'

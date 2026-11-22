@@ -1,287 +1,200 @@
-<h1 align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
-      <img alt="Stylized letter 'K' with a futuristic font and a subscript 12, representing Kazimierz·AKN branding" src="./assets/logo.light.svg" width="200">
-  </picture>
-</h1>
+<p align="center">
+  <img alt="Horn, logo animé" src="./assets/logo.webp" height="150">
+</p>
 
-<h4 align="center">Horn·AKN (formerly Kazimierz·AKN) - Public Access Gateway with Pangolin</h4>
+<h1 align="center">「horn.akn」</h1>
 
-<div align="center">
+<p align="center"><strong>VPS Oracle Cloud — la passerelle d'accès public du homelab</strong></p>
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../../LICENSE)
+<p align="center">
+  <img alt="host: OCI Always Free A1" src="https://img.shields.io/badge/host-OCI_Always_Free_A1-F80000?logo=oracle&logoColor=white">
+  <img alt="os: NixOS" src="https://img.shields.io/badge/os-NixOS-5277C3?logo=nixos&logoColor=white">
+  <img alt="arch: aarch64-linux" src="https://img.shields.io/badge/arch-aarch64--linux-blue">
+  <img alt="config: NixOS flake" src="https://img.shields.io/badge/config-NixOS_flake-5277C3?logo=nixos&logoColor=white">
+  <img alt="deploy: mise" src="https://img.shields.io/badge/deploy-mise_%2B_nixos--rebuild-orange">
+</p>
 
-<a href="#about">About</a> · <a href="#services-overview">Services Overview</a> ·
-<a href="#current-project-structure">Project Structure</a> · <a href="#security-considerations">Security
-Considerations</a> · <a href="#license">License</a>
+<p align="center">
+  <a href="#services">Services</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#le-chemin-des-requêtes">Chemin des requêtes</a> ·
+  <a href="#accès">Accès</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#déploiement">Déploiement</a> ·
+  <a href="#contribuer">Contribuer</a> ·
+  <a href="#pour-aller-plus-loin">Pour aller plus loin</a>
+</p>
 
-</div>
+Horn est la passerelle par laquelle une partie du homelab (photos, streaming, tableau de bord d'observabilité,
+authentification) est joignable depuis Internet, pour la famille et les proches. C'est un VPS unique, volontairement
+hors de Kubernetes, qui reste le seul point exposé : il peut être compromis, détruit et recréé sans que le reste de
+l'infrastructure soit atteint, puisque les services restent chez eux et ne sont joints qu'à travers un tunnel WireGuard
+([ADR-008](../../../docs/decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md),
+[ADR-016](../../../docs/decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).
 
----
+## Services
 
-## About
-
-Kazimierz·AKN is a **public access gateway** powered by [Pangolin](https://digpangolin.com/) and designed to provide
-secure, easy-to-use access to selected homelab services for family and friends. Named after the knight nation of
-Kazimierz from Arknights, this project documents the setup and configuration of a VPS-based security gateway that serves
-as the first line of defense for exposing services to the internet.
-
-### Architecture Overview
-
-The solution is a **single VPS** (no Kubernetes) running Pangolin with integrated security:
-
-**VPS Layer (Oracle Cloud Infrastructure - eu-paris-1, Always Free ARM)**:
-
-- **Pangolin**: Tunneled reverse proxy controller with web dashboard
-- **Gerbil**: WireGuard tunnel manager (site/client tunnels)
-- **Traefik**: HTTP reverse proxy with automatic Let's Encrypt SSL
-- **Tailscale**: Mesh VPN for secure SSH access and monitoring
-- **NixOS**: Installed over a bootstrap Ubuntu image with `nixos-anywhere`, fully declarative (ADR-016); runs the
-  containers above and is deployed with `nixos-rebuild` from an operator machine
-- **Pulumi**: Provisions the OCI instance, network (VCN/NSG), and DNS records the VPS runs on
-
-> **Note**: The instance/network itself (compartment, VCN, instance, DNS) is provisioned by a separate Pulumi stack --
-> see `pulumi/`. No WAF/IPS layer runs on Traefik; Pangolin's own access controls (including its
-> GeoIP-based geoblocking) provide edge protection instead (see
-> [modules/pangolin.nix](./nix/modules/pangolin.nix)).
-
-**Backend Cluster Connection**:
-
-- **Newt**: Pangolin service node running on lungmen.akn cluster
-- **WireGuard Site Tunnel**: Secure, encrypted connection between Gerbil (VPS) and Newt (cluster) via UDP 51820
-- **Backend Services**: Applications (Jellyfin, Immich, etc.) proxied through Newt
-- **Client Tunnels**: Optional WireGuard client connections via UDP 21820 for direct access
-
-**External Integrations**:
-
-- **auth.chezmoi.sh**: Pocket-ID SSO for authentication
-- **Mailjet**: SMTP for notifications and user communications
-
-This architecture provides:
-
-- **Simple access** for non-technical users (browser-only, no client installation required)
-- **Strong security** with automated SSL, GeoIP geoblocking, and Pangolin's own identity-aware access control
-- **Self-hosted control** with no third-party MITM risks (Cloudflare's only role is issuing the DNS-01 token for
-  wildcard TLS certs -- it never proxies traffic)
-- **Isolation** with the VPS as a sacrificial layer that can be compromised without impacting internal infrastructure
-- **Simple management** with no Kubernetes overhead on the edge
-- **Declarative configuration** with NixOS, versioned in Git and applied with `nixos-rebuild` (secrets encrypted with
-  SOPS + age)
-
-## Services Overview
-
-![Architecture diagram](./assets/architecture-dark.svg#gh-dark-mode-only)
-![Architecture diagram](./assets/architecture-light.svg#gh-light-mode-only)
-
----
-
-### VPS Components
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/system/pangolin.svg" alt="Pangolin Logo" width="120" align="left" style="margin-right: 16px;">
+<img src="../../../docs/assets/icons/system/pangolin.svg" alt="Pangolin" width="96" align="left" />
 
 ### [Pangolin](https://pangolin.net/)
 
-Self-hosted tunneled reverse proxy controller with web dashboard for account and tunnel management. Provides
-identity-aware access control and integrates with Gerbil for WireGuard tunnel orchestration.
+Contrôleur de la passerelle : il tient la liste des sites (les Newt des clusters) et des ressources publiées, décide qui
+a le droit d'y accéder et sert le tableau de bord sur `pangolin.chezmoi.sh`. La connexion au tableau de bord passe par
+Pocket-Id, et Pangolin envoie ses emails par Mailjet. Son Integration API, que les projets Pulumi des clusters
+interrogent pour déclarer leurs ressources, n'est jamais publique : elle n'est joignable que sur le tailnet.
 
-**\*Why this choice**: Distributed architecture (edge node on VPS + service node in cluster) provides secure
-connectivity without exposing backend infrastructure. Enterprise-grade security with OIDC integration and organization
-management.\*
+<br clear="all" />
 
-</div>
-</div>
+<img src="../../../docs/assets/icons/system/pangolin.svg" alt="Gerbil" width="96" align="right" />
 
-<br/><br/>
+### [Gerbil](https://github.com/fosrl/gerbil)
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/system/pangolin.svg" alt="Gerbil Logo" width="120" align="right" style="margin-left: 16px;">
+Gestionnaire WireGuard de la passerelle. Les Newt des clusters s'y connectent en UDP 51820 (tunnels de sites) et les
+clients Pangolin en UDP 21820 (tunnels clients, pour les ressources privées). Il génère sa clé et reçoit sa
+configuration de Pangolin.
 
-### Gerbil (WireGuard Manager)
+<br clear="all" />
 
-WireGuard tunnel manager that establishes secure site tunnels (UDP 51820) and client tunnels (UDP 21820). Auto-generates
-and manages WireGuard keys, syncing configuration with the Pangolin controller.
+## Architecture
 
-**\*Why this choice**: Native Pangolin component that handles all WireGuard complexity, enabling secure encrypted
-tunnels to backend services without manual key management.\*
+![Architecture de horn.akn](./assets/architecture.png)
 
-</div>
-</div>
+Tout le trafic public entre par Traefik, qui interroge Pangolin pour savoir où l'envoyer ; rien ne sort du VPS en clair,
+les requêtes autorisées rejoignent les clusters par le tunnel WireGuard de Gerbil. L'administration (déploiements, SSH,
+Integration API) ne passe que par le tailnet.
 
-<br/><br/>
+## Le chemin des requêtes
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/system/traefik.svg" alt="Traefik Logo" width="120" align="left" style="margin-right: 16px;">
+Un visiteur qui ouvre un service (`photos.chezmoi.sh`, `streaming.chezmoi.sh`, `o11y.chezmoi.sh` ou `auth.chezmoi.sh`)
+atteint les ports 80 et 443 du VPS. Ces ports sont publiés par le conteneur Gerbil, dont Traefik partage l'espace
+réseau. Traefik termine le TLS avec un certificat wildcard `chezmoi.sh` obtenu par un défi DNS-01 Cloudflare, redirige
+le HTTP vers HTTPS, et recharge toutes les 5 secondes sa configuration depuis Pangolin.
 
-### [Traefik](https://traefik.io/)
+Pangolin tranche ensuite : la ressource existe-t-elle, l'accès est-il autorisé. Les services qui gèrent eux-mêmes leur
+authentification (Pocket-Id, Grafana) sont publiés sans second contrôle au niveau de Pangolin. Si la requête est
+acceptée, Gerbil la transmet dans le tunnel WireGuard au Newt du bon cluster, qui la livre au service. Un nom qui ne
+correspond à aucune ressource reçoit une page 404 au thème de la maison (error-pages), jamais le message brut de
+Traefik. Certains services ne sont jamais publiés : n8n et le MCP d'observabilité ne répondent qu'à un appareil qui a le
+client Pangolin (ressources privées).
 
-Modern HTTP reverse proxy and load balancer with automatic Let's Encrypt SSL certificate management and dynamic routing
-configuration in front of Pangolin.
+## Accès
 
-**\*Why this choice**: Dynamic configuration updates without restarts, and native Let's Encrypt integration (HTTP-01
-per-domain by default, or a DNS-01 wildcard cert via Cloudflare). Well-suited for managing multiple domains with
-automated SSL.\*
+La passerelle écoute en public sur les ports TCP 80 et 443 et UDP 51820 et 21820, ouverts dans le pare-feu de l'hôte et
+dans le groupe de sécurité réseau (NSG) OCI. Le tableau de bord est sur `https://pangolin.chezmoi.sh`, et
+l'enregistrement DNS `*.chezmoi.sh` pointe sur le VPS : c'est lui la passerelle de tous les services exposés.
 
-</div>
-</div>
+La machine s'administre en SSH par le tailnet (`ssh root@horn-akn`, clé uniquement, connexions limitées à trois
+tentatives, `fail2ban` actif), Tailscale SSH étant aussi activé. Le port 22 est fermé dans le NSG tant que l'option
+Pulumi `unsecure` est à `false` : on ne l'ouvre que le temps d'une installation. L'Integration API de Pangolin est
+republiée sur le tailnet par `tailscale serve`, à l'adresse `https://horn-akn.<tailnet>.ts.net`, qui est la valeur de
+`pangolin:url` des projets Pulumi.
 
-<br/><br/>
+## Configuration
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/platform/tailscale.svg" alt="Tailscale Logo" width="120" align="left" style="margin-right: 16px;">
+Le VPS est une instance Always Free `VM.Standard.A1.Flex` (1 OCPU, 6 Go) d'`eu-paris-1`, provisionnée par Pulumi
+(`pulumi/`, projet `horn-akn`, pile `horn_akn.live`) : compartiment, VCN dual-stack, NSG, instance, enregistrements DNS
+Cloudflare, jeton DNS-01 de Traefik, clé d'enregistrement Tailscale, et côté Pangolin l'organisation `chezmoi-sh`, le
+fournisseur d'identité Pocket-Id et le rôle `Privileged`. Le compartiment parent `chezmoi.sh` et les groupes Pocket-Id
+`maison` et `famille` sont retrouvés par leur nom, sans lire la pile `chezmoi_sh`. L'instance démarre sur une image
+Ubuntu qui ne sert que d'amorce : NixOS s'installe par-dessus avec `nixos-anywhere`.
 
-### [Tailscale](https://tailscale.com/)
+Tout le système est dans le flake `nix/`, qui expose deux sorties : `horn-akn-aarch64` (production) et `horn-akn-x86_64`
+(VM de test Proxmox, pour répéter l'installation). `configuration.nix` porte la base (réseau, SSH, durcissement du
+noyau, Tailscale, sops-nix) et `modules/pangolin.nix` les quatre conteneurs Docker (Pangolin, Gerbil, Traefik,
+error-pages), dont les images sont épinglées par tag et digest. `modules/geoip.nix` rafraîchit chaque nuit les bases
+GeoLite2 (Country et ASN) que Pangolin utilise pour ses règles de pays et d'ASN ; elles viennent d'un miroir
+communautaire, sans compte MaxMind. Il n'y a pas de WAF ni d'IPS sur Traefik : le contrôle d'accès de Pangolin est la
+protection du bord.
 
-Mesh VPN providing secure SSH access for VPS administration and configuration. Also re-exposes Pangolin's Integration
-API on the tailnet via Tailscale Serve, so the Pulumi stacks can reach it without a public endpoint.
+Tout l'état de Pangolin vit dans `/var/lib/pangolin/config` sur le volume de démarrage (base SQLite, clé WireGuard de
+Gerbil, certificats, configuration de Traefik) : il n'y a pas de volume de données séparé, d'où la sauvegarde avant
+toute réinstallation. Docker publie les ports 80 et 443 sur l'adresse privée (VCN) de l'instance, l'**IP de liaison**
+(`pangolin.bindIp`), pour que `tailscale serve` garde le 443 de l'adresse du tailnet ; `mise run nixos:binding-ip`
+l'écrit à partir de la sortie Pulumi dans `nix/extra/etc/pangolin/binding-ip` (ignoré par Git), et le build refuse de
+continuer sans elle.
 
-**\*Why this choice**: Already used across the homelab infrastructure. Provides secure, zero-trust access for VPS
-management without exposing SSH to the public internet. Tailscale Serve keeps the Integration API off the public
-internet.\*
+Les secrets sont chiffrés avec SOPS + age dans `nix/secrets/kazimierz.sops.yaml` et déchiffrés par sops-nix avec la clé
+d'hôte SSH : `tailscale_authkey`, `pangolin_server_secret`, `pangolin_smtp_user`, `pangolin_smtp_pass` et
+`cloudflare_dns_api_token`. Le `pangolin_server_secret` signe les sessions et chiffre des données de la base : il ne
+change jamais, et se reprend à l'identique pour restaurer un état. Le jeton Cloudflare et la clé Tailscale sortent de la
+pile Pulumi, pas d'OpenBao, parce que la passerelle ne doit pas dépendre d'un cluster qu'elle sert à joindre.
+`nix/secrets/kazimierz.example.yaml` décrit chaque clé.
 
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-
-### [NixOS](https://nixos.org/)
-
-Declarative operating system, installed over the stock Ubuntu image with `nixos-anywhere` and updated with
-`nixos-rebuild switch` over the tailnet from an operator machine. The system, the Pangolin stack (as containers) and the
-hardening live in a flake; secrets are encrypted with SOPS + age and decrypted on the host by `sops-nix`.
-
-**\*Why this choice**: One tool for the OS and the services, with a one-command rollback to the previous generation.
-Same pattern as `exusiai.akn` ([ADR-016](../../../docs/decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).\*
-
-</div>
-</div>
-
-<br/><br/>
-
----
-
-### External Services
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/apps/pocket-id.svg" alt="Pocket-ID Logo" width="120" align="left" style="margin-right: 16px;">
-
-### [Pocket-ID](https://pocket-id.org/) (auth.chezmoi.sh)
-
-OIDC/OAuth2 authentication provider serving as the SSO solution for all publicly exposed services.
-
-**\*Why this choice**: This is the primary authentication method for all users accessing the gateway.\*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../../docs/assets/icons/platform/mailjet.svg" alt="Mailjet Logo" width="120" align="right" style="margin-left: 16px;">
-
-### [Mailjet](https://www.mailjet.com/)
-
-Transactional email service used by Pangolin for notifications and user communications.
-
-**\*Why this choice**: Reliable, cost-effective email delivery with excellent deliverability rates and EU data
-centers.\*
-
-</div>
-</div>
-
-<br/><br/>
-
----
-
-## Current Project Structure
-
-This project contains documentation and infrastructure-as-code (Pulumi and NixOS) for the Pangolin VPS gateway:
-
-```txt
-akn.horn/
-├── README.md                                   # This documentation
-├── architecture.d2                             # Architecture diagram source (D2 format)
-├── assets/                                     # Generated diagrams and assets
-│   ├── architecture-dark.svg                   # Dark theme architecture diagram
-│   └── architecture-light.svg                  # Light theme architecture diagram
-├── nix/                                        # NixOS flake (infrastructure-as-code)
-│   ├── flake.nix                               # Hosts: horn-akn-aarch64 (prod), horn-akn-x86_64 (test VM)
-│   ├── platforms/                              # Boot + disk layout: oci.a1.nix (prod, aarch64), proxmox.kvm.nix (test VM)
-│   ├── configuration.nix                       # Base system (network, SSH, hardening, Tailscale, sops)
-│   ├── modules/
-│   │   ├── pangolin.nix                        # Pangolin, Gerbil, Traefik and error-pages containers (Docker)
-│   │   └── geoip.nix                           # GeoLite2 database refresh
-│   └── secrets/                                # SOPS-encrypted host secrets (+ example template)
-└── pulumi/                                     # Provisions the OCI instance, network and DNS
-    └── stack/
-        ├── oci/                                # Compartment, VCN/NSG, instance, DNS records
-        ├── pangolin/                           # Pangolin dashboard OIDC IdP/org/role
-        └── pocket-id/                          # Pocket-ID side of the Pangolin SSO client
+```text
+nix/
+├── flake.nix              nixpkgs, disko, sops-nix, deux sorties (aarch64 prod, x86_64 test)
+├── configuration.nix      réseau, SSH, fail2ban, sysctl, Tailscale, sops
+├── platforms/             démarrage et disque : oci.a1.nix (prod), proxmox.kvm.nix (VM de test)
+├── modules/
+│   ├── pangolin.nix       Pangolin, Gerbil, Traefik, error-pages, tailscale serve
+│   └── geoip.nix          rafraîchissement des bases GeoLite2
+└── secrets/               kazimierz.sops.yaml (+ exemple)
 ```
 
-## Installation and Setup
+## Déploiement
 
-The OCI instance and network are provisioned first via the Pulumi stack in `pulumi/`. NixOS is then
-installed over the bootstrap image and managed with `nixos-rebuild` from then on:
+### Première installation
 
-```bash
-mise run nixos:oci:install ubuntu@<public-ip>   # first install or reinstall (DESTRUCTIVE: repartitions the boot volume)
-mise run nixos:oci:update                       # deploy a change (nixos-rebuild switch over the tailnet)
-mise run nixos:backup                           # hot backup of Pangolin's state, run it before any reinstall
-```
+La procédure complète, avec le dépannage, est dans le guide
+[Initialiser Horn](../../../docs/guides/Initialiser-Horn.md). En résumé :
 
-Nothing is applied automatically, on purpose (see
-[ADR-008](../../../docs/decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)). See
-[Initialiser Kazimierz](../../../docs/guides/Initialiser-Kazimierz.md) for the complete bootstrap procedure.
+1. Provisionner l'instance : `pulumi config set pangolin false` (les ressources Pangolin ont besoin de l'instance
+   qui n'existe pas encore), puis `pulumi preview` et `pulumi up` dans `pulumi/`. Ouvrir temporairement
+   le SSH avec `pulumi config set unsecure true`, et vérifier que `tag:svc-pangolin` existe dans l'ACL du tailnet et
+   qu'aucun nœud `horn-akn` ne traîne dans la console Tailscale (sinon le nouveau devient `horn-akn-1`, et le
+   `pangolin:url` des piles casse).
+2. Générer la clé d'hôte (`ssh-keygen -t ed25519` dans `nix/extra/etc/ssh/`), l'ajouter comme destinataire de
+   `nix/.sops.yaml`, puis créer `nix/secrets/kazimierz.sops.yaml` depuis l'exemple et le chiffrer avec `sops`.
+3. Sur l'instance Ubuntu, installer `cpio` (nécessaire à `nixos-anywhere`), puis lancer
+   `mise run nixos:oci:install ubuntu@<ip publique>`. Cette tâche **repartitionne le volume de démarrage** : elle évalue
+   le système, montre la dernière sauvegarde et demande confirmation avant d'effacer.
+4. Sur une installation neuve, ouvrir `https://pangolin.chezmoi.sh/auth/initial-setup` pour créer le compte
+   administrateur (le jeton est affiché une fois dans `docker logs pangolin`), créer une clé d'API, puis
+   `pulumi config rm pangolin && pulumi up` pour les ressources Pangolin, et refermer le SSH avec
+   `pulumi config set unsecure false && pulumi up`.
 
-## Security Considerations
+Pour réinstaller un hôte en service, restaurer d'abord l'état : `mise run nixos:backup` fait une sauvegarde à chaud
+(sans interruption, base SQLite copiée par son API de sauvegarde) dans `$KAZIMIERZ_BACKUP_DIR`, par défaut
+`~/.local/share/kazimierz.akn/backups`. L'archive contient des secrets en clair : la garder chiffrée au repos. Elle
+s'extrait dans `nix/extra/var/lib/pangolin/config` avant l'installation, avec le même `pangolin_server_secret`.
 
-> \[!WARNING] The VPS is designed to be **sacrificial** and potentially compromisable. It acts as a security buffer to
-> protect internal infrastructure.
+### Mises à jour
 
-### Authentication & Access Control
+`mise run nixos:oci:update` rafraîchit l'IP de liaison puis lance `nixos-rebuild switch` sur l'hôte, par le tailnet
+(`root@horn-akn` par défaut). Rien ne s'applique automatiquement. `nixos-rebuild --rollback` sur l'hôte revient à la
+génération précédente.
 
-- **SSO Integration**: All public services authenticate via Pocket-ID (auth.chezmoi.sh)
-- **Passkey-first**: Modern, phishing-resistant authentication for users
-- **Zero Trust**: Every request validated, no implicit trust
-- **Read-only modes**: Where applicable, services exposed with limited permissions
-- **SSH Access**: VPS management via Tailscale only, SSH never exposed to public internet
+### Vérifier un déploiement
 
-### Data & Secrets Protection
+- `tailscale status | grep horn-akn` : le nœud est sur le tailnet.
+- `ssh root@horn-akn 'systemctl status docker-pangolin docker-gerbil docker-traefik docker-error-pages pangolin-prepare pangolin-tailscale-serve'`
+  : tous les services sont actifs.
+- `ssh root@horn-akn 'tailscale serve status'` : l'Integration API est republiée sur le 443 du tailnet.
+- `curl -sI https://pangolin.chezmoi.sh | head -n1` : le tableau de bord répond avec un certificat valide.
+- Les sites (Newt) des deux clusters sont en ligne dans le tableau de bord.
+- `pulumi preview` dans les projets des clusters n'affiche aucun diff sur les ressources `pangolin`.
 
-- **No critical data on VPS**: VPS only stores proxy configuration, no application data (Pangolin's state lives on the
-  boot volume, back it up with `mise run nixos:backup`)
-- **Stateless proxy**: All requests proxied in real-time, no caching of sensitive data
-- **No secrets managed**: No secrets or credentials must be stored on the VPS _(or at least nothing too sensitive)_; the
-  few it needs are SOPS-encrypted in Git (sops-nix)
-- **End-to-end encryption**: TLS from internet → VPS, encrypted VPN → backend
+## Contribuer
 
-### Sacrificial Design Philosophy
+Pour valider une modification sans toucher à l'hôte : `mise run nixos:binding-ip`, puis, depuis `nix/`,
+`nix eval --raw ".#nixosConfigurations.horn-akn-aarch64.config.system.build.toplevel.drvPath"` (Nix s'exécute en
+natif ; les outils des tâches, `nixos-anywhere` et `nixos-rebuild`, sont épinglés par `nix/flake.lock`). Il ne valide
+que l'évaluation : une dérivation qui ne compile pas ne se voit qu'au build. `mise run nixos:e2e <user@host>` répète
+l'installation complète sur une VM de test Proxmox (x86_64), et **efface la cible**. Côté Pulumi, `pulumi preview` dans
+`pulumi/`.
 
-The VPS acts as a **security buffer** - designed to absorb and contain potential attacks without compromising critical
-homelab infrastructure. Even if fully breached:
+Les images des conteneurs sont à mettre à jour dans `nix/modules/pangolin.nix`, à un seul endroit. Le schéma
+d'architecture se modifie dans `architecture.d2`, puis `mise run diagram:generate` régénère `assets/architecture.png`, à
+commiter avec. Lancer `mise run lint` avant de pousser.
 
-- Backend cluster (lungmen.akn, ...) remains protected behind WireGuard tunnel (Pangolin ↔ Newt)
-- No sensitive data is exposed (everything proxied in real-time through Newt)
-- VPS can be destroyed and recreated from the bootstrap documentation (restore Pangolin's backup to keep its state)
-- No Kubernetes complexity means smaller attack surface and easier rebuilds
-- Newt provides additional isolation layer between internet and backend services
+## Pour aller plus loin
 
-## License
-
-This repository is licensed under the [Apache-2.0](../../../LICENSE).
-
-> \[!CAUTION] This is a personal project intended for my own use. Feel free to explore and use the code, but please note
-> that it comes with no warranties or guarantees. Use it at your own risk.
->
-> This VPS is specifically designed as a **sacrificial bastion** - it may be compromised as part of its security design
-> and should never contain critical data or direct access to sensitive systems.
+- [Initialiser Horn](../../../docs/guides/Initialiser-Horn.md) : la procédure d'installation complète, la
+  restauration de l'état et le dépannage.
+- [ADR-008](../../../docs/decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md) : pourquoi la passerelle
+  reste hors de Kubernetes.
+- [ADR-016](../../../docs/decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : pourquoi NixOS.
+- [Migration vers la flotte](../../../docs/migrations/MIGR-20261114-00-Migrer-vers-la-Flotte.md) : le renommage en
+  `horn.akn`.
+- [Nommage des machines](../../../docs/reference/Nommage-des-Machines-Reference.md) : d'où vient le nom `horn`.
+- [Référence IPAM](../../../docs/reference/IPAM-Reference.md) : le plan d'adressage du VCN OCI.
