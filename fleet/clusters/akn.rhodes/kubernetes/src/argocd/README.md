@@ -23,8 +23,8 @@ For more information, please refer to the [official documentation](https://argo-
 
 ArgoCD self-hosts on `rhodes.akn` (the hub pattern) and, like every other bootstrap-order component on this cluster
 (Cilium, OpenBao, ESO, cert-manager, Pocket-Id), it can't depend on ArgoCD to exist yet — see
-[Restaurer Rhodes](../../../../../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md). It's applied by hand as the last
-step of that chain, not synced automatically like a regular app:
+[Restaurer Rhodes](../../../../../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md). It's applied by hand as the
+last step of that chain, not synced automatically like a regular app:
 
 ```sh
 kubectl apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/argocd/
@@ -60,10 +60,10 @@ The deployment follows a hierarchical structure:
      - [`shoot.apps/applications.applicationset.yaml`](shoot.apps/applications.applicationset.yaml)
 
 3. **System Applications** — discovered by `system.applicationset.yaml` from every
-   `projects/<cluster>/src/infrastructure/kubernetes/*` directory that has a `kustomization.yaml`.
+   `fleet/clusters/<family>.<name>/kubernetes/dist/system/*` directory (rendered from `kubernetes/src/system/*`).
 
 4. **Business Applications** — discovered by `applications.applicationset.yaml` from every
-   `projects/<cluster>/src/apps/*` directory that has a `kustomization.yaml`.
+   `fleet/clusters/<family>.<name>/kubernetes/dist/apps/*` directory (rendered from `kubernetes/src/apps/*`).
 
 Here is a visual representation of the deployment hierarchy:
 
@@ -96,8 +96,8 @@ flowchart TD
 
 Individual apps and infrastructure components control their own ArgoCD sync policy via a per-directory
 `.application.patch` file (manual vs. automated sync — see
-[ADR-007](../../../../../../docs/archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)), not a folder naming
-convention.
+[ADR-007](../../../../../../docs/archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)), not a folder
+naming convention.
 
 ## 🚀 ArgoCD Bootstrap
 

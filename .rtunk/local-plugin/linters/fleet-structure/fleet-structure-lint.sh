@@ -19,10 +19,8 @@
 #
 # Rules:
 #   1. A system component present on two or more distinct clusters must have a
-#      catalog/kubernetes/<x>/ base. Both layouts are scanned during the
-#      migration: projects/<cluster>/src/infrastructure/kubernetes/<x>/ and
-#      fleet/clusters/<family>.<name>/kubernetes/src/system/<x>/. A cluster that
-#      exists in both layouts is counted once (rhodes.akn == akn.rhodes).
+#      catalog/kubernetes/<x>/ base (scanned under
+#      fleet/clusters/<family>.<name>/kubernetes/src/system/<x>/).
 #   2. Every folder under fleet/hosts and fleet/clusters is named
 #      core.<name> or akn.<name>.
 set -o nounset
@@ -33,17 +31,15 @@ if [[ ${1:-} == "--self-test" ]]; then
 	tmp="$(mktemp -d)"
 	trap 'rm -rf "${tmp}"' EXIT
 	mkdir -p "${tmp}/catalog/kubernetes/with-base"
-	for c in a.akn b.akn; do
-		mkdir -p "${tmp}/projects/${c}/src/infrastructure/kubernetes"/{no-base,with-base}
+	for c in akn.a akn.b; do
+		mkdir -p "${tmp}/fleet/clusters/${c}/kubernetes/src/system"/{no-base,with-base}
 	done
-	# c.akn exists in both layouts: counted once, so "only-here" is not shared.
-	mkdir -p "${tmp}/projects/c.akn/src/infrastructure/kubernetes/only-here" \
-		"${tmp}/fleet/clusters/akn.c/kubernetes/src/system/only-here"
+	mkdir -p "${tmp}/fleet/clusters/akn.c/kubernetes/src/system/only-here"
 	out="$("${self}" "${tmp}")" && {
 		echo >&2 "self-test: expected a failure for no-base"
 		exit 1
 	}
-	[[ ${out} == *"no-base: present on a.akn, b.akn but catalog/kubernetes/no-base/ is missing"* && ${out} == "projects/"* ]] || {
+	[[ ${out} == *"no-base: present on a.akn, b.akn but catalog/kubernetes/no-base/ is missing"* && ${out} == "fleet/clusters/"* ]] || {
 		echo >&2 "self-test: bad no-base report: ${out}"
 		exit 1
 	}
@@ -51,7 +47,7 @@ if [[ ${1:-} == "--self-test" ]]; then
 		echo >&2 "self-test: false positive: ${out}"
 		exit 1
 	}
-	rm -r "${tmp}/projects/a.akn/src/infrastructure/kubernetes/no-base"
+	rm -r "${tmp}/fleet/clusters/akn.a/kubernetes/src/system/no-base"
 	"${self}" "${tmp}" >/dev/null || {
 		echo >&2 "self-test: expected a pass"
 		exit 1
@@ -77,17 +73,10 @@ elif ! REPO_ROOT="$(git rev-parse --show-toplevel)"; then
 fi
 FAILURES=0
 
-# One "<component> <cluster> <relative dir>" line per system component; cluster is the
-# canonical <name>.<family>, so both layouts of a cluster collapse together.
+# One "<component> <cluster>" line per system component; cluster is the
+# canonical <name>.<family>.
 pairs="$(mktemp)"
 trap 'rm -f "${pairs}"' EXIT
-
-for dir in "${REPO_ROOT}"/projects/*/src/infrastructure/kubernetes/*/; do
-	[[ -d ${dir} ]] || continue
-	component="$(basename "${dir}")"
-	cluster="$(basename "${dir%/src/infrastructure/kubernetes/*}")"
-	echo "${component} ${cluster} ${dir#"${REPO_ROOT}"/}" >>"${pairs}"
-done
 
 for dir in "${REPO_ROOT}"/fleet/clusters/*/kubernetes/src/system/*/; do
 	[[ -d ${dir} ]] || continue

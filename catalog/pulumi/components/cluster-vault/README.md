@@ -39,8 +39,7 @@ Local and Tailscaled, and **defaults to enabled** for Remote (set `remote.enable
 - No CA certificate or token-reviewer JWT override is needed — Vault uses the local cluster's service-account token and
   CA automatically.
 
-**Usage example** (see
-[`projects/rhodes.akn`](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts)):
+**Usage example** (see [`fleet/clusters/akn.rhodes`](../../../../fleet/clusters/akn.rhodes/pulumi/stack/system/vault.ts)):
 
 ```typescript
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
@@ -312,7 +311,7 @@ pnpm test      # inside the pnpm workspace
 - [ADR-003 — OpenBao Path Naming Conventions](../../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
 - [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
 - [`catalog/pulumi/README.md`](../../README.md) — workspace / `file:` protocol rationale
-- Live consumers: [`rhodes.akn` (Local)](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts),
+- Live consumers: [`rhodes.akn` (Local)](../../../../fleet/clusters/akn.rhodes/pulumi/stack/system/vault.ts),
   [`lungmen.akn` (Remote)](../../../../fleet/clusters/akn.lungmen/pulumi/stack/system/vault.ts)
 
 ## License

@@ -11,8 +11,6 @@
 #
 # Arguments:
 #   app-path    Path to the application directory or yaml file.
-#               Format: projects/<cluster>/src/apps/<application>
-#               Format: projects/<cluster>/src/infrastructure/kubernetes/<app>
 #               Format: fleet/clusters/<family>.<name>/kubernetes/src/{apps,system}/<app>
 #
 # Options:

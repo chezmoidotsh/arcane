@@ -16,10 +16,9 @@ guides propres aux composants, [Restaurer OpenBao](Restaurer-OpenBao.md) et
 ## Avant de commencer
 
 Outils : `omnictl`, `kubectl`, `s3cmd`, `kustomize`, `ksops`, `cilium` et `pulumi`. `mise install`, lancé dans
-`projects/rhodes.akn/`, installe ceux que `mise` gère. Les tâches `dr:openbao:*` et `dr:pocket-id:*` utilisées par les
-deux guides de composants sont définies dans
-[`.mise.toml`](../../../projects/rhodes.akn/docs/disaster-recovery/.mise.toml) de
-`projects/rhodes.akn/docs/disaster-recovery/` : elles ne sont disponibles que depuis ce dossier.
+`fleet/clusters/akn.rhodes/`, installe ceux que `mise` gère. Les tâches `dr:openbao:*` et `dr:pocket-id:*` utilisées par les
+deux guides de composants sont définies dans [`.mise.toml`](../../../fleet/clusters/akn.rhodes/.mise.toml) de
+`fleet/clusters/akn.rhodes/` : elles ne sont disponibles que depuis ce dossier.
 
 Accès et états requis :
 
@@ -27,7 +26,7 @@ Accès et états requis :
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Accès à Omni (`omnictl config new` ou `add`) | Provisionner le cluster à l'étape 1.                                                                                                                  |
 | `SOPS_AGE_KEY_FILE` valide                   | Déchiffrer chaque secret `sops/` appliqué dans la chaîne (`external-dns/sops`, `vault/sops`, `pocket-id/sops`, `argocd/sops`).                        |
-| Accès à la stack Pulumi `rhodes-akn-infra`   | `pulumi login` fait et stack sélectionnée, pour les `pulumi up` des étapes 3 et 7. Il faut aussi l'accès à la stack Pulumi de `chezmoi.sh` (étape 3). |
+| Accès à la stack Pulumi `rhodes-akn`         | `pulumi login` fait et stack sélectionnée, pour les `pulumi up` des étapes 3 et 7. Il faut aussi l'accès à la stack Pulumi de `chezmoi.sh` (étape 3). |
 | Token root d'OpenBao                         | Récupéré à l'avance dans le gestionnaire de secrets personnel : il sert aux étapes 5 et 7. Il n'est consigné nulle part dans le dépôt.                |
 
 Exporter le contexte `kubectl` du nouveau cluster une fois ; les commandes suivantes se copient ensuite telles quelles :
@@ -46,7 +45,7 @@ Cilium s'installe en deux temps. Talos pose sa base (DaemonSet, opérateur) auto
 du template de cluster. Le reste de sa configuration (annonces L2, pool d'IP du LoadBalancer, `GatewayClass`,
 `NetworkPolicy`) est appliqué à la main à l'étape 2.
 
-Appliquer `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml` avec `omnictl`, en suivant la
+Appliquer `fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml` avec `omnictl`, en suivant la
 [procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) jusqu'à l'étape
 8 (kubeconfig et vérification du CNI). Les étapes 9 et 10 de cette procédure (identité Proxmox, CSI et CCM)
 correspondent aux étapes 2 et 3 du présent guide, et sa
@@ -84,17 +83,17 @@ kubectl --context ${CLUSTER_CONTEXT} label namespace proxmox-system pod-security
 Appliquer ensuite chaque application, une à la fois :
 
 ```sh
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/cilium/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/proxmox/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/cert-manager/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/cloudnative-pg/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/external-secrets/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/external-dns/
 
-kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops \
+kustomize build --enable-alpha-plugins --enable-exec fleet/clusters/akn.rhodes/kubernetes/src/system/external-dns/sops \
   | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/system/cilium/
 ```
 
 Notes sur ce bloc :
@@ -109,7 +108,7 @@ Notes sur ce bloc :
   a échoué la première fois. Les `Gateway` et le `Certificate` wildcard vivent dans ce même dossier (la Gateway API de
   Cilium n'a pas de Pod dédié par Gateway : le plan de données est l'Envoy embarqué dans `cilium-agent`, bloqué dans le
   namespace `kube-system` de cette release Helm sans valeur de chart pour le déplacer ; voir
-  `projects/rhodes.akn/src/infrastructure/kubernetes/README.md`). Or le `Certificate` a besoin de la CRD de
+  `fleet/clusters/akn.rhodes/kubernetes/src/system/README.md`). Or le `Certificate` a besoin de la CRD de
   cert-manager, absente à la première passe. La seconde passe ne change rien à ce qui est déjà réconcilié (même field
   manager, contenu inchangé). Avec `--server-side --force-conflicts`, elle ne répète pas la micro-coupure de mise à jour
   progressive de la première passe : celle-ci était un transfert unique de propriété de field manager depuis les
@@ -189,7 +188,7 @@ kubectl --context ${CLUSTER_CONTEXT} create namespace vault --dry-run=client -o 
 kubectl --context ${CLUSTER_CONTEXT} create namespace pocket-id --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 kubectl --context ${CLUSTER_CONTEXT} create namespace o11y --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
-cd projects/rhodes.akn/src/infrastructure/pulumi
+cd fleet/clusters/akn.rhodes/pulumi
 pulumi config set recovery true
 pulumi up --refresh --parallel 15
 ```
@@ -285,7 +284,7 @@ celui de l'étape 5 :
 export VAULT_ADDR=http://localhost:8200   # ou https://vault.chezmoi.sh si la Gateway et le certificat sont déjà en place
 read -rs -p "Token root : " VAULT_TOKEN && export VAULT_TOKEN   # saisie masquée, hors historique du shell
 
-cd projects/rhodes.akn/src/infrastructure/pulumi
+cd fleet/clusters/akn.rhodes/pulumi
 pulumi config set recovery false
 pulumi up --refresh --parallel 15
 ```
@@ -310,12 +309,12 @@ Le namespace `argocd` n'est livré par aucun fichier de `dist/argocd/` (l'`Appli
 
 ```sh
 kubectl --context ${CLUSTER_CONTEXT} create namespace argocd --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/argocd/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/argocd/
 
-kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/argocd/sops \
+kustomize build --enable-alpha-plugins --enable-exec fleet/clusters/akn.rhodes/kubernetes/src/argocd/sops \
   | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f projects/rhodes.akn/src/bootstrap.applications.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml
 ```
 
 ArgoCD s'auto-héberge sur `rhodes.akn` (modèle hub, voir la
@@ -325,7 +324,7 @@ lieu d'en être une dépendance, et son propre `ExternalSecret` OIDC a besoin qu
 
 Une fois l'`Application` `seed` en `Synced`/`Healthy`, les ApplicationSets `applications` et `system` d'ArgoCD prennent
 le relais : `applications` découvre chaque dossier de `dist/apps/*`, `system` chaque dossier de
-`src/infrastructure/kubernetes/*` (voir `projects/rhodes.akn/src/argocd/shoot.apps/`), y compris tout ce qui vient
+`src/infrastructure/kubernetes/*` (voir `fleet/clusters/akn.rhodes/kubernetes/src/argocd/shoot.apps/`), y compris tout ce qui vient
 d'être appliqué à la main, et les réconcilient par GitOps à partir de là. Aucun `kubectl apply` manuel supplémentaire ne
 devrait être nécessaire.
 

@@ -38,7 +38,7 @@
 # HOW TO CLONE
 # ------------
 # 1. Copy to:
-#      projects/<cluster>/src/infrastructure/omni/<name>.clustertemplate.yaml
+#      fleet/clusters/<family>.<name>/omni/<name>.clustertemplate.yaml
 # 2. Override at minimum in the copy:
 #      Cluster.name                     e.g. lungmen-akn
 #      kubernetes.version               within the Talos support matrix above
@@ -60,8 +60,7 @@
 #    "yaml: construct errors: ... expected 4 elements node, got N".
 # 6. `scripts/omni:template:lint` checks every per-cluster template's
 #    podSubnets/serviceSubnets/clusterDNS fall within ADR-014's 172.16.0.0/12
-#    range; it runs in CI on any change under fleet/clusters/*/omni/ (and
-#    projects/*/src/infrastructure/omni/ for a cluster not migrated yet).
+#    range; it runs in CI on any change under fleet/clusters/*/omni/.
 #
 # SHA PINNING
 # -----------

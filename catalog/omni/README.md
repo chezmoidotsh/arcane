@@ -76,7 +76,7 @@ online, authenticated, state-changing operation and does not belong in a per-clu
 **Drift check (online, read-only, manual):**
 
 ```sh
-omni:drift:check                    # machine classes + every fleet/clusters/*/omni/ and projects/*/src/infrastructure/omni/ template
+omni:drift:check                    # machine classes + every fleet/clusters/*/omni/ template
 omni:drift:check --machineclasses   # machine classes only
 omni:drift:check --templates        # cluster templates only
 ```

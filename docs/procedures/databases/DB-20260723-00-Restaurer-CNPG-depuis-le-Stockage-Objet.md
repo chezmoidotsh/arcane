@@ -49,9 +49,9 @@ Exporter ces variables une fois ; toutes les commandes suivantes se copient ensu
 ```sh
 export CLUSTER_CONTEXT=<contexte kubectl du cluster cible>           # ex. admin@rhodes.akn
 export NAMESPACE=<namespace du cluster CNPG>                         # ex. vault
-export CLUSTER_MANIFEST=<manifeste du Cluster à restaurer>           # ex. projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml
-export OBJECTSTORE_MANIFEST=<manifeste de l'ObjectStore>             # ex. projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml
-export SCHEDULEDBACKUP_MANIFEST=<manifeste du ScheduledBackup>       # ex. projects/rhodes.akn/src/apps/vault/cnpg.scheduledbackup.yaml
+export CLUSTER_MANIFEST=<manifeste du Cluster à restaurer>           # ex. fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.cluster.yaml
+export OBJECTSTORE_MANIFEST=<manifeste de l'ObjectStore>             # ex. fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.objectstore.yaml
+export SCHEDULEDBACKUP_MANIFEST=<manifeste du ScheduledBackup>       # ex. fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.scheduledbackup.yaml
 export CLUSTER_NAME=<metadata.name du Cluster>                       # le nom choisi à l'étape 3 si le cluster est renommé
 ```
 
@@ -85,10 +85,10 @@ s'applique avant de supposer l'un ou l'autre chemin. D'après
 des clusters l'obtiennent de Vault par un `ExternalSecret` : le secret existe une fois ESO déployé et synchronisé, sans
 autre action que de confirmer qu'ESO est sain. `rhodes.akn` (le cluster de plateforme, qui ne peut pas dépendre de Vault
 pour ses propres identifiants de backup : dépendance circulaire) l'obtient d'un `Secret` que la stack Pulumi
-`rhodes-akn-infra` écrit directement dans le cluster. L'appliquer une fois le namespace cible créé :
+`rhodes-akn` écrit directement dans le cluster. L'appliquer une fois le namespace cible créé :
 
 ```sh
-cd projects/rhodes.akn/src/infrastructure/pulumi && pulumi up --refresh --parallel 15
+cd fleet/clusters/akn.rhodes/pulumi && pulumi up --refresh --parallel 15
 ```
 
 Les procédures de reprise après sinistre d'[OpenBao](../../plan-de-reprise/brouillon/Restaurer-OpenBao.md) et de
@@ -174,7 +174,7 @@ spec:
 > récupéré, qui identifie un autre flux d'archive, déjà clos.
 
 Pour les appelants OpenBao et Pocket-Id de `rhodes.akn`,
-`projects/rhodes.akn/docs/disaster-recovery/.mise/tasks/dr/cnpg/patch-recovery-source` (tâche
+`fleet/clusters/akn.rhodes/.mise/tasks/dr/cnpg/patch-recovery-source` (tâche
 `dr:cnpg:patch-recovery-source`, encapsulée à son tour par `dr:openbao:patch-recovery` et `dr:pocket-id:patch-recovery`)
 automatise toute cette étape, y compris le décodage et la génération des ULID. Elle modifie le fichier uniquement et
 n'exécute aucun `kubectl apply`. Cette tâche est locale à ce dossier, contrairement à `cnpg:backup:latest` qui vaut pour

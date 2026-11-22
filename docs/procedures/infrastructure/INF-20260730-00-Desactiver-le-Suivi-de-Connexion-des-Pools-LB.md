@@ -181,7 +181,7 @@ ssh root@${PVE_HOST} "iptables -t raw -L PREROUTING -n --line-numbers | grep NOT
 
 Cas validé le 2026-07-30 : la Gateway externe de `rhodes.akn` est servie par `10.0.0.64`, premier `/29` du bloc
 `10.0.0.64/26`. Le nom DNS à tester est celui d'une `HTTPRoute` attachée à cette Gateway (non vérifié ici : à relever
-dans `projects/rhodes.akn/src/`).
+dans `fleet/clusters/akn.rhodes/kubernetes/src/`).
 
 ```sh
 export PVE_HOST=pve-01.pve.chezmoi.sh

@@ -9,10 +9,9 @@ It packages the per-identity pattern hand-rolled in `chezmoi.sh`'s
 [`stack/proxmox/access.ts`](../../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access.ts) for reuse
 by cluster-owned Pulumi programs that provision their **own** Proxmox identities directly, against their own
 `proxmox.Provider`, instead of consuming a token minted by chezmoi.sh's stack — see
-[`rhodes.akn`'s `stack/proxmox.ts`](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts) for the
-first consumer, and that stack's `rhodes-akn-bootstrap@pve` delegated credential (chezmoi.sh's
-`stack/proxmox/access.ts`) for how a cluster's own program gets enough privilege on `pve-01` to do this without ever
-touching `root@pam`.
+[`rhodes.akn`'s `stack/system/proxmox.ts`](../../../../fleet/clusters/akn.rhodes/pulumi/stack/system/proxmox.ts) for the first
+consumer, and that stack's `rhodes-akn-bootstrap@pve` delegated credential (chezmoi.sh's `stack/proxmox/access.ts`) for
+how a cluster's own program gets enough privilege on `pve-01` to do this without ever touching `root@pam`.
 
 ## Usage
 

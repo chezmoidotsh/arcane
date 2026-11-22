@@ -90,7 +90,7 @@ kubectl --context $CLUSTER_CONTEXT get storageclass proxmox-lvmthin-ext4 -o json
 ```
 
 Les trois `StorageClass` `proxmox-lvmthin-*` de `lungmen.akn` et les deux de `rhodes.akn` déclarent
-`allowVolumeExpansion: true` (`projects/*/dist/infrastructure/kubernetes/proxmox/`), et l'expérience Proxmox CSI a
+`allowVolumeExpansion: true` (`fleet/clusters/*/kubernetes/dist/system/proxmox/`), et l'expérience Proxmox CSI a
 validé l'extension d'un volume (critère V-009 de `docs/experiments/20260617-proxmox-csi-ccm/README.md`,
 redimensionnement `kubectl patch` vers `2Gi`).
 

@@ -1,0 +1,13 @@
+encryptionsalt: v1:wM1AygltLQI=:v1:2OnFsdw1JIV8tKtp:VFwkwRdsGE/TZa/sX62QeFqmkmd10Q==
+config:
+  garage:endpoint: https://admin.s3.chezmoi.sh
+  kubernetes:context: omni-rhodes-akn
+  rhodes-akn:recovery: "false"
+  rhodes-akn:cloudflare_account_id:
+    secure: v1:sTZSQ/kNh5xTP3CW:sZWxubkqgfA5WBk4yNxqn9fK/zXJa7dlcoWj/Er4SuSfOVfFEXA7Mq6c2wWZV7P2
+  rhodes-akn:cloudflare_zone_id:
+    secure: v1:caysMrBHlwdhvLjw:ktO/z5Mh0cwIe8gCGaBtDx9yd8o6J6IUudGO56Xc+j58L2HSmGn5j6qlLYDIP0AM
+  vault:vaultVersionOverride: 2.2.2
+  pocket-id:baseUrl: https://auth.chezmoi.sh
+  pangolin:orgId: chezmoi-sh
+  pangolin:url: https://horn-akn.tail831c5d.ts.net

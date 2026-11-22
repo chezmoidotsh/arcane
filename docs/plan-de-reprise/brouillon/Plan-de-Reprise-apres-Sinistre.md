@@ -79,7 +79,7 @@ flowchart TD
 | Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                              | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                                                                 |
 | VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`              | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)                                                       |
 | Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `chezmoi-sh-infra` ; Garage pour les sauvegardes              | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/rhodes-akn-bootstrap.ts)                        |
-| ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                              | [`src/argocd/README.md`](../../../projects/rhodes.akn/src/argocd/README.md)                                                                                                                                                       |
+| ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                              | [`kubernetes/src/argocd/README.md`](../../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/README.md)                                                                                                                           |
 
 ### Chaîne des projets
 
@@ -337,11 +337,11 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 4. Les sauvegardes d'OpenBao sont sur le Garage du NAS
 
-- **Constat** : `projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml` envoie les sauvegardes CNPG d'OpenBao vers
+- **Constat** : `fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.objectstore.yaml` envoie les sauvegardes CNPG d'OpenBao vers
   `s3://cnpg-rhodes-akn/openbao` sur `https://s3.chezmoi.sh`, comme celles de Pocket-Id et de Grafana. La copie hors
   site passe par la synchronisation B2 du dataset de Garage (circularités 2 et 3).
 - **Ce qui a changé** : l'emplacement de la clé age est établi. `softhsm-tokens.secret.yaml` est chiffré pour un seul
-  destinataire, la même clé publique age que `projects/rhodes.akn/.sops.yaml` utilise partout. La clé privée vit dans
+  destinataire, la même clé publique age que `fleet/clusters/akn.rhodes/.sops.yaml` utilise partout. La clé privée vit dans
   `.mise/age/key.txt` sur le poste de l'opérateur (`SOPS_AGE_KEY_FILE` du `.mise.toml` racine, chemin ignoré par Git) et
   dans le Secret `argocd-sops-age-key` de `rhodes.akn`, lui-même chiffré pour la même clé
   (`src/argocd/sops/age-key.secret.yaml`). Aucune copie indépendante du poste et du cluster n'est documentée.

@@ -111,7 +111,6 @@ lint:
       # `checksum/secret: <sha256>` that trip generic-api-key on the word "secret".
       linters: [gitleaks]
       paths:
-        - projects/*/dist/**/*
         - fleet/clusters/*/kubernetes/dist/**/*
     - # Pulumi SDKs dynamically bridged from Terraform providers — 100%
       # generated, never hand-edited, excluded from all linters. Source is
@@ -166,8 +165,6 @@ actions:
       run: scripts/dist:render --staged-only
       triggers:
         - files:
-            - projects/*/src/apps/**
-            - projects/*/src/infrastructure/kubernetes/**
             - fleet/clusters/*/kubernetes/src/**
             - catalog/helm/**
     # Catch a stale dist/ before it reaches CI (commit made with --no-verify, or drift from a
