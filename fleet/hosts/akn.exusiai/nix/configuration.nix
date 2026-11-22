@@ -43,7 +43,10 @@
 
   # --- Secrets (sops-nix, age) -------------------------------------------------
   # Host key = the SSH ed25519 host key, converted by sops-nix. See README.
-  sops.defaultSopsFile = ./secrets/rimbilliton.sops.yaml;
+  # Written by pulumi/ (SopsFile): Tailscale key, B2 key, Pocket-Id client. The values nothing
+  # generates (restic password, Wings node) are in secrets/manual.sops.yaml, see the modules.
+  sops.defaultSopsFile = ./secrets/exusiai.sops.json;
+  sops.defaultSopsFormat = "json";
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
   sops.secrets.tailscale_authkey = { };
 

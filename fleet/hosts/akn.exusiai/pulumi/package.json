@@ -6,6 +6,7 @@
 	"dependencies": {
 		"@axnic/pulumi-pocket-id": "catalog:",
 		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@chezmoi.sh/pulumi-sops-file": "workspace:*",
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/oci": "catalog:",

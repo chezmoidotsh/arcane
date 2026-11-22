@@ -7,7 +7,7 @@
 #
 # Wings does not start until it knows its node: create the node in the Panel,
 # then put its `uuid`, `token_id` and `token` (from the node's Configuration tab)
-# in the SOPS file (see docs/guides/Initialiser-Rimbilliton.md). The rest of Wings' config.yml is
+# in the SOPS file (see docs/guides/Initialiser-Exusiai.md). The rest of Wings' config.yml is
 # declared below and rendered by sops-nix, so nothing is written by hand.
 { config, lib, pkgs, ... }:
 let
@@ -126,7 +126,7 @@ in
     "d /tmp/pelican 0755 root root -"
   ];
 
-  # Pocket-Id sign-in (the client is created by hand in Pocket-Id, see docs/guides/Initialiser-Rimbilliton.md).
+  # Pocket-Id sign-in (the client is managed by Pulumi, its credentials come from exusiai.sops.json).
   sops.secrets.oauth_pocketid_client_id = { };
   sops.secrets.oauth_pocketid_client_secret = { };
   sops.templates."pelican-panel.env".content = ''
@@ -134,9 +134,18 @@ in
     OAUTH_POCKETID_CLIENT_SECRET=${config.sops.placeholder.oauth_pocketid_client_secret}
   '';
 
-  sops.secrets.wings_uuid = { };
-  sops.secrets.wings_token_id = { };
-  sops.secrets.wings_token = { };
+  sops.secrets.wings_uuid = {
+    sopsFile = ../secrets/manual.sops.yaml;
+    format = "yaml";
+  };
+  sops.secrets.wings_token_id = {
+    sopsFile = ../secrets/manual.sops.yaml;
+    format = "yaml";
+  };
+  sops.secrets.wings_token = {
+    sopsFile = ../secrets/manual.sops.yaml;
+    format = "yaml";
+  };
   sops.templates."wings-config.yml".content = ''
     debug: false
     uuid: ${config.sops.placeholder.wings_uuid}
