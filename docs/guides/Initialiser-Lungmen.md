@@ -82,8 +82,9 @@ Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lu
   la livre ; elle s'applique quand le cluster est `Ready`, avant le déploiement de
   `dist/infrastructure/kubernetes/proxmox/` (étape 10).
 - **Enregistrement en spoke** (étape 11) : `argocd cluster add`, dans le hub de `rhodes.akn`. Ensuite, les
-  ApplicationSets d'ArgoCD prennent en charge tout `dist/apps/` et le reste de `dist/infrastructure/kubernetes/` (voir
-  le [README du projet](../../projects/lungmen.akn/README.md#usage-and-development)).
+  ApplicationSets d'ArgoCD prennent en charge tout `fleet/clusters/akn.lungmen/kubernetes/dist/apps/` et
+  `…/dist/system/` (voir l'ApplicationSet `seed` de `rhodes.akn`,
+  [`shoot.applicationset.yaml`](../../projects/rhodes.akn/src/argocd/seed.apps/shoot.applicationset.yaml)).
 - **Liste de validation** CNI/CSI/CCM : la dérouler dans la procédure générique
   ([liste de validation](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#liste-de-validation))
   avant d'ouvrir le cluster au trafic applicatif.

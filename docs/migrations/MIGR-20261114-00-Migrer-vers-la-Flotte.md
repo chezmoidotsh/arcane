@@ -36,7 +36,7 @@ chaque élément ayant son README.
 | 5     | Les petits hôtes du groupe `core`                                   | code prêt, état Pulumi à déplacer                                          |
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                          |
 | 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                               |
-| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1 code prêt, PR 2 et 4 à faire ; `rhodes.akn` : à faire |
+| 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1 et 2 code prêt, PR 4 à faire ; `rhodes.akn` : à faire |
 | 9     | Scinder les piles lourdes de `chezmoi_sh`                           | à faire                                                                    |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                    |
 | 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                    |
@@ -623,6 +623,32 @@ ce cas. Pour chaque cluster :
   deux. La conformité partielle lance une matrice sur 23 dossiers `dist` de plus, et `dist:render --check --all` est
   plus lent.
 - **À confirmer** : `argocd appset generate` avec l'expression d'inversion des noms (pull request 2).
+
+### Détail de l'étape 8 : `lungmen.akn`, pull request 2
+
+- **Constaté** : `projects/rhodes.akn/src/argocd/seed.apps/shoot.applicationset.yaml` calcule `$dist` par cluster. Par
+  défaut : `projects/<hôte>/dist/{infrastructure/kubernetes,apps}`. Si `has $host (list "lungmen.akn")` :
+  `fleet/clusters/<hôte | splitList "." | reverse | join ".">/kubernetes/dist/{system,apps}`. La pull request 2 de
+  `rhodes.akn` ajoute `"rhodes.akn"` à la liste ; la condition disparaît quand tous les clusters ont été déplacés. Le
+  `.application.patch` de `external-dns` de la copie est réécrit (c'est le seul de `lungmen.akn` qui contient des
+  chemins).
+- **Constaté** (simulation hors ligne : `helm template` et expansion des générateurs sur une archive git, avec quatre
+  faux secrets de cluster) : noms, espaces de noms et correspondances de patches identiques (23 `Application` pour
+  `lungmen.akn`, 13 pour `rhodes.akn`) ; seuls les 23 chemins de `lungmen.akn` changent. Les espaces de noms viennent du
+  basename, donc le renommage `infrastructure/kubernetes` vers `system` est sans effet. Dans le cluster, le
+  `spec.sources[].path` de chaque `Application` est mis à jour en place, rien n'est recréé.
+- **Risque** (à vérifier avant la fusion) : les applications tournent avec `prune: true` automatique. Avant de
+  fusionner, `diff -r` entre les deux copies doit être vide, et toute branche ouverte qui touche le cluster doit être
+  portée sur la copie. Aujourd'hui : `feat/lungmen-litellm` (#1349 : application `litellm` et changements des bases,
+  soit `Database` CNPG, `ExternalSecret`, `PushSecret`, générateur de mot de passe, `CiliumNetworkPolicy`, modification
+  du `Cluster` `apps-20260329`). Si elle arrive sur `main` avant la pull request 2 sans être portée, la pull request 2
+  supprime l'`Application` `litellm` (ressources orphelines) et élague les objets des bases.
+- **Risque** : après la fusion, seule la copie sous `fleet/` est déployée : modifier `projects/lungmen.akn` ne fait
+  silencieusement rien. Geler les changements jusqu'à la pull request 4.
+- **À confirmer** : `argocd appset generate` avec les vrais secrets de cluster ; après la fusion, `argocd app list`
+  donne les mêmes noms, aucune `Application` n'est supprimée ni recréée, l'état de synchronisation est inchangé et les
+  `sources[].path` pointent vers `fleet/`.
+- **Retour arrière** : `git revert`, les chemins reviennent vers l'ancien code, toujours présent.
 
 ### Ce qui reste à confirmer à l'étape 8
 
