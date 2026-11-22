@@ -36,7 +36,7 @@ de ces backends.
 
 ## Prérequis
 
-Outils : `kubectl`, `s3cmd`, `kustomize`, `ksops`. Lancer `mise install` depuis `projects/rhodes.akn/` pour les
+Outils : `kubectl`, `s3cmd`, `kustomize`, `ksops`. Lancer `mise install` depuis `fleet/clusters/akn.rhodes/` pour les
 provisionner tous. Les tâches `dr:openbao:*` citées plus bas ne sont visibles que depuis
 [`fleet/clusters/akn.rhodes/`](../../../fleet/clusters/akn.rhodes), qui contient leur `.mise.toml`.
 
@@ -72,12 +72,12 @@ Le namespace `vault` et le secret `cnpg-backup-credentials` existent déjà (ét
 ```sh
 # openbao-softhsm-tokens : le seul secret qui doit rester chiffré avec SOPS dans Git
 # (aucune solution de repli en cas de perte, voir l'avertissement ci-dessous)
-kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/vault/sops \
+kustomize build --enable-alpha-plugins --enable-exec fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/sops \
   | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
 # openbao-database-credentials : généré localement par un Generator ESO, sans Vault
 # (ESO doit déjà être déployé, voir Restaurer Rhodes, étape 2)
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side -n vault -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side -n vault -f fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/database.externalsecret.yaml
 ```
 
 L'option `-n vault` est indispensable : `database.externalsecret.yaml` n'a pas de champ `namespace:` (il s'appuie sur le
@@ -104,12 +104,12 @@ les entrées suivantes :
 
 ```sh
 export NAMESPACE=vault
-export CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml
-export OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml
-export SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.scheduledbackup.yaml
+export CLUSTER_MANIFEST=fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.cluster.yaml
+export OBJECTSTORE_MANIFEST=fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.objectstore.yaml
+export SCHEDULEDBACKUP_MANIFEST=fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.scheduledbackup.yaml
 ```
 
-Deux tâches `mise` (à lancer depuis `projects/rhodes.akn/docs/disaster-recovery/`) encapsulent les étapes manuelles :
+Deux tâches `mise` (à lancer depuis `fleet/clusters/akn.rhodes/`) encapsulent les étapes manuelles :
 
 ```sh
 mise run dr:openbao:backup:latest -- ${CLUSTER_CONTEXT}   # affiche le dernier serverName (étapes 1 et 2 de la procédure)
@@ -125,14 +125,14 @@ Revenir ici quand les vérifications rapides de la procédure passent (`Cluster 
 > Le renommage de `metadata.name` par l'étape 3 de la procédure se répercute au-delà de `cnpg.cluster.yaml`.
 > `database.externalsecret.yaml` construit l'`uri` de connexion d'OpenBao avec l'hôte `openbao-database-rw`, et son
 > commentaire précise qu'il suit `metadata.name` : l'aligner sur le nouveau nom, comme `spec.cluster.name` de
-> `cnpg.scheduledbackup.yaml`. Les manifestes de `projects/rhodes.akn/dist/apps/vault/` sont rendus depuis `src/` :
+> `cnpg.scheduledbackup.yaml`. Les manifestes de `fleet/clusters/akn.rhodes/kubernetes/dist/apps/vault/` sont rendus depuis `src/` :
 > lancer `dist:render` après ces modifications, sinon l'étape 3 réapplique l'ancien `Cluster` (`openbao-database`,
 > ancien `serverName`).
 
 ### 3. Appliquer le reste de l'application `vault`
 
 ```sh
-kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/apps/vault/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f fleet/clusters/akn.rhodes/kubernetes/dist/apps/vault/
 ```
 
 Cette commande applique le `StatefulSet` OpenBao, le `ServiceAccount` `openbao` et le `ClusterRoleBinding`
@@ -184,7 +184,7 @@ chaîne :
 - `bao secrets list` et `bao auth list` confirment que les montages et backends sont bien restaurés ;
 - le `bao write auth/rhodes.akn/config ...` manuel de l'étape 6, si le backend d'authentification Kubernetes ne s'est
   pas auto-réparé ;
-- le `pulumi up` de `rhodes-akn-infra` (étape 7 de [Restaurer Rhodes](Restaurer-Rhodes.md)) s'authentifie auprès du même
+- le `pulumi up` de `rhodes-akn` (étape 7 de [Restaurer Rhodes](Restaurer-Rhodes.md)) s'authentifie auprès du même
   `VAULT_ADDR` : exporter le même `VAULT_TOKEN` avant de le lancer.
 
 Une fois la Gateway et un certificat valide confirmés, `VAULT_ADDR` peut passer à `https://vault.chezmoi.sh` (utiliser

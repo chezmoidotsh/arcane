@@ -43,10 +43,10 @@ il s'enregistre comme cluster ArgoCD (un Secret `argocd.argoproj.io/secret-type:
 d'ArgoCD) et gère ses propres charges de travail comme celles des autres. Tous les autres clusters sont des **spokes** :
 ils s'enregistrent dans l'ArgoCD du hub avec `argocd cluster add` et n'ont pas de dossier `argocd/`.
 
-| Rôle  | Cluster actuel | Particularité dans le dépôt                                                                                             |
-| ----- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Hub   | `rhodes.akn`   | Porte `projects/rhodes.akn/src/argocd/` et `projects/rhodes.akn/src/bootstrap.applications.yaml` (Application `argocd`) |
-| Spoke | `lungmen.akn`  | Aucun dossier `argocd/` ; enregistré avec `argocd cluster add` (voir `docs/guides/Initialiser-Lungmen.md`)              |
+| Rôle  | Cluster actuel | Particularité dans le dépôt                                                                                                                           |
+| ----- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hub   | `rhodes.akn`   | Porte `fleet/clusters/akn.rhodes/kubernetes/src/argocd/` et `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml` (Application `argocd`) |
+| Spoke | `lungmen.akn`  | Aucun dossier `argocd/` ; enregistré avec `argocd cluster add` (voir `docs/guides/Initialiser-Lungmen.md`)                                            |
 
 L'étape 11 bifurque donc selon le rôle du nouveau cluster : auto-hébergement d'ArgoCD pour un hub, `argocd cluster add`
 pour un spoke. Le rôle se décide cluster par cluster (variable `GITOPS_ROLE` des [entrées requises](#entrées-requises))
@@ -77,7 +77,7 @@ Omni gère les clusters Talos avec trois briques indépendantes :
 | Fichier                                   | Rôle                                                                                |
 | ----------------------------------------- | ----------------------------------------------------------------------------------- |
 | `catalog/omni/clustertemplates/base.yaml` | Template de base à copier (ne passe volontairement pas la validation telle quelle). |
-| `projects/*/src/infrastructure/omni/`     | Emplacement du template de chaque cluster.                                          |
+| `fleet/clusters/*/omni/`                  | Emplacement du template de chaque cluster.                                          |
 | `catalog/omni/machineclasses/`            | Catalogue des machine classes : `c1.minimal`, `w1.medium`, `w1.large`, `w1.xlarge`. |
 
 ### Allocation des CIDR de Pod
@@ -129,8 +129,8 @@ Exporter ces variables une fois ; toutes les commandes suivantes se copient ensu
 
 ```sh
 export CLUSTER_NAME=<nom du cluster dans Omni>            # ex. rhodes-akn (choisi à l'étape 2)
-export PROJECT_DIR=<dossier du projet du cluster>         # ex. projects/rhodes.akn
-export TEMPLATE_FILE=<chemin du template du cluster>      # ex. projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml (créé à l'étape 3)
+export PROJECT_DIR=<dossier du projet du cluster>         # ex. fleet/clusters/akn.rhodes
+export TEMPLATE_FILE=<chemin du template du cluster>      # ex. fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml (créé à l'étape 3)
 export KUBECONFIG_OUT=<chemin local du kubeconfig>        # ex. ~/.kube/config-rhodes-akn
 export GITOPS_ROLE=<hub|spoke>                            # selon la topologie GitOps ; utilisé à l'étape 11
 ```
@@ -186,7 +186,7 @@ Champs à modifier par rapport à la base :
 - `workers.machineClass.size:` : nombre de workers.
 - Vérifier que `serviceSubnets` reste `172.31.0.0/19` et `clusterDNS` reste `172.31.0.10`.
 
-Les templates de `rhodes.akn` et `lungmen.akn` (`projects/*/src/infrastructure/omni/`) servent d'exemples de copie
+Les templates de `rhodes.akn` et `lungmen.akn` (`fleet/clusters/*/omni/`) servent d'exemples de copie
 modifiée.
 
 > [!NOTE]\
@@ -229,7 +229,7 @@ omnictl cluster template validate -f $TEMPLATE_FILE
 ```
 
 Chaque projet de cluster encapsule cette commande dans une tâche `mise` de son propre `.mise.toml`
-(`projects/rhodes.akn/` et `fleet/clusters/akn.lungmen/` en définissent une) :
+(`fleet/clusters/akn.rhodes/` et `fleet/clusters/akn.lungmen/` en définissent une) :
 
 ```sh
 mise run omni:clustertemplate:validate
@@ -326,10 +326,10 @@ Le Proxmox CCM et le plugin Proxmox CSI (étape 10) partagent une identité Prox
 même stack écrit la configuration obtenue dans le cluster sous le Secret `proxmox-system/proxmox-cloud-provider` (clé
 `config.yaml`), que les deux charts référencent par `existingConfigSecret` :
 
-| Cluster       | Programme Pulumi                                                 |
-| ------------- | ---------------------------------------------------------------- |
-| `rhodes.akn`  | `projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts` |
-| `lungmen.akn` | `fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts`      |
+| Cluster       | Programme Pulumi                                            |
+| ------------- | ----------------------------------------------------------- |
+| `rhodes.akn`  | `fleet/clusters/akn.rhodes/pulumi/stack/system/proxmox.ts`  |
+| `lungmen.akn` | `fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts` |
 
 Le composant sous-jacent est `catalog/pulumi/components/proxmox-cluster-identity` (voir son README). Le programme lit le
 Secret d'amorçage dans `kube-system` : le kubeconfig de l'étape 8 doit donc être utilisable par le provider Kubernetes
@@ -392,7 +392,7 @@ kubectl get storageclass
 Appliquer la branche décidée dans la [topologie GitOps hub et spoke](#topologie-gitops-hub-et-spoke) :
 
 - **Hub** : auto-hébergement. Appliquer les manifests ArgoCD du cluster lui-même, sur le modèle de `rhodes.akn`
-  (`projects/rhodes.akn/src/argocd/` et `projects/rhodes.akn/src/bootstrap.applications.yaml`).
+  (`fleet/clusters/akn.rhodes/kubernetes/src/argocd/` et `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml`).
 - **Spoke** : enregistrement dans l'ArgoCD du hub.
 
   ```sh
@@ -467,10 +467,10 @@ export OLD_SHA=<SHA actuellement épinglé>       # ex. 934e67a9b70724c834bc1ac7
 export NEW_SHA=<SHA complet du commit de fusion> # git fetch origin && git rev-parse origin/main
 
 # Relever le SHA actuellement épinglé (un seul SHA doit apparaître)
-grep -ohE '[0-9a-f]{40}' projects/*/src/infrastructure/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml | sort -u
+grep -ohE '[0-9a-f]{40}' fleet/clusters/*/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml | sort -u
 
 # Remplacer le SHA (avec le sed BSD de macOS : sed -i '')
-sed -i "s/$OLD_SHA/$NEW_SHA/g" projects/*/src/infrastructure/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml
+sed -i "s/$OLD_SHA/$NEW_SHA/g" fleet/clusters/*/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml
 
 omnictl cluster template validate -f $TEMPLATE_FILE
 omnictl cluster template sync -f $TEMPLATE_FILE
@@ -484,7 +484,7 @@ une commande de réépinglage sont suivies par l'issue [#1357](https://github.co
 - _2026-10-17_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structurée selon
   le gabarit de procédure, entrées en variables `export`. Corrections vérifiées contre le dépôt : le template de base ne
   contient pas `kubelet.extraArgs.cloud-provider: external` (seuls ceux de `rhodes.akn` et `lungmen.akn` l'ajoutent) ;
-  `seed.application.yaml` n'est plus cité, le hub `rhodes.akn` s'amorce avec `projects/rhodes.akn/src/argocd/` et
+  `seed.application.yaml` n'est plus cité, le hub `rhodes.akn` s'amorce avec `fleet/clusters/akn.rhodes/kubernetes/src/argocd/` et
   `bootstrap.applications.yaml` ; le critère V-001 utilise le label
   `app.kubernetes.io/name=proxmox-cloud-controller-manager` ; les URL Cilium sont lues dans le template ; les chemins
   `access/` sont précisés ; le namespace `proxmox-system` est créé avant le Secret avec `--server-side` ; le kubeconfig

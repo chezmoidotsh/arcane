@@ -99,7 +99,7 @@ The scope is enclosed in square brackets and identifies which part of the reposi
 | `project:chezmoi.sh`                     | `projects/chezmoi.sh/`                         |
 | `project:kazimierz.akn`                  | `projects/kazimierz.akn/`                      |
 | `project:lungmen.akn`                    | `projects/lungmen.akn/` (removed)              |
-| `project:rhodes.akn`                     | `projects/rhodes.akn/`                         |
+| `project:rhodes.akn`                     | `projects/rhodes.akn/` (removed)               |
 | `project:shodan.akn`                     | `projects/shodan.akn/`                         |
 | `fleet:rhodes.akn`                       | `fleet/clusters/akn.rhodes`                    |
 | `fleet:lungmen.akn`                      | `fleet/clusters/akn.lungmen`                   |

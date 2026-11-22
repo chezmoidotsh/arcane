@@ -337,11 +337,11 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 4. Les sauvegardes d'OpenBao sont sur le Garage du NAS
 
-- **Constat** : `projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml` envoie les sauvegardes CNPG d'OpenBao vers
+- **Constat** : `fleet/clusters/akn.rhodes/kubernetes/src/apps/vault/cnpg.objectstore.yaml` envoie les sauvegardes CNPG d'OpenBao vers
   `s3://cnpg-rhodes-akn/openbao` sur `https://s3.chezmoi.sh`, comme celles de Pocket-Id et de Grafana. La copie hors
   site passe par la synchronisation B2 du dataset de Garage (circularités 2 et 3).
 - **Ce qui a changé** : l'emplacement de la clé age est établi. `softhsm-tokens.secret.yaml` est chiffré pour un seul
-  destinataire, la même clé publique age que `projects/rhodes.akn/.sops.yaml` utilise partout. La clé privée vit dans
+  destinataire, la même clé publique age que `fleet/clusters/akn.rhodes/.sops.yaml` utilise partout. La clé privée vit dans
   `.mise/age/key.txt` sur le poste de l'opérateur (`SOPS_AGE_KEY_FILE` du `.mise.toml` racine, chemin ignoré par Git) et
   dans le Secret `argocd-sops-age-key` de `rhodes.akn`, lui-même chiffré pour la même clé
   (`src/argocd/sops/age-key.secret.yaml`). Aucune copie indépendante du poste et du cluster n'est documentée.

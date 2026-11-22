@@ -61,7 +61,7 @@ sortent de la machine sont l'authentification OIDC vers Pocket-Id et le défi DN
 L'interface se trouve sur `https://hass.chezmoi.sh`. La connexion se fait par Pocket-Id, réservée aux membres du groupe
 `maison`. La base PostgreSQL n'est atteignable que depuis le LAN, par Grafana (une `CiliumNetworkPolicy` de `rhodes.akn`
 ne l'autorise qu'à lui,
-[`network-policy.allow-grafana-to-home-assistant.yaml`](../../../projects/rhodes.akn/src/apps/o11y/security/network-policy.allow-grafana-to-home-assistant.yaml)).
+[`network-policy.allow-grafana-to-home-assistant.yaml`](../../../fleet/clusters/akn.rhodes/kubernetes/src/apps/o11y/security/network-policy.allow-grafana-to-home-assistant.yaml)).
 Côté réseau, la machine vit dans le VLAN IoT avec une exception pour Internet et un accès depuis le VLAN des
 utilisateurs ([référence IPAM](../../../docs/reference/IPAM-Reference.md)).
 

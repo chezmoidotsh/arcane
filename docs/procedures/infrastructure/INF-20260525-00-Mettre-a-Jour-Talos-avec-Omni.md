@@ -33,10 +33,10 @@ contrôles après et le retour arrière.
   le pool `workers` : un seul worker redémarre à la fois, et son voisin doit porter toute la charge pendant ce temps
   (voir l'en-tête des templates).
 
-| Cluster       | Template                                                                  | Control plane | Workers (`w1.large`) |
-| ------------- | ------------------------------------------------------------------------- | ------------- | -------------------- |
-| `rhodes.akn`  | `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml` | 1             | 2                    |
-| `lungmen.akn` | `fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml`            | 1             | 3                    |
+| Cluster       | Template                                                       | Control plane | Workers (`w1.large`) |
+| ------------- | -------------------------------------------------------------- | ------------- | -------------------- |
+| `rhodes.akn`  | `fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml`   | 1             | 2                    |
+| `lungmen.akn` | `fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml` | 1             | 3                    |
 
 ## Prérequis
 
@@ -59,7 +59,7 @@ Exporter ces variables une fois ; toutes les commandes suivantes se copient ensu
 
 ```sh
 export CLUSTER_NAME=<nom du cluster dans Omni>       # ex. rhodes-akn
-export TEMPLATE_FILE=<chemin du cluster template>    # ex. projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+export TEMPLATE_FILE=<chemin du cluster template>    # ex. fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
 export TARGET_VERSION=<version cible de Talos>       # ex. v1.14.2 (préfixe v obligatoire)
 ```
 
@@ -126,7 +126,7 @@ omnictl cluster template validate -f $TEMPLATE_FILE
 ```
 
 La tâche `mise run omni:clustertemplate:validate`, lancée depuis `fleet/clusters/akn.lungmen/` ou
-`projects/rhodes.akn/`, exécute cette validation sur le template du cluster.
+`fleet/clusters/akn.rhodes/`, exécute cette validation sur le template du cluster.
 
 Contrôler que le diff Git ne contient que la ligne `version` attendue :
 
@@ -197,9 +197,9 @@ version `v1.14.2` est un exemple de patch dans le même minor, à remplacer par 
 
 ```sh
 omnictl cluster status rhodes-akn
-# édition de projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml : talos.version: v1.14.2
-omnictl cluster template validate -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
-omnictl cluster template sync -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+# édition de fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml : talos.version: v1.14.2
+omnictl cluster template validate -f fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
+omnictl cluster template sync -f fleet/clusters/akn.rhodes/omni/rhodes.clustertemplate.yaml
 omnictl cluster status rhodes-akn
 ```
 

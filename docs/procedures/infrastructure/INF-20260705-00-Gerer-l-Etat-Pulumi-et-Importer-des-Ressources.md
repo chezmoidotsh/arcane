@@ -22,7 +22,7 @@ Les six projets Pulumi du dépôt déclarent le même backend dans leur `Pulumi.
 | `exusiai.akn` | `exusiai-akn`      |
 | `horn.akn`    | `horn-akn`         |
 | `lungmen.akn` | `lungmen-akn`      |
-| `rhodes.akn`  | `rhodes-akn-infra` |
+| `rhodes.akn`  | `rhodes-akn`       |
 
 ```yaml
 backend:
