@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2312  # a failing find/rg/sort in a process substitution only shortens the list, the callers handle an empty one
 # discover-cnpg.sh — Discover CNPG candidates from rendered dist/ manifests.
 #
-# Scans projects/*/dist/ for postgresql.cnpg.io/v1 Cluster objects (the
+# Scans projects/*/dist/ and fleet/clusters/*/kubernetes/dist/ for postgresql.cnpg.io/v1 Cluster objects (the
 # rendered, canonical state applied by ArgoCD). Logical databases are derived
 # from Database objects in the same dist/ directory, avoiding src/ duplication
 # and helmvalues parsing.
@@ -9,7 +10,7 @@
 # Output schema (one element per cluster, no duplicates):
 #   {
 #     "cluster_name":       string,   // live CNPG cluster name
-#     "project":            string,   // first path segment under projects/
+#     "project":            string,   // canonical cluster name (projects/<name>, or fleet/clusters/<family>.<name> -> <name>.<family>)
 #     "namespace":          string,   // resolved namespace
 #     "namespace_source":   string,   // "manifest" | "kustomization" | "inferred"
 #     "app_dir":            string,   // directory name under dist/apps/
@@ -47,8 +48,27 @@ yq_or_empty() {
 }
 
 project_of() {
-  local path="$1"
-  printf '%s' "${path#projects/}" | cut -d/ -f1
+	local path="$1" rest folder
+	if [[ ${path} == fleet/clusters/* ]]; then
+		rest="${path#fleet/clusters/}"
+		folder="${rest%%/*}" # <family>.<name>
+		printf '%s.%s' "${folder#*.}" "${folder%%.*}"
+	else
+		rest="${path#projects/}"
+		printf '%s' "${rest%%/*}"
+	fi
+}
+
+# Directory holding src/ and dist/ for a manifest path.
+kube_root_of() {
+	local path="$1" rest
+	if [[ ${path} == fleet/clusters/* ]]; then
+		rest="${path#fleet/clusters/}"
+		printf 'fleet/clusters/%s/kubernetes' "${rest%%/*}"
+	else
+		rest="${path#projects/}"
+		printf 'projects/%s' "${rest%%/*}"
+	fi
 }
 
 # --- Emit one JSON entry per Cluster found in dist/ ------------------------
@@ -63,41 +83,41 @@ project_of() {
 # Clusters with at least one Database are classified as "mutualized".
 
 emit_clusters() {
-  local file project app_dir dist_dir name ns ns_source src_kust
-  local plugin_enabled dbs_json db_count source_type db_file db_name
+	local file project app_dir dist_dir name ns ns_source src_kust
+	local plugin_enabled dbs_json db_count source_type db_file db_name
 
-  while IFS= read -r file; do
-    project="$(project_of "${file}")"
-    [[ -n ${FILTER_PROJECT} && ${project} != "${FILTER_PROJECT}" ]] && continue
+	while IFS= read -r file; do
+		project="$(project_of "${file}")"
+		[[ -n ${FILTER_PROJECT} && ${project} != "${FILTER_PROJECT}" ]] && continue
 
-    dist_dir="$(dirname "${file}")"
-    app_dir="$(basename "${dist_dir}")"
+		dist_dir="$(dirname "${file}")"
+		app_dir="$(basename "${dist_dir}")"
 
-    while IFS= read -r name; do
-      [[ -z ${name} ]] && continue
+		while IFS= read -r name; do
+			[[ -z ${name} ]] && continue
 
-      # --- Namespace ---
-      ns="$(yq_or_empty \
-        "select(.kind == \"Cluster\" and .metadata.name == \"${name}\") | .metadata.namespace // \"\"" \
-        "${file}")"
-      ns_source="manifest"
+			# --- Namespace ---
+			ns="$(yq_or_empty \
+				"select(.kind == \"Cluster\" and .metadata.name == \"${name}\") | .metadata.namespace // \"\"" \
+				"${file}")"
+			ns_source="manifest"
 
-      if [[ -z ${ns} ]]; then
-        src_kust="projects/${project}/src/apps/${app_dir}/kustomization.yaml"
-        if [[ -f ${src_kust} ]]; then
-          ns="$(yq_or_empty '.namespace // ""' "${src_kust}")"
-          [[ -n ${ns} ]] && ns_source="kustomization"
-        fi
-      fi
+			if [[ -z ${ns} ]]; then
+				src_kust="$(kube_root_of "${file}")/src/apps/${app_dir}/kustomization.yaml"
+				if [[ -f ${src_kust} ]]; then
+					ns="$(yq_or_empty '.namespace // ""' "${src_kust}")"
+					[[ -n ${ns} ]] && ns_source="kustomization"
+				fi
+			fi
 
-      if [[ -z ${ns} ]]; then
-        ns="${app_dir}"
-        ns_source="inferred"
-      fi
+			if [[ -z ${ns} ]]; then
+				ns="${app_dir}"
+				ns_source="inferred"
+			fi
 
-      # --- Plugin ---
-      plugin_enabled="$(yq -r \
-        "select(.kind == \"Cluster\" and .metadata.name == \"${name}\") |
+			# --- Plugin ---
+			plugin_enabled="$(yq -r \
+				"select(.kind == \"Cluster\" and .metadata.name == \"${name}\") |
            [.spec.plugins[]? |
              select(.name == \"barman-cloud.cloudnative-pg.io\" and .enabled == true)] |
            length > 0" \
@@ -142,18 +162,18 @@ emit_clusters() {
           context_hint:      ("admin@" + $project)
         }'
 
-    done < <(yq -r 'select(.kind == "Cluster") | .metadata.name' "${file}" 2>/dev/null || true)
-  done < <({
-    # Collect dist/ directories under projects/ and search only inside them.
-    dist_dirs=()
-    while IFS= read -r d; do dist_dirs+=("${d}"); done \
-      < <(find projects -maxdepth 2 -type d -name dist 2>/dev/null | sort)
-    if [[ ${#dist_dirs[@]} -gt 0 ]]; then
-      rg -l --no-messages 'apiVersion:\s*postgresql\.cnpg\.io/v1' \
-        -g '*.yaml' -g '*.yml' \
-        "${dist_dirs[@]}" 2>/dev/null || true
-    fi
-  } | sort -u)
+		done < <(yq -r 'select(.kind == "Cluster") | .metadata.name' "${file}" 2>/dev/null || true)
+	done < <({
+		# Collect dist/ directories under projects/ and fleet/clusters/ and search only inside them.
+		dist_dirs=()
+		while IFS= read -r d; do dist_dirs+=("${d}"); done \
+			< <(find projects fleet/clusters -mindepth 2 -maxdepth 3 -type d \( -path 'projects/*/dist' -o -path 'fleet/clusters/*/kubernetes/dist' \) 2>/dev/null | sort)
+		if [[ ${#dist_dirs[@]} -gt 0 ]]; then
+			rg -l --no-messages 'apiVersion:\s*postgresql\.cnpg\.io/v1' \
+				-g '*.yaml' -g '*.yml' \
+				"${dist_dirs[@]}" 2>/dev/null || true
+		fi
+	} | sort -u)
 }
 
 # --- Assemble --------------------------------------------------------------

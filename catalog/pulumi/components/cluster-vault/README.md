@@ -64,7 +64,7 @@ new ClusterVaultComponent("rhodes.akn", {
 - You want the option to disable shared access for an isolated cluster.
 
 **Usage example** (see
-[`projects/lungmen.akn`](../../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/vault.ts)):
+[`fleet/clusters/akn.lungmen`](../../../../fleet/clusters/akn.lungmen/pulumi/stack/system/vault.ts)):
 
 ```typescript
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
@@ -313,7 +313,7 @@ pnpm test      # inside the pnpm workspace
 - [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
 - [`catalog/pulumi/README.md`](../../README.md) — workspace / `file:` protocol rationale
 - Live consumers: [`rhodes.akn` (Local)](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts),
-  [`lungmen.akn` (Remote)](../../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/vault.ts)
+  [`lungmen.akn` (Remote)](../../../../fleet/clusters/akn.lungmen/pulumi/stack/system/vault.ts)
 
 ## License
 

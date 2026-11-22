@@ -60,7 +60,8 @@
 #    "yaml: construct errors: ... expected 4 elements node, got N".
 # 6. `scripts/omni:template:lint` checks every per-cluster template's
 #    podSubnets/serviceSubnets/clusterDNS fall within ADR-014's 172.16.0.0/12
-#    range; it runs in CI on any change under projects/*/src/infrastructure/omni/.
+#    range; it runs in CI on any change under fleet/clusters/*/omni/ (and
+#    projects/*/src/infrastructure/omni/ for a cluster not migrated yet).
 #
 # SHA PINNING
 # -----------

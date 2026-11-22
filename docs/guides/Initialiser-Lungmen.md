@@ -12,13 +12,13 @@ dont `lungmen.akn` est l'exemple concret (voir aussi [`catalog/omni/README.md`](
 # Les machine classes doivent exister dans Omni (communes à tous les clusters).
 mise run omni:machineclass:apply
 
-cd projects/lungmen.akn
+cd fleet/clusters/akn.lungmen
 
 # Validation hors ligne du template
 mise run omni:clustertemplate:validate
 
 # Application et réconciliation du cluster (en ligne, authentifié)
-omnictl cluster template sync -f src/infrastructure/omni/lungmen.clustertemplate.yaml
+omnictl cluster template sync -f omni/lungmen.clustertemplate.yaml
 
 # Suivi de la convergence, puis kubeconfig
 omnictl cluster status lungmen-akn
@@ -35,21 +35,21 @@ sans Longhorn.
 
 > [!NOTE]\
 > Pour restaurer des données applicatives plutôt qu'amorcer un cluster vide, voir
-> [`src/infrastructure/kubernetes/velero/`](../../projects/lungmen.akn/src/infrastructure/kubernetes/velero/). Les
-> sauvegardes antérieures à la recréation portent la classe de stockage `longhorn` ; le `ConfigMap`
-> `change-storage-class-config` la remappe vers `proxmox-lvmthin-ext4` à la restauration.
+> [`kubernetes/src/system/velero/`](../../fleet/clusters/akn.lungmen/kubernetes/src/system/velero/). Les sauvegardes
+> antérieures à la recréation portent la classe de stockage `longhorn` ; le `ConfigMap` `change-storage-class-config` la
+> remappe vers `proxmox-lvmthin-ext4` à la restauration.
 
 ## Identité du cluster
 
-| Paramètre             | Valeur                                                                                                                                    |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Nom du cluster        | `lungmen-akn`                                                                                                                             |
-| Fichier de template   | [`src/infrastructure/omni/lungmen.clustertemplate.yaml`](../../projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml) |
-| CIDR de Pod (ADR-014) | `172.30.32.0/19` (cluster ID 2, voir l'[IPAM](../reference/IPAM-Reference.md))                                                            |
-| CIDR de Service / DNS | `172.31.0.0/19` / `172.31.0.10` (communs à tous les clusters, à ne pas modifier)                                                          |
-| Control plane         | `c1.minimal` × 1                                                                                                                          |
-| Workers               | `w1.large` × 3                                                                                                                            |
-| Rôle GitOps           | Spoke : enregistré dans l'ArgoCD hub de `rhodes.akn`, sans installation ArgoCD locale                                                     |
+| Paramètre             | Valeur                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| Nom du cluster        | `lungmen-akn`                                                                                             |
+| Fichier de template   | [`omni/lungmen.clustertemplate.yaml`](../../fleet/clusters/akn.lungmen/omni/lungmen.clustertemplate.yaml) |
+| CIDR de Pod (ADR-014) | `172.30.32.0/19` (cluster ID 2, voir l'[IPAM](../reference/IPAM-Reference.md))                            |
+| CIDR de Service / DNS | `172.31.0.0/19` / `172.31.0.10` (communs à tous les clusters, à ne pas modifier)                          |
+| Control plane         | `c1.minimal` × 1                                                                                          |
+| Workers               | `w1.large` × 3                                                                                            |
+| Rôle GitOps           | Spoke : enregistré dans l'ArgoCD hub de `rhodes.akn`, sans installation ArgoCD locale                     |
 
 Le template `lungmen.clustertemplate.yaml` est une copie complète et autonome de
 [`catalog/omni/clustertemplates/base.yaml`](../../catalog/omni/clustertemplates/base.yaml) : les templates Omni ne se
@@ -78,9 +78,8 @@ Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lu
 - **Application du template** (étape 6) : `omnictl cluster template sync`, détaillé à
   l'[étape 6 de la procédure](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#étape-6--appliquer-le-template-de-cluster).
 - **Identité Proxmox CCM/CSI** (étape 9) : ce n'est pas une étape manuelle. La stack Pulumi du projet
-  ([`src/infrastructure/pulumi/stack/proxmox.ts`](../../projects/lungmen.akn/src/infrastructure/pulumi/stack/proxmox.ts))
-  la livre ; elle s'applique quand le cluster est `Ready`, avant le déploiement de
-  `dist/infrastructure/kubernetes/proxmox/` (étape 10).
+  ([`pulumi/stack/system/proxmox.ts`](../../fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts)) la livre ; elle
+  s'applique quand le cluster est `Ready`, avant le déploiement de `dist/infrastructure/kubernetes/proxmox/` (étape 10).
 - **Enregistrement en spoke** (étape 11) : `argocd cluster add`, dans le hub de `rhodes.akn`. Ensuite, les
   ApplicationSets d'ArgoCD prennent en charge tout `fleet/clusters/akn.lungmen/kubernetes/dist/apps/` et
   `…/dist/system/` (voir l'ApplicationSet `seed` de `rhodes.akn`,
@@ -91,8 +90,9 @@ Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lu
 
 ## Après l'amorçage
 
-- Les manifests suivent le chemin `src/` vers `dist/` (généré par `dist:render`) vers ArgoCD. `dist/` ne s'édite jamais
-  à la main (voir le [README du projet](../../projects/lungmen.akn/README.md#usage-and-development)).
+- Les manifests suivent le chemin `kubernetes/src/` vers `kubernetes/dist/` (généré par `dist:render`) vers ArgoCD.
+  `dist/` ne s'édite jamais à la main (voir le
+  [README du projet](../../fleet/clusters/akn.lungmen/README.md#usage-and-development)).
 - `lungmen.akn` dépend du cluster de plateforme `rhodes.akn` pour OpenBao (secrets, via External Secrets Operator) et
   Pocket-Id (OIDC/SSO). Les deux doivent être joignables pour que les ExternalSecrets et les routes protégées par SSO
   deviennent sains.
@@ -109,6 +109,6 @@ Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lu
 - [Créer un cluster Talos avec Omni](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) : la
   procédure générique dont ce guide est l'exemple concret.
 - [Catalogue Omni](../../catalog/omni/README.md) : templates de base et machine classes partagés.
-- [README de `lungmen.akn`](../../projects/lungmen.akn/README.md) : services, développement et reprise après sinistre du
-  cluster.
+- [README de `lungmen.akn`](../../fleet/clusters/akn.lungmen/README.md) : services, développement et reprise après
+  sinistre du cluster.
 - [IPAM](../reference/IPAM-Reference.md) : allocation des CIDR de Pod par cluster.

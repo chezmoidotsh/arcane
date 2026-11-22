@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import { expect } from "chai";
 import { before, describe, it } from "mocha";
 
-import { vaultSecretMetadata } from "./vault-secret-metadata";
+import { ownerFromRepoRelativePath, vaultSecretMetadata } from "./vault-secret-metadata";
 
 /**
  * Unit tests for vaultSecretMetadata.
@@ -54,6 +54,16 @@ describe("vaultSecretMetadata", () => {
 		const meta = vaultSecretMetadata(source);
 		// caller is catalog/pulumi/lib/… → second segment is "pulumi"
 		expect(meta["owner"]).to.equal("pulumi");
+	});
+
+	it("derives owner as the canonical machine name under fleet/", () => {
+		expect(
+			ownerFromRepoRelativePath("fleet/clusters/akn.lungmen/pulumi/stack/system/vault.ts"),
+		).to.equal("lungmen.akn");
+		expect(ownerFromRepoRelativePath("fleet/hosts/core.omni/pulumi/index.ts")).to.equal(
+			"omni.core",
+		);
+		expect(ownerFromRepoRelativePath("projects/chezmoi.sh/src/x.ts")).to.equal("chezmoi.sh");
 	});
 
 	it("uses the single fixed renewal-process sentence", () => {

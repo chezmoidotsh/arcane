@@ -57,8 +57,8 @@ export CLUSTER_NAME=<metadata.name du Cluster>                       # le nom ch
 
 Les trois manifestes sont dans le même dossier. Leur nom varie selon le projet : `cnpg.*.yaml` sur `rhodes.akn`,
 `<nom>.objectstore.yaml` et `<nom>.scheduledbackup.yaml` sur `lungmen.akn` (par exemple
-`projects/lungmen.akn/src/apps/databases/apps.objectstore.yaml`). `kubectl get cluster` après l'étape 4 confirme le nom
-réellement utilisé pour `CLUSTER_NAME`.
+`fleet/clusters/akn.lungmen/kubernetes/src/apps/databases/apps.objectstore.yaml`). `kubectl get cluster` après l'étape 4
+confirme le nom réellement utilisé pour `CLUSTER_NAME`.
 
 ## Étape 1 — Extraire les coordonnées S3 et les identifiants
 
@@ -257,8 +257,8 @@ Cette procédure ne modifie jamais le backup S3, elle le lit seulement : réessa
   les manifestes `ObjectStore` et `ScheduledBackup` référençaient `amiya.akn` et un motif
   `{app}.postgresql-objectstore.yaml` qui n'existent plus dans `projects/` ; ils sont remplacés par
   `<nom>.objectstore.yaml` et `<nom>.scheduledbackup.yaml` de `lungmen.akn`
-  (`projects/lungmen.akn/src/apps/databases/`). Le callout de l'étape 2 a été inséré dans le texte et les renvois aux
-  autres procédures suivent leurs nouveaux noms.
+  (`fleet/clusters/akn.lungmen/kubernetes/src/apps/databases/`). Le callout de l'étape 2 a été inséré dans le texte et
+  les renvois aux autres procédures suivent leurs nouveaux noms.
 - _2026-08-06_ : Reclassement de `DB-20260723-00` en `BKP-20260723-00` : c'est fondamentalement une procédure de
   restauration de backup, elle vit donc avec `BKP-20260805-00` dans `docs/procedures/backups/` et non plus dans
   `databases/`. Aucun contenu modifié hors l'identifiant et les liens relatifs qui traversaient le déplacement.

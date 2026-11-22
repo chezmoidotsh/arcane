@@ -1,0 +1,28 @@
+# =============================================================================
+# lungmen.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Cloud + Vault/OpenBao infrastructure for lungmen.akn (remote cluster Vault auth backend, Cloudflare
+# cert-manager token, Tailscale OAuth client, Pocket-Id and Pangolin resources, Garage keys),
+# stack lungmen_akn.live (state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the shared secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) come from fleet/.fnox.toml and
+# the provider credentials (Cloudflare, Pocket-Id, Pangolin, Tailscale, Garage) from ../.fnox.toml.
+# Both are resolved from Bitwarden Secrets Manager (with the token and project ID of the
+# Keychain, see `mise run bws:setup`) and exist only inside that process. They are created
+# by hand in the Bitwarden project under the names listed in ../.fnox.toml; a missing one
+# fails the run. The vault provider needs an OpenBao session: `mise run bao:login`.
+# The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
+#
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+PULUMI_STACK = "lungmen_akn.live"

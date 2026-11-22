@@ -52,14 +52,14 @@ Rules:
 
 Decide from the path of the file that declares the version.
 
-| The version is declared in                                                                                   | Case                                  |
-| ------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
-| `projects/*/src/apps/**`, `projects/*/src/infrastructure/kubernetes/**`, `projects/rhodes.akn/src/argocd/**` | 1. Kubernetes (ArgoCD)                |
-| `catalog/kubernetes/**`                                                                                      | 2. Catalog (shared Kubernetes bases)  |
-| `fleet/hosts/core.<name>/nix/**`, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/**`     | 3. NixOS LXC appliance                |
-| `fleet/hosts/akn.horn/nix/**`, `fleet/hosts/akn.exusiai/nix/**`                                              | 4. NixOS host (OCI VPS)               |
-| a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules)                       | 5. Nix flake input or nixpkgs package |
-| no file in the repository (Home Assistant OS, a router firmware, a manual component)                         | 6. Outside the repository             |
+| The version is declared in                                                                                                                         | Case                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `fleet/clusters/*/kubernetes/src/**`, `projects/*/src/apps/**`, `projects/*/src/infrastructure/kubernetes/**`, `projects/rhodes.akn/src/argocd/**` | 1. Kubernetes (ArgoCD)                |
+| `catalog/kubernetes/**`                                                                                                                            | 2. Catalog (shared Kubernetes bases)  |
+| `fleet/hosts/core.<name>/nix/**`, `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/**`                                           | 3. NixOS LXC appliance                |
+| `fleet/hosts/akn.horn/nix/**`, `fleet/hosts/akn.exusiai/nix/**`                                                                                    | 4. NixOS host (OCI VPS)               |
+| a `flake.nix` or `flake.lock` elsewhere (`catalog/nix/images/**`, other NixOS modules)                                                             | 5. Nix flake input or nixpkgs package |
+| no file in the repository (Home Assistant OS, a router firmware, a manual component)                                                               | 6. Outside the repository             |
 
 When none fits, say so in the issue or the PR. Do not guess a command.
 
@@ -89,8 +89,8 @@ Applies to apps and in-cluster infrastructure of `lungmen.akn`, `rhodes.akn` (an
 3. Run `dist:render` on the touched application (`dist:render <path>`, or `--changed`), and commit `src/` and `dist/`
    together. A diff in `dist/` that you did not expect is the real content of the upgrade: read it.
 4. Merge. ArgoCD syncs from `dist/`. To force it: `argocd:app:sync <application directory>`, the directory that holds
-   the `kustomization.yaml` of the version line (for example `projects/lungmen.akn/src/infrastructure/kubernetes/cilium`
-   or `projects/lungmen.akn/src/apps/n8n`).
+   the `kustomization.yaml` of the version line (for example `fleet/clusters/akn.lungmen/kubernetes/src/system/cilium`
+   or `fleet/clusters/akn.lungmen/kubernetes/src/apps/n8n`).
 5. Check: the ArgoCD application is `Synced` and `Healthy`, the pods run the new version, then the service itself.
 
 `rhodes.akn` is the core platform (OpenBao, Pocket-Id, monitoring collection): prefer a quiet moment, and expect a
@@ -102,9 +102,10 @@ version is not undone by a revert: when the notes mention one, say it in the iss
 ## 2. Catalog (shared Kubernetes bases)
 
 `catalog/kubernetes/**` holds reference values and kustomize bases that projects copy. Bump the annotated line there,
-then find the projects that carry the same component (`rg` the name under `projects/*/src`) and treat each as case 1, or
-say that it is left on its own version on purpose. The CloudNative-PG image catalog
-(`catalog/kubernetes/cloudnative-pg/kustomize/default.image-catalog.yaml`) pins digests: see the digest rule.
+then find the projects that carry the same component (`rg` the name under `fleet/clusters/*/kubernetes/src` and
+`projects/*/src`) and treat each as case 1, or say that it is left on its own version on purpose. The CloudNative-PG
+image catalog (`catalog/kubernetes/cloudnative-pg/kustomize/default.image-catalog.yaml`) pins digests: see the digest
+rule.
 
 ## 3. NixOS LXC appliance
 
