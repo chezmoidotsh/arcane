@@ -1,8 +1,6 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
-import * as pulumi from "@pulumi/pulumi";
 import * as tailscale from "@pulumi/tailscale";
-
-const config = new pulumi.Config();
+import { cloudflareAccountId, cloudflareZoneId } from "../config";
 
 // Everything the observability LXC (data.o11y.chezmoi.sh) needs: a Caddy DNS-01 token for its
 // own TLS certificate, and a Tailscale identity to join the tailnet (kernel TUN mode) so
@@ -23,8 +21,8 @@ const config = new pulumi.Config();
 const caddyDns01Token = new Dns01TokenComponent("caddy-dns01-observability", {
 	owner: "chezmoi.sh",
 	application: "caddy-dns01/observability",
-	accountId: config.requireSecret("cloudflare_account_id"),
-	zoneId: config.requireSecret("cloudflare_zone_id"),
+	accountId: cloudflareAccountId,
+	zoneId: cloudflareZoneId,
 });
 export const observabilityDns01Token = caddyDns01Token.tokenValue;
 
