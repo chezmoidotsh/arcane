@@ -14,18 +14,18 @@ const zoneId = config.requireSecret("cloudflare_zone_id");
 // covers `main.minecraft` (Wings, called by browsers) and any per-server name.
 // Caddy only serves the names it is configured for, each with its own
 // certificate (HTTP-01 does not issue wildcards).
-export const dnsRecord = new cloudflare.DnsRecord("rimbilliton-minecraft", {
+export const dnsRecord = new cloudflare.DnsRecord("exusiai-minecraft", {
 	zoneId,
 	name: "minecraft",
 	type: "A",
 	content: instance.publicIp,
 	ttl: 300,
 	proxied: false,
-	comment: "rimbilliton.akn -> Minecraft servers and Pelican panel",
+	comment: "exusiai.akn -> Minecraft servers and Pelican panel",
 });
 
 export const dnsWildcardRecord = new cloudflare.DnsRecord(
-	"rimbilliton-minecraft-wildcard",
+	"exusiai-minecraft-wildcard",
 	{
 		zoneId,
 		name: "*.minecraft",
@@ -33,6 +33,6 @@ export const dnsWildcardRecord = new cloudflare.DnsRecord(
 		content: instance.publicIp,
 		ttl: 300,
 		proxied: false,
-		comment: "rimbilliton.akn -> Pelican Wings and per-server names",
+		comment: "exusiai.akn -> Pelican Wings and per-server names",
 	},
 );

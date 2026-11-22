@@ -1,7 +1,7 @@
 import * as oci from "@pulumi/oci";
 import * as pulumi from "@pulumi/pulumi";
 
-import { rimbilliton } from "./compartments";
+import { exusiai } from "./compartments";
 import { nsg, subnet } from "./network";
 
 const config = new pulumi.Config();
@@ -17,20 +17,20 @@ const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 //
 // The image is a plain Ubuntu Minimal, only a *bootstrap* OS: NixOS is
 // installed over it with nixos-anywhere (kexec), see ../../../README.md and
-// docs/guides/Initialiser-Rimbilliton.md. Hence ignoreChanges on sourceDetails/metadata -- once
+// docs/guides/Initialiser-Exusiai.md. Hence ignoreChanges on sourceDetails/metadata -- once
 // NixOS is installed, a newer Ubuntu image must not trigger a replacement
 // (which would wipe the world).
 const ubuntuImage = oci.core.getImagesOutput({
-	compartmentId: rimbilliton.id,
+	compartmentId: exusiai.id,
 	operatingSystem: "Canonical Ubuntu",
 	shape: "VM.Standard.A1.Flex",
 });
 
 export const instance = new oci.core.Instance(
-	"rimbilliton-minecraft",
+	"exusiai-minecraft",
 	{
 		availabilityDomain,
-		compartmentId: rimbilliton.id,
+		compartmentId: exusiai.id,
 		shape: "VM.Standard.A1.Flex",
 		shapeConfig: { ocpus: 1, memoryInGbs: 6 },
 		sourceDetails: {

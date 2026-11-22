@@ -1,7 +1,7 @@
 import * as oci from "@pulumi/oci";
 import * as pulumi from "@pulumi/pulumi";
 
-import { rimbilliton } from "./compartments";
+import { exusiai } from "./compartments";
 
 const config = new pulumi.Config();
 
@@ -14,12 +14,12 @@ const unsecure = config.getBoolean("unsecure") ?? false;
 export const VCN_CIDR = "172.16.1.0/26";
 export const SUBNET_CIDR = "172.16.1.0/28";
 
-// Host renamed rimbilliton.akn -> exusiai.akn in place: displayNames follow
-// (updatable), but the logical names (`rimbilliton-akn-*`, part of the URNs)
-// and `dnsLabel` stay -- `dnsLabel` cannot be updated, changing it would
-// replace the VCN and everything in it.
-export const vcn = new oci.core.Vcn("rimbilliton-akn-vcn", {
-	compartmentId: rimbilliton.id,
+// `dnsLabel` keeps the host's former name ("rimbilliton"): it is NOT updatable, so changing it
+// REPLACES the VCN, and with it the subnet, the NSG and the instance's VNIC, i.e. the
+// machine holding the Minecraft worlds would lose its network (new public IP, DNS to redo,
+// possible instance replacement). Do not touch it before the migration planned in #1601.
+export const vcn = new oci.core.Vcn("exusiai-akn-vcn", {
+	compartmentId: exusiai.id,
 	cidrBlocks: [VCN_CIDR],
 	displayName: "exusiai-akn-vcn",
 	dnsLabel: "rimbillitonvcn",
@@ -28,12 +28,12 @@ export const vcn = new oci.core.Vcn("rimbilliton-akn-vcn", {
 });
 
 export const internetGateway = new oci.core.InternetGateway(
-	"rimbilliton-akn-igw",
-	{ compartmentId: rimbilliton.id, vcnId: vcn.id, enabled: true },
+	"exusiai-akn-igw",
+	{ compartmentId: exusiai.id, vcnId: vcn.id, enabled: true },
 );
 
-export const routeTable = new oci.core.RouteTable("rimbilliton-akn-rt", {
-	compartmentId: rimbilliton.id,
+export const routeTable = new oci.core.RouteTable("exusiai-akn-rt", {
+	compartmentId: exusiai.id,
 	vcnId: vcn.id,
 	routeRules: [
 		{
@@ -53,9 +53,9 @@ export const routeTable = new oci.core.RouteTable("rimbilliton-akn-rt", {
 // can't be detached (OCI requires >= 1 list), so replace it with an
 // ICMP-only list -- same reasoning as kazimierz-akn-default-sl.
 export const defaultSecurityList = new oci.core.SecurityList(
-	"rimbilliton-akn-default-sl",
+	"exusiai-akn-default-sl",
 	{
-		compartmentId: rimbilliton.id,
+		compartmentId: exusiai.id,
 		vcnId: vcn.id,
 		displayName: "exusiai-akn-default-sl",
 		ingressSecurityRules: [
@@ -81,8 +81,8 @@ export const defaultSecurityList = new oci.core.SecurityList(
 	},
 );
 
-export const subnet = new oci.core.Subnet("rimbilliton-akn-subnet", {
-	compartmentId: rimbilliton.id,
+export const subnet = new oci.core.Subnet("exusiai-akn-subnet", {
+	compartmentId: exusiai.id,
 	vcnId: vcn.id,
 	cidrBlock: SUBNET_CIDR,
 	routeTableId: routeTable.id,
@@ -90,8 +90,8 @@ export const subnet = new oci.core.Subnet("rimbilliton-akn-subnet", {
 	displayName: "exusiai-akn-subnet",
 });
 
-export const nsg = new oci.core.NetworkSecurityGroup("rimbilliton-akn-nsg", {
-	compartmentId: rimbilliton.id,
+export const nsg = new oci.core.NetworkSecurityGroup("exusiai-akn-nsg", {
+	compartmentId: exusiai.id,
 	vcnId: vcn.id,
 	displayName: "exusiai-akn-nsg",
 	freeformTags: { project: "exusiai.akn", managed_by: "pulumi" },
@@ -117,7 +117,7 @@ for (const { name, protocol, min, max } of ingressRules.filter(
 		["ipv6", "::/0"],
 	] as const) {
 		new oci.core.NetworkSecurityGroupSecurityRule(
-			`rimbilliton-akn-nsg-ingress-${name}-${suffix}`,
+			`exusiai-akn-nsg-ingress-${name}-${suffix}`,
 			{
 				networkSecurityGroupId: nsg.id,
 				direction: "INGRESS",
@@ -140,7 +140,7 @@ for (const [name, protocol] of [
 		["ipv6", "::/0"],
 	] as const) {
 		new oci.core.NetworkSecurityGroupSecurityRule(
-			`rimbilliton-akn-nsg-egress-${name}-${suffix}`,
+			`exusiai-akn-nsg-egress-${name}-${suffix}`,
 			{
 				networkSecurityGroupId: nsg.id,
 				direction: "EGRESS",

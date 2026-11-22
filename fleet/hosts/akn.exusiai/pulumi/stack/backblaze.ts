@@ -1,7 +1,7 @@
 import * as b2 from "@pulumi/b2";
 import * as random from "@pulumi/random";
 
-const suffix = new random.RandomId("rimbilliton-backups-suffix", {
+const suffix = new random.RandomId("exusiai-backups-suffix", {
 	byteLength: 4,
 });
 
@@ -9,9 +9,10 @@ const suffix = new random.RandomId("rimbilliton-backups-suffix", {
 // Lifecycle: restic manages its own retention (forget --prune); B2 only has
 // to hide nothing -- we just cancel abandoned large uploads.
 const backupsBucket = new b2.Bucket(
-	"rimbilliton-backups",
+	"exusiai-backups",
 	{
-		bucketName: suffix.hex.apply((s) => `rimbilliton-minecraft-${s}`),
+		// A bucket name cannot change: renaming it replaces the bucket (see `protect` below).
+		bucketName: suffix.hex.apply((s) => `exusiai-minecraft-${s}`),
 		bucketType: "allPrivate",
 		lifecycleRules: [
 			{
@@ -29,8 +30,8 @@ const backupsBucket = new b2.Bucket(
 	},
 );
 
-const backupsKey = new b2.ApplicationKey("rimbilliton-backups", {
-	keyName: "rimbilliton-minecraft-restic",
+const backupsKey = new b2.ApplicationKey("exusiai-backups", {
+	keyName: "exusiai-minecraft-restic",
 	bucketIds: [backupsBucket.bucketId],
 	capabilities: [
 		"deleteFiles",
