@@ -1,2 +1,3 @@
 # Generated files — collapsed by default in GitHub PR reviews
 projects/*/dist/**/*.yaml  linguist-generated=true
+fleet/clusters/*/kubernetes/dist/**/*.yaml  linguist-generated=true

@@ -22,6 +22,7 @@ on:
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
       - "projects/*/dist/**"
+      - "fleet/clusters/*/kubernetes/dist/**"
 
   pull_request:
     paths:
@@ -29,6 +30,7 @@ on:
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
       - "projects/*/dist/**"
+      - "fleet/clusters/*/kubernetes/dist/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -64,7 +66,7 @@ jobs:
 
       - name: 🔍 Fail if any dist/ file is stale
         run: |
-          if ! git diff --exit-code -- 'projects/*/dist/**'; then
+          if ! git diff --exit-code -- 'projects/*/dist/**' 'fleet/clusters/*/kubernetes/dist/**'; then
             echo ""
             echo "::error ::One or more dist/ directories are out of sync with their src/ sources."
             echo "::error ::Run 'scripts/dist:render --all' locally and commit the result."
@@ -89,6 +91,7 @@ jobs:
         with:
           files: |
             projects/**/dist/**
+            fleet/clusters/*/kubernetes/dist/**
           dir_names: true
           matrix: true
 

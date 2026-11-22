@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows n8n to reach the Actual Budget API from its namespace (n8n-nodes-actual).
+      Pairs with allow-n8n-to-actual-budget in the n8n namespace.
+  name: allow-actual-budget-from-n8n
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: actual-budget
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: n8n
+            app.kubernetes.io/name: n8n
+      toPorts:
+        - ports:
+            - port: "5006"
+              protocol: TCP

@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to route traffic to Jellyfin application.
+  name: allow-jellyfin-from-newt
+  namespace: jellyfin
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyfin
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "8096"
+              protocol: TCP

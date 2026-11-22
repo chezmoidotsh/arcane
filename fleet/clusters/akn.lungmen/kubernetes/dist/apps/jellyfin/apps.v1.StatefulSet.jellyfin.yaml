@@ -1,0 +1,118 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/instance: jellyfin
+    app.kubernetes.io/name: jellyfin
+  name: jellyfin
+  namespace: jellyfin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: jellyfin
+      app.kubernetes.io/name: jellyfin
+  serviceName: jellyfin
+  template:
+    metadata:
+      annotations:
+        backup.velero.io/backup-volumes: persistent
+        o11y.chezmoi.sh/log-format: bracketed
+      labels:
+        app.kubernetes.io/instance: jellyfin
+        app.kubernetes.io/name: jellyfin
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - image: oci.chezmoi.sh/ghcr.io/jellyfin/jellyfin:12.3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        name: jellyfin
+        ports:
+        - containerPort: 8096
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 64710
+          runAsNonRoot: true
+          runAsUser: 64710
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /config
+          name: persistent
+        - mountPath: /cache
+          name: cache
+        - mountPath: /tmp
+          name: tmpdir
+        - mountPath: /media/movies
+          name: movies
+          readOnly: true
+        - mountPath: /media/tvshows
+          name: tvshows
+          readOnly: true
+        - mountPath: /media/musics
+          name: musics
+          readOnly: true
+        - mountPath: /media/animes
+          name: animes
+          readOnly: true
+      securityContext:
+        fsGroup: 64710
+        runAsGroup: 64710
+        runAsNonRoot: true
+        runAsUser: 64710
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: cache
+      - emptyDir: {}
+        name: tmpdir
+      - name: movies
+        persistentVolumeClaim:
+          claimName: jellyfin-movies-smb-storage
+          readOnly: true
+      - name: tvshows
+        persistentVolumeClaim:
+          claimName: jellyfin-tvshows-smb-storage
+          readOnly: true
+      - name: musics
+        persistentVolumeClaim:
+          claimName: jellyfin-musics-smb-storage
+          readOnly: true
+      - name: animes
+        persistentVolumeClaim:
+          claimName: jellyfin-animes-smb-storage
+          readOnly: true
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app.kubernetes.io/instance: jellyfin
+        app.kubernetes.io/name: jellyfin
+      name: persistent
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: proxmox-lvmthin-ext4-retain

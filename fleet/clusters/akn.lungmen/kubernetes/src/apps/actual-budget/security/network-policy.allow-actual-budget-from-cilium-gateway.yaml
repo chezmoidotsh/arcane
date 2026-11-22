@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway API to route traffic to the Actual Budget application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+  name: allow-actual-budget-from-cilium-gateway
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: actual-budget
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "5006"
+              protocol: TCP

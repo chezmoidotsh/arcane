@@ -1,0 +1,17 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: n8n-egress-inspection-ca
+  namespace: n8n
+spec:
+  commonName: n8n-egress-inspection-ca
+  duration: 8760h
+  issuerRef:
+    kind: ClusterIssuer
+    name: egress-inspection-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  renewBefore: 720h
+  secretName: n8n-egress-inspection-ca

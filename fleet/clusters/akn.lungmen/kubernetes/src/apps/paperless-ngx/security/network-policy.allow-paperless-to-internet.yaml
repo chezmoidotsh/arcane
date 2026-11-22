@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Paperless NGX to access specific internet resources for core functionality:
+      - Gmail IMAP (imap.gmail.com) for importing emails and documents via email
+      All connections are restricted to secure protocols only.
+  name: allow-paperless-ngx-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: webserver
+  egress:
+    - toFQDNs:
+        # Allow access to IMAP Gmail for importing mails
+        - matchName: imap.gmail.com
+      toPorts:
+        - ports:
+            - port: "993"
+              protocol: TCP

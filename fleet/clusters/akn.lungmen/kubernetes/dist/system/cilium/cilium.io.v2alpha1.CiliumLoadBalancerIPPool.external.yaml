@@ -1,0 +1,14 @@
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: external
+spec:
+  blocks:
+  - cidr: 10.0.0.72/29
+  serviceSelector:
+    matchExpressions:
+    - key: io.cilium/lb-ipam-pool
+      operator: NotIn
+      values:
+      - internal

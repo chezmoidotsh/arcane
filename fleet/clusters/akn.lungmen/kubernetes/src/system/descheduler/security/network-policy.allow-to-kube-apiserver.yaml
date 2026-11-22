@@ -1,0 +1,17 @@
+---
+# The descheduler Job lists nodes/pods/PDBs and creates pod evictions through the
+# Kubernetes API; that is its only egress need.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows descheduler-system pods to reach the Kubernetes API server, required to read
+      nodes, pods and PodDisruptionBudgets and to create pod evictions.
+  name: allow-to-kube-apiserver
+  namespace: descheduler-system
+spec:
+  endpointSelector: {}
+  egress:
+    - toEntities:
+        - kube-apiserver

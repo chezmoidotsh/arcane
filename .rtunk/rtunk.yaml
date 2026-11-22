@@ -85,6 +85,7 @@ lint:
       linters: [svgo]
       paths:
         - projects/*/docs/assets/architecture.svg
+        - fleet/clusters/*/assets/architecture.svg
     - # SOPS-encrypted dotenv files must not be reformatted — linters corrupt
       # the lowercase sops_* metadata keys that SOPS requires for decryption.
       linters: [ALL]
@@ -111,6 +112,7 @@ lint:
       linters: [gitleaks]
       paths:
         - projects/*/dist/**/*
+        - fleet/clusters/*/kubernetes/dist/**/*
     - # Pulumi SDKs dynamically bridged from Terraform providers — 100%
       # generated, never hand-edited, excluded from all linters. Source is
       # committed (pnpm install can't regenerate a missing SDK directory);
@@ -166,6 +168,7 @@ actions:
         - files:
             - projects/*/src/apps/**
             - projects/*/src/infrastructure/kubernetes/**
+            - fleet/clusters/*/kubernetes/src/**
             - catalog/helm/**
     # Catch a stale dist/ before it reaches CI (commit made with --no-verify, or drift from a
     # change outside the pre-commit triggers). Only the projects changed against the parent

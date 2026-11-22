@@ -1,0 +1,55 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Gateway API core CRDs (GatewayClass, Gateway, HTTPRoute, TCPRoute, ...) — Cilium's chart doesn't
+  # bundle these.
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
+
+  - ../../../../../../../catalog/kubernetes/cilium/kustomize
+
+  - external.ippool.yaml
+  - internal.ippool.yaml
+  - egress-inspection.yaml
+  - security/
+
+  # Gateway/HTTPRoute/Certificate live here, not in their own component, because Cilium's Gateway
+  # API implementation has no separate per-Gateway pod: traffic is proxied by the same
+  # Envoy embedded in cilium-agent (envoy.enabled), which ships as part of this Helm release and is
+  # therefore stuck in this release's namespace (kube-system) — there's no chart value to move it.
+  - external.gateway.yaml
+  - internal.gateway.yaml
+  - wildcard.chezmoi.sh.certificate.yaml
+
+helmCharts:
+  - repo: https://helm.cilium.io/
+    name: cilium
+    # oripathy: type=helm upstream=github.com/cilium/cilium tagPrefix=v
+    version: 1.20.4
+
+    releaseName: cilium
+    namespace: kube-system
+
+    valuesFile: ../../../../../../../catalog/kubernetes/cilium/helm/default.helmvalues.yaml
+
+patches:
+  # Log formats of the pods (ADR-020).
+  - target: { kind: DaemonSet, name: cilium-envoy }
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: bracketed}}
+  - target: { kind: Deployment, name: cilium-operator }
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations/o11y.chezmoi.sh~1log-format, value: logfmt}
+  - target: { kind: Deployment, name: hubble-relay }
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
+  - target: { kind: Deployment, name: hubble-ui }
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt, o11y.chezmoi.sh/log-format.frontend: none}}
+  - target: { kind: CronJob, name: hubble-generate-certs }
+    patch: |-
+      - {op: add, path: /spec/jobTemplate/spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}
+  - target: { kind: Job, name: hubble-generate-certs-df446b0717 }
+    patch: |-
+      - {op: add, path: /spec/template/metadata/annotations, value: {o11y.chezmoi.sh/log-format: logfmt}}

@@ -1,0 +1,26 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the proxies created by the Tailscale operator to reach Let's Encrypt's ACME
+      endpoint. The proxy of a Tailscale Ingress serves HTTPS with a certificate for its
+      <name>.<tailnet>.ts.net name and gets (and renews) it by running the ACME flow itself:
+      without this rule every TLS handshake stalls with
+      "acme.GetReg ... acme-v02.api.letsencrypt.org ... i/o timeout".
+      Proxies carry the tailscale.com/managed label set by the operator; the operator itself
+      does not need this access.
+  name: allow-tailscale-to-letsencrypt
+  namespace: tailscale-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: acme-v02.api.letsencrypt.org
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      tailscale.com/managed: "true"

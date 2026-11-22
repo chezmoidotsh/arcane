@@ -1,0 +1,46 @@
+# =============================================================================
+# Lungmen.akn Cluster - Mise Configuration
+# =============================================================================
+# Mise configuration for the lungmen.akn cluster (fleet/clusters/akn.lungmen).
+# This cluster is the migration target for home applications, replacing
+# the legacy maison cluster with Talos Linux and ArgoCD architecture.
+#
+# Services: Home Applications (migrated from maison)
+# Architecture: Talos Linux + ArgoCD
+# =============================================================================
+
+# =============================================================================
+# Tool Installation Matrix
+# =============================================================================
+# Tools needed only when operating on the lungmen Omni cluster template.
+# omnictl is declared in the root .mise.toml (pinned to 1.8.2); no project-level
+# override is needed — the root pin is inherited here automatically.
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for lungmen.akn cluster"
+# Converts the D2 diagram source to SVG format for documentation
+# Input: architecture.d2 (diagram-as-code source)
+# Output: assets/architecture.svg (embedded in the README)
+run = "d2 --theme 0 architecture.d2 assets/architecture.svg"
+dir = "{{ config_root }}"
+
+[tasks."app:build"]
+description = "Build all apps manifests to verify Kustomize configuration"
+run = "kustomize build --enable-helm"
+
+# -----------------------------------------------------------------------------
+# Omni Cluster Template Validation
+# -----------------------------------------------------------------------------
+# Offline validation only — `omnictl cluster template validate` needs no Omni
+# connectivity or OMNICONFIG. Applying a template is an online operation (needs
+# OMNICONFIG from the root .mise.toml and an Omni login); see
+# catalog/omni/README.md for the apply workflow instead of a task here.
+
+[tasks."omni:clustertemplate:validate"]
+description = "Validate the lungmen Omni cluster template offline (no Omni connectivity)"
+run = "omnictl cluster template validate -f {{ config_root }}/omni/lungmen.clustertemplate.yaml"
+dir = "{{ config_root }}"

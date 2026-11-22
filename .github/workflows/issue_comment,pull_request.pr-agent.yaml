@@ -30,7 +30,8 @@
 # runs with secrets. Bots (Renovate included) and pull requests from forks get no welcome
 # comment: their token is read-only.
 #
-# Generated and lock files are ignored (`ignore.glob`): `projects/*/dist/` is rendered from
+# Generated and lock files are ignored (`ignore.glob`): `projects/*/dist/` (and
+# `fleet/clusters/*/kubernetes/dist/`) is rendered from
 # `src/` (ADR-011) and checked by the dist staleness workflow, so the review reads `src/`.
 #
 # Permissions: contents: read, issues: write, pull-requests: write (commenting only)
@@ -149,7 +150,7 @@ jobs:
           PR_DESCRIPTION.PUBLISH_DESCRIPTION_AS_COMMENT: "true"
           PR_DESCRIPTION.GENERATE_AI_TITLE: "false"
           # Rendered manifests and lock files are generated: review their sources instead.
-          IGNORE.GLOB: '["projects/*/dist/**", "pnpm-lock.yaml", "uv.lock"]'
+          IGNORE.GLOB: '["projects/*/dist/**", "fleet/clusters/*/kubernetes/dist/**", "pnpm-lock.yaml", "uv.lock"]'
           # Repository conventions (see AGENTS.md).
           PR_REVIEWER.EXTRA_INSTRUCTIONS: >-
             This is a GitOps homelab repository (Talos, ArgoCD, Cilium, OpenBao). Flag: plaintext
