@@ -20,7 +20,7 @@ import { rhodesAknProvider } from "./kubernetes";
 // configure its own Proxmox provider, authenticated with a delegated,
 // narrowly-scoped credential (rhodes-akn-bootstrap@pve, Administrator at
 // /access only — cannot touch VMs, storage or SDN) that pve-01.core's
-// pulumi/access/rhodes-akn-bootstrap.ts mints for exactly this
+// pulumi/stack/access/rhodes-akn-bootstrap.ts mints for exactly this
 // purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
 // for the full pattern.
 //
@@ -37,7 +37,7 @@ import { rhodesAknProvider } from "./kubernetes";
 // holding the exporting stack's own passphrase, and this repo deliberately
 // keeps every project's Pulumi state passphrase separate (see
 // docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md
-// and pve-01.core's pulumi/access/rhodes-akn-bootstrap.ts for the full
+// and pve-01.core's pulumi/stack/access/rhodes-akn-bootstrap.ts for the full
 // reasoning). Goes through the explicit `rhodesAknProvider` (./kubernetes.ts), like
 // everything else in this file.
 const bootstrapSecret = k8s.core.v1.Secret.get(
@@ -46,7 +46,7 @@ const bootstrapSecret = k8s.core.v1.Secret.get(
 	{ provider: rhodesAknProvider },
 );
 // Already the complete, ready-to-use `USER@REALM!TOKENID=SECRET` string — see
-// pve-01.core's pulumi/access/rhodes-akn-bootstrap.ts for why this must
+// pve-01.core's pulumi/stack/access/rhodes-akn-bootstrap.ts for why this must
 // not be rebuilt from separate id/secret parts.
 const bootstrapApiToken = bootstrapSecret.data["api-token"].apply((v) =>
 	Buffer.from(v, "base64").toString("utf-8"),

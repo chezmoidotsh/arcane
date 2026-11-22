@@ -130,8 +130,8 @@ Pour désactiver le suivi de connexion (conntrack) sur ces pools, voir
 ## SDN Proxmox : VNet talosnet
 
 Réseau interne de nœud à nœud pour les clusters Talos, provisionné dans la zone SDN `pvenet`, non routé sur les VLAN
-physiques. Codifié dans Pulumi : `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts` (`pvenetZone`,
-`talosnetVnet`, `talosnetSubnet`). La procédure
+physiques. Codifié dans Pulumi : `fleet/hosts/core.pve-01/pulumi/stack/network/sdn.ts` (`pvenetZone`, `talosnetVnet`,
+`talosnetSubnet`). La procédure
 [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) garde la
 justification de conception et le chemin de migration vers `vxlan`.
 
@@ -145,7 +145,7 @@ justification de conception et le chemin de migration vers `vxlan`.
 | DNS (option 6) | `10.128.0.3` (talosnet-dns, BIND), IP littérale via `dhcpDnsServer` ; permet aux clients talosnet de résoudre les noms split-horizon                                                                                 |
 | SNAT           | Activé : les nœuds atteignent `pve-01.pve.chezmoi.sh:8006` (requis par proxmox-csi-plugin)                                                                                                                           |
 | MTU            | Non défini sur la zone ni le VNet (défaut PVE) ; `1450` fixé sur `eth1` de chaque nœud par `catalog/omni/clustertemplates/base.yaml`, dimensionné pour une migration future vers `vxlan` (50 octets d'encapsulation) |
-| ACL            | `SDN.Use` (rôle `PVESDNUser`) accordé à `omni@pve` sur le VNet (`omniSdnTalosnetAcl`) ; le même rôle sur `localnetwork/vmbr1` (plan VLAN 5 / `eth0`) est dans `stack/proxmox/access/omni.ts`                         |
+| ACL            | `SDN.Use` (rôle `PVESDNUser`) accordé à `omni@pve` sur le VNet (`omniSdnTalosnetAcl`) ; le même rôle sur `localnetwork/vmbr1` (plan VLAN 5 / `eth0`) est dans `fleet/hosts/core.pve-01/pulumi/stack/access/omni.ts`  |
 
 Un VNet unique est partagé par tous les clusters : les `MachineClass` Omni sont des objets COSI partagés et non
 kustomizables, et les `patches[]` d'un template de cluster ne peuvent pas surcharger leur `providerdata` (où se trouve
@@ -331,9 +331,8 @@ de refuser le reste en entrée.
 
 ### Groupe de sécurité Proxmox `talos`
 
-Référence de base des VM Talos gérées par Omni, déclarée dans
-`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/firewall.ts`. Une VM l'utilise en déclarant `GROUP talos`
-dans son `.fw` (étape manuelle).
+Référence de base des VM Talos gérées par Omni, déclarée dans `fleet/hosts/core.pve-01/pulumi/stack/network/firewall.ts`. Une VM
+l'utilise en déclarant `GROUP talos` dans son `.fw` (étape manuelle).
 
 | Règle (entrant) | Protocole | Port  | Source     | Usage                                      |
 | --------------- | --------- | ----- | ---------- | ------------------------------------------ |

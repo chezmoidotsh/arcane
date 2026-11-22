@@ -13,7 +13,7 @@ import * as pulumi from "@pulumi/pulumi";
 // This stack mints the kubernetes-cloud-provider@pve identity itself,
 // directly against pve-01, using a delegated, narrowly-scoped credential
 // (lungmen-akn-bootstrap@pve, Administrator at /access only) that pve-01.core's
-// pulumi/access/lungmen-akn-bootstrap.ts mints for exactly this
+// pulumi/stack/access/lungmen-akn-bootstrap.ts mints for exactly this
 // purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
 // for the full pattern.
 //

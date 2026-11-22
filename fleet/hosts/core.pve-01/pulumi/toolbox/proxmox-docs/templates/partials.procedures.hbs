@@ -7,25 +7,21 @@ Every procedure below ends in an apply, so this comes first.
 **Prerequisite — authenticate as `root@pam` with a password, not an API token.** Unlike every other stack in this
 project, this one cannot use a scoped API token: Proxmox VE's ACME endpoints reject token authentication outright,
 even a full-privilege token with privilege separation disabled, because they check for a real `root@pam` session. The
-credential is passed as environment variables, scoped to the single command that needs it:
+credential comes from Bitwarden Secrets Manager (`pulumi-proxmox-ve-root-password`, see `../.fnox.toml`): fnox resolves
+it and only places it in the environment of the command that needs it:
 
 ```sh
-cd projects/chezmoi.sh/src/infrastructure/pulumi
+cd fleet/hosts/core.pve-01/pulumi
 
-PROXMOX_VE_USERNAME="root@pam" \
-PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s {{host.fqdn}} -w)" \
-  mise run pulumi:diff     # preview pending changes
-
-PROXMOX_VE_USERNAME="root@pam" \
-PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s {{host.fqdn}} -w)" \
-  mise run pulumi:apply    # apply, then regenerate this document
+mise run pulumi:diff     # preview pending changes
+mise run pulumi:apply    # apply, then regenerate this document
 ```
 
 > [!IMPORTANT]
 > The password never goes into Pulumi config — not even as `--secret`. `Pulumi.<stack>.yaml` is committed to git, and
-> encrypted-at-rest is not the same as safe to commit. Read it from a password manager inline, as above, and never
-> `export` it into a long-lived shell. The one-time Keychain setup is in
-> [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md), "Bootstrapping".
+> encrypted-at-rest is not the same as safe to commit. Let fnox resolve it, as above, and never `export` it into a
+> long-lived shell. The secret is created by hand in the Bitwarden project, see
+> [`README.md`](./README.md), « Première installation ».
 
 Applying also regenerates this document from the resulting state, so it never drifts from what is deployed.
 
@@ -57,7 +53,7 @@ journalctl -u pvedaemon -f    # watch the challenge
 ### Add a service identity
 
 Add the role (if no built-in fits), the user, an optional token, and one ACL per grant to
-[`stack/proxmox/access.ts`](../src/infrastructure/pulumi/stack/proxmox/access.ts), then apply. Scope every grant to a
+[`pulumi/stack/access/`](./pulumi/stack/access/), then apply. Scope every grant to a
 pool or a node, never to `/`.
 
 Give the user a `comment`: it is what fills the Purpose column above. An identity declared without one renders blank,
@@ -122,4 +118,4 @@ See
 > [!IMPORTANT]
 > ACME resources cannot be imported or applied with an API token. Proxmox VE's ACME endpoints reject token
 > authentication outright — even a full-privilege one — and require a real `root@pam` password session. See
-> [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md), "Bootstrapping".
+> [`README.md`](./README.md), « Première installation ».

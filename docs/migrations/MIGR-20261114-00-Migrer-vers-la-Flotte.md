@@ -37,7 +37,7 @@ chaque élément ayant son README.
 | 6     | Déplacer le compartiment OCI parent `chezmoi.sh` vers `base`        | code prêt, état Pulumi à déplacer                                                                                          |
 | 7     | Les hôtes du groupe `akn`                                           | code prêt (A, B, C), états Pulumi à déplacer                                                                               |
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 à 4 code prêt, état Pulumi à déplacer |
-| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | `core.pbs` et `core.nas` code prêt, états Pulumi à déplacer ; `core.pve-01` et `base` à faire                              |
+| 9     | Scinder les piles lourdes de `chezmoi_sh`                           | `core.pbs`, `core.nas` et `core.pve-01` code prêt, états Pulumi à déplacer ; `base` à faire                                |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | à faire                                                                                                                    |
 | 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                    |
 
@@ -943,6 +943,57 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
   `main` les déclare encore : un `up` voudrait les recréer. `truenas:destroyProtection` refuse les suppressions côté
   TrueNAS mais ne couvre ni la clé B2, ni les secrets OpenBao, ni les mots de passe, ni le jeton Cloudflare. Des mots de
   passe recréés casseraient les montages SMB de `lungmen.akn`.
+- **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
+
+### Détail de l'étape 9 : `core.pve-01`
+
+- **Constaté** : `proxmox/host/fs/` va dans `fleet/hosts/core.pve-01/fs/` (et son `.mise.toml` à la racine de l'hôte,
+  tâches `host:*` inchangées) ; `stack/proxmox/` (avec `access/`) devient le projet `pve-01-core` (pile
+  `pve-01_core.live`) sous `fleet/hosts/core.pve-01/pulumi/`, avec le générateur `toolbox/proxmox-docs/` ;
+  `PROXMOX-VE.md` va à la racine de l'hôte ; les deux README fusionnent dans celui de l'hôte ; la tâche
+  `proxmox:acme:rotate` suit. 40 ressources déplacées (39 racines et le jeton enfant `acme-dns-pve-token`) : rôles,
+  utilisateurs, jetons et ACL d'Omni et des amorçages de `rhodes.akn` et `lungmen.akn`, pools et appartenances, zone,
+  VNet, sous-réseau et applicateur SDN, groupe de sécurité du pare-feu `pve-sg-talos`, compte, greffon DNS et certificat
+  ACME, stockage `pve-storage-pbs`, les deux `Secret` Kubernetes d'amorçage et le jeton DNS-01 `acme-dns-pve`. Les deux
+  fournisseurs `kubernetes` explicites (`rhodes-akn`, `lungmen-akn`) suivent (copie automatique par `state move` : à
+  confirmer). Il reste 8 ressources dans `chezmoi_sh` : observabilité (jeton et client OAuth), compartiment OCI, groupes
+  et revendications Pocket-Id.
+- **Constaté** : rien ne traverse la frontière en dehors de valeurs de configuration copiées (identifiants Cloudflare,
+  contextes Kubernetes). `pve-storage-pbs` part avec sa clé `pveBackupTokenSecret` (ajoutée à l'étape 9 `core.pbs`),
+  désormais dans `pve-01-core` : une rotation du jeton dans `pbs-core` oblige à mettre à jour `pve-01-core`.
+  Contrairement à ce que supposait le plan, aucune tâche `mise` ne lit de sortie pour les amorçages : les jetons
+  arrivent aux clusters par les `Secret` `kube-system/{rhodes,lungmen}-akn-bootstrap-pve`, lus par `Secret.get` ; rien à
+  recibler. `chezmoi.sh` perd `@pulumi/proxmox`, `@pulumi/kubernetes`, `@chezmoi.sh/pulumi-lib`, `handlebars` et toute
+  sa configuration de test (plus aucun test).
+- **Manuel avant la fusion** :
+  1. créer `fleet/hosts/core.pve-01/pulumi/.mise/env.yaml` (SOPS, `PULUMI_STACK=pve-01_core.live`, nouvelle
+     `PULUMI_CONFIG_PASSPHRASE`) ;
+  2. `pnpm install` ;
+  3. `pulumi stack init pve-01_core.live` ;
+  4. `pulumi config set --secret` de `pve-01-core:cloudflare_account_id` et `pve-01-core:cloudflare_zone_id` (depuis
+     `chezmoi_sh`) et de `pve-01-core:pveBackupTokenSecret` (depuis la sortie de `pbs-core`) ; `proxmox:endpoint`,
+     `proxmox:insecure` et les deux contextes Kubernetes sont déjà en clair dans le fichier de pile ; la connexion
+     `root@pam` vient de l'environnement ;
+  5. exporter les deux états ;
+  6. `pulumi state protect` des racines dans la source, par précaution ;
+  7. `pulumi state move` des 39 racines vers `organization/pve-01-core/pve-01_core.live` ;
+  8. `pulumi preview` vide dans la destination, et dans la source aucune sortie modifiée, au plus la suppression de
+     fournisseurs devenus inutiles.
+
+  Après : retirer de `chezmoi_sh` `proxmox:endpoint`, `proxmox:insecure`, les deux contextes Kubernetes et
+  `pveBackupTokenSecret`.
+
+- **Risque** : aucune des 40 ressources n'a `protect` ni `retainOnDelete`. Un `pulumi up` dans `chezmoi_sh` depuis cette
+  branche avant le déplacement supprimerait le SDN (eth1 `talosnet` de tous les nœuds Talos et chemin SNAT du pilote CSI
+  vers l'API Proxmox), l'utilisateur, les rôles et les ACL d'Omni, les jetons et `Secret` d'amorçage, les pools, le
+  stockage PBS (sauvegardes arrêtées), l'ACME et le groupe de sécurité : d'où le `state protect` préalable. Un `up` dans
+  `pve-01-core` avant le déplacement tenterait de créer des doublons.
+- **À confirmer** : le `state move` entre phrases secrètes différentes avec le `kubeconfig` secret des fournisseurs
+  Kubernetes ; la copie automatique des fournisseurs.
+- **À trancher** : les commentaires des `proxmox-cloud-controller-manager.helmvalues/default.yaml` des deux clusters
+  nomment encore `stack/proxmox` de `chezmoi.sh` (modifier `src/` demande un `dist:render`) ; l'identifiant Oripathy
+  d'`otelcol-contrib` passe de `chezmoi.sh/…` à `pve-01.core/…` (issues existantes dupliquées) ; la suppression complète
+  de la configuration de test de `chezmoi.sh`.
 - **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
 
 ### 10. Séquencer `core.o11y-datastore` avec l'ADR-022

@@ -379,7 +379,7 @@ d'administration des nœuds au VLAN 5.
   de suivi.
 - [#1032 Documenter la topologie réseau du homelab](https://github.com/chezmoidotsh/arcane/issues/1032) : l'issue
   bloquante.
-- [Implémentation Pulumi](../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts) : la zone, le VNet
+- [Implémentation Pulumi](../../fleet/hosts/core.pve-01/pulumi/stack/network/sdn.ts) : la zone, le VNet
   et le sous-réseau du SDN.
 - [IPAM](../reference/IPAM-Reference.md) : le plan d'adressage (VLAN, pools LB Cilium, `talosnet`, CIDR Kubernetes).
 - [Référence réseau](../reference/Reseau-Reference.md) : la topologie réseau du homelab.

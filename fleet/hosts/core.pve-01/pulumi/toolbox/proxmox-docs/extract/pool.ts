@@ -6,7 +6,7 @@ export const POOL_TYPE =
 
 export interface PoolDoc {
 	poolId: string;
-	/** Carries the pool's intent from `pools.ts` into the document. */
+	/** Carries the pool's intent from `stack/storage/pools.ts` into the document. */
 	comment?: string;
 }
 

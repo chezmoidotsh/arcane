@@ -6,8 +6,8 @@ d'observabilité (`data.o11y.chezmoi.sh:4318`). Il remplace `prometheus-node-exp
 l'ancien LXC `pve-exporter`. Les métriques de l'API Proxmox VE (nœuds, invités, stockage) ne passent pas par lui : le
 serveur de métriques OpenTelemetry de PVE les pousse.
 
-La configuration et le drop-in systemd sont versionnés dans `projects/chezmoi.sh/src/infrastructure/proxmox/host/`, et
-deux tâches `mise` les déploient : `host:otelcol:install` (paquet) et `host:otelcol:deploy` (configuration).
+La configuration et le drop-in systemd sont versionnés dans `fleet/hosts/core.pve-01/`, et deux tâches `mise` les
+déploient : `host:otelcol:install` (paquet) et `host:otelcol:deploy` (configuration).
 
 > [!NOTE]\
 > Procédure rejouée sur `pve-01` le 2026-11-11 : installation, déploiement et vérifications dans VictoriaMetrics et
@@ -40,7 +40,7 @@ La tâche télécharge le `.deb` de la version épinglée dans `.mise.toml` (`OT
 changement de version.
 
 ```sh
-cd projects/chezmoi.sh/src/infrastructure/proxmox/host
+cd fleet/hosts/core.pve-01
 
 mise run host:otelcol:install -- ${PVE_HOST}
 # → <fichier>.deb: OK, puis la version affichée par `otelcol-contrib --version`
@@ -80,8 +80,7 @@ précédente.
    [opentelemetry-collector-releases](https://github.com/open-telemetry/opentelemetry-collector-releases/releases) et
    relever le `sha256` de `otelcol-contrib_<version>_linux_amd64.deb` dans le fichier de sommes de contrôle de la
    version (`opentelemetry-collector-releases_otelcol-contrib_checksums.txt`).
-2. Reporter les deux valeurs dans `projects/chezmoi.sh/src/infrastructure/proxmox/host/.mise.toml` : `OTELCOL_VERSION`
-   et `OTELCOL_DEB_SHA256`.
+2. Reporter les deux valeurs dans `fleet/hosts/core.pve-01/.mise.toml` : `OTELCOL_VERSION` et `OTELCOL_DEB_SHA256`.
 3. Rejouer l'étape 1, puis l'étape 2 si la configuration change, et les vérifications rapides.
 
 ## Retour arrière
@@ -121,8 +120,8 @@ supprimer aussi, puis `systemctl daemon-reload`.
 
 ## Pour aller plus loin
 
-- [README des fichiers de l'hôte Proxmox](../../../projects/chezmoi.sh/src/infrastructure/proxmox/host/README.md) :
-  contenu de la configuration et du drop-in versionnés.
+- [README des fichiers de l'hôte Proxmox](../../../fleet/hosts/core.pve-01/README.md) : contenu de la configuration et
+  du drop-in versionnés.
 - [ADR-018](../../decisions/ADR-018-OTLP-comme-Protocole-d-Ingestion-Unique-pour-l-Appliance-d-Observabilite.md) : le
   choix d'OTLP/HTTP comme seul protocole d'ingestion.
 - [Infrastructure manuelle](../../reference/Infrastructure-Manuelle-Reference.md) : ce qui est configuré à la main sur

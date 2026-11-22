@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This module auto-generates `projects/chezmoi.sh/docs/PROXMOX-VE.md` — an up-to-date reference for
-`pve-01.pve.chezmoi.sh` derived from the deployed Pulumi stack's own state, not from hand-picked imports. It follows the
-same architecture as [`truenas-docs/`](../../../../../../../fleet/hosts/core.nas/pulumi/toolbox/truenas-docs/) and
-[`proxmox-backup-server-docs/`](../../../../../../../fleet/hosts/core.pbs/pulumi/toolbox/proxmox-backup-server-docs/),
-with two additions those two don't have: a **derive layer** and a **static host facts file**.
+This module auto-generates `fleet/hosts/core.pve-01/PROXMOX-VE.md` — an up-to-date reference for `pve-01.pve.chezmoi.sh`
+derived from the deployed Pulumi stack's own state, not from hand-picked imports. It follows the same architecture as
+[`truenas-docs/`](../../../../core.nas/pulumi/toolbox/truenas-docs/) and
+[`proxmox-backup-server-docs/`](../../../../core.pbs/pulumi/toolbox/proxmox-backup-server-docs/), with two additions
+those two don't have: a **derive layer** and a **static host facts file**.
 
-Adding a resource anywhere under `../../stack/proxmox/` is enough — the next regeneration picks it up by Pulumi type
+Adding a resource anywhere in the Pulumi project (`../../`) is enough — the next regeneration picks it up by Pulumi type
 token, with no import list to maintain here.
 
 ## The three kinds of content
@@ -65,7 +65,7 @@ and no round-trip through state.
 3. **Derive cross-resource statements** — `derive.ts` answers what no single resource can: which pool is an enforcement
    boundary (pools × ACLs), which identity has no token (users × tokens), how subnets nest under zones.
 4. **Render** — `render.ts` compiles `templates/root.hbs` with every `templates/partials.*.hbs`.
-5. **Write** — `index.ts` writes the Markdown to `projects/chezmoi.sh/docs/PROXMOX-VE.md`.
+5. **Write** — `index.ts` writes the Markdown to `fleet/hosts/core.pve-01/PROXMOX-VE.md`.
 
 Every list-returning extractor sorts its output, so the document does not reshuffle between runs on incidental
 state-file ordering. The one exception is firewall rules: their order **is** their evaluation order, so
@@ -80,9 +80,9 @@ Route every optional string from state through `extract/index.ts`'s `text()` hel
 **A credential whose secrecy is not guaranteed by the schema.** `AcmeDnsPlugin`'s `data` map holds the Cloudflare DNS-01
 API token. Unlike `UserToken.value` or `StoragePbs.password`, the provider does **not** declare it an additional secret
 output — only `dataWo`. It is encrypted in state today because the declaration feeds it secret Outputs and Pulumi
-propagates secretness, which `../../stack/proxmox/acme.ts` now pins explicitly with `additionalSecretOutputs`. That is a
-property of the call site, not of the resource type, so `extract/acme-dns-plugin.ts` never reads the field at all as an
-independent second layer, and `render.test.ts` asserts a fixture token never reaches rendered output.
+propagates secretness, which `../../stack/system/acme.ts` now pins explicitly with `additionalSecretOutputs`. That is a property of
+the call site, not of the resource type, so `extract/acme-dns-plugin.ts` never reads the field at all as an independent
+second layer, and `render.test.ts` asserts a fixture token never reaches rendered output.
 
 ## File structure
 
@@ -112,14 +112,13 @@ Already chained onto `mise run pulumi:apply`, so a normal apply keeps the docume
 out-of-band state change (e.g. a manual `pulumi refresh`).
 
 **Safety net:** if `proxmox:endpoint` is unset, `index.ts` logs and exits cleanly instead of failing — `pulumi:apply`'s
-post-task chain covers the whole shared stack, so a hard failure here would block applies for
-observability/omni/truenas/zot-registry too.
+post-task runs after the apply, and a hard failure here would report a successful apply as failed.
 
 ## Extending
 
 ### Adding a resource of a type already covered
 
-Nothing to do here — declare it under `../../stack/proxmox/`, apply, regenerate. Give it a `comment`.
+Nothing to do here — declare it in the Pulumi project (`../../`), apply, regenerate. Give it a `comment`.
 
 ### Adding a new resource type
 
@@ -146,4 +145,4 @@ npx mocha
 
 ## Generated output
 
-See [`projects/chezmoi.sh/docs/PROXMOX-VE.md`](../../../../docs/PROXMOX-VE.md).
+See [`fleet/hosts/core.pve-01/PROXMOX-VE.md`](../../../PROXMOX-VE.md).

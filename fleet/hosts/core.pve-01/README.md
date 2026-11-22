@@ -1,240 +1,285 @@
-# Proxmox VE (pve-01.pve.chezmoi.sh) as Code
+<p align="center">
+  <img alt="Proxmox VE, logo" src="../../../docs/assets/icons/platform/proxmox.svg" height="150">
+</p>
 
-This folder contains the Pulumi TypeScript stack that manages a narrow, deliberately scoped slice of
-`pve-01.pve.chezmoi.sh` — the Proxmox VE host every cluster in this homelab runs on — as declarative code. It follows
-the same bridged-provider pattern already established for
-[`fleet/hosts/core.pbs/`](../../../../../../../fleet/hosts/core.pbs/) and
-[`fleet/hosts/core.nas/`](../../../../../../../fleet/hosts/core.nas/):
-[`@pulumi/proxmox`](../../../../../../../catalog/pulumi/sdks/proxmox/), a Pulumi provider dynamically bridged from the
-[`bpg/terraform-provider-proxmox`](https://github.com/bpg/terraform-provider-proxmox) Terraform provider.
+<h1 align="center">「pve-01.core」</h1>
 
-See
-[docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md](../../../../../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md),
-"Non-Goals" for why this scope is narrow: Proxmox VE's **VM/LXC lifecycle** stays fully manual — this stack manages
-administrative config objects (ACLs, SDN, backup-storage registration, resource pools, ACME) that don't carry the
-`Proxmox → hosts K8s → K8s manages Proxmox` trust-cycle risk that non-goal exists to block.
+<p align="center"><strong>L'hyperviseur Proxmox VE sur lequel tourne tout le homelab</strong></p>
 
-## What's managed here
+<p align="center">
+  <img alt="host: Proxmox VE" src="https://img.shields.io/badge/host-Proxmox_VE-E57000?logo=proxmox&logoColor=white">
+  <img alt="config: Pulumi" src="https://img.shields.io/badge/config-Pulumi-8A3391?logo=pulumi&logoColor=white">
+  <img alt="deploy: mise" src="https://img.shields.io/badge/deploy-mise_%2B_pulumi-orange">
+</p>
 
-| File/Folder   | Responsibility                                                                                                                                          |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `access.ts`   | Custom roles (`OmniProvider`, `OmniProviderNode`), the `rhodes-akn-bootstrap@pve`, `omni@pve` service accounts, their API tokens, and every ACL binding |
-| `sdn.ts`      | The `pvenet` SDN zone, `talosnet` VNet + subnet (shared node-traffic network for all Talos/Omni clusters), and the SDN apply step                       |
-| `pools.ts`    | The `core` and `talos` resource pools, and `talos`'s storage-level pool membership (`local`, `nvme-lvm`)                                                |
-| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`fleet/hosts/core.pbs/`](../../../../../../../fleet/hosts/core.pbs/) manages     |
-| `acme.ts`     | The node's ACME account (`default`) and Cloudflare DNS-01 plugin, plus the scoped Cloudflare token that plugin uses                                     |
-| `firewall.ts` | The `talos` cluster Security Group — a baseline firewall policy every Omni-managed Talos VM can opt into                                                |
+<p align="center">
+  <a href="#services">Services</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#accès">Accès</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#déploiement">Déploiement</a> ·
+  <a href="#contribuer">Contribuer</a> ·
+  <a href="#pour-aller-plus-loin">Pour aller plus loin</a>
+</p>
 
-### Intentionally not managed via Pulumi
+`pve-01` est l'unique hyperviseur du homelab : tous les nœuds Kubernetes, les LXC de la plateforme et le NAS sont des
+invités de cette machine. Elle est donc tout en bas de la chaîne de dépendances, et rien d'autre ne survit à sa perte.
 
-- **VM/LXC lifecycle** (create/modify/delete compute) — the actual trust-cycle risk
-  `docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md`'s Proxmox non-goal protects against. Structurally
-  unreachable from this stack's code: no `VirtualEnvironmentVm`/`VirtualEnvironmentContainer`/`ClonedVm` import anywhere
-  here, even though the bridged SDK exposes them.
-- **Realms** (`pam`, `pve`) — both are Proxmox VE built-ins; no `pocket-id` or other custom realm exists on this host.
-  Not worth codifying two realms that ship with every install.
-- **Local storage config** (`local`, `nvme-lvm`) — stays manual, same reasoning as the VM/OS layer. Only the
-  **pbs**-type storage entry (`storage.ts`) is in scope.
-- **PCI/USB resource mapping** (`HBA-4xSATA`, `NIC-10G`, `INTERNAL-6xSATA`) — these encode host-specific IOMMU addresses
-  that need `lspci` rediscovery on any rebuild regardless of whether the mapping object itself is versioned, and are
-  only consumed by one VM's passthrough config (VM-lifecycle-adjacent, out of scope). Revisit if passthrough config
-  starts changing often.
-- **Notifications** — the bridged provider has no PVE notification resource type (unlike PBS). The node stays on its
-  built-in `sendmail`→`root@pam` matcher; no Pulumi equivalent exists to replace it.
-- **Backup jobs themselves** (which VMs/LXCs get backed up, on what schedule) — Proxmox VE `vzdump` resources, staying
-  manual for the same reason VM/LXC lifecycle does. `storage.ts` only prepares the _destination_ those jobs push to.
-- **The `testing` ACME account** — exists on the host (Let's Encrypt staging directory) but no node certificate config
-  references it. Not imported; dropped the same way ADR-015 dropped `DomainIdentity` — no live consumer, not worth
-  codifying. (The `default` account **is** managed — see `acme.ts` and "Bootstrapping" below for why that requires
-  username/password authentication instead of an API token.)
-- **The legacy `vmbr1` SDN ACL's target zone** (`localnetwork`) — the ACL grant itself is declared in `access.ts`
-  (`omniSdnVmbr1Acl`), but the `localnetwork` zone/`vmbr1` bridge it points at predates this stack and is manual,
-  outside the SDN abstraction `sdn.ts` manages.
+Le système et le cycle de vie des invités (VM, LXC, sauvegardes, stockage local, ponts réseau) restent manuels : laisser
+les clusters piloter l'hyperviseur qui les héberge fermerait une boucle de confiance
+([ADR-015](../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md), « Non-Goals »). Le projet Pulumi
+`pve-01-core` (pile `pve-01_core.live`, dans [`pulumi/`](pulumi/)) ne gère que la couche d'administration : les
+identités et leurs droits, le réseau SDN, les pools, l'entrée de stockage vers PBS, le certificat ACME et le pare-feu de
+base des VM Talos. Les fichiers installés à la main sur le nœud sont dans [`fs/`](fs/).
 
-## Access model
+## Services
 
-Two service identities, each scoped to the minimum the manual `pveum`/`pvesh` recipes they replace actually granted (see
-`docs/experiments/20260617-proxmox-csi-ccm/README.md` and `fleet/hosts/core.omni-infra-provider-proxmox/README.md`,
-"Proxmox user and role setup" — the recipes this stack codifies):
+<img src="../../../docs/assets/icons/platform/proxmox.svg" alt="Proxmox VE" width="96" align="left" />
 
-- **`rhodes-akn-bootstrap@pve`** — `Administrator` scoped to `/access` only (users, roles, ACLs, tokens — nothing on
-  VMs, storage or SDN). A delegation credential, not a service identity for a workload: `rhodes.akn`'s own Pulumi
-  program (`fleet/clusters/akn.rhodes/pulumi/stack/system/proxmox.ts`) uses it to self-provision its own
-  `kubernetes-cloud-provider@pve` identity (CCM+CSI, merged) directly against `pve-01`, via
-  `catalog/pulumi/components/proxmox-cluster-identity`, instead of this stack minting that token on its behalf. This
-  stack no longer owns any Kubernetes CCM/CSI identity for that reason — see that component's README for the full
-  pattern, and this stack's `git log` for the identities/roles that used to live here (`kubernetes-ccm@pve`,
-  `kubernetes-csi@pve`, `KubernetesCCM`, `KubernetesCSI`).
-- **`omni@pve`** — the widest identity (VM allocate/clone/config/power), scoped to `/pool/talos` plus
-  `Sys.AccessNetwork`/`Sys.Audit` on `/nodes/pve-01` and `SDN.Use` on both bridges it attaches Talos VM NICs to.
-  Authenticates with a password (`PROXMOX_PASSWORD`), not a token — `access.ts` never sets or reads that password, so it
-  stays untouched by this stack.
+### [Proxmox VE](https://www.proxmox.com/en/proxmox-virtual-environment/overview)
 
-No credential here can act outside `/pool/talos` on VM/LXC resources, `/access` on permission management, and none has
-any privilege on the `core` pool (the platform LXCs this stack itself indirectly depends on via
-`oci-registry`/`omni`/`o11y`).
+Héberge les VM Talos, les LXC de la plateforme et la VM du NAS. Omni y crée les VM des clusters, les plugins CSI et CCM
+des clusters y attachent les volumes, et l'interface web sert à l'administration au quotidien. Il pousse aussi ses
+sauvegardes chiffrées vers Proxmox Backup Server et ses métriques vers l'appliance d'observabilité.
 
-## Bootstrapping
+<br clear="all" />
 
-One-time setup before the first `pulumi up` against this stack:
+<img src="../../../docs/assets/icons/system/opentelemetry.svg" alt="OpenTelemetry Collector" width="96" align="right" />
+
+### [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/)
+
+Envoie le journal systemd et les métriques de la machine (CPU, mémoire, disques physiques, cartes réseau et ponts) à
+l'appliance d'observabilité, comme les agents des LXC. _Il remplace `prometheus-node-exporter` et le transfert rsyslog
+vers l'ancien LXC `pve-exporter`._
+
+<br clear="all" />
+
+## Architecture
+
+![Architecture de pve-01.core](./assets/architecture.png)
+
+Tout passe par l'API de Proxmox VE sur le port 8006 : Pulumi, Omni et les clusters s'en servent chacun avec leur propre
+identité. L'hôte ne parle à Internet que pour son certificat (Let's Encrypt et l'API de Cloudflare pour le DNS-01).
+
+## Accès
+
+L'interface web et l'API sont sur `https://pve-01.pve.chezmoi.sh:8006`, avec un certificat Let's Encrypt renouvelé par
+le client ACME de Proxmox VE. L'interface de gestion n'est pas exposée sur Internet, d'où le DNS-01 (le HTTP-01 n'a
+aucun moyen de la valider). Les adresses (gestion, IPMI, VLAN) sont dans la
+[référence IPAM](../../../docs/reference/IPAM-Reference.md). L'hôte lui-même est administré en SSH
+(`root@pve-01.pve.chezmoi.sh`), comme le font les tâches `host:*` ci-dessous.
+
+Les droits sont répartis sur trois identités, chacune limitée au chemin le plus étroit qui fonctionne :
+
+- **`omni@pve`** est la plus large (allocation, clonage, configuration et alimentation des VM), limitée au pool `talos`,
+  avec `Sys.AccessNetwork` et `Sys.Audit` sur `/nodes/pve-01` et `SDN.Use` sur les deux ponts où elle branche les cartes
+  des VM Talos. Elle s'authentifie par mot de passe (`PROXMOX_PASSWORD`) que cette pile ne lit ni n'écrit jamais.
+- **`rhodes-akn-bootstrap@pve`** et **`lungmen-akn-bootstrap@pve`** sont des identifiants de délégation, pas des
+  identités de workload : `Administrator` limité à `/access` (utilisateurs, rôles, ACL, jetons, sans toucher aux VM, au
+  stockage ni au SDN) et `Permissions.Modify` sur `/nodes/pve-01` et `/pool/talos`. Le programme Pulumi de chaque
+  cluster s'en sert pour créer lui-même son identité CCM et CSI (composant
+  `catalog/pulumi/components/proxmox-cluster-identity`, `fleet/clusters/akn.rhodes/pulumi/stack/proxmox.ts`). Le jeton
+  est déposé directement dans un `Secret` Kubernetes du cluster (`kube-system/<cluster>-akn-bootstrap-pve`), jamais en
+  sortie de pile.
+
+Aucun identifiant ne peut agir hors du pool `talos` sur les VM et les LXC. Aucun n'a de droit sur le pool `core`
+(`oci-registry`, `omni`, `o11y`, …). Ajouter un invité au pool `talos` donne donc à toutes les identités liées à ce pool
+un accès complet sur lui : l'appartenance au pool _est_ la permission.
+
+## Configuration
+
+Le projet Pulumi couvre, par dossier de `pulumi/stack/` (`config.ts` lit toutes les entrées du programme une seule fois)
+: `access/` (rôles personnalisés `OmniProvider*`, comptes de service, jetons et chaque ACL), `network/sdn.ts` (zone
+`pvenet` et VNet `talosnet`, réseau partagé de trafic des nœuds de tous les clusters Talos, avec SNAT parce que les
+nœuds n'ont pas d'adresse sur le VLAN du homelab et doivent joindre l'API de Proxmox VE pour le CSI), `storage/pools.ts`
+(pools `core` et `talos`, et l'appartenance de `talos` aux stockages `local` et `nvme-lvm`), `storage/storage.ts`
+(entrée de stockage de type `pbs` vers le datastore géré par [`core.pbs`](../core.pbs/README.md)), `system/acme.ts`
+(compte `default`, greffon DNS-01 Cloudflare et le jeton Cloudflare limité au DNS-01 qu'il utilise) et
+`network/firewall.ts` (groupe de sécurité `talos`, la base ouverte à toutes les VM Talos : ICMP, apid `50000` et trustd
+`50001` depuis `+rfc1918`). Les modifications SDN sont appliquées automatiquement en fin de `pulumi up`. L'état est dans
+le backend S3 Garage du NAS (voir `Pulumi.yaml`) et les secrets (phrase secrète partagée, identifiants du backend,
+Cloudflare, `root@pam`) sont résolus par fnox depuis Bitwarden Secrets Manager (`fleet/.fnox.toml` et `.fnox.toml`),
+sans fichier chiffré dans le dépôt.
+
+Ne sont **pas** gérés par Pulumi : le cycle de vie des VM et LXC (aucun type `VirtualEnvironmentVm` ou `Container` n'est
+importé), les jobs de sauvegarde, le stockage local et les ponts, les mappings PCI/USB (adresses IOMMU à redécouvrir à
+chaque reconstruction), les realms `pam` et `pve` (intégrés), les notifications (le fournisseur n'a pas de ressource
+pour Proxmox VE : le nœud garde son règle `sendmail` vers `root@pam`), le compte ACME `testing` (staging, sans
+consommateur) et la zone `localnetwork` / pont `vmbr1` visée par l'ACL `omniSdnVmbr1Acl`, antérieure à la pile. Le
+détail, les tableaux d'identités et de pools et les procédures sont dans [`PROXMOX-VE.md`](PROXMOX-VE.md), généré depuis
+l'état déployé (voir [`pulumi/toolbox/proxmox-docs/`](pulumi/toolbox/proxmox-docs/README.md)).
+
+Les fichiers de l'hôte, installés à la main (voir la
+[référence de l'infrastructure manuelle](../../../docs/reference/Infrastructure-Manuelle-Reference.md)), vivent sous
+`fs/` avec un dossier cible encodé par des points : `fs/etc.otelcol-contrib/config.yaml` devient
+`/etc/otelcol-contrib/config.yaml`.
+
+- **Collecteur OpenTelemetry** : paquet Debian `otelcol-contrib` (version et somme de contrôle épinglées dans
+  [`.mise.toml`](.mise.toml)). Les logs viennent du journal systemd (récepteur `journald`, curseur dans
+  `/var/lib/otelcol-contrib`) et suivent le même mapping que les agents des LXC (`catalog/nix/modules/o11y-agent`) :
+  `MESSAGE` en corps, `SYSLOG_IDENTIFIER` en `service.name`, `PRIORITY` en sévérité. Les métriques sont celles de
+  `hostmetrics`, avec `service.name=hostmetrics`. `host.name` vaut le nom d'hôte du nœud (`pve-01`). Les métriques de
+  l'API Proxmox VE (nœuds, invités, stockage) ne viennent pas d'ici : c'est le serveur de métriques OpenTelemetry de
+  Proxmox VE qui les pousse (`/etc/pve/status.cfg`).
+- **`qga-ping`** : l'agent invité `qemu-ga` (extension `siderolabs/qemu-guest-agent` des VM Talos, 11.1.1 en 2026-11)
+  tourne en boucle à 100 % d'un CPU quand une réponse reste coincée dans son port virtio-serial : le client de l'hôte
+  est parti sans la lire, chaque `write()` renvoie `EAGAIN` et l'agent réessaie sans attendre, jusqu'à ce que Proxmox
+  relise le port (arrêt, sauvegarde, affichage de l'IP). Le 2026-11-14, 6 des 7 VM Talos tournaient ainsi depuis des
+  semaines, soit environ 6 cœurs perdus (signature : des millions de `syscw` pour quelques Ko de `wchar` dans
+  `/proc/<pid>/io`, fd sur `/dev/vportNpN`). Un `qm agent <vmid> ping` lit les données en attente et arrête la boucle ;
+  `qga-ping` le fait chaque minute (timer systemd) pour chaque VM démarrée dont l'agent est activé, en envoyant un
+  `guest-sync` directement à `/var/run/qemu-server/<vmid>.qga` (`qm` lance un interpréteur Perl par appel : environ 50 s
+  de CPU par passage pour dix VM, contre environ 0,1 s ici). Seuls les échecs sont journalisés. À retirer quand le
+  correctif sera dans l'extension (patch qemu-devel non fusionné « qga: don't busy-loop writing to virtio-serial when
+  host disconnected », 2026-07, qui attend `POLLOUT` au lieu de réessayer).
+
+```text
+fs/
+├── etc.otelcol-contrib/config.yaml                                   -> /etc/otelcol-contrib/config.yaml
+├── etc.systemd.system.otelcol-contrib.service.d/override.conf        -> /etc/systemd/system/otelcol-contrib.service.d/override.conf
+├── etc.systemd.system/qga-ping.{service,timer}                       -> /etc/systemd/system/
+└── usr.local.sbin/qga-ping                                           -> /usr/local/sbin/qga-ping
+```
+
+## Déploiement
+
+### Première installation
+
+À faire une seule fois avant le premier `pulumi up` de la pile.
 
 > [!IMPORTANT]\
-> **Credentials never go into Pulumi config, full stop — not even as `--secret`.** `pulumi config set --secret` still
-> writes an encrypted blob into `Pulumi.chezmoi_sh.live.yaml`, and that file is committed to git. Encrypted-at-rest is
-> not the same as "safe to commit" — this project's rule is that no credential (password, API token, private key) ever
-> lands in a git-tracked file, encrypted or not. Every credential below is supplied through an **environment variable,
-> set for a single command and never exported into the shell session** — never through `pulumi config set`. Only
-> non-sensitive connection details (`proxmox:endpoint`, `proxmox:insecure` — a URL and a boolean, not credentials)
-> belong in Pulumi config, matching the existing `pbs:endpoint`/`pbs:insecure`/`truenas:url` convention.
+> **Aucun identifiant n'entre dans la configuration Pulumi, pas même avec `--secret`** : `pulumi config set --secret`
+> écrit un blob chiffré dans `pulumi/Pulumi.pve-01_core.live.yaml`, qui est commité, et chiffré au repos ne veut pas
+> dire sûr à commiter. Chaque identifiant passe par une variable d'environnement posée pour une seule commande, jamais
+> exportée dans la session. Seuls les paramètres de connexion non sensibles (`proxmox:endpoint`, `proxmox:insecure`)
+> vont dans la configuration.
 
-1. **Authenticate as `root@pam` with a username/password, not an API token — mandatory, not optional.** Every other
-   stack next to this one (`fleet/hosts/core.nas/`, `fleet/hosts/core.pbs/`) authenticates via a scoped API token, and
-   that remains the default posture to aim for. This stack is the deliberate exception: `acme.ts`'s `AcmeAccount`
-   resource manages Proxmox VE's `/cluster/acme/account` endpoint, which **hard-rejects API token authentication
-   entirely** — confirmed live, `pulumi import`/`preview` fail with `Permission check failed (user != root@pam)` no
-   matter how the token is scoped, even with `privsep` disabled (a token still authenticates as `root@pam!<tokenname>`,
-   a different identity string than a real `root@pam` ticket/password session, which is what this endpoint specifically
-   checks for). There is no ACL grant, role, or token configuration that works around this — a genuine password-based
-   login is the only way any tool can manage this resource, Pulumi included. If ACME weren't in scope, a scoped token
-   would be preferable and this whole requirement would go away; it's in scope because managing the Cloudflare DNS-01
-   plugin without also managing the account it authenticates against doesn't accomplish anything (see `acme.ts`'s
-   comment).
-
-   > [!CAUTION]\
-   > The `root@pam!pulumi-import` token on this host is **not** the read-only credential its name suggests: it holds
-   > both `PVEAuditor` and `Administrator` at `/`, i.e. full cluster control including `Permissions.Modify` and
-   > `User.Modify`. The `Administrator` grant was added while trying to get the ACME import to work, before it was
-   > established that no token can reach those endpoints — it served no purpose and was never rolled back. Nothing in
-   > this stack needs that token any more, since every operation authenticates as `root@pam` with a password. Revoke it,
-   > or at minimum drop the `Administrator` ACL:
-   >
-   > ```sh
-   > pveum user token remove root@pam pulumi-import                       # preferred
-   > pveum acl delete / --tokens 'root@pam!pulumi-import' --roles Administrator  # minimum
-   > ```
-
-   Set the non-sensitive connection details in Pulumi config (safe to commit — a URL and a boolean, not credentials):
+1. **S'authentifier en `root@pam` avec un mot de passe, pas un jeton d'API** (obligatoire). Les autres piles
+   (`core.nas`, `core.pbs`) utilisent un jeton, mais le point d'accès `/cluster/acme/account` de Proxmox VE, géré par
+   `acme.ts`, refuse toute authentification par jeton : `pulumi import` et `preview` échouent avec
+   `Permission check failed (user != root@pam)`, même avec un jeton sans séparation de privilèges (il s'authentifie
+   comme `root@pam!<nom>`, pas comme une vraie session `root@pam`). Aucun rôle ni ACL n'y change rien. Les paramètres
+   non sensibles :
 
    ```sh
    pulumi config set proxmox:endpoint https://pve-01.pve.chezmoi.sh:8006/api2/json
-   pulumi config set proxmox:insecure "true"   # self-signed cert, same as pbs:insecure
+   pulumi config set proxmox:insecure "true"   # certificat auto-signé, comme pbs:insecure
    ```
 
-   Then supply the actual credential as an environment variable, scoped to the single command that needs it (see
-   "Storing the root password securely" below for retrieving it from macOS Keychain without it ever touching shell
-   history):
+   puis le mot de passe, que fnox résout depuis Bitwarden Secrets Manager (`.fnox.toml`, secret
+   `pulumi-proxmox-ve-root-password`, créé à la main) et ne place que dans l'environnement du processus `pulumi` : rien
+   à inliner, `pulumi up` suffit. `PROXMOX_VE_ENDPOINT` et `PROXMOX_VE_API_TOKEN` peuvent surcharger ponctuellement la
+   configuration, mais seuls `PROXMOX_VE_USERNAME` et `PROXMOX_VE_PASSWORD` rendent `AcmeAccount` accessible.
 
-   ```sh
-   PROXMOX_VE_USERNAME="root@pam" \
-   PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s pve-01.pve.chezmoi.sh -w)" \
-     pulumi up
-   ```
-
-   `PROXMOX_VE_ENDPOINT` and `PROXMOX_VE_API_TOKEN` env vars also work as one-off overrides of the Pulumi-config values
-   above — confirmed live (`PROXMOX_VE_API_TOKEN=... pulumi preview` authenticated correctly with the read-only import
-   token, no config file touched) — but `PROXMOX_VE_USERNAME`/`PROXMOX_VE_PASSWORD` are the two that matter here, since
-   they're what makes `AcmeAccount` reachable at all.
-
-   `fleet/hosts/core.pbs/`'s provider accepts the same kind of username/password env-var pair as an alternative to an
-   API token — nothing in that stack's current scope requires it (PBS has no equivalent root-only endpoint), but the
-   option is deliberately kept available there too, documented in that stack's own README, for whenever a future
-   PBS-side resource needs it. **That stack's current bootstrapping doc still shows
-   `pulumi config set --secret pbs:apiToken` — a pre-existing pattern from before this credentials-never-in-git rule was
-   established, not something newly introduced here. Flagged as a cleanup this repo still owes itself, not fixed in this
-   change.**
-
-   ### Storing the root password securely (macOS Keychain)
-
-   `root@pam`'s password is a materially bigger secret than any scoped API token this project otherwise uses — never put
-   it in shell history, a plaintext file, a Pulumi config value (secret or not), or an env var left `export`ed in a
-   long-lived shell session. macOS's system Keychain is the right place for an operator running `pulumi up` from a Mac:
-   encrypted at rest, unlockable only by the logged-in user, and the same mechanism macOS itself uses for WiFi and
-   website passwords.
-
-   **Store it once** (the `-U` flag updates an existing entry instead of erroring if one is already there; `-w` with no
-   value prompts interactively — never pass the password as a `-w <value>` argument, which would land in shell history):
-
-   ```sh
-   security add-generic-password -a "root@pam" -s "pve-01.pve.chezmoi.sh" -U -w
-   ```
-
-   > [!WARNING]\
-   > **`-w` must be the last argument, always.** `security`'s argument parser treats `-w` as taking a mandatory value,
-   > and it isn't fussy about that value starting with a dash: `-w -U` silently stores the literal string `-U` as the
-   > password — no prompt, no error, just a wrong secret sitting in the Keychain. Only when `-w` is the final token does
-   > `security` fall back to a secure interactive prompt. Confirmed live: `-a ... -s ... -w -U` created an entry with
-   > zero prompt. If you've ever run it in that order, delete and redo it:
+   > [!CAUTION]\
+   > Le jeton `root@pam!pulumi-import` de cet hôte n'est **pas** en lecture seule malgré son nom : il porte `PVEAuditor`
+   > et `Administrator` sur `/`, soit le contrôle complet du cluster (`Permissions.Modify`, `User.Modify`). Le rôle
+   > `Administrator` a été ajouté en essayant d'importer l'ACME, avant de constater qu'aucun jeton n'atteint ces points
+   > d'accès, et jamais retiré. Plus rien n'en a besoin : le révoquer, ou au minimum retirer l'ACL.
    >
    > ```sh
-   > security delete-generic-password -a "root@pam" -s "pve-01.pve.chezmoi.sh"
-   > security add-generic-password -a "root@pam" -s "pve-01.pve.chezmoi.sh" -U -w
+   > pveum user token remove root@pam pulumi-import                       # préféré
+   > pveum acl delete / --tokens 'root@pam!pulumi-import' --roles Administrator  # minimum
    > ```
 
-   **Retrieve it straight into the command that needs it**, as a command-substitution inline in the env-var assignment
-   shown in step 1 above — never assigned to a shell variable or `export`ed first, and never piped into
-   `pulumi config set`. The value exists only for the duration of that one `pulumi up`/`preview` invocation.
-
-   On a non-macOS machine, substitute the platform's equivalent (`pass`, `gopass`, a password manager's CLI, …) for the
-   `security` invocation above — inlining the retrieval directly into the command's env-var assignment is what matters,
-   not the specific keychain tool.
-
-2. **Copy the shared Slack webhook URL and Cloudflare account/zone IDs** — already configured as project-level secret
-   config (`cloudflare_account_id`, `cloudflare_zone_id`), reused as-is by `acme.ts`. The `pbs-core` project
-   (`fleet/hosts/core.pbs/`) keeps its own copy in its own stack config.
-
-   Also copy the `pveBackupTokenSecret` output of the `pbs-core` stack into this stack's secret config, read by
-   `storage.ts` (no `StackReference` between the two projects, ADR-017):
+2. **Renseigner les secrets de la pile** : `cloudflare_account_id` et `cloudflare_zone_id` (lus par `stack/config.ts`,
+   utilisés par `acme.ts`, chaque projet qui crée un jeton Cloudflare garde sa propre copie, sans `StackReference`,
+   ADR-017) et `pveBackupTokenSecret` (sortie de la pile `pbs-core`, lue par `stack/config.ts`, utilisée par
+   `storage.ts`), copiée par un tube pour qu'elle n'atteigne pas l'historique :
 
    ```sh
-   pulumi config set --secret pveBackupTokenSecret <secret>
+   (cd ../../core.pbs/pulumi && pulumi stack output pveBackupTokenSecret --show-secrets) \
+     | pulumi config set --secret pveBackupTokenSecret
    ```
 
-3. **Provide the PBS datastore's client-side encryption key** for `storage.ts`'s `StoragePbs` resource — the same key
-   material documented in `fleet/hosts/core.pbs/README.md`, "Bootstrapping" step 6. Point `PVE_PBS_STORE_ENCRYPTION_KEY`
-   at a local copy of the keyfile for the one apply that needs it:
+   Les contextes kubectl par lesquels les `Secret` de bootstrap des clusters sont écrits (`rhodesAknKubernetesContext`,
+   `lungmenAknKubernetesContext`) sont des valeurs simples, déjà dans `pulumi/Pulumi.pve-01_core.live.yaml`.
+
+3. **Fournir la clé de chiffrement côté client du datastore PBS** à la ressource `StoragePbs` de `storage.ts` (la même
+   que dans [`core.pbs`](../core.pbs/README.md), « Première installation », étape 6), en pointant
+   `PVE_PBS_STORE_ENCRYPTION_KEY` vers une copie locale du fichier de clé pour l'unique apply qui en a besoin :
 
    ```sh
-   PVE_PBS_STORE_ENCRYPTION_KEY=/path/to/key pulumi up
+   PVE_PBS_STORE_ENCRYPTION_KEY=/chemin/vers/la/cle pulumi up
    ```
 
-   The value is applied once, at creation, and ignored afterwards (`ignoreChanges` in `storage.ts`) — a normal
-   `pulumi up` with the env var unset shows no diff, so there's no reason to keep the key around between bootstrap runs.
-   There is no Pulumi-config fallback for this by design — a credential this sensitive never gets an option that writes
-   it to a git-tracked file.
+   La valeur est appliquée à la création puis ignorée (`ignoreChanges`) : un `pulumi up` normal sans la variable
+   n'affiche aucun écart, inutile de garder la clé entre deux bootstraps. Il n'y a volontairement aucun repli par la
+   configuration Pulumi.
 
-4. **Import existing live resources** with zero recreation (see
-   `docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md` for the general
-   procedure). Everything declared in `access.ts`, `sdn.ts`, `pools.ts` and `storage.ts`, plus `acme.ts`'s
-   `AcmeAccount`, `AcmeDnsPlugin` and `AcmeCertificate`, already exists on `pve-01` — created by the manual recipes this
-   stack replaces — and was imported rather than recreated. The three ACME imports require the username/password
-   credential from step 1: they fail under an API token no matter how it is scoped, the same way `pulumi up` would.
+4. **Importer les ressources existantes** sans les recréer (procédure générale :
+   [`INF-20260705-00`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)).
+   Ce qui est déclaré dans `stack/access/`, `sdn.ts`, `pools.ts` et `storage.ts`, plus `AcmeAccount`, `AcmeDnsPlugin` et
+   `AcmeCertificate`, existait déjà sur `pve-01` (créé par les recettes manuelles que la pile remplace). Les trois
+   imports ACME exigent l'identifiant de l'étape 1. Ne sont pas des imports : le jeton Cloudflare DNS-01 de `acme.ts`
+   (une rotation volontaire de celui configuré à la main), le groupe de sécurité `talos` de `firewall.ts` et
+   `rhodes-akn-bootstrap@pve` (utilisateur, jeton et ACL sur `/access`).
 
-   Genuinely new, not imported: the Cloudflare DNS-01 token in `acme.ts` (a deliberate rotation of the hand-configured
-   one), `firewall.ts`'s `talos` Security Group (no Security Group was in use on this host before — see `firewall.ts`'s
-   own comment for the state it replaces), and `rhodes-akn-bootstrap@pve` (its user, token, and `/access`-scoped ACL) —
-   created specifically to let `rhodes.akn`'s own Pulumi program self-provision its Kubernetes CCM/CSI identity; no
-   equivalent existed before that change.
+5. **Lancer `pulumi up`** (voir _Mises à jour_). Le jeton Cloudflare de `acme.ts` est remplacé au premier apply : le
+   jeton longue durée configuré à la main cesse alors d'être utilisé par le greffon `cloudflare`, à révoquer dans le
+   tableau de bord Cloudflare une fois l'apply réussi.
 
-5. **Run `pulumi up`** (see "Running Pulumi commands" below). The Cloudflare DNS-01 token in `acme.ts` rotates on first
-   apply — the previously hand-configured long-lived token stops being used by the `cloudflare` ACME plugin at that
-   point; revoke it in the Cloudflare dashboard once the apply succeeds.
+Sur le nœud, le collecteur s'installe ensuite avec la procédure
+[`INF-20261111-00`](../../../docs/procedures/infrastructure/INF-20261111-00-Installer-le-Collecteur-OpenTelemetry-sur-Proxmox.md)
+:
 
-## Adding a new identity or ACL binding
-
-Follow `access.ts`'s per-identity block pattern: a `VirtualEnvironmentRole` (only if the built-in roles don't already
-cover it), a `VirtualEnvironmentUser`, an optional `UserToken`, and one `Acl` per `(path, role)` grant. None of these
-use the `parent` resource option — every import in this stack was done without a matching `--parent`, so a resource
-declared with `parent` gets a different URN than what's in state and shows as a spurious delete+create; keep new
-resources flat, matching the rest of the stack. Keep every grant scoped to the narrowest path that works (a resource
-pool, a specific node) rather than `/`.
-
-## Running Pulumi commands
-
-```bash
-cd projects/chezmoi.sh/src/infrastructure/pulumi
-mise run pulumi:diff     # Preview pending changes
-mise run pulumi:apply    # Apply changes (requires confirmation)
-pulumi stack             # Show current stack state
+```sh
+mise run host:otelcol:install -- pve-01.pve.chezmoi.sh   # paquet (première fois, ou après un changement de version)
+mise run host:otelcol:deploy  -- pve-01.pve.chezmoi.sh   # configuration et drop-in, validés sur le nœud, puis redémarrage
+mise run host:qga-ping:deploy -- pve-01.pve.chezmoi.sh   # script et unités, un passage, timer activé
 ```
 
-See `.agents/skills/` and `AGENTS.md` for commit and PR workflows.
+### Mises à jour
+
+Pour la pile, depuis `pulumi/` (fnox fournit les identifiants `root@pam` de l'étape 1) :
+
+```sh
+cd fleet/hosts/core.pve-01/pulumi
+mise run pulumi:diff     # prévisualise les changements
+mise run pulumi:apply    # applique (confirmation requise), puis régénère PROXMOX-VE.md
+```
+
+Les deux passent par `pulumi:stack`, qui ne rafraîchit l'état que s'il a plus de `PULUMI_REFRESH_MAX_AGE` heures (24 par
+défaut) : `-- --refresh` ou `-- --no-refresh` forcent ou évitent le rafraîchissement. Les fichiers de l'hôte se
+redéploient avec les tâches `host:*` ci-dessus. `mise run proxmox:acme:rotate` fait tourner le jeton Cloudflare (il le
+marque comme à remplacer puis applique) ; le révoquer ensuite dans Cloudflare, pas avant, sinon les renouvellements
+échouent jusqu'au prochain apply.
+
+### Vérifier un déploiement
+
+- `pulumi:diff` ne montre aucun écart après un `pulumi:apply`.
+- `systemctl is-active otelcol-contrib` répond `active` sur le nœud et `host.name="pve-01"` apparaît dans VictoriaLogs.
+- `systemctl list-timers qga-ping.timer` montre le prochain passage.
+- Le certificat de `https://pve-01.pve.chezmoi.sh:8006` est celui de Let's Encrypt. Pour le réémettre avant l'échéance
+  (renouvelé automatiquement à 30 jours), `pvenode acme cert order --force` puis `journalctl -u pvedaemon -f`.
+
+## Contribuer
+
+Une nouvelle identité ou ACL suit le bloc par identité de `pulumi/stack/access/` : un `VirtualEnvironmentRole`
+(seulement si aucun rôle intégré ne convient), un `VirtualEnvironmentUser`, un `UserToken` optionnel et un `Acl` par
+couple (chemin, rôle). Donner un `comment` à l'utilisateur, qui remplit la colonne « Purpose » de `PROXMOX-VE.md`. Les
+ressources restent plates (pas d'option `parent`) : tout l'import a été fait sans `--parent`, un parent donnerait une
+URN différente de celle de l'état et un faux delete+create. Chaque droit est limité au chemin le plus étroit possible
+(un pool, un nœud), jamais `/`. Un nouveau jeton affiche son secret une seule fois dans la sortie de l'apply.
+
+Un nouveau cluster Talos n'a rien à faire côté SDN : il partage le VNet existant et l'identité Omni y a déjà `SDN.Use`.
+Un _nouveau_ VNet exige une ACL `PVESDNUser` pour l'identité Omni
+([`INF-20260627-00`](../../../docs/procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)).
+
+Le schéma d'architecture se modifie dans `architecture.d2`, puis `mise run diagram:generate` régénère
+`assets/architecture.png`, à commiter avec. `PROXMOX-VE.md` ne se modifie pas à la main :
+`mise run proxmox:docs:generate` (déjà chaîné à `pulumi:apply`) le régénère. Lancer `mise run lint` avant de pousser.
+
+## Pour aller plus loin
+
+- [`PROXMOX-VE.md`](PROXMOX-VE.md) : référence générée (identités, pools, SDN, stockage de sauvegarde, certificats,
+  procédures de restauration d'un invité et de reconstruction de l'hôte).
+- [ADR-015](../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md) : pourquoi la portée de la pile est
+  étroite.
+- [ADR-014](../../../docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : les VM Talos à deux
+  cartes réseau et le SDN.
+- [Infrastructure manuelle](../../../docs/reference/Infrastructure-Manuelle-Reference.md) : ce qui reste configuré à la
+  main sur l'hôte.
+- [Référence IPAM](../../../docs/reference/IPAM-Reference.md) : adresses et VLAN de l'hôte.
+- [Nommage des machines](../../../docs/reference/Nommage-des-Machines-Reference.md) : d'où vient le nom `pve-01.core`.
+- [`core.pbs`](../core.pbs/README.md) : le serveur de sauvegarde que cet hôte alimente.

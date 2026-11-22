@@ -14,8 +14,8 @@
 # fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts, which
 # self-provisions the kubernetes-cloud-provider-lungmen@pve identity against
 # pve-01 (via catalog/pulumi/components/proxmox-cluster-identity,
-# authenticated with a delegated credential minted by chezmoi.sh's
-# stack/proxmox/access/lungmen-akn-bootstrap.ts, scoped to /access only)
+# authenticated with a delegated credential minted by pve-01.core's
+# fleet/hosts/core.pve-01/pulumi/stack/access/lungmen-akn-bootstrap.ts, scoped to /access only)
 # rather than consuming a token minted by that stack.
 # proxmox-csi-plugin shares this same Secret — see that chart's own
 # helmvalues comment for the merged-identity trade-off. Matches upstream's

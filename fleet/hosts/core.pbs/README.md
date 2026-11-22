@@ -107,7 +107,7 @@ Ne sont pas gérés par Pulumi :
 - la VM et son système (installation, compte `root@pam`, réseau), le disque de cache (une opération Proxmox VE) et la
   clé de chiffrement du datastore et son paperkey (le fournisseur n'a pas de ressource pour cela, c'est la CLI de PBS) ;
 - les tâches de sauvegarde elles-mêmes (quelles VM, quand) : ce sont des ressources Proxmox VE, pas PBS. Seule l'entrée
-  de stockage `pve-storage-pbs` est déclarée, dans la pile `pve-01-core` (`fleet/hosts/core.pve-01/pulumi/storage.ts`) ;
+  de stockage `pve-storage-pbs` est déclarée, dans la pile `pve-01-core` (`fleet/hosts/core.pve-01/pulumi/stack/storage/storage.ts`) ;
 - l'URL du webhook Slack, copiée à la main : elle vit dans un fichier SOPS (`slack-webhook-url` de
   `fleet/hosts/akn.ptilopsis/nix/secrets/o11y.sops.yaml`) que cette pile, qui s'exécute en amont de tout cluster, ne
   peut pas lire.

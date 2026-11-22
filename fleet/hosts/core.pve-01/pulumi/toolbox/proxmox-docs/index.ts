@@ -105,7 +105,7 @@ async function main(): Promise<void> {
 	const projectRoot = path.resolve(__dirname, "../..");
 
 	// `proxmox:endpoint` is normally always set (see
-	// fleet/hosts/core.pve-01/README.md, "Bootstrapping"). This guard is a
+	// fleet/hosts/core.pve-01/README.md, « Première installation »). This guard is a
 	// safety net for the rare case it isn't: skip gracefully rather than
 	// failing `mise run pulumi:apply`'s post-task after a successful apply.
 	const endpoint = readOptionalConfig(projectRoot, "proxmox:endpoint");

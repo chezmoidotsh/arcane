@@ -14,7 +14,7 @@
 # fleet/clusters/akn.rhodes/pulumi/stack/system/proxmox.ts, which
 # self-provisions the kubernetes-cloud-provider@pve identity against pve-01
 # (via catalog/pulumi/components/proxmox-cluster-identity, authenticated with
-# a delegated credential minted by chezmoi.sh's stack/proxmox/access.ts,
+# a delegated credential minted by pve-01.core's stack/access/rhodes-akn-bootstrap.ts,
 # scoped to /access only) rather than consuming a token minted by that stack.
 # proxmox-csi-plugin shares this same Secret — see that chart's own
 # helmvalues comment for the merged-identity trade-off. Matches upstream's
