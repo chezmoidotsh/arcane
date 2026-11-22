@@ -1,7 +1,7 @@
 import * as proxmox from "@pulumi/proxmox";
 import * as pulumi from "@pulumi/pulumi";
 
-import { omniUser } from "./access";
+import { omniUser } from "../access/omni";
 
 // -----------------------------------------------------------------------------
 // pvenet / talosnet -- shared node-traffic network for all Talos/Omni

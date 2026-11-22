@@ -1,8 +1,7 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
 import * as proxmox from "@pulumi/proxmox";
-import * as pulumi from "@pulumi/pulumi";
 
-const config = new pulumi.Config();
+import { cloudflareAccountId, cloudflareZoneId } from "../config";
 
 // -----------------------------------------------------------------------------
 // Cloudflare DNS-01 token for pve-01.pve.chezmoi.sh
@@ -21,8 +20,8 @@ const config = new pulumi.Config();
 const acmeDns01Token = new Dns01TokenComponent("acme-dns-pve", {
 	owner: "chezmoi.sh",
 	application: "Proxmox Virtual Environment ACME (pve-01.pve.chezmoi.sh)",
-	accountId: config.requireSecret("cloudflare_account_id"),
-	zoneId: config.requireSecret("cloudflare_zone_id"),
+	accountId: cloudflareAccountId,
+	zoneId: cloudflareZoneId,
 });
 
 // -----------------------------------------------------------------------------
@@ -37,7 +36,7 @@ const acmeDns01Token = new Dns01TokenComponent("acme-dns-pve", {
 // `root@pam` ticket/password session, which this endpoint specifically
 // requires). Managing this resource is why this stack's provider
 // authenticates via `root@pam` username/password instead of an API token --
-// see ../README.md, "Bootstrapping". Without it, ACME can mint the plugin's
+// see ../README.md, « Première installation ». Without it, ACME can mint the plugin's
 // Cloudflare token but never actually touch the account it authenticates
 // against, defeating the point of managing ACME here at all.
 //
@@ -72,7 +71,7 @@ export const acmeDnsPlugin = new proxmox.AcmeDnsPlugin(
 		plugin: "cloudflare",
 		api: "cf",
 		data: {
-			CF_Account_ID: config.requireSecret("cloudflare_account_id"),
+			CF_Account_ID: cloudflareAccountId,
 			CF_Token: acmeDns01Token.tokenValue,
 		},
 	},

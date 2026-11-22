@@ -1,7 +1,8 @@
 import { kubeconfigFor } from "@chezmoi.sh/pulumi-lib";
 import * as k8s from "@pulumi/kubernetes";
 import * as proxmox from "@pulumi/proxmox";
-import * as pulumi from "@pulumi/pulumi";
+
+import { lungmenAknContext } from "../config";
 
 // -----------------------------------------------------------------------------
 // lungmen-akn-bootstrap@pve -- lets lungmen.akn's own Pulumi program
@@ -46,9 +47,6 @@ const lungmenAknBootstrapApiToken = lungmenAknBootstrapToken.value;
 // Explicit named provider, not the ambient default: the lungmen.akn Pulumi
 // program's every other stack file goes through Vault/ESO, never Kubernetes
 // directly, so there is no ambient default provider to depend on here.
-const lungmenAknContext = new pulumi.Config().require(
-	"lungmenAknKubernetesContext",
-);
 const lungmenAkn = new k8s.Provider("lungmen-akn", {
 	context: lungmenAknContext,
 	kubeconfig: kubeconfigFor(lungmenAknContext),

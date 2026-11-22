@@ -3,7 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as fs from "fs";
 import * as os from "os";
 
-const config = new pulumi.Config();
+import { pbsStoreEncryptionKeyPath, pveBackupTokenSecret } from "../config";
 
 // -----------------------------------------------------------------------------
 // pbs.pve.chezmoi.sh -- registers Proxmox VE's `pbs`-type storage entry
@@ -17,11 +17,10 @@ const config = new pulumi.Config();
 // each project keeps its own passphrase (ADR-017). Rotating the token in
 // pbs-core means updating this config value and applying this stack too.
 const pveBackupTokenId = "pve-backup@pbs!pve-storage";
-const pveBackupTokenSecret = config.requireSecret("pveBackupTokenSecret");
 
 // `encryptionKey` is the datastore's client-side encryption key -- the same
 // key material described in fleet/hosts/core.pbs/README.md,
-// "Bootstrapping" step 6 (generated once via `proxmox-backup-client key
+// "Première installation" step 6 (generated once via `proxmox-backup-client key
 // create` on the PBS VM, with no Pulumi-managed origin). Sourced *only* from
 // PVE_PBS_STORE_ENCRYPTION_KEY, a path to a local keyfile -- deliberately no
 // Pulumi-config fallback: a credential this sensitive never gets an option
@@ -32,7 +31,7 @@ const pveBackupTokenSecret = config.requireSecret("pveBackupTokenSecret");
 // `PVE_PBS_STORE_ENCRYPTION_KEY=/path/to/key pulumi up` only needs to be
 // used for the one bootstrap apply that creates this resource.
 function readStoragePbsEncryptionKey(): pulumi.Output<string> | undefined {
-	const keyPath = process.env.PVE_PBS_STORE_ENCRYPTION_KEY;
+	const keyPath = pbsStoreEncryptionKeyPath;
 	if (!keyPath) {
 		return undefined;
 	}
