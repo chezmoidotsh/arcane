@@ -675,7 +675,6 @@ fleet/clusters/*/kubernetes/src/**/charts/
 .mise/*
 !.mise/tasks
 !.mise/omni
-!projects/**/.mise/env.yaml
 
 # Nix build artefacts under catalog/* (overrides project-level result/)
 catalog/**/result

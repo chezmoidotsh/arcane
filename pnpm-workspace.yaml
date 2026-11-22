@@ -2,8 +2,7 @@ packages:
   - catalog/pulumi/lib
   - catalog/pulumi/components/*
   - catalog/pulumi/sdks/*
-  - fleet/hosts/*/pulumi
-  - projects/*/src/infrastructure/pulumi
+  - fleet/base/pulumi
   - fleet/clusters/*/pulumi
   - fleet/hosts/*/pulumi
 

@@ -24,7 +24,7 @@ const dns01Token = new Dns01TokenComponent("hass-chezmoi-sh-home-assistant", {
 // -----------------------------------------------------------------------------
 // Group membership (admin/maison/famille) is managed in chezmoi.sh.
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
-  name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
+  name: "organization/base/base.live",
 });
 
 const oidcClient = new pocketid.OidcClient("home-assistant", {

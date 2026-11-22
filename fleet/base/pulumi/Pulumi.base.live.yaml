@@ -1,0 +1,10 @@
+encryptionsalt: v1:F/oYeaXuyvo=:v1:xIDEiEY58jLvwCMX:bntgWcPCS0JGD6FAQgqSP3Chf/BwvQ==
+config:
+  pocket-id:baseUrl: https://auth.chezmoi.sh
+  oci:region: eu-paris-1
+  base:cloudflare_account_id:
+    secure: v1:KxhHmnCVjeegQU4q:K5362Qv/BYrFDN3d6cygrLCFyBtiSwyvbMzMbB65vz/bzhLv/fwkTa2X/FWywWlg
+  base:cloudflare_zone_id:
+    secure: v1:0OfAXFIxpWvZAecg:PGH2Mei+atm/gGbN5GaQZKk4pBrfE5UDVbJVUZEGXr8IKZBvH6wWRDu0RpfHLS92
+  tailscale:tailnet:
+    secure: v1:j+og3UehZ0PDhI+y:avnJ636Z1KkUC98Thlit+I85GozxY2ysofG+TS6Id/1J

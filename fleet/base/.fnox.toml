@@ -1,0 +1,21 @@
+# fleet/base Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+
+[secrets]
+# Cloudflare provider (Dns01TokenComponent of the observability LXC): email + global API key, which can create
+# account tokens.
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+
+# OCI provider (parent compartment).
+TF_VAR_fingerprint = { provider = "bws", value = "pulumi-oci-fingerprint" }
+TF_VAR_private_key = { provider = "bws", value = "pulumi-oci-private-key" }
+TF_VAR_region = { provider = "bws", value = "pulumi-oci-region" }
+TF_VAR_tenancy_ocid = { provider = "bws", value = "pulumi-oci-tenancy-ocid" }
+TF_VAR_user_ocid = { provider = "bws", value = "pulumi-oci-user-ocid" }
+
+# Admin API key of Pocket-Id (auth.chezmoi.sh), read by the pocket-id provider (groups).
+POCKET_ID_API_KEY = { provider = "bws", value = "pulumi-pocket-id-api-key" }
+
+# Tailscale provider (OAuth client of the observability LXC).
+TAILSCALE_API_KEY = { provider = "bws", value = "pulumi-tailscale-api-key" }

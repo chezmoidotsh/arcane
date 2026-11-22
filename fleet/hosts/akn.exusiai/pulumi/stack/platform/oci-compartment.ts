@@ -2,7 +2,7 @@ import * as oci from "@pulumi/oci";
 
 import { tenancyOcid } from "../config";
 
-// The parent `chezmoi.sh` compartment is owned by the chezmoi.sh stack (stack/oci.ts there): it is looked up by
+// The parent `chezmoi.sh` compartment is owned by the base stack (stack/oci.ts there): it is looked up by
 // name in the tenancy instead of being read from that stack. The lookup must find exactly one compartment and
 // fail otherwise, because `compartmentId` is updatable on a compartment: a wrong value would move this
 // compartment instead of failing.
