@@ -420,7 +420,7 @@ remplacement garde son ancienne valeur.
   - **Renommage en place possible.** Vérifié sur le schéma de `@pulumi/oci` 4.20.0 (`Args` des ressources, mention «
     Updatable ») : le `name` et la `description` du compartiment, le `displayName` de l'instance, du VCN, de la liste de
     sécurité, du sous-réseau et du NSG, et les `freeformTags.project` sont modifiables sur place. Le `dnsLabel` du VCN
-    ne l'est pas : `dnsLabel: "rimbillitonvcn"` **reste inchangé** (commentaire dans `stack/oci/network.ts`). Le
+    ne l'est pas : `dnsLabel: "rimbillitonvcn"` **reste inchangé** (commentaire dans `stack/platform/network.ts`). Le
     sous-réseau n'a pas de `dnsLabel` et la VNIC de l'instance n'a pas de `hostnameLabel` dans le code.
   - **Renommé** : les noms logiques (`pulumi state rename`, voir le runbook de la PR), le nom de la clé B2 (la clé est
     remplacée), les commentaires des enregistrements DNS et le schéma d'architecture (re-rendu en PNG). Les secrets NixOS

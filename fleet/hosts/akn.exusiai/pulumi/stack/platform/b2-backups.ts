@@ -1,5 +1,9 @@
 import * as b2 from "@pulumi/b2";
+import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
+
+// S3 endpoint of the Backblaze account, as reported by the provider (https://s3.<region>.backblazeb2.com).
+const account = b2.getAccountInfoOutput();
 
 const suffix = new random.RandomId("exusiai-backups-suffix", {
 	byteLength: 4,
@@ -46,3 +50,6 @@ const backupsKey = new b2.ApplicationKey("exusiai-backups", {
 export const backupsBucketName = backupsBucket.bucketName;
 export const backupsKeyId = backupsKey.applicationKeyId;
 export const backupsKeySecret = backupsKey.applicationKey;
+
+// What restic reads (`repositoryFile` in nix/modules/backup.nix).
+export const resticRepository = pulumi.interpolate`s3:${account.s3ApiUrl}/${backupsBucketName}/restic`;

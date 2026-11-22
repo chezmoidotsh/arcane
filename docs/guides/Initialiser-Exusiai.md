@@ -16,7 +16,7 @@ provisionnement Pulumi, l'installation de NixOS avec `nixos-anywhere` et la conf
 
 La stack Pulumi de `pulumi/` provisionne les ressources OCI (compartiment, VCN, sous-réseau, NSG, instance), les
 enregistrements DNS, le bucket B2, la clé Tailscale ainsi que le groupe `minecraft`, le client OIDC et le secret du
-client dans Pocket-Id (`stack/pocket-id.ts`). L'instance démarre sur une image Ubuntu standard, avec uniquement une clé
+client dans Pocket-Id (`stack/access/pocket-id.ts`). L'instance démarre sur une image Ubuntu standard, avec uniquement une clé
 SSH injectée par cloud-init (configuration Pulumi `ssh_authorized_keys`). NixOS est ensuite installé par-dessus avec
 `nixos-anywhere`, la seule étape manuelle. Le guide jumeau [Initialiser Kazimierz](Initialiser-Kazimierz.md) suit le
 même schéma pour le VPS `kazimierz.akn`.
@@ -34,9 +34,9 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
   `TF_VAR_private_key` et `TF_VAR_region` (à exporter dans le shell, comme pour `kazimierz.akn`), puis ceux des
   providers Backblaze, Cloudflare et Tailscale.
 - **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
-  posé sur la clé par `stack/tailscale.ts`).
+  posé sur la clé par `stack/access/tailscale.ts`).
 - **Stack parente** : `chezmoi_sh.live` (compartiment parent, sortie `chezmoiShCompartmentId` lue par
-  `stack/oci/compartments.ts`) déjà appliquée.
+  `stack/platform/oci-compartment.ts`) déjà appliquée.
 - **Pocket-Id** : une clé d'API pour le provider Pulumi (voir l'étape 2) ; le groupe et le client sont gérés par Pulumi.
 
 ## Procédure d'amorçage
@@ -64,14 +64,15 @@ Si OCI répond `Out of host capacity`, réessayer plus tard (limite connue des i
 
 ### 2. Groupe et client OIDC Pocket-Id
 
-`stack/pocket-id.ts` déclare le groupe `minecraft` et le client OIDC `Minecraft` (callback
+`stack/access/pocket-id.ts` déclare le groupe `minecraft` et le client OIDC `Minecraft` (callback
 `https://minecraft.chezmoi.sh/auth/oauth/callback/pocketid`, confidentiel, **PKCE désactivé** car le plugin Pocket ID de
 Pelican n'envoie pas de `code_challenge`, groupes autorisés `admin` et `minecraft`). Pelican authentifie les
 utilisateurs par ce client (plugin installé par NixOS, étape 6).
 
-Le groupe et le client existent déjà dans Pocket-Id (créés à la main avant cette stack) : la stack les importe avec
-l'option `import` de Pulumi, leurs UUID étant écrits en dur dans `stack/pocket-id.ts`. Le secret du client est généré
-par une ressource `OidcClientSecret` et exporté comme sortie de stack `minecraftOidcClientSecret`.
+Le groupe et le client existent déjà dans Pocket-Id (créés à la main avant cette stack) et sont maintenant dans le
+state de la stack. L'UUID du client est une entrée (`clientId`) de `stack/access/pocket-id.ts` : sans elle, Pulumi
+remplacerait le client par un autre, avec un nouvel identifiant. Le secret du client est généré par une ressource
+`OidcClientSecret` et écrit dans `secrets/exusiai.sops.json`.
 
 Premier `pulumi up` (à exécuter une fois, par un humain) :
 
@@ -80,7 +81,7 @@ export POCKET_ID_API_KEY=<clé d'API Pocket-Id>   # ou : pulumi config set --sec
 pulumi preview
 ```
 
-L'aperçu doit afficher le groupe et le client en **import** ou sans changement, avec au plus des mises à jour en place
+L'aperçu doit afficher le groupe et le client sans changement, avec au plus des mises à jour en place
 de champs cosmétiques, plus la **création** de `minecraft-secret`. Si l'aperçu affiche une création (`create`) ou un
 remplacement (`replace`) du client ou du groupe, s'arrêter : un UUID ou un champ est faux. Sinon :
 
@@ -91,7 +92,7 @@ remplacement (`replace`) du client ou du groupe, s'arrêter : un UUID ou un cham
 3. Une fois Pelican démarré, vérifier que la connexion à `https://minecraft.chezmoi.sh/` avec Pocket-Id fonctionne.
 
 Installation initiale (rien n'existe encore dans Pocket-Id) : créer le groupe et le client à la main dans l'interface
-avec les valeurs ci-dessus, remplacer les deux UUID dans `stack/pocket-id.ts`, puis suivre la même procédure.
+avec les valeurs ci-dessus, renseigner l'UUID du client dans `minecraftClientUuid` de `stack/access/pocket-id.ts`, importer le groupe et le client dans le state (`pulumi import`), puis suivre la même procédure.
 
 ### 3. Préparer la clé d'hôte et les secrets
 
@@ -109,7 +110,7 @@ sops --encrypt --in-place secrets/manual.sops.yaml
 `secrets/exusiai.sops.json` (clé Tailscale, identifiants B2, client Pocket-Id) est écrit par `pulumi up` : rien à
 renseigner. Dans `manual.sops.yaml`, ne mettre que `restic_password` ; les trois valeurs `wings_*` n'existent qu'une
 fois le nœud créé dans le Panel (étape 6), donc les ajouter à ce moment-là. La clé Tailscale (`tailscaleAuthKey`) est à
-usage unique et expire 7 jours après sa création (`stack/tailscale.ts`) : installer l'hôte dans ce délai.
+usage unique et expire 7 jours après sa création (`stack/access/tailscale.ts`) : installer l'hôte dans ce délai.
 
 Les deux fichiers sont ciblés par la règle de `nix/.sops.yaml` (clé de l'administrateur et clé de l'hôte comme destinataires) et lus par
 `configuration.nix` et les modules. Exécuter sops depuis ce répertoire, car il cherche `.sops.yaml` vers le haut sans jamais fusionner
@@ -180,14 +181,14 @@ Un flake ne voit que les fichiers connus de Git : si le build signale un chemin 
 
 ### Dépanner l'installation
 
-| Symptôme                                                                            | Cause et correction                                                                                                                                                                                                                                                                        |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Permission denied (publickey)`, `Identity file ... not accessible`                 | L'agent SSH n'a pas la clé de `ssh_authorized_keys`. Vérifier avec `ssh-add -l` (voir ci-dessus)                                                                                                                                                                                           |
-| `Connection closed by <ip> port 22`                                                 | sshd ralentit après des échecs répétés. Corriger la cause, attendre une à deux minutes, réessayer                                                                                                                                                                                          |
-| `no cpio command found, but required to build the new initrd`                       | Installer `cpio` sur l'instance (voir ci-dessus)                                                                                                                                                                                                                                           |
-| `pulumi preview` planifie le remplacement de `TailnetKey` (`exusiai-tailscale-key`) | La clé de premier démarrage expire 7 jours après sa création (`expiry` dans `stack/tailscale.ts`). Sans danger pour un hôte déjà dans le tailnet : le remplacement réécrit `tailscale_authkey` dans `secrets/exusiai.sops.json`. Pour couper le bruit, ajouter `ignoreChanges: ["expiry"]` |
-| `kexec_file_load failed: Address not available`                                     | Utiliser `mise run nixos:oci:install`, qui passe `--kexec-syscall` (voir ci-dessus)                                                                                                                                                                                                        |
-| `ubuntu@...` demande un mot de passe après un échec                                 | Le kexec a déjà eu lieu : l'hôte est l'installeur NixOS. Reprendre avec `root@` et `--phases disko,install,reboot`                                                                                                                                                                         |
+| Symptôme                                                                            | Cause et correction                                                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Permission denied (publickey)`, `Identity file ... not accessible`                 | L'agent SSH n'a pas la clé de `ssh_authorized_keys`. Vérifier avec `ssh-add -l` (voir ci-dessus)                                                                                                                                                                                                  |
+| `Connection closed by <ip> port 22`                                                 | sshd ralentit après des échecs répétés. Corriger la cause, attendre une à deux minutes, réessayer                                                                                                                                                                                                 |
+| `no cpio command found, but required to build the new initrd`                       | Installer `cpio` sur l'instance (voir ci-dessus)                                                                                                                                                                                                                                                  |
+| `pulumi preview` planifie le remplacement de `TailnetKey` (`exusiai-tailscale-key`) | La clé de premier démarrage expire 7 jours après sa création (`expiry` dans `stack/access/tailscale.ts`). Sans danger pour un hôte déjà dans le tailnet : le remplacement réécrit `tailscale_authkey` dans `secrets/exusiai.sops.json`. Pour couper le bruit, ajouter `ignoreChanges: ["expiry"]` |
+| `kexec_file_load failed: Address not available`                                     | Utiliser `mise run nixos:oci:install`, qui passe `--kexec-syscall` (voir ci-dessus)                                                                                                                                                                                                               |
+| `ubuntu@...` demande un mot de passe après un échec                                 | Le kexec a déjà eu lieu : l'hôte est l'installeur NixOS. Reprendre avec `root@` et `--phases disko,install,reboot`                                                                                                                                                                                |
 
 ### 5. Vérifier le déploiement
 

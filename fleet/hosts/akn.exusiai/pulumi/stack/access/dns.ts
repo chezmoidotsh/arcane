@@ -1,10 +1,7 @@
 import * as cloudflare from "@pulumi/cloudflare";
-import * as pulumi from "@pulumi/pulumi";
 
-import { instance } from "./oci/instance";
-
-const config = new pulumi.Config();
-const zoneId = config.requireSecret("cloudflare_zone_id");
+import { cloudflareZoneId as zoneId } from "../config";
+import { instance } from "../platform/instance";
 
 // Caddy gets its certificate through HTTP-01 (port 80 is open in the NSG), so
 // no DNS-01 token is needed on this host.
@@ -14,7 +11,7 @@ const zoneId = config.requireSecret("cloudflare_zone_id");
 // covers `main.minecraft` (Wings, called by browsers) and any per-server name.
 // Caddy only serves the names it is configured for, each with its own
 // certificate (HTTP-01 does not issue wildcards).
-export const dnsRecord = new cloudflare.DnsRecord("exusiai-minecraft", {
+new cloudflare.DnsRecord("exusiai-minecraft", {
 	zoneId,
 	name: "minecraft",
 	type: "A",
@@ -24,7 +21,7 @@ export const dnsRecord = new cloudflare.DnsRecord("exusiai-minecraft", {
 	comment: "exusiai.akn -> Minecraft servers and Pelican panel",
 });
 
-export const dnsWildcardRecord = new cloudflare.DnsRecord(
+new cloudflare.DnsRecord(
 	"exusiai-minecraft-wildcard",
 	{
 		zoneId,

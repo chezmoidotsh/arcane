@@ -1,12 +1,10 @@
 import * as oci from "@pulumi/oci";
-import * as pulumi from "@pulumi/pulumi";
 
-import { exusiai } from "./compartments";
+import { sshAuthorizedKeys } from "../config";
 import { nsg, subnet } from "./network";
+import { ociCompartment } from "./oci-compartment";
 
-const config = new pulumi.Config();
-
-// Same single AD as kazimierz.akn (eu-paris-1).
+// Single availability domain of eu-paris-1.
 const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 
 // Always Free A1 quota of this tenancy is 2 OCPU / 12 GB in total and
@@ -21,7 +19,7 @@ const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 // NixOS is installed, a newer Ubuntu image must not trigger a replacement
 // (which would wipe the world).
 const ubuntuImage = oci.core.getImagesOutput({
-	compartmentId: exusiai.id,
+	compartmentId: ociCompartment.id,
 	operatingSystem: "Canonical Ubuntu",
 	shape: "VM.Standard.A1.Flex",
 });
@@ -30,7 +28,7 @@ export const instance = new oci.core.Instance(
 	"exusiai-minecraft",
 	{
 		availabilityDomain,
-		compartmentId: exusiai.id,
+		compartmentId: ociCompartment.id,
 		shape: "VM.Standard.A1.Flex",
 		shapeConfig: { ocpus: 1, memoryInGbs: 6 },
 		sourceDetails: {
@@ -54,7 +52,7 @@ export const instance = new oci.core.Instance(
 			assignPublicIp: "true",
 			nsgIds: [nsg.id],
 		},
-		metadata: { ssh_authorized_keys: config.require("ssh_authorized_keys") },
+		metadata: { ssh_authorized_keys: sshAuthorizedKeys },
 		displayName: "exusiai-minecraft",
 		freeformTags: {
 			project: "exusiai.akn",

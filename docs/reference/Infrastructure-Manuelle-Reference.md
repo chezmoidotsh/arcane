@@ -193,7 +193,7 @@ statut courant. L'ordre n'est pas un tri.
       (ligne 30 d'époque). Statut : issue #1280, pas encore de PR.
 - [x] **3. Réactiver le groupe Pocket-Id et le client OIDC d'exusiai avec `@axnic/pulumi-pocket-id`** : le provider
       utilisé par les autres stacks fonctionne ; le fichier actuel est du code mort en attente de l'issue 1170. Preuve :
-      `fleet/hosts/akn.exusiai/pulumi/stack/pocket-id.ts`. Statut : issue #1281, PR #1293 fusionnée.
+      `fleet/hosts/akn.exusiai/pulumi/access/pocket-id.ts`. Statut : issue #1281, PR #1293 fusionnée.
 - [ ] **4. Déclarer l'enregistrement des spokes ArgoCD (`Secret` de cluster) au lieu de `argocd cluster add`** : la
       seule trace de l'enregistrement de lungmen est l'ArgoCD en place ; reconstruire le hub impose une étape manuelle.
       Preuve : `OMNI-20260721-00`, étape 11. Statut : issue #1282, pas encore de PR.

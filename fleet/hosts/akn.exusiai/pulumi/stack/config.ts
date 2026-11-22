@@ -1,0 +1,17 @@
+import * as pulumi from "@pulumi/pulumi";
+
+// Every input of the program is read here, once. The other modules import what they need.
+const config = new pulumi.Config();
+
+export const sshAuthorizedKeys = config.require("ssh_authorized_keys");
+export const cloudflareZoneId = config.requireSecret("cloudflare_zone_id");
+
+// Opt-in SSH (tcp/22), closed by default: administration goes through Tailscale (see stack/access/tailscale.ts).
+// Flip with `pulumi config set unsecure true` for a break-glass session.
+export const unsecure = config.getBoolean("unsecure") ?? false;
+
+// The chezmoi.sh stack owns the parent OCI compartment and the shared Pocket-Id groups: this host reads them
+// across. One StackReference per program (a second one with the same name would collide).
+export const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
+	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
+});
