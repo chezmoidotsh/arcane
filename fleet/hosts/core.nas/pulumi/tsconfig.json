@@ -3,5 +3,5 @@
 	"compilerOptions": {
 		"outDir": "bin"
 	},
-	"include": ["*.ts", "users/**/*.ts", "zpools/**/*.ts", "toolbox/**/*.ts"]
+	"include": ["index.ts", "stack/**/*.ts", "toolbox/**/*.ts"]
 }

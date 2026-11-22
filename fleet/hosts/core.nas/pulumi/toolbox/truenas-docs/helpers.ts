@@ -28,7 +28,7 @@ const DOW_NAMES_SINGULAR = [
  * raw cron fields rather than guessing.
  *
  * `dow` accepts both `0` and `7` for Sunday -- TrueNAS's own `ScrubTask`
- * resources use `7` (see `zpools/const.ts`'s `SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET`)
+ * resources use `7` (see `stack/storage/zpools/const.ts`'s `SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET`)
  * while `SnapshotTask`/`CloudSync` use `0`, and both are valid cron.
  */
 export function cronToHuman(

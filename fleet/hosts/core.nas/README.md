@@ -36,8 +36,8 @@ permissions, sauvegardes, reconstruction) est [`TRUENAS.md`](TRUENAS.md).
 
 Sert la médiathèque, les espaces utilisateurs (`Mes Documents`, `Documents partagés`), les sauvegardes de Home Assistant
 et le stockage applicatif d'Immich et de Paperless-ngx, monté par les clusters Kubernetes. SMB est le seul protocole de
-partage déclaré (`pulumi/shares.ts`) ; les comptes de service qui s'y connectent (`pulumi/users/`) voient leur mot de
-passe publié dans OpenBao.
+partage déclaré (`pulumi/stack/storage/shares.ts`) ; les comptes de service qui s'y connectent
+(`pulumi/stack/access/users/`) voient leur mot de passe publié dans OpenBao.
 
 <br clear="all" />
 
@@ -69,37 +69,38 @@ l'adresse côté `talosnet`), alors que SMB s'adresse directement au NAS.
   que Garage et Nginx Proxy Manager soient joignables depuis les pods Talos sans traverser le SNAT du SDN. Les adresses
   exactes sont dans [`TRUENAS.md`](TRUENAS.md) et dans la
   [référence réseau](../../../docs/reference/Reseau-Reference.md).
-- **Alertes** : les alertes critiques partent par e-mail via le relais du NAS (`pulumi/alerts.ts`).
+- **Alertes** : les alertes critiques partent par e-mail via le relais du NAS (`pulumi/stack/system/alerts.ts`).
 
 ## Configuration
 
-La stack est découpée par responsabilité. Un fichier par domaine dans `pulumi/` :
+La stack est découpée par responsabilité. Un fichier par domaine dans `pulumi/stack/`, que `pulumi/index.ts` importe et
+dont il n'exporte que les sorties :
 
-| Fichier           | Responsabilité                                                                                                                                |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `zpools/`         | Pools ZFS et hiérarchie de datasets, un fichier par pool (`zp1cs01.ts`, `zp1hs01.ts`), plus scrubs et snapshots ; conventions dans son README |
-| `shares.ts`       | Partages SMB                                                                                                                                  |
-| `users/`          | Comptes de service, un fichier par compte, avec l'ACL du dataset qu'il possède ; mots de passe publiés dans OpenBao                           |
-| `acls.ts`         | Modèles d'ACL NFS4 et affectation aux datasets sans propriétaire unique                                                                       |
-| `identities.ts`   | Lectures (pas des ressources) des identités TrueNAS préexistantes (`apps`, `builtin_users`)                                                   |
-| `apps.ts`         | Catalogue d'applications et applications `garage` et `nginx-proxy-manager`                                                                    |
-| `cloudsync.ts`    | Buckets Backblaze B2 et tâches de synchronisation hors-site                                                                                   |
-| `jobs.ts`         | Tâches cron : test S.M.A.R.T. quotidien, création du squelette de dossiers des espaces utilisateurs                                           |
-| `certificates.ts` | Demandes de signature (CSR) et jeton Cloudflare DNS-01 pour l'ACME                                                                            |
-| `network.ts`      | Nom d'hôte, passerelle, DNS, interfaces                                                                                                       |
-| `services.ts`     | Services activés au démarrage                                                                                                                 |
-| `alerts.ts`       | Destination et politique des alertes                                                                                                          |
+| Fichier                  | Responsabilité                                                                                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage/zpools/`        | Pools ZFS et hiérarchie de datasets, un fichier par pool (`zp1cs01.ts`, `zp1hs01.ts`), plus scrubs et snapshots ; conventions dans son README |
+| `storage/shares.ts`      | Partages SMB                                                                                                                                  |
+| `access/users/`          | Comptes de service, un fichier par compte, avec l'ACL du dataset qu'il possède ; mots de passe publiés dans OpenBao                           |
+| `access/acls.ts`         | Modèles d'ACL NFS4 et affectation aux datasets sans propriétaire unique                                                                       |
+| `access/identities.ts`   | Lectures (pas des ressources) des identités TrueNAS préexistantes (`apps`, `builtin_users`)                                                   |
+| `apps.ts`                | Catalogue d'applications et applications `garage` et `nginx-proxy-manager`                                                                    |
+| `backup/cloudsync.ts`    | Buckets Backblaze B2 et tâches de synchronisation hors-site                                                                                   |
+| `system/jobs.ts`         | Tâches cron : test S.M.A.R.T. quotidien, création du squelette de dossiers des espaces utilisateurs                                           |
+| `system/certificates.ts` | Demandes de signature (CSR) et jeton Cloudflare DNS-01 pour l'ACME                                                                            |
+| `system/network.ts`      | Nom d'hôte, passerelle, DNS, interfaces                                                                                                       |
+| `system/services.ts`     | Services activés au démarrage                                                                                                                 |
+| `system/alerts.ts`       | Destination et politique des alertes                                                                                                          |
 
 Les trois couches de protection des données (scrub hebdomadaire de chaque pool, snapshots de `zp1hs01`, synchronisation
 vers B2 sans `zp1cs01`, dont le contenu est considéré comme ré-acquérable) et leurs horaires réels sont dans
 [`TRUENAS.md`](TRUENAS.md), section _Backups_ ; la justification des valeurs est dans
-[`pulumi/zpools/README.md`](pulumi/zpools/README.md).
+[`pulumi/stack/storage/zpools/README.md`](pulumi/stack/storage/zpools/README.md).
 
 Ce que Pulumi ne gère volontairement pas :
 
 - les certificats ACME (le provider ne sait ni configurer le défi DNS-01 ni référencer une CSR) : seules les CSR et le
   jeton Cloudflare sont déclarés ;
-- les serveurs DNS (`truenas.DnsNameserver`), déjà portés par `network.ts` ;
+- les serveurs DNS (`truenas.DnsNameserver`), déjà portés par `system/network.ts` ;
 - toutes les applications TrueNAS sauf `garage` et `nginx-proxy-manager` ;
 - les ACL de systèmes de fichiers NFS4 : le provider ne peut pas les appliquer. La stack déclare les modèles et
   documente lequel poser sur quel dataset, à refaire à la main dans l'interface (`Storage` → `Datasets` →
@@ -155,9 +156,9 @@ correspondent à la table de [`TRUENAS.md`](TRUENAS.md).
 ## Contribuer
 
 **Ajouter ou modifier un dataset.** Les datasets sont une table plate indexée par chemin (avec `/` initial) dans
-`zpools/zp1cs01.ts` ou `zpools/zp1hs01.ts`, typée par `TrueNASPoolComponent`. L'imbrication se déduit du chemin : chaque
-ancêtre doit donc avoir sa propre entrée, juste avant l'enfant. Pour les datasets d'application, préférer `atime: Off`
-et `compression: Lz4`.
+`stack/storage/zpools/zp1cs01.ts` ou `stack/storage/zpools/zp1hs01.ts`, typée par `TrueNASPoolComponent`. L'imbrication
+se déduit du chemin : chaque ancêtre doit donc avoir sa propre entrée, juste avant l'enfant. Pour les datasets
+d'application, préférer `atime: Off` et `compression: Lz4`.
 
 ```typescript
 "/applications/mynewds": {
@@ -171,9 +172,9 @@ et `compression: Lz4`.
 Les autres fichiers retrouvent un dataset par son chemin sans `/` initial, avec
 `pool.get("applications/immich").resource`, qui échoue si le chemin n'est pas déclaré.
 
-**Ajouter ou modifier un partage.** Déclarer un `truenas.ShareSmb` (ou `ShareNfs`) dans `shares.ts`, avec le dataset
-comme `parent` et `ignoreChanges: ["hosts"]`. Le générateur de documentation ne lit pas ce fichier : il relit l'état via
-`pulumi stack export`.
+**Ajouter ou modifier un partage.** Déclarer un `truenas.ShareSmb` (ou `ShareNfs`) dans `stack/storage/shares.ts`, avec
+le dataset comme `parent` et `ignoreChanges: ["hosts"]`. Le générateur de documentation ne lit pas ce fichier : il relit
+l'état via `pulumi stack export`.
 
 ```typescript
 new truenas.ShareSmb(
@@ -189,8 +190,8 @@ new truenas.ShareSmb(
 );
 ```
 
-Si le dataset a besoin de permissions précises, ajouter sa ligne d'affectation (`acls.ts` ou `users/<compte>.ts`) et
-appliquer le modèle à la main.
+Si le dataset a besoin de permissions précises, ajouter sa ligne d'affectation (`stack/access/acls.ts` ou
+`stack/access/users/<compte>.ts`) et appliquer le modèle à la main.
 
 **Documentation générée.** [`TRUENAS.md`](TRUENAS.md) est produit à partir de l'état réel de la stack par
 [`pulumi/toolbox/truenas-docs/`](pulumi/toolbox/truenas-docs/README.md), et ne se modifie pas à la main :
@@ -206,6 +207,7 @@ versionner. `mise run lint` vérifie le reste. Les conventions de commit et de P
   : l'état de la stack est hébergé sur Garage, donc sur ce NAS.
 - [ADR-017](../../../docs/decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md)
   : la phrase secrète Pulumi par projet.
-- [`pulumi/zpools/README.md`](pulumi/zpools/README.md) : conventions ZFS et justification des plannings de sauvegarde.
-- [`pulumi/users/README.md`](pulumi/users/README.md) : conventions des comptes de service.
+- [`pulumi/stack/storage/zpools/README.md`](pulumi/stack/storage/zpools/README.md) : conventions ZFS et justification
+  des plannings de sauvegarde.
+- [`pulumi/stack/access/users/README.md`](pulumi/stack/access/users/README.md) : conventions des comptes de service.
 - [Nommage des machines](../../../docs/reference/Nommage-des-Machines-Reference.md) : pourquoi `core.nas`.

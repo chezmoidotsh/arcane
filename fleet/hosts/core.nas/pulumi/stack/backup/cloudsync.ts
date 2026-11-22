@@ -3,7 +3,7 @@ import * as b2 from "@pulumi/b2";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
-import { zp1hs01 } from "./zpools/zp1hs01";
+import { zp1hs01 } from "../storage/zpools/zp1hs01";
 
 import path = require("node:path");
 

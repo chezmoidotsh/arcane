@@ -307,7 +307,7 @@ A few things worth knowing about what this configuration does and doesn't protec
 
 ### Add a dataset or a share
 
-Declare the dataset in [`pulumi/zpools/`](./pulumi/zpools/) (quota, encryption,
+Declare the dataset in [`pulumi/stack/storage/zpools/`](./pulumi/stack/storage/zpools/) (quota, encryption,
 comment — the comment is what fills the dataset trees above) and, if it must be reachable over the network, the share in
 [`pulumi/shares.ts`](./pulumi/shares.ts), then `mise run pulumi:apply`. If the
 dataset needs specific permissions, add its row to the assignment table (see

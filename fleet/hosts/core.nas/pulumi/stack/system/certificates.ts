@@ -1,8 +1,6 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
-import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
-
-const config = new pulumi.Config();
+import { cloudflareAccountId, cloudflareZoneId } from "../config";
 
 // --- Certificate Signing Requests ---------------------------------------
 // `truenas.Certificate` has no field to reference a CSR (`csr_id`) or to
@@ -50,8 +48,8 @@ new truenas.Certificate("csr-truenas", {
 const acmeDns01Token = new Dns01TokenComponent("acme-dns-truenas", {
 	owner: "chezmoi.sh",
 	application: "TrueNAS ACME Authenticator",
-	accountId: config.requireSecret("cloudflare_account_id"),
-	zoneId: config.requireSecret("cloudflare_zone_id"),
+	accountId: cloudflareAccountId,
+	zoneId: cloudflareZoneId,
 });
 
 new truenas.AcmeDnsAuthenticator("acme-dns-cloudflare", {

@@ -5,7 +5,7 @@
 # hash-compare only -- the raw password is never printed, logged, or written
 # to disk anywhere in this script.
 #
-# Background: fleet/hosts/core.nas/pulumi/users/
+# Background: fleet/hosts/core.nas/pulumi/stack/access/users/
 # {immich,jellyfin,paperless-ngx}.ts (Pulumi project `nas-core`, stack
 # `nas_core.live`) each provision an SMB service account with a
 # random.RandomPassword exported as a stack output, and push it into OpenBao

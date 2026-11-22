@@ -1,9 +1,9 @@
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
+import { zp1hs01 } from "../../storage/zpools/zp1hs01";
 import type { Nfs4AclAssignment } from "../acls";
 import { builtInUsersGroup } from "../identities";
-import { zp1hs01 } from "../zpools/zp1hs01";
 
 // See ./README.md for the shared conventions (UID range, field choices,
 // password/parent handling) every account in this directory follows.

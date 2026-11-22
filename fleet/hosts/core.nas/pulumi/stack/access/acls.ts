@@ -1,11 +1,11 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
+import { zp1cs01 } from "../storage/zpools/zp1cs01";
+import { zp1hs01 } from "../storage/zpools/zp1hs01";
 import { appsUser, builtInUsersGroup } from "./identities";
 import { fireStickTvUser } from "./users/firesticktv";
 import { jellyfinUser } from "./users/jellyfin";
-import { zp1cs01 } from "./zpools/zp1cs01";
-import { zp1hs01 } from "./zpools/zp1hs01";
 
 // -----------------------------------------------------------------------------
 // This stack does NOT apply filesystem ACLs to any dataset. It only manages

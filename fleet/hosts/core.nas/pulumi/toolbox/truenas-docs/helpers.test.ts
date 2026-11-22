@@ -12,7 +12,7 @@ describe("cronToHuman", () => {
 	});
 
 	it("renders the real smart-test cronjob schedule as daily", () => {
-		// jobs.ts smart-test
+		// stack/system/jobs.ts smart-test
 		expect(cronToHuman("00", "0", "*", "*", "*")).to.equal("daily at 00:00");
 	});
 
@@ -23,7 +23,7 @@ describe("cronToHuman", () => {
 	});
 
 	it("treats dow=7 as Sunday, same as dow=0", () => {
-		// zpools/const.ts SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET uses "7"
+		// stack/storage/zpools/const.ts SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET uses "7"
 		expect(cronToHuman("00", "00", "*", "*", "7")).to.equal(
 			"weekly, Sundays at 00:00",
 		);

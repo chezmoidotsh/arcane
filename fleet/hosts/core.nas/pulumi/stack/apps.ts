@@ -1,8 +1,12 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
-import { zp1hs01 } from "./zpools/zp1hs01";
-
-const config = new pulumi.Config();
+import {
+	garageAdminToken,
+	garageRpcSecret,
+	garageWebUiPassword,
+	garageWebUiUsername,
+} from "./config";
+import { zp1hs01 } from "./storage/zpools/zp1hs01";
 
 // -----------------------------------------------------------------------------
 // TrueNAS SCALE Apps (nas.chezmoi.sh)
@@ -21,7 +25,7 @@ const config = new pulumi.Config();
 // replace, but still a real redeploy). Confirm before running `up`.
 //
 // Every published port's `host_ips` includes both `10.0.0.31` and
-// `10.128.0.6` (talosnet, see ./network.ts): talosnet pods need to reach
+// `10.128.0.6` (talosnet, see ./system/network.ts): talosnet pods need to reach
 // Garage/nginx directly on that subnet, since the SDN's SNAT path drops
 // forwarded return traffic due to an asymmetric conntrack-zone assignment on
 // pve-01.
@@ -118,13 +122,13 @@ new truenas.Catalog("truenas-catalog", {
 							value: "s3.chezmoi.sh",
 						},
 					],
-					admin_token: config.requireSecret("garage_admin_token"),
+					admin_token: garageAdminToken,
 					enable_web_ui_auth: true,
 					region: "fr-par-1",
 					replication_factor: 1,
-					rpc_secret: config.requireSecret("garage_rpc_secret"),
-					web_ui_password: config.requireSecret("garage_web_ui_password"),
-					web_ui_username: config.requireSecret("garage_web_ui_username"),
+					rpc_secret: garageRpcSecret,
+					web_ui_password: garageWebUiPassword,
+					web_ui_username: garageWebUiUsername,
 				},
 				ix_certificate_authorities: {},
 				ix_certificates: {},
@@ -218,5 +222,3 @@ new truenas.Catalog("truenas-catalog", {
 		{ ignoreChanges: ["version"], retainOnDelete: true },
 	);
 }
-export const garageAdminEndpointUrl = `https://s3.chezmoi.sh`;
-export const garageAdminTokem = config.requireSecret("garage_admin_token");

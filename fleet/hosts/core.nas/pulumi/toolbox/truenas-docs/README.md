@@ -9,9 +9,9 @@ The core idea: the doc is **derived from the deployed Pulumi stack's own state**
 sibling modules. Adding a new resource (a `truenas.User`, an NFS share, a CloudSync job, …) anywhere under `../../` (the
 `nas-core` project) is enough — the next regeneration picks it up automatically, grouped by its Pulumi type token, with
 no import list to maintain here. The one exception is the NFS4-ACL-template-to-dataset assignment guide
-(`../../acls.ts`): this provider can't apply NFS4 ACLs itself, so that pairing has no infrastructure resource of its own
-and travels as a **Pulumi stack output** (`nfs4AclAssignments`, see `../../index.ts`) instead — read the same generic
-way as every other section, still with no import of `acls.ts`.
+(`../../stack/access/acls.ts`): this provider can't apply NFS4 ACLs itself, so that pairing has no infrastructure
+resource of its own and travels as a **Pulumi stack output** (`nfs4AclAssignments`, see `../../index.ts`) instead — read
+the same generic way as every other section, still with no import of `acls.ts`.
 
 Generation runs standalone (`mise run truenas:docs:generate`, chained onto `pulumi:apply`), **not** as part of
 `pulumi up`/`preview` itself — it reads the stack's last-applied state via `pulumi stack export`, so it always reflects

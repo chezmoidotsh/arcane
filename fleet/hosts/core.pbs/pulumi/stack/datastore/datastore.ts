@@ -4,7 +4,7 @@ import * as pbs from "@pulumi/proxmox-backup-server";
 // -----------------------------------------------------------------------------
 // Backblaze B2 bucket + application key backing the S3 datastore
 // -----------------------------------------------------------------------------
-// No file-lock on the bucket, unlike the TrueNAS buckets (fleet/hosts/core.nas/pulumi/cloudsync.ts):
+// No file-lock on the bucket, unlike the TrueNAS buckets (fleet/hosts/core.nas/pulumi/stack/backup/cloudsync.ts):
 // Proxmox Backup Server's own garbage collection actively deletes unreferenced
 // chunks through plain S3 DeleteObject calls (no bypass-governance header). A
 // governance-mode retention would silently block those deletes, defeating GC

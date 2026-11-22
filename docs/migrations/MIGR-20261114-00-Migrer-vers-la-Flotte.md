@@ -220,10 +220,10 @@ utiliser. Les scopes `project:*` restent valides jusqu'à l'étape 11.
   (test volontaire sur une branche).
 - **Retour arrière** : retirer le linter de rtunk.
 - **Constaté** : le lint est `scripts/fleet:structure:lint`, lancé en CI par rtunk (pas de workflow dédié).
-  `scripts/fleet:structure:lint --self-test` couvre les
-  quatre cas (composant partagé sans base : échec ; avec base : succès ; cluster présent dans les deux arborescences :
-  compté une fois ; nom de dossier invalide : échec). En local, le lint peut signaler `tailscale` à cause d'un dossier
-  `projects/amiya.akn/` non suivi resté sur le disque ; en CI ce dossier n'existe pas.
+  `scripts/fleet:structure:lint --self-test` couvre les quatre cas (composant partagé sans base : échec ; avec base :
+  succès ; cluster présent dans les deux arborescences : compté une fois ; nom de dossier invalide : échec). En local,
+  le lint peut signaler `tailscale` à cause d'un dossier `projects/amiya.akn/` non suivi resté sur le disque ; en CI ce
+  dossier n'existe pas.
 
 ### 4. Déplacer le catalogue
 
@@ -266,8 +266,8 @@ Concerne `core.omni`, `core.oci-registry`, `core.talosnet-dns`, `core.omni-infra
   comportement entre deux piles dont les phrases secrètes diffèrent ; la commande existe dans la version épinglée par
   `mise`). Le `pulumi up` de la nouvelle pile écrit `nix/secrets/caddy.sops.json` (jeton DNS-01, ressource `SopsFile`).
 - **Vérification** : `pulumi preview` vide **dans la pile source et dans la pile destination** après chaque `state move`
-  ; `caddy.sops.json` contient la même valeur que l'ancien `caddy.sops.env` ; l'image reconstruite se déploie sur un LXC de test si
-  disponible (**à confirmer**).
+  ; `caddy.sops.json` contient la même valeur que l'ancien `caddy.sops.env` ; l'image reconstruite se déploie sur un LXC
+  de test si disponible (**à confirmer**).
 - **Retour arrière** : `pulumi state move` dans l'autre sens, ou restauration de l'état exporté avant l'étape
   (`pulumi stack import`) ; `git revert` pour les fichiers.
 - **Constaté** : les quatre dossiers LXC sont dans `fleet/hosts/core.<nom>/nix/`, avec `README.md`, `.mise.toml` et
@@ -282,9 +282,9 @@ Concerne `core.omni`, `core.oci-registry`, `core.talosnet-dns`, `core.omni-infra
   Les projets lisent l'identifiant du compte et celui de la zone Cloudflare dans leur propre configuration, sans
   `StackReference`. `pulumi state move` existe dans la version épinglée par `mise` (v3.268.0) ; son comportement entre
   deux piles à phrases secrètes différentes reste **à confirmer** et doit être essayé d'abord sur une copie de l'état.
-  Le `pulumi up` de `core.omni` et de `core.oci-registry` écrit `caddy.sops.json` depuis sa propre pile. La bibliothèque commune
-  des LXC (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`) reste à côté de `o11y-datastore` et
-  est référencée par les hôtes déplacés ; elle bouge à l'étape 10.
+  Le `pulumi up` de `core.omni` et de `core.oci-registry` écrit `caddy.sops.json` depuis sa propre pile. La bibliothèque
+  commune des LXC (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`) reste à côté de
+  `o11y-datastore` et est référencée par les hôtes déplacés ; elle bouge à l'étape 10.
 - **Manuel, avant la fusion** : créer la phrase secrète de chaque projet (`.mise/env.yaml`, SOPS), `pulumi stack init`,
   renseigner les deux clés de configuration secrètes, lancer les deux `state move`, vérifier que les trois
   `pulumi preview` sont vides.
@@ -361,15 +361,15 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
 - **Manuel, noms d'hôte** : le nom d'hôte NixOS et le nom du nœud Tailscale sont alignés sur le nom canonique
   (`exusiai-akn` au tour B, `horn-akn` au tour C). Pour `horn.akn`, ce nom fait partie de l'URL de l'API de Pangolin
   (`pangolin:url`) : voir le détail du tour C.
-- **Constaté** (tour A, `closure.akn`) : `projects/hass` est devenu `fleet/hosts/akn.closure` (`.mise.toml`
-  et `README.md` à la racine, code Pulumi dans `pulumi/`), le projet `closure-akn` et la pile
-  `closure_akn.live` (fichier `Pulumi.closure_akn.live.yaml`). Aucune `StackReference` ne lit `hass-infra` ; il n'y a ni
-  schéma d'architecture ni Nix à rendre (`hass` n'a aucune configuration de machine dans le dépôt). Le propriétaire du
-  jeton Cloudflare reste `hass` : le nom du jeton, `(hass) - Home Assistant`, ne change pas. Aucun nom côté cloud ne
-  dérive du nom du projet ou de la pile : l'aperçu attendu après le renommage est vide. Le fichier `.mise/env.yaml` (sops) est
-  supprimé : la phrase secrète et les identifiants Garage viennent de fnox (`fleet/.fnox.toml`), le `.mise.toml` Pulumi
-  ne fixe que `PULUMI_STACK`. Les tours B (`rimbilliton.akn` vers `exusiai.akn`) et C
-  (`kazimierz.akn` vers `horn.akn`) sont décrits plus bas.
+- **Constaté** (tour A, `closure.akn`) : `projects/hass` est devenu `fleet/hosts/akn.closure` (`.mise.toml` et
+  `README.md` à la racine, code Pulumi dans `pulumi/`), le projet `closure-akn` et la pile `closure_akn.live` (fichier
+  `Pulumi.closure_akn.live.yaml`). Aucune `StackReference` ne lit `hass-infra` ; il n'y a ni schéma d'architecture ni
+  Nix à rendre (`hass` n'a aucune configuration de machine dans le dépôt). Le propriétaire du jeton Cloudflare reste
+  `hass` : le nom du jeton, `(hass) - Home Assistant`, ne change pas. Aucun nom côté cloud ne dérive du nom du projet ou
+  de la pile : l'aperçu attendu après le renommage est vide. Le fichier `.mise/env.yaml` (sops) est supprimé : la phrase
+  secrète et les identifiants Garage viennent de fnox (`fleet/.fnox.toml`), le `.mise.toml` Pulumi ne fixe que
+  `PULUMI_STACK`. Les tours B (`rimbilliton.akn` vers `exusiai.akn`) et C (`kazimierz.akn` vers `horn.akn`) sont décrits
+  plus bas.
 - **Manuel, avant la fusion** (tour A), depuis l'ancienne arborescence (celle de l'étape 6) :
   1. sauvegarder l'état (`pulumi stack export`) ;
   2. répéter l'opération sur un backend `file://` (import de la sauvegarde, puis le renommage ci-dessous) ;
@@ -449,17 +449,16 @@ propriétaire.
   6. **barrière** : `https://horn-akn.tail831c5d.ts.net/` doit répondre avec un certificat valide (tout code HTTP, 401
      ou 404 compris), `pangolin.chezmoi.sh` répondre et les deux sites Newt être en ligne. Ne pas continuer sans cette
      réponse (si le certificat manque : redémarrer `pangolin-tailscale-serve`) ;
-  7. `pulumi preview --diff` dans `horn` : exactement cinq `update` OCI (compartiment : `name` et `description`
-     ; instance et NSG : `displayName` et `freeformTags.project` ; VCN et liste de sécurité : `displayName`) plus un
+  7. `pulumi preview --diff` dans `horn` : exactement cinq `update` OCI (compartiment : `name` et `description` ;
+     instance et NSG : `displayName` et `freeformTags.project` ; VCN et liste de sécurité : `displayName`) plus un
      `update` du fournisseur Pangolin par défaut (propriété `url`) ; **tout `create`, `replace` ou `delete` (en
      particulier un `replace` du fournisseur ou d'une ressource `pangolin:*`), tout `update` sur une autre ressource ou
-     toute autre propriété arrête l'opération** ; puis `pulumi up` et un second `pulumi preview` vide
-     ;
-  8. `pulumi preview --diff` dans `rhodes.akn` et `lungmen.akn` : **uniquement** l'`update` du fournisseur
-     Pangolin (`url`), même condition d'arrêt (un `replace` ferait tourner les identifiants Newt) ; puis
-     `pulumi up` dans les deux, pour que l'état référence la nouvelle URL ;
-  9. fusionner, sans secret de projet à commiter. Contrôles : `pangolin.chezmoi.sh` répond, les deux sites Newt sont
-     en ligne, un service public de chaque cluster répond.
+     toute autre propriété arrête l'opération** ; puis `pulumi up` et un second `pulumi preview` vide ;
+  8. `pulumi preview --diff` dans `rhodes.akn` et `lungmen.akn` : **uniquement** l'`update` du fournisseur Pangolin
+     (`url`), même condition d'arrêt (un `replace` ferait tourner les identifiants Newt) ; puis `pulumi up` dans les
+     deux, pour que l'état référence la nouvelle URL ;
+  9. fusionner, sans secret de projet à commiter. Contrôles : `pangolin.chezmoi.sh` répond, les deux sites Newt sont en
+     ligne, un service public de chaque cluster répond.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : un
   état vide planifierait une seconde passerelle (instance, VCN, enregistrements DNS, dont l'écrasement de
   `*.chezmoi.sh`, IdP, organisation et rôle Pangolin). Ne jamais lancer `nixos:oci:install` ni `nixos:e2e` (elles
@@ -502,9 +501,9 @@ remplacement garde son ancienne valeur.
     ne l'est pas : `dnsLabel: "rimbillitonvcn"` **reste inchangé** (commentaire dans `stack/platform/network.ts`). Le
     sous-réseau n'a pas de `dnsLabel` et la VNIC de l'instance n'a pas de `hostnameLabel` dans le code.
   - **Renommé** : les noms logiques (`pulumi state rename`, voir le runbook de la PR), le nom de la clé B2 (la clé est
-    remplacée), les commentaires des enregistrements DNS et le schéma d'architecture (re-rendu en PNG). Les secrets NixOS
-    sont répartis en `nix/secrets/exusiai.sops.json`, écrit par Pulumi (`SopsFile`), et `nix/secrets/manual.sops.yaml`
-    (mot de passe restic, nœud Wings).
+    remplacée), les commentaires des enregistrements DNS et le schéma d'architecture (re-rendu en PNG). Les secrets
+    NixOS sont répartis en `nix/secrets/exusiai.sops.json`, écrit par Pulumi (`SopsFile`), et
+    `nix/secrets/manual.sops.yaml` (mot de passe restic, nœud Wings).
   - **Conservé volontairement** (suivi dans #1601) : le `dnsLabel` du VCN, le nom du bucket B2 et la description de la
     clé Tailscale.
   - **Preuve côté NixOS** : `nix eval` de `…toplevel.drvPath` pour les deux sorties. Après le simple déplacement, le
@@ -519,8 +518,8 @@ remplacement garde son ancienne valeur.
      (`rimbilliton-akn-infra` vers `exusiai-akn`, `rimbilliton_akn.live` vers `exusiai_akn.live`), `pulumi stack init`
      puis `pulumi stack import` ;
   4. vérifier que `PULUMI_STACK` vaut `exusiai_akn.live` dans `pulumi/.mise.toml` ;
-  5. `pulumi preview --diff` : exactement six `update` (compartiment : `name` et `description` ; instance, NSG
-     : `displayName` et `freeformTags.project` ; VCN, liste de sécurité, sous-réseau : `displayName`). **Tout `create`,
+  5. `pulumi preview --diff` : exactement six `update` (compartiment : `name` et `description` ; instance, NSG :
+     `displayName` et `freeformTags.project` ; VCN, liste de sécurité, sous-réseau : `displayName`). **Tout `create`,
      `replace` ou `delete`, tout autre changement, ou toute autre propriété sur ces six ressources arrête l'opération**,
      en particulier `dnsLabel`, `compartmentId`, `sourceDetails` et le volume de démarrage ;
   6. `pulumi up`, puis `pulumi preview` (aucun changement attendu) ;
@@ -870,13 +869,13 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
      `fleet/.fnox.toml`, `PULUMI_STACK=pbs_core.live` de `pulumi/.mise.toml`) ;
   2. `pulumi stack init pbs_core.live` (fait) ;
   3. `pulumi config set --secret` (valeurs par l'entrée standard) de `pbs-core:cloudflare_account_id`,
-     `pbs-core:cloudflare_zone_id` et `pbs-core:notificationsSlackWebhookUrl`, et `pbs:endpoint` / `pbs:insecure` en clair.
-     Le jeton d'API PBS n'est pas dans la configuration : il vit dans Bitwarden (`pulumi-pbs-api-token`, déclaré comme
-     `PBS_API_TOKEN` dans `.fnox.toml`), au format `pulumi@pbs!pulumi:<secret>` (le fournisseur l'envoie tel quel dans
-     `Authorization: PBSAPIToken=`), avec le rôle `Admin` sur `/` (propagation) pour l'utilisateur `pulumi@pbs` et pour le
-     jeton. La configuration enregistrée dans l'état l'emporte sur l'environnement et un `refresh` la réutilise : un
-     jeton périmé y donne un 401 à chaque lecture, d'où l'absence de `pbs:apiToken` ; seule l'authentification de `b2` et
-     de Cloudflare vient aussi de fnox ;
+     `pbs-core:cloudflare_zone_id` et `pbs-core:notificationsSlackWebhookUrl`, et `pbs:endpoint` / `pbs:insecure` en
+     clair. Le jeton d'API PBS n'est pas dans la configuration : il vit dans Bitwarden (`pulumi-pbs-api-token`, déclaré
+     comme `PBS_API_TOKEN` dans `.fnox.toml`), au format `pulumi@pbs!pulumi:<secret>` (le fournisseur l'envoie tel quel
+     dans `Authorization: PBSAPIToken=`), avec le rôle `Admin` sur `/` (propagation) pour l'utilisateur `pulumi@pbs` et
+     pour le jeton. La configuration enregistrée dans l'état l'emporte sur l'environnement et un `refresh` la réutilise
+     : un jeton périmé y donne un 401 à chaque lecture, d'où l'absence de `pbs:apiToken` ; seule l'authentification de
+     `b2` et de Cloudflare vient aussi de fnox ;
   4. dans `chezmoi_sh`, `pulumi config set --secret pveBackupTokenSecret` avec la sortie actuelle, par un pipe ;
   5. exporter les deux états ;
   6. `pulumi state move` des 5 racines de `organization/chezmoi-sh-infra/chezmoi_sh.live` vers
@@ -891,9 +890,10 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
   main (jeton périmé, 401 à chaque `refresh`).
 - **Risque** : aucun `pulumi up` dans `chezmoi_sh` depuis cette branche avant le `state move` : le code ne déclare plus
   les ressources PBS, un `up` détruirait le jeton, les ACL, le datastore et la clé B2 (seul le bucket est retenu).
-- **À confirmer** (sur une copie de l'état) : le `state move` entre deux piles à phrases secrètes différentes (la source garde la sienne, la destination a la phrase partagée de la flotte : voir le constat ci-dessus) ; le
-  déplacement du bucket protégé (peut-être un `pulumi state unprotect` d'abord) ; la dépendance de `pve-storage-pbs`
-  vers le jeton, qui reste dans la source.
+- **À confirmer** (sur une copie de l'état) : le `state move` entre deux piles à phrases secrètes différentes (la source
+  garde la sienne, la destination a la phrase partagée de la flotte : voir le constat ci-dessus) ; le déplacement du
+  bucket protégé (peut-être un `pulumi state unprotect` d'abord) ; la dépendance de `pve-storage-pbs` vers le jeton, qui
+  reste dans la source.
 - **À trancher** : la clé secrète `pveBackupTokenSecret` contredit la règle du README de `stack/proxmox` (« aucun
   identifiant dans la configuration Pulumi »), déjà enfreinte par `garage_*` et le webhook ; l'autre option, une
   variable d'environnement avec `ignoreChanges`, ne propagerait plus une rotation. L'emplacement de
@@ -915,28 +915,34 @@ Concerne `core.pbs`, `core.nas`, puis `core.pve-01` (le plus critique : SDN, par
   `nas-core`. `scripts/bao:smb:drift-check` lit `fleet/hosts/core.nas/pulumi` (sa tâche `mise` y est déplacée) et gagne
   `--help`. `chezmoi.sh` perd les dépendances `@pulumi/truenas`, `@pulumi/b2`, `@pulumi/random`, `@pulumi/vault` et le
   composant `truenas-pool`.
-- **Manuel avant la fusion** :
-  1. créer `fleet/hosts/core.nas/pulumi/.mise/env.yaml` (SOPS, `PULUMI_STACK=nas_core.live`, nouvelle
-     `PULUMI_CONFIG_PASSPHRASE`) puis `mise trust` ;
-  2. `pulumi stack init nas_core.live` ;
-  3. `pulumi config set --secret` de `nas-core:cloudflare_account_id`, `nas-core:cloudflare_zone_id`,
-     `nas-core:garage_admin_token`, `nas-core:garage_rpc_secret`, `nas-core:garage_web_ui_password` et
-     `nas-core:garage_web_ui_username` (mêmes valeurs que dans `chezmoi_sh`) ; les fournisseurs `truenas`, `b2` et
-     `vault` lisent l'environnement comme avant ;
-  4. exporter les deux états et vérifier dans l'export les 91 URN ;
-  5. `pulumi state move` des 40 racines vers `organization/nas-core/nas_core.live` ;
-  6. `pulumi preview` vide dans la destination, et dans la source seulement la suppression des 6 sorties (mots de passe
-     SMB, `nfs4AclAssignments`) et peut-être de fournisseurs par défaut devenus inutiles ;
-  7. `bao:smb:drift-check` sans dérive.
-
-  Après : retirer de `chezmoi_sh` `truenas:url`, `truenas:destroyProtection` et les quatre clés `garage_*`.
-
-- **Risque** : aucun `pulumi up` dans `chezmoi_sh` depuis cette branche avant le `state move`.
-  `truenas:destroyProtection` refuse les suppressions côté TrueNAS mais ne couvre ni la clé B2, ni les secrets OpenBao,
-  ni les mots de passe, ni le jeton Cloudflare. Des mots de passe recréés casseraient les montages SMB de `lungmen.akn`.
-  L'état source peut garder des fournisseurs qui demandent les greffons `truenas` ou `b2`, retirés du `package.json` : à
-  vérifier dans l'aperçu.
-- **À confirmer** : mêmes points que pour `core.pbs` (phrases secrètes différentes, buckets protégés).
+- **Constaté** : le programme suit le découpage de `core.pbs` : `index.ts` importe les modules et n'exporte que les
+  sorties ; `stack/config.ts` lit toutes les entrées ; le reste est rangé en `stack/system/` (réseau, services, alertes,
+  certificats, tâches cron), `stack/storage/` (pools et partages), `stack/access/` (identités, ACL, utilisateurs),
+  `stack/apps.ts` et `stack/backup/` (B2 et synchronisation). Déplacer un fichier ne change aucune URN : le `preview`
+  est identique avant et après.
+- **Fait le 2026-11-22** :
+  1. secret `pulumi-truenas-api-key` créé dans Bitwarden Secrets Manager (les autres noms de
+     `fleet/hosts/core.nas/.fnox.toml` existaient) ; fnox remplace `env.yaml` et la règle SOPS de l'hôte ;
+  2. `pulumi stack init nas_core.live` sous la phrase secrète de `chezmoi_sh`, la seule lisible par `state move` ;
+  3. recopie des six secrets `nas-core:*` par l'entrée standard, `truenas:url` et `truenas:destroyProtection` en clair ;
+  4. exports chiffrés des deux états (dossier `0700`), sélection des URN par expression régulière sur les noms logiques
+     et leurs descendants : 91 URN, comme prévu ;
+  5. `pulumi state move` : la source passe de 152 à 61 ressources, la destination de 0 à 97 (91, le `Stack` et cinq
+     fournisseurs par défaut) ;
+  6. rechiffrement sous la phrase partagée : `pulumi stack export --show-secrets`, recréation de la pile, reprise de la
+     configuration, `pulumi stack import` avec les `secrets_providers` de la nouvelle pile (sans eux l'import échoue) ;
+     97 ressources, aucun `plaintext` dans l'export, configuration identique ;
+  7. `pulumi preview` de la destination : 90 identiques, 2 mises à jour, les buckets B2 (`defaultServerSideEncryption`
+     et `revision`, attributs calculés du fournisseur, déjà vus sur `pbs-core`).
+- **Reste à faire** : `pulumi preview --refresh --parallel 4` de la destination (le fournisseur TrueNAS refuse plus de
+  20 appels concurrents, d'où `--parallel`) avec une session `mise run bao:login` (les trois `vault:kv/secretV2` ont
+  besoin d'OpenBao) ; `bao:smb:drift-check` sans dérive ; sur la source, un `preview` depuis cette branche (seule la
+  suppression des sorties attendue) ; puis retirer de `chezmoi_sh` `truenas:url`, `truenas:destroyProtection` et les
+  quatre clés `garage_*`.
+- **Risque** : aucun `pulumi up` dans `chezmoi_sh` avant la fusion. L'état n'a plus les ressources, mais le code de
+  `main` les déclare encore : un `up` voudrait les recréer. `truenas:destroyProtection` refuse les suppressions côté
+  TrueNAS mais ne couvre ni la clé B2, ni les secrets OpenBao, ni les mots de passe, ni le jeton Cloudflare. Des mots de
+  passe recréés casseraient les montages SMB de `lungmen.akn`.
 - **Retour arrière** : `pulumi state move` inverse ou `pulumi stack import` des exports ; `git revert`.
 
 ### 10. Séquencer `core.o11y-datastore` avec l'ADR-022
