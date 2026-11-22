@@ -1,13 +1,7 @@
 import * as oci from "@pulumi/oci";
-import * as pulumi from "@pulumi/pulumi";
 
-import { kazimierz } from "./compartments";
-
-const config = new pulumi.Config();
-
-// Opt-in: SSH (tcp/22) ingress is only created when explicitly enabled.
-// Defaults to closed -- flip with `pulumi config set unsecure true`.
-const unsecure = config.getBoolean("unsecure") ?? false;
+import { unsecure } from "../config";
+import { ociCompartment } from "./oci-compartment";
 
 // Dual-stack VCN/subnet/NSG for kazimierz.akn, ported from the abandoned
 // Crossplane implementation (issue 1010/1076 -- see
@@ -18,8 +12,8 @@ const unsecure = config.getBoolean("unsecure") ?? false;
 // (updatable), but the logical names (`kazimierz-akn-*`, part of the URNs)
 // and `dnsLabel` stay -- `dnsLabel` cannot be updated, changing it would
 // replace the VCN and everything in it.
-export const vcn = new oci.core.Vcn("kazimierz-akn-vcn", {
-	compartmentId: kazimierz.id,
+const vcn = new oci.core.Vcn("kazimierz-akn-vcn", {
+	compartmentId: ociCompartment.id,
 	cidrBlocks: ["172.16.0.0/26"],
 	displayName: "horn-akn-vcn",
 	dnsLabel: "kazimierzaknvcn",
@@ -27,17 +21,17 @@ export const vcn = new oci.core.Vcn("kazimierz-akn-vcn", {
 	isOracleGuaAllocationEnabled: true,
 });
 
-export const internetGateway = new oci.core.InternetGateway(
+const internetGateway = new oci.core.InternetGateway(
 	"kazimierz-akn-igw",
 	{
-		compartmentId: kazimierz.id,
+		compartmentId: ociCompartment.id,
 		vcnId: vcn.id,
 		enabled: true,
 	},
 );
 
-export const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
-	compartmentId: kazimierz.id,
+const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
+	compartmentId: ociCompartment.id,
 	vcnId: vcn.id,
 	routeRules: [
 		{
@@ -73,10 +67,10 @@ export const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
 // dual-stack), and Security Lists/NSGs are evaluated with OR semantics --
 // an egress-all rule here would be pure duplication, not an additional
 // permission.
-export const defaultSecurityList = new oci.core.SecurityList(
+const defaultSecurityList = new oci.core.SecurityList(
 	"kazimierz-akn-default-sl",
 	{
-		compartmentId: kazimierz.id,
+		compartmentId: ociCompartment.id,
 		vcnId: vcn.id,
 		displayName: "horn-akn-default-sl",
 		ingressSecurityRules: [
@@ -103,7 +97,7 @@ export const defaultSecurityList = new oci.core.SecurityList(
 );
 
 export const subnet = new oci.core.Subnet("kazimierz-akn-subnet", {
-	compartmentId: kazimierz.id,
+	compartmentId: ociCompartment.id,
 	vcnId: vcn.id,
 	cidrBlock: "172.16.0.0/28",
 	routeTableId: routeTable.id,
@@ -111,7 +105,7 @@ export const subnet = new oci.core.Subnet("kazimierz-akn-subnet", {
 });
 
 export const nsg = new oci.core.NetworkSecurityGroup("kazimierz-akn-nsg", {
-	compartmentId: kazimierz.id,
+	compartmentId: ociCompartment.id,
 	vcnId: vcn.id,
 	displayName: "horn-akn-nsg",
 	freeformTags: { project: "horn.akn", managed_by: "pulumi" },

@@ -4,14 +4,14 @@ import * as pulumi from "@pulumi/pulumi";
 import {
 	pangolinOidcClient,
 	pangolinOidcClientSecret,
-} from "../pocket-id/pangolin";
+} from "../access/pocket-id";
 import { chezmoiShOrg } from "./org";
 
 // Lets chezmoi.sh org members log into the Pangolin dashboard via Pocket-Id
 // SSO instead of local Pangolin accounts. Sign-in eligibility is already
 // restricted Pocket-Id-side (../pocket-id/pangolin.ts's AllowedUserGroups)
 // -- this side just has to trust whoever comes through.
-export const chezmoiShIdp = new pangolin.Idp("chezmoi-sh-pocket-id", {
+const chezmoiShIdp = new pangolin.Idp("chezmoi-sh-pocket-id", {
 	name: "auth.chezmoi.sh",
 	authUrl: "https://auth.chezmoi.sh/authorize",
 	tokenUrl: "https://auth.chezmoi.sh/api/oidc/token",

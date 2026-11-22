@@ -1,7 +1,12 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 
-import { familleGroupId, maisonGroupId } from "./index";
+import { chezmoiSh } from "../config";
+
+// Group membership (admin/maison/famille) is managed in chezmoi.sh, not here: read across through the
+// StackReference of stack/config.ts rather than duplicated.
+const maisonGroupId = chezmoiSh.getOutput("maisonGroupId") as pulumi.Output<string>;
+const familleGroupId = chezmoiSh.getOutput("familleGroupId") as pulumi.Output<string>;
 
 // The Pocket-Id side of Pangolin's SSO login only (Pangolin dashboard IDP
 // id 1, "https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"). Imported

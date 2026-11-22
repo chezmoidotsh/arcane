@@ -1,7 +1,6 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
-import * as pulumi from "@pulumi/pulumi";
 
-const config = new pulumi.Config();
+import { cloudflareAccountId, cloudflareZoneId } from "../config";
 
 // -----------------------------------------------------------------------------
 // Cloudflare DNS-01 token for Pangolin's wildcard *.chezmoi.sh certificate
@@ -23,7 +22,7 @@ const config = new pulumi.Config();
 const traefikDns01Token = new Dns01TokenComponent("kazimierz-traefik-dns01", {
 	owner: "kazimierz.akn",
 	application: "Traefik DNS-01 wildcard cert (*.chezmoi.sh)",
-	accountId: config.requireSecret("cloudflare_account_id"),
-	zoneId: config.requireSecret("cloudflare_zone_id"),
+	accountId: cloudflareAccountId,
+	zoneId: cloudflareZoneId,
 });
 export const traefikDns01TokenValue = traefikDns01Token.tokenValue;

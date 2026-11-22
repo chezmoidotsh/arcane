@@ -1,10 +1,8 @@
 import * as oci from "@pulumi/oci";
-import * as pulumi from "@pulumi/pulumi";
 
-import { kazimierz } from "./compartments";
+import { sshAuthorizedKeys } from "../config";
 import { nsg, subnet } from "./network";
-
-const config = new pulumi.Config();
+import { ociCompartment } from "./oci-compartment";
 
 // eu-paris-1 has exactly one AD (verified with `oci iam availability-domain
 // list`) -- not a config knob, it will never be anything else.
@@ -32,7 +30,7 @@ const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 // "Canonical-Ubuntu-<ver>-Minimal-aarch64-<date>-<rev>" format at every
 // position that matters.
 const ubuntuImage = oci.core.getImagesOutput({
-	compartmentId: kazimierz.id,
+	compartmentId: ociCompartment.id,
 	operatingSystem: "Canonical Ubuntu",
 	shape: "VM.Standard.A1.Flex",
 });
@@ -53,7 +51,7 @@ export const instance = new oci.core.Instance(
 	"kazimierz-pangolin",
 	{
 		availabilityDomain,
-		compartmentId: kazimierz.id,
+		compartmentId: ociCompartment.id,
 		shape: "VM.Standard.A1.Flex",
 		shapeConfig: { ocpus: 1, memoryInGbs: 6 },
 		sourceDetails: {
@@ -82,7 +80,7 @@ export const instance = new oci.core.Instance(
 			assignPublicIp: "true",
 			nsgIds: [nsg.id],
 		},
-		metadata: { ssh_authorized_keys: config.require("ssh_authorized_keys") },
+		metadata: { ssh_authorized_keys: sshAuthorizedKeys },
 		displayName: "horn-pangolin",
 		freeformTags: {
 			project: "horn.akn",

@@ -1,10 +1,7 @@
 import * as cloudflare from "@pulumi/cloudflare";
-import * as pulumi from "@pulumi/pulumi";
 
-import { instance } from "./instance";
-
-const config = new pulumi.Config();
-const zoneId = config.requireSecret("cloudflare_zone_id");
+import { cloudflareZoneId as zoneId } from "../config";
+import { instance } from "../platform/instance";
 
 // Wildcard chezmoi.sh (not just kazimierz.akn) also points here: kazimierz
 // is the shared public gateway for every internet-facing service in the
@@ -22,7 +19,7 @@ const records = [
 	},
 ];
 
-export const dnsRecords = records.map(
+records.map(
 	({ name, comment }) =>
 		new cloudflare.DnsRecord(name.replace(/\*/g, "wildcard"), {
 			zoneId,

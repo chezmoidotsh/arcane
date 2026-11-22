@@ -9,7 +9,7 @@ import { chezmoiShOrg } from "./org";
 // tracker, archives, ...) but get exposed publicly through Pangolin for
 // trusted household members, without handing out dashboard admin rights.
 // Selected via role_mapping in ./idp.ts.
-export const privilegedRole = new pangolin.Role(
+new pangolin.Role(
 	"privileged",
 	{
 		name: "Privileged",
