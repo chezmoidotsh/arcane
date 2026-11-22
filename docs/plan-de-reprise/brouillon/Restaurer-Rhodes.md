@@ -171,7 +171,7 @@ workers où tourne external-dns : Cilium résout ce trafic avec l'identité `rem
 
 Lancer le `pulumi up` de `chezmoi.sh` **avant** celui de `rhodes.akn`, au moins une fois. `stack/proxmox.ts` de
 `rhodes.akn` authentifie son provider Proxmox avec l'identifiant `rhodes-akn-bootstrap@pve`, que la stack de
-`chezmoi.sh` (`stack/proxmox/access/rhodes-akn-bootstrap.ts`) livre dans ce cluster sous la forme d'un `Secret`
+`chezmoi.sh` (`fleet/hosts/core.pve-01/pulumi/stack/access/rhodes-akn-bootstrap.ts`) livre dans ce cluster sous la forme d'un `Secret`
 Kubernetes direct (`kube-system/rhodes-akn-bootstrap-pve`), volontairement pas par un `StackReference` Pulumi : une
 lecture inter-projets d'une sortie secrète exige la passphrase de la stack _exportatrice_, que ce dépôt ne partage pas
 entre projets (voir les commentaires de ce fichier). Si ce `Secret` n'existe pas, le `pulumi up` de `rhodes.akn` échoue
@@ -405,7 +405,7 @@ devrait être nécessaire.
 - _2026-07-27_ (étape 3) : Ajout de l'obligation de lancer le `pulumi up` de `chezmoi.sh` avant celui de `rhodes.akn`,
   nouvelle dépendance forte introduite par la correction du même exercice qui fait passer l'identifiant
   `rhodes-akn-bootstrap@pve` d'un `StackReference` Pulumi à un `Secret` Kubernetes direct (voir
-  `stack/proxmox/access/rhodes-akn-bootstrap.ts`). Note aussi que le `pulumi up` de cette étape résout les Pods CCM/CSI
+  `fleet/hosts/core.pve-01/pulumi/stack/access/rhodes-akn-bootstrap.ts`). Note aussi que le `pulumi up` de cette étape résout les Pods CCM/CSI
   bloqués par le taint signalés à l'étape 2.
 - _2026-07-27_ : Premier exercice réel de l'étape 2 sur un cluster `rhodes.akn` en production. Chaque `kubectl apply` de
   l'étape passe en `--server-side` (l'application côté client rejette la CRD `httproutes` de la Gateway API à cause de

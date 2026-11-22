@@ -5,12 +5,13 @@ service identity for a Kubernetes cluster integration: a custom `VirtualEnvironm
 `UserToken` (always created with `privilegesSeparation` disabled, so the token carries exactly the user's own
 permissions), and one `Acl` grant per path supplied.
 
-It packages the per-identity pattern hand-rolled in `chezmoi.sh`'s
-[`stack/proxmox/access.ts`](../../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access.ts) for reuse
-by cluster-owned Pulumi programs that provision their **own** Proxmox identities directly, against their own
-`proxmox.Provider`, instead of consuming a token minted by chezmoi.sh's stack — see
+It packages the per-identity pattern hand-rolled in `pve-01.core`'s
+[`pulumi/stack/access/`](../../../../fleet/hosts/core.pve-01/pulumi/stack/access/) for reuse by cluster-owned Pulumi programs that
+provision their **own** Proxmox identities directly, against their own `proxmox.Provider`, instead of consuming a token
+minted by the `pve-01-core` stack — see
 [`rhodes.akn`'s `stack/system/proxmox.ts`](../../../../fleet/clusters/akn.rhodes/pulumi/stack/system/proxmox.ts) for the first
-consumer, and that stack's `rhodes-akn-bootstrap@pve` delegated credential (chezmoi.sh's `stack/proxmox/access.ts`) for
+consumer, and that stack's `rhodes-akn-bootstrap@pve` delegated credential (`pve-01.core`'s
+`pulumi/stack/access/rhodes-akn-bootstrap.ts`) for
 how a cluster's own program gets enough privilege on `pve-01` to do this without ever touching `root@pam`.
 
 ## Usage

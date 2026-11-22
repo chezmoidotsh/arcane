@@ -12,8 +12,8 @@ import * as pulumi from "@pulumi/pulumi";
 // -----------------------------------------------------------------------------
 // This stack mints the kubernetes-cloud-provider@pve identity itself,
 // directly against pve-01, using a delegated, narrowly-scoped credential
-// (lungmen-akn-bootstrap@pve, Administrator at /access only) that chezmoi.sh's
-// stack/proxmox/access/lungmen-akn-bootstrap.ts mints for exactly this
+// (lungmen-akn-bootstrap@pve, Administrator at /access only) that pve-01.core's
+// pulumi/stack/access/lungmen-akn-bootstrap.ts mints for exactly this
 // purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
 // for the full pattern.
 //
@@ -23,7 +23,7 @@ import * as pulumi from "@pulumi/pulumi";
 // instead of being contained to one — acceptable for this single-node,
 // single-cluster deployment.
 //
-// The delegated credential arrives as a Kubernetes Secret chezmoi.sh's own
+// The delegated credential arrives as a Kubernetes Secret the pve-01-core
 // stack writes directly into the new lungmen-akn cluster (kube-system), not
 // through a Pulumi StackReference — reading a *secret* StackReference output
 // requires holding the exporting stack's own passphrase, and this repo
@@ -90,7 +90,7 @@ const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
 		},
 		// Node-scoped: topology + lifecycle status (CCM). Pool-scoped: every
 		// Talos VM's disk/config lifecycle (CSI) — the shared `talos` pool every
-		// cluster's VMs belong to (see chezmoi.sh's stack/proxmox/pools.ts).
+		// cluster's VMs belong to (see pve-01.core's pulumi/pools.ts).
 		aclPaths: ["/nodes/pve-01", "/pool/talos"],
 		tokenName: "cloud-provider",
 		tokenComment: "proxmox-cloud-controller-manager + proxmox-csi-plugin token",

@@ -14,13 +14,13 @@ import { rhodesAknProvider } from "./kubernetes";
 // -----------------------------------------------------------------------------
 // This stack mints the kubernetes-cloud-provider@pve identity itself,
 // directly against pve-01, rather than consuming a token minted by
-// chezmoi.sh's stack — that stack owns pve-01 as a whole, but a Kubernetes
+// the pve-01-core stack — that stack owns pve-01 as a whole, but a Kubernetes
 // cluster's own CCM/CSI credentials are this cluster's concern, not a
 // shared-infra one. Doing so requires this stack to
 // configure its own Proxmox provider, authenticated with a delegated,
 // narrowly-scoped credential (rhodes-akn-bootstrap@pve, Administrator at
-// /access only — cannot touch VMs, storage or SDN) that chezmoi.sh's
-// stack/proxmox/access/rhodes-akn-bootstrap.ts mints for exactly this
+// /access only — cannot touch VMs, storage or SDN) that pve-01.core's
+// pulumi/stack/access/rhodes-akn-bootstrap.ts mints for exactly this
 // purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
 // for the full pattern.
 //
@@ -31,13 +31,13 @@ import { rhodesAknProvider } from "./kubernetes";
 // single-cluster deployment, but split the roles if that trust boundary
 // ever needs to matter.
 //
-// The delegated credential arrives as a Kubernetes Secret chezmoi.sh's own
+// The delegated credential arrives as a Kubernetes Secret the pve-01-core
 // stack writes directly into this cluster (kube-system), not through a
 // Pulumi StackReference — reading a *secret* StackReference output requires
 // holding the exporting stack's own passphrase, and this repo deliberately
 // keeps every project's Pulumi state passphrase separate (see
 // docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md
-// and chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for the full
+// and pve-01.core's pulumi/stack/access/rhodes-akn-bootstrap.ts for the full
 // reasoning). Goes through the explicit `rhodesAknProvider` (./kubernetes.ts), like
 // everything else in this file.
 const bootstrapSecret = k8s.core.v1.Secret.get(
@@ -46,7 +46,7 @@ const bootstrapSecret = k8s.core.v1.Secret.get(
 	{ provider: rhodesAknProvider },
 );
 // Already the complete, ready-to-use `USER@REALM!TOKENID=SECRET` string — see
-// chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for why this must
+// pve-01.core's pulumi/stack/access/rhodes-akn-bootstrap.ts for why this must
 // not be rebuilt from separate id/secret parts.
 const bootstrapApiToken = bootstrapSecret.data["api-token"].apply((v) =>
 	Buffer.from(v, "base64").toString("utf-8"),
@@ -88,8 +88,8 @@ const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
 			],
 		},
 		// Node-scoped: topology + lifecycle status (CCM). Pool-scoped: every
-		// Talos VM's disk/config lifecycle (CSI) — see ../pools.ts in
-		// chezmoi.sh's stack for the `talos` pool this is scoped to.
+		// Talos VM's disk/config lifecycle (CSI) — see pools.ts in
+		// pve-01.core's pulumi/ for the `talos` pool this is scoped to.
 		aclPaths: ["/nodes/pve-01", "/pool/talos"],
 		tokenName: "cloud-provider",
 		tokenComment: "proxmox-cloud-controller-manager + proxmox-csi-plugin token",

@@ -3,31 +3,16 @@
 	"version": "0.1.0",
 	"private": true,
 	"main": "index.ts",
-	"scripts": {
-		"proxmox:docs": "ts-node toolbox/proxmox-docs/index.ts",
-		"test": "mocha",
-		"test:watch": "mocha --watch",
-		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
-	},
 	"dependencies": {
 		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
-		"@chezmoi.sh/pulumi-lib": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
-		"@pulumi/kubernetes": "catalog:",
 		"@pulumi/oci": "catalog:",
 		"@axnic/pulumi-pocket-id": "catalog:",
-		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
-		"@pulumi/tailscale": "catalog:",
-		"handlebars": "catalog:"
+		"@pulumi/tailscale": "catalog:"
 	},
 	"devDependencies": {
-		"@types/chai": "catalog:",
-		"@types/mocha": "catalog:",
 		"@types/node": "catalog:",
-		"chai": "catalog:",
-		"mocha": "catalog:",
-		"ts-node": "catalog:",
 		"typescript": "catalog:"
 	}
 }

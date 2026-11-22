@@ -1,0 +1,113 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../../docs/assets/d2/styles.blueprint.d2"
+
+direction: right
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   What drives pve-01.core (Omni, the clusters, the Pulumi operator), what  │
+# │   it pushes to (backups, observability) and the platforms it uses for its  │
+# │   own certificate.                                                         │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+internet: {
+  class: network
+  label.near: bottom-center
+
+  cloudflare: {
+    class: platform
+    label: Cloudflare
+    icon: assets/icons/platform/cloudflare.blueprint.svg
+  }
+
+  letsencrypt: {
+    class: platform
+    label: Let's Encrypt
+    icon: assets/icons/platform/letsencrypt.blueprint.svg
+  }
+}
+
+localnet: {
+  class: network
+  label.near: bottom-center
+
+  operator: {
+    class: hardware
+    label: "Pulumi\n(pve-01-core)"
+  }
+
+  omni: {
+    class: hardware
+    label: "Omni infra provider\n(core.omni-infra-provider-proxmox)"
+  }
+
+  clusters: {
+    class: hardware
+    label: Kubernetes clusters
+    icon: assets/icons/system/kubernetes.blueprint.svg
+  }
+
+  pbs: {
+    class: hardware
+    label: "Proxmox Backup Server\n(pbs.pve.chezmoi.sh)"
+    icon: assets/icons/platform/proxmox.blueprint.svg
+  }
+
+  o11y: {
+    class: hardware
+    label: "Observability appliance\n(data.o11y.chezmoi.sh)"
+    icon: assets/icons/system/victoriametrics.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                pve-01.core                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Proxmox VE (web UI, API, backup client, ACME client, metric server)      │
+# │   and the OpenTelemetry Collector installed next to it.                    │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+pve-01·core: {
+  class: project
+  label: pve-01.core
+
+  proxmox: {
+    class: application
+    label: "Proxmox VE\n(web UI and API)"
+    icon: assets/icons/platform/proxmox.blueprint.svg
+  }
+
+  otelcol: {
+    class: application
+    label: "OpenTelemetry Collector\n(journald, hostmetrics)"
+    icon: assets/icons/system/opentelemetry.blueprint.svg
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# Who drives the hypervisor.
+localnet.operator -> pve-01·core.proxmox: "Apply configuration (HTTPS API)" {target-arrowhead: 8006; class: [connect-management]}
+localnet.omni -> pve-01·core.proxmox: "Create and manage Talos VMs (HTTPS API)" {target-arrowhead: 8006; class: [connect-app]}
+localnet.clusters -> pve-01·core.proxmox: "Attach volumes, provision identities (HTTPS API)" {target-arrowhead: 8006; class: [connect-app]}
+localnet.operator -> localnet.clusters: "Write bootstrap Secrets (Kubernetes API)" {class: [connect-management]}
+
+# What the hypervisor pushes.
+pve-01·core.proxmox -> localnet.pbs: "Push guest backups (encrypted)" {class: [connect-app]}
+pve-01·core.proxmox -> localnet.o11y: "Push PVE metrics (OTLP)" {target-arrowhead: 4318; class: [connect-app]}
+pve-01·core.otelcol -> localnet.o11y: "Push logs and metrics (OTLP/HTTP)" {target-arrowhead: 4318; class: [connect-app]}
+
+# Certificate.
+pve-01·core.proxmox -> internet.letsencrypt: "Get certificate (ACME)" {target-arrowhead: 443; class: [connect-to-internet]}
+pve-01·core.proxmox -> internet.cloudflare: "Solve DNS-01 challenge (API)" {target-arrowhead: 443; class: [connect-management-to-internet]}

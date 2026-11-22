@@ -101,7 +101,7 @@ lint:
       paths:
         - fleet/hosts/core.nas/TRUENAS.md
         - fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md
-        - projects/chezmoi.sh/docs/PROXMOX-VE.md
+        - fleet/hosts/core.pve-01/PROXMOX-VE.md
     - # Prettier should not lint/format templated YAML files
       linters: [prettier]
       paths:

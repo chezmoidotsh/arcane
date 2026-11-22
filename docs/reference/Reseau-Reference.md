@@ -48,12 +48,12 @@ Sources : `catalog/omni/machineclasses/README.md`, `catalog/omni/machineclasses/
 
 ## SDN Proxmox
 
-| Élément     | Valeur                                                               | Source                                                               |
-| ----------- | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| Zone        | `pvenet`, de type `simple` (pas VXLAN), IPAM `pve`, DHCP `dnsmasq`   | `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts` |
-| VNet        | `talosnet`, partagé par tous les clusters Talos/Omni                 | idem                                                                 |
-| Sous-réseau | SNAT activé : les nœuds sans adresse VLAN 5 atteignent l'API Proxmox | idem                                                                 |
-| DNS DHCP    | `talosnet-dns` (BIND), adresse littérale                             | idem                                                                 |
+| Élément     | Valeur                                                               | Source                                                |
+| ----------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Zone        | `pvenet`, de type `simple` (pas VXLAN), IPAM `pve`, DHCP `dnsmasq`   | `fleet/hosts/core.pve-01/pulumi/stack/network/sdn.ts` |
+| VNet        | `talosnet`, partagé par tous les clusters Talos/Omni                 | idem                                                  |
+| Sous-réseau | SNAT activé : les nœuds sans adresse VLAN 5 atteignent l'API Proxmox | idem                                                  |
+| DNS DHCP    | `talosnet-dns` (BIND), adresse littérale                             | idem                                                  |
 
 Un VNet unique évite de reconfigurer l'UDM Pro à chaque nouveau cluster. Contrepartie acceptée dans l'ADR-014 : le
 trafic de nœuds (`eth1`) n'est pas isolé en L2 par cluster. Les CIDR de `talosnet` et de sa plage parente sont dans la
@@ -82,8 +82,8 @@ d2 docs/assets/network/topology.d2 docs/assets/network/topology.svg
   `vmbr1` ; le Gateway `internal` sur `talosnet` est ajouté d'après
   `projects/<cluster>/src/infrastructure/kubernetes/cilium/internal.gateway.yaml` (voir
   [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md)). Écarts relevés : `AGENTS.md` parle de « Proxmox SDN
-  VXLAN » alors que `sdn.ts` déclare une zone `simple` (seul le MTU de `eth1` anticipe VXLAN), écart corrigé depuis dans `AGENTS.md` ; le nœud du diagramme
-  garde l'identifiant interne `vnet-talos`, alors que le VNet s'appelle `talosnet`.
+  VXLAN » alors que `sdn.ts` déclare une zone `simple` (seul le MTU de `eth1` anticipe VXLAN), écart corrigé depuis dans
+  `AGENTS.md` ; le nœud du diagramme garde l'identifiant interne `vnet-talos`, alors que le VNet s'appelle `talosnet`.
 
 ## Pour aller plus loin
 
