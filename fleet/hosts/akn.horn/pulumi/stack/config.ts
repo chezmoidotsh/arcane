@@ -11,8 +11,10 @@ export const cloudflareAccountId = config.requireSecret("cloudflare_account_id")
 // Defaults to closed -- flip with `pulumi config set unsecure true`.
 export const unsecure = config.getBoolean("unsecure") ?? false;
 
-// The chezmoi.sh stack owns the parent OCI compartment and the Pocket-Id groups (admin/maison/famille).
-// One StackReference per program: a second one with the same name would collide.
-export const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
-	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
-});
+// The OCI provider authenticates with TF_VAR_* (fnox); the tenancy id is also needed to look up the parent
+// compartment. Same convention as the chezmoi.sh stack: never a Pulumi config for OCI credentials.
+const tenancyOcidFromEnv = process.env.TF_VAR_tenancy_ocid;
+if (!tenancyOcidFromEnv) {
+	throw new Error("TF_VAR_tenancy_ocid must be set (OCI credentials, see ../.fnox.toml)");
+}
+export const tenancyOcid = tenancyOcidFromEnv;
