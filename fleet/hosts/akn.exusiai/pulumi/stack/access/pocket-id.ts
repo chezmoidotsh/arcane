@@ -1,12 +1,7 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
-import type * as pulumi from "@pulumi/pulumi";
 
-import { chezmoiSh } from "../config";
-
-// The `admin` group lives in chezmoi.sh (single source of truth).
-const adminGroupId = chezmoiSh.getOutput(
-	"adminGroupId",
-) as pulumi.Output<string>;
+// The `admin` group is managed by the chezmoi.sh stack (single source of truth): it is looked up by name.
+const adminGroupId = pocketid.getUserGroupOutput({ name: "admin" }).userGroupId;
 
 // Members of this group can sign in to the Pelican panel and run their own
 // Minecraft server (create, configure, back up). Add users from the Pocket-Id UI.

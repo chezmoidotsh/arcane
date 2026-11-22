@@ -35,8 +35,9 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
   providers Backblaze, Cloudflare et Tailscale.
 - **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
   posé sur la clé par `stack/access/tailscale.ts`).
-- **Stack parente** : `chezmoi_sh.live` (compartiment parent, sortie `chezmoiShCompartmentId` lue par
-  `stack/platform/oci-compartment.ts`) déjà appliquée.
+- **Stack parente** : `chezmoi_sh.live` déjà appliquée. Elle crée le compartiment parent `chezmoi.sh` et le groupe
+  Pocket-Id `admin`, que cette stack retrouve par leur nom (`stack/platform/oci-compartment.ts`,
+  `stack/access/pocket-id.ts`) au lieu de lire ses sorties.
 - **Pocket-Id** : une clé d'API pour le provider Pulumi (voir l'étape 2) ; le groupe et le client sont gérés par Pulumi.
 
 ## Procédure d'amorçage
