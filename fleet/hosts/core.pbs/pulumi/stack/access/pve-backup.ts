@@ -1,7 +1,7 @@
 import * as pbs from "@pulumi/proxmox-backup-server";
 import * as pulumi from "@pulumi/pulumi";
 
-import { backupsDatastore } from "./datastore";
+import { backupsDatastore } from "../datastore/datastore";
 
 // -----------------------------------------------------------------------------
 // pve-backup@pbs -- least-privilege identity for Proxmox VE's own storage

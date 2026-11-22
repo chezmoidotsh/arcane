@@ -170,7 +170,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 - **Exige** : une VM PBS installée depuis l'ISO ; un disque de cache monté sur `/mnt/datastore/cache` ; le datastore
   `Backblaze-B2` et son point d'accès S3, donc une clé d'application B2 sur le bucket `pbs-vm-backup-<suffixe>` ; la clé
   de chiffrement côté client.
-- **D'où cela vient** : la clé B2 et le datastore sont créés par `core.pbs/pulumi/datastore.ts` ; la clé B2 n'existe que
+- **D'où cela vient** : la clé B2 et le datastore sont créés par `core.pbs/pulumi/stack/datastore/datastore.ts` ; la clé B2 n'existe que
   dans l'état Pulumi (elle n'est pas exportée en sortie de stack) et dans la configuration de la VM PBS perdue ; l'état
   est sur Garage, que l'étape 4 restaure depuis PBS. C'est une boucle, voir
   [Circularité 1](#1-létat-pulumi-vit-sur-ce-que-pulumi-provisionne).
@@ -304,7 +304,7 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
 
 ### 2. Les identifiants B2 n'existent que dans Pulumi
 
-- **Constat** : `stack/truenas/cloudsync.ts` crée la clé `truenas-replication` et `core.pbs/pulumi/datastore.ts` la clé
+- **Constat** : `stack/truenas/cloudsync.ts` crée la clé `truenas-replication` et `core.pbs/pulumi/stack/datastore/datastore.ts` la clé
   `pbs-vm-backup`.
 - **Ce qui a changé** : l'issue dit que la clé `truenas-replication` est exportée en sortie de stack. Ce n'est plus le
   cas : `cloudsync.ts` l'exporte au niveau du module, mais `index.ts` ne la réexporte pas (« Only what is read from
@@ -313,7 +313,7 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
   `stack/observability.ts`, `fleet/hosts/core.oci-registry/pulumi/`) ont une copie chiffrée avec SOPS dans
   `secrets/caddy.sops.json` (hôtes `core.omni` et `core.oci-registry`, écrite par le `pulumi up` de leur pile) ou
   `secrets/caddy.sops.env` (observability, écrite par les tâches `pulumi:*` de
-  [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml)). Le jeton ACME de PBS (`core.pbs/pulumi/acme.ts`) n'a aucune copie dans le dépôt : il est injecté
+  [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml)). Le jeton ACME de PBS (`core.pbs/pulumi/stack/access/acme.ts`) n'a aucune copie dans le dépôt : il est injecté
   à la main dans PBS.
 - **État** : atténuée pour les LXC (leur reconstruction n'a pas besoin de l'état Pulumi) ; ouverte pour les deux clés B2
   et le jeton ACME de PBS. Une nouvelle clé peut sans doute être créée depuis le compte Backblaze, mais le dépôt ne le

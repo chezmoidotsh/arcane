@@ -10,7 +10,7 @@ const config = new pulumi.Config();
 // against the datastore the pbs-core project (fleet/hosts/core.pbs/) manages
 // -----------------------------------------------------------------------------
 // Authenticates as `pve-backup@pbs`'s `pve-storage` token, which lives in the
-// pbs-core project (fleet/hosts/core.pbs/pulumi/access.ts). The token ID is
+// pbs-core project (fleet/hosts/core.pbs/pulumi/stack/access/pve-backup.ts). The token ID is
 // fixed (`<userid>!<tokenName>`); the one-time secret is copied by hand from
 // pbs-core's `pveBackupTokenSecret` output into this stack's own secret config
 // (`pulumi config set --secret pveBackupTokenSecret`) -- no StackReference,
@@ -61,7 +61,7 @@ export const pbsStorage = new proxmox.StoragePbs(
 		encryptionKey: readStoragePbsEncryptionKey(),
 		contents: ["backup"],
 		// Retention is handled centrally by the datastore's own PruneJob
-		// (fleet/hosts/core.pbs/pulumi/jobs.ts), not per-job on the Proxmox VE
+		// (fleet/hosts/core.pbs/pulumi/stack/datastore/jobs.ts), not per-job on the Proxmox VE
 		// side -- see fleet/hosts/core.pbs/README.md, "Access model",
 		// "No Datastore.Prune on this token, on purpose". `keepAll` here
 		// mirrors that: this storage entry itself applies no retention.

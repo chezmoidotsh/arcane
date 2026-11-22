@@ -42,7 +42,7 @@ on every regeneration even with no actual config change.
 
 `pbs.WebhookNotification`'s `url` field (a Slack incoming-webhook URL, sensitive in practice — anyone holding it can
 post to the channel) is **not** in the `yavasura/pbs` provider's own `additionalSecretOutputs` list (only
-`WebhookNotification`'s `secret` field, the HMAC signing key, is — see `../../notifications.ts`'s constructor call and
+`WebhookNotification`'s `secret` field, the HMAC signing key, is — see `../../stack/notifications/slack.ts`'s constructor call and
 `catalog/pulumi/sdks/proxmox-backup-server/webhookNotification.ts`). That means `pulumi stack export` returns it in
 **plaintext**, unlike a `pbs.ApiToken`'s `value`.
 

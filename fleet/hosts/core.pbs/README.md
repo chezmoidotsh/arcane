@@ -72,16 +72,18 @@ de sauvegarde côté Proxmox VE.
 Les sauvegardes sont chiffrées côté client par Proxmox VE avant d'arriver : sans la clé, rien dans le datastore n'est
 restaurable. La clé et son paperkey sont dans OpenBao.
 
-Chaque fichier de `pulumi/` a une responsabilité :
+Le programme de `pulumi/` suit le découpage des autres hôtes (`index.ts`, `stack/config.ts`, `stack/<groupe>/`) :
 
-| Fichier            | Contenu                                                                                                                                      |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `acme.ts`          | Jeton Cloudflare DNS-01 du certificat de `pbs.pve.chezmoi.sh`                                                                                |
-| `datastore.ts`     | Bucket Backblaze B2, clé d'application, point d'accès S3 et datastore                                                                        |
-| `jobs.ts`          | Tâche de rétention (`prune`) et tâche de vérification hebdomadaire                                                                           |
-| `notifications.ts` | Cible webhook Slack et règle qui lui envoie tous les événements du datastore                                                                 |
-| `access.ts`        | Compte `pve-backup@pbs`, son jeton d'API et les droits sur le datastore                                                                      |
-| `toolbox/`         | Générateur de [`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md), voir son [README](pulumi/toolbox/proxmox-backup-server-docs/README.md) |
+| Fichier                        | Contenu                                                                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`                     | Importe les modules et n'exporte que les sorties de la pile                                                                                  |
+| `stack/config.ts`              | Toutes les entrées du programme (identifiants Cloudflare, URL du webhook Slack), lues une seule fois                                         |
+| `stack/datastore/datastore.ts` | Bucket Backblaze B2, clé d'application, point d'accès S3 et datastore                                                                        |
+| `stack/datastore/jobs.ts`      | Tâche de rétention (`prune`) et tâche de vérification hebdomadaire                                                                           |
+| `stack/access/pve-backup.ts`   | Compte `pve-backup@pbs`, son jeton d'API et les droits sur le datastore                                                                      |
+| `stack/access/acme.ts`         | Jeton Cloudflare DNS-01 du certificat de `pbs.pve.chezmoi.sh`                                                                                |
+| `stack/notifications/slack.ts` | Cible webhook Slack et règle qui lui envoie tous les événements du datastore                                                                 |
+| `toolbox/`                     | Générateur de [`PROXMOX_BACKUP_SERVER.md`](PROXMOX_BACKUP_SERVER.md), voir son [README](pulumi/toolbox/proxmox-backup-server-docs/README.md) |
 
 Le bucket n'a pas de verrou de fichier, contrairement à ceux du NAS : le ramasse-miettes de PBS supprime des blocs par
 de simples `DeleteObject`, et une rétention en mode gouvernance les bloquerait en silence, ce qui ferait grossir le
@@ -226,12 +228,12 @@ n'est pas fait, chaque sauvegarde planifiée échoue à l'authentification.
 
 ## Contribuer
 
-Les tâches de rétention et de vérification sont dans `pulumi/jobs.ts` (`pbs.PruneJob` et `pbs.VerifyJob`, chacune avec
+Les tâches de rétention et de vérification sont dans `pulumi/stack/datastore/jobs.ts` (`pbs.PruneJob` et `pbs.VerifyJob`, chacune avec
 son identifiant explicite et un `store`). Les espaces de noms PBS ne sont pas utilisés ; s'il en faut pour une rétention
 ou des droits par charge, voir `catalog/pulumi/sdks/proxmox-backup-server/` (`pruneJob.ts`, `verifyJob.ts`,
 `namespace.ts`).
 
-Les notifications (`pulumi/notifications.ts`) combinent une cible (où : URL, méthode, gabarit) et une règle (quoi :
+Les notifications (`pulumi/stack/notifications/slack.ts`) combinent une cible (où : URL, méthode, gabarit) et une règle (quoi :
 sévérités, mode). Le fichier `notifications.cfg` de PBS est orienté ligne : un `body` multiligne doit être encodé en
 base64, sinon l'API répond « detected unexpected control character » (voir le commentaire de `slackWebhookBody`). Pour
 une seconde cible (Gotify, SMTP), déclarer la ressource `pbs.*Notification` correspondante puis étendre `targets` ou

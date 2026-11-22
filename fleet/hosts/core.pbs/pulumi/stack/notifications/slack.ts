@@ -1,7 +1,6 @@
 import * as pbs from "@pulumi/proxmox-backup-server";
-import * as pulumi from "@pulumi/pulumi";
 
-const config = new pulumi.Config();
+import { notificationsSlackWebhookUrl } from "../config";
 
 // -----------------------------------------------------------------------------
 // Slack notifications (#notifications)
@@ -11,7 +10,7 @@ const config = new pulumi.Config();
 // (projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/
 // observability.sops.env) instead of standing up a second channel. That
 // webhook URL lives in a SOPS-encrypted file outside this stack's reach --
-// this stack runs upstream of any Kubernetes cluster (see ./acme.ts) -- so
+// this stack runs upstream of any Kubernetes cluster (see ../access/acme.ts) -- so
 // it's copied in by hand as a Pulumi secret; see ../README.md, "Première installation".
 //
 // `body` is a Slack Block Kit payload, templated with PBS's own notification
@@ -94,14 +93,14 @@ const slackWebhookBody = `{
 
 const slackWebhook = new pbs.WebhookNotification("pbs-notify-slack", {
 	name: "slack-notifications",
-	url: config.requireSecret("notificationsSlackWebhookUrl"),
+	url: notificationsSlackWebhookUrl,
 	method: "post",
 	comment: "Slack #notifications",
 	body: Buffer.from(slackWebhookBody).toString("base64"),
 });
 
 // Routes every prune/verify/GC notification from the datastore (see
-// ./datastore.ts) to Slack. PBS emits `info` on success too, but at this
+// ../datastore/datastore.ts) to Slack. PBS emits `info` on success too, but at this
 // volume (one datastore, nightly/weekly jobs) the noise is worth it:
 // filtering to `warning`/`error` only risks silently missing a failure that
 // was never surfaced.

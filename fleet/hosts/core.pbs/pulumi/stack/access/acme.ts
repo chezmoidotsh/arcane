@@ -1,7 +1,6 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
-import * as pulumi from "@pulumi/pulumi";
 
-const config = new pulumi.Config();
+import { cloudflareAccountId, cloudflareZoneId } from "../config";
 
 // -----------------------------------------------------------------------------
 // Cloudflare DNS-01 token for pbs.pve.chezmoi.sh
@@ -19,7 +18,7 @@ const config = new pulumi.Config();
 const acmeDns01Token = new Dns01TokenComponent("acme-dns-pbs", {
 	owner: "chezmoi.sh",
 	application: "Proxmox Backup Server ACME (pbs.pve.chezmoi.sh)",
-	accountId: config.requireSecret("cloudflare_account_id"),
-	zoneId: config.requireSecret("cloudflare_zone_id"),
+	accountId: cloudflareAccountId,
+	zoneId: cloudflareZoneId,
 });
 export const pbsDns01Token = acmeDns01Token.tokenValue;
