@@ -3,10 +3,15 @@ import "./stack/platform/oci-compartment";
 import "./stack/platform/network";
 import "./stack/access/dns";
 import "./stack/access/pocket-id";
-import "./stack/pangolin/idp";
-import "./stack/pangolin/role";
 
+import { withPangolin } from "./stack/config";
 import { instance } from "./stack/platform/instance";
+
+// Needs the running Pangolin instance (see stack/config.ts): skipped with `pulumi config set pangolin false`.
+if (withPangolin) {
+	require("./stack/pangolin/idp");
+	require("./stack/pangolin/role");
+}
 
 // Read by the NixOS flake (mise task nixos:binding-ip): Docker publishes 80/443 on this address only.
 export const bindingIp = instance.privateIp;
