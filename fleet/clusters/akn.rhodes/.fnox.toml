@@ -1,0 +1,20 @@
+# rhodes.akn Pulumi stack secrets, on top of the shared ones of fleet/.fnox.toml (Bitwarden provider, state
+# backend, passphrase). Created by hand in the Bitwarden project under these names.
+#
+# Not here: the OpenBao token of the vault provider (`mise run bao:login`, VAULT_ADDR comes from the root
+# .mise.toml) and the Proxmox / Kubernetes / Grafana credentials, which the stack reads from the cluster and
+# from OpenBao itself.
+
+[secrets]
+# Cloudflare provider (cert-manager DNS-01 token): email + global API key, which can create account tokens.
+CLOUDFLARE_API_KEY = { provider = "bws", value = "pulumi-cloudflare-api-key" }
+CLOUDFLARE_EMAIL = { provider = "bws", value = "pulumi-cloudflare-email" }
+
+# Admin API key of Pocket-Id (auth.chezmoi.sh), read by the pocket-id provider (one OIDC client per app).
+POCKET_ID_API_KEY = { provider = "bws", value = "pulumi-pocket-id-api-key" }
+
+# API key of the Pangolin Integration API (https://horn-akn.<tailnet>.ts.net), read by the pangolin provider.
+PANGOLIN_API_KEY = { provider = "bws", value = "pulumi-pangolin-api-key" }
+
+# Admin token of Garage (https://admin.s3.chezmoi.sh, `garage:endpoint` of the stack), read by the garage provider.
+GARAGE_ADMIN_TOKEN = { provider = "bws", value = "pulumi-garage-admin-api-key" }

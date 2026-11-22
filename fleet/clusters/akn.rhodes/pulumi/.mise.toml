@@ -1,33 +1,28 @@
 # =============================================================================
 # rhodes.akn Pulumi stack - Mise configuration
 # =============================================================================
-# Cloud + Vault/OpenBao infrastructure for rhodes.akn, managed as a Pulumi stack
-# (state in the Garage S3 backend, see Pulumi.yaml).
+# Cloud + Vault/OpenBao infrastructure for rhodes.akn (cluster Vault auth backend and mounts, Pocket-Id JWT
+# auth backend, Cloudflare cert-manager token, Pocket-Id and Pangolin resources, Garage keys),
+# stack rhodes_akn.live (state in the Garage S3 backend, see Pulumi.yaml).
 #
-# `[env] _.file` loads PULUMI_STACK and PULUMI_CONFIG_PASSPHRASE from
-# .mise/env.yaml — SOPS-encrypted, transparently decrypted by mise using the
-# already-configured age key. This is what lets `pulumi` commands run in this
-# directory without prompting for a stack name or a passphrase.
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the shared secrets
+# (PULUMI_CONFIG_PASSPHRASE, Garage S3 backend credentials) come from fleet/.fnox.toml and
+# the provider credentials (Cloudflare, Pocket-Id, Pangolin, Garage) from ../.fnox.toml.
+# Both are resolved from Bitwarden Secrets Manager (with the token and project ID of the
+# Keychain, see `mise run bws:setup`) and exist only inside that process. They are created
+# by hand in the Bitwarden project under the names listed in ../.fnox.toml; a missing one
+# fails the run. The vault provider needs an OpenBao session: `mise run bao:login`.
+# The stack lives in the root pnpm workspace: run `pnpm install` before the first use.
 #
-# pulumi:diff / pulumi:apply go through scripts/pulumi:stack, which refreshes
-# only when the last refresh is older than PULUMI_REFRESH_MAX_AGE hours
-# (default 24). Force or skip it: `mise run pulumi:apply -- --refresh` /
-# `-- --no-refresh`.
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version.
 # =============================================================================
 
 [tools]
 node = "24"
 
 [env]
-_.file = "{{ config_root }}/.mise/env.yaml"
-
-[tasks."pulumi:diff"]
-description = "Preview pending changes for the current Pulumi stack"
-run = "pulumi:stack preview"
-dir = "{{ config_root }}"
-
-[tasks."pulumi:apply"]
-interactive = true
-description = "Apply pending changes to the current Pulumi stack"
-run = "pulumi:stack up"
-dir = "{{ config_root }}"
+PULUMI_STACK = "rhodes_akn.live"

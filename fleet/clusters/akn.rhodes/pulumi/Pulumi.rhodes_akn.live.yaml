@@ -1,12 +1,12 @@
-encryptionsalt: v1:Wt1bfB4ve84=:v1:6wL09ObsKmol4mF2:/xUOa8xDysLoYvRxQtRc5bpdnjfwFw==
+encryptionsalt: v1:wM1AygltLQI=:v1:2OnFsdw1JIV8tKtp:VFwkwRdsGE/TZa/sX62QeFqmkmd10Q==
 config:
   garage:endpoint: https://admin.s3.chezmoi.sh
   kubernetes:context: omni-rhodes-akn
   rhodes-akn:recovery: "false"
   rhodes-akn:cloudflare_account_id:
-    secure: v1:tNkng2PoAuAXDU7F:zIp4TL6TrpJaYth3cwUAcYcjXerZi3aj8KfvXzro6AxjvM7b4w+2nR78Lbe1Pb5z
+    secure: v1:sTZSQ/kNh5xTP3CW:sZWxubkqgfA5WBk4yNxqn9fK/zXJa7dlcoWj/Er4SuSfOVfFEXA7Mq6c2wWZV7P2
   rhodes-akn:cloudflare_zone_id:
-    secure: v1:aItyDk7gbUAT43Dp:438Chai41N+guAPmPgDc99ln4xVwCnYXhYGw71IjBEh/1yrd0rERiFwNqDaQXWsG
+    secure: v1:caysMrBHlwdhvLjw:ktO/z5Mh0cwIe8gCGaBtDx9yd8o6J6IUudGO56Xc+j58L2HSmGn5j6qlLYDIP0AM
   vault:vaultVersionOverride: 2.2.2
   pocket-id:baseUrl: https://auth.chezmoi.sh
   pangolin:orgId: chezmoi-sh
