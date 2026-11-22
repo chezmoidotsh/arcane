@@ -68,7 +68,7 @@ Tell-apart rules when two rows seem to fit:
 | A README that describes a directory (what it contains, how to change it) | Next to the code, as a `README.md` |
 | OPA policies and their rule sheets                                       | `policies/opa/`, never in `docs/`  |
 | Agent instructions, skills and knowledge                                 | `AGENTS.md`, `.agents/`            |
-| Output of a generator (`projects/chezmoi.sh/docs/*.md`)                  | Where its generator writes it      |
+| Output of a generator (`fleet/hosts/core.*/*.md`)                        | Where its generator writes it      |
 | Diagrams and icons used by READMEs                                       | `docs/assets/`                     |
 
 A README section that is really a guide moves to `docs/`, and the README links to it.

@@ -1,6 +1,6 @@
 <h1 align="center">
   <picture>
-    <img alt="TrueNAS SCALE logo" src="../../../projects/chezmoi.sh/docs/assets/icons/hardware/truenas-scale.svg" width="201">
+    <img alt="TrueNAS SCALE logo" src="../../../docs/assets/icons/hardware/truenas-scale.svg" width="201">
   </picture>
 </h1>
 

@@ -148,7 +148,7 @@ Two SOPS/age files baked into the image at build time. There is no ingest or que
 | `secrets/observability.sops.env` | `SLACK_WEBHOOK_URL`, `ALERTMANAGER_DEADMAN_URL` | operator |
 
 Edit the operator file with `sops secrets/observability.sops.env`. Run `pulumi up` in
-`projects/chezmoi.sh/src/infrastructure/pulumi` before `lxc:secrets:sync`, so the stack outputs exist.
+`fleet/base/pulumi` before `lxc:secrets:sync`, so the stack outputs exist.
 
 ### Create the container (first deployment)
 

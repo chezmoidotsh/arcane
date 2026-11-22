@@ -36,7 +36,7 @@ en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraf
   secrets Bitwarden correspondants doivent exister : un secret manquant fait échouer la commande.
 - **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
   posé sur la clé par `stack/access/tailscale.ts`).
-- **Stack parente** : `chezmoi_sh.live` déjà appliquée. Elle crée le compartiment parent `chezmoi.sh` et le groupe
+- **Stack parente** : `base.live` déjà appliquée. Elle crée le compartiment parent `chezmoi.sh` et le groupe
   Pocket-Id `admin`, que cette stack retrouve par leur nom (`stack/platform/oci-compartment.ts`,
   `stack/access/pocket-id.ts`) au lieu de lire ses sorties.
 - **Pocket-Id** : une clé d'API pour le provider Pulumi (voir l'étape 2) ; le groupe et le client sont gérés par Pulumi.
