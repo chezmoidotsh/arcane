@@ -383,7 +383,7 @@ puis `exusiai`, puis `horn` en dernier, car les deux autres dépendent de lui (v
      secrète est demandée de façon interactive (deux invites) ;
   5. `pulumi preview` depuis `pulumi/` : l'aperçu doit être vide (tout `create` ou `delete` arrête l'opération). Le
      provider Pocket-Id exige `POCKET_ID_API_KEY` (clé d'API de Pocket-Id, secret `pulumi-pocket-id-api-key` de
-     Bitwarden Secrets Manager, fourni par `fleet/.fnox.toml`) dans l'environnement ;
+     Bitwarden Secrets Manager, déclaré dans le `.fnox.toml` de l'hôte) dans l'environnement ;
   6. fusionner.
 - **Risque** : ne jamais lancer `pulumi stack init` ni `pulumi up` depuis le nouveau dossier avant le renommage : cela
   créerait un second jeton Cloudflare et un second client Pocket-Id. Entre le renommage et la fusion, la pile référencée
