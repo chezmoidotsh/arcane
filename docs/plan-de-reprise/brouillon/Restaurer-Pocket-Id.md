@@ -27,8 +27,8 @@ d'OpenBao.
 
 ## Avant de commencer
 
-Outils nécessaires : `kubectl`, `s3cmd`, `kustomize`, `ksops`. `mise install` exécuté depuis `fleet/clusters/akn.rhodes/` les
-provisionne tous. Les tâches `dr:pocket-id:*` utilisées plus bas sont définies dans
+Outils nécessaires : `kubectl`, `s3cmd`, `kustomize`, `ksops`. `mise install` exécuté depuis
+`fleet/clusters/akn.rhodes/` les provisionne tous. Les tâches `dr:pocket-id:*` utilisées plus bas sont définies dans
 `fleet/clusters/akn.rhodes/.mise.toml` : `mise install` doit aussi avoir été exécuté depuis ce dossier.
 
 Accès et état requis :
@@ -57,8 +57,8 @@ export CLUSTER_CONTEXT=<contexte kubectl du nouveau cluster>   # ex. admin@rhode
 
 Le namespace `pocket-id` et le secret `cnpg-backup-credentials` existent déjà (étape 3 de
 [Restaurer Rhodes](Restaurer-Rhodes.md)) : `cnpg-backup-credentials` est un `Secret` créé par la stack Pulumi
-(`fleet/clusters/akn.rhodes/pulumi/stack/system/cloudnative-pg.ts`). Il reste deux secrets, dont aucun ne vient de
-Vault (Pocket-Id n'a aucune dépendance à Vault, par conception) :
+(`fleet/clusters/akn.rhodes/pulumi/stack/cloudnative-pg.ts`). Il reste deux secrets, dont aucun ne vient de Vault
+(Pocket-Id n'a aucune dépendance à Vault, par conception) :
 
 ```sh
 # pocket-id-secrets : le seul secret qui reste chiffré avec SOPS dans le dépôt
@@ -97,7 +97,8 @@ fichier uniquement et n'exécute aucun `kubectl apply`.
 
 Le nom du cluster (`pocket-id-20260530`) embarque un suffixe de génération qui change à chaque recréation du cluster,
 selon le même schéma que prend en compte le script de découverte du skill `cnpg-backup`. Confirmer le nom courant dans
-`fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.cluster.yaml` au lieu de supposer que cette valeur s'applique encore.
+`fleet/clusters/akn.rhodes/kubernetes/src/apps/pocket-id/cnpg.cluster.yaml` au lieu de supposer que cette valeur
+s'applique encore.
 
 > [!WARNING]\
 > Ce nom apparaît aussi dans l'`uri` de `database.externalsecret.yaml` (hôte `pocket-id-20260530-rw`) et dans

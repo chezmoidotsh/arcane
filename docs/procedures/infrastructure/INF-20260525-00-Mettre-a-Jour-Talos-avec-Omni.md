@@ -14,7 +14,7 @@ contrôles après et le retour arrière.
 ## Cadre technique et conventions
 
 - **La version est dans le template** : chaque cluster déclare `talos.version` dans
-  `projects/<cluster>/src/infrastructure/omni/<cluster>.clustertemplate.yaml`, avec le préfixe `v` (obligatoire pour
+  `fleet/clusters/<famille>.<nom>/omni/<cluster>.clustertemplate.yaml`, avec le préfixe `v` (obligatoire pour
   `omnictl cluster template validate`). Le template est la source de vérité : une modification faite à la main dans
   l'interface d'Omni n'est pas suivie dans Git.
 - **Un template par cluster, sans overlay** : les templates sont des copies complètes de

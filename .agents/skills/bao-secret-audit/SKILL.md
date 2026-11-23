@@ -51,9 +51,9 @@ false-positive shapes documented below — it's the source of truth for what eac
      obviously a typo, surface it and ask before touching anything — the live secret might be intentionally pending
      creation.
    - **Orphaned secrets** — the _lowest_-confidence findings. Never propose deleting one without checking, per entry:
-     whether the owning app exists yet under `projects/<cluster>/src/apps/` (pre-provisioned secrets for a
-     not-yet-deployed app are expected, not a bug), and whether it's consumed via Terraform/Ansible/Crossplane (out of
-     this tool's scan scope, see Known limitations).
+     whether the owning app exists yet under `fleet/clusters/<family>.<name>/kubernetes/src/apps/` (pre-provisioned
+     secrets for a not-yet-deployed app are expected, not a bug), and whether it's consumed via
+     Terraform/Ansible/Crossplane (out of this tool's scan scope, see Known limitations).
 4. **Triage, don't bulk-act.** Per `AGENTS.md`'s scope-management rules: fix an evidenced, in-scope bug inline (like the
    dangling-reference typo case above) if the fix is small and clearly safe; for anything requiring judgment calls about
    staleness or intent, summarize and let the user decide — don't auto-file an issue per orphaned secret, and don't

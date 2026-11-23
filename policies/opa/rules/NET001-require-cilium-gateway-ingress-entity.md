@@ -113,7 +113,7 @@ after the cluster is fully operational, so all HTTPRoute backends are regular ap
 
 ```sh
 # CI (GitHub Actions) — per-app directory with --combine
-conftest test projects/<cluster>/dist/apps/<app>/ -p policies/opa/ --combine
+conftest test fleet/clusters/<family>.<name>/kubernetes/dist/apps/<app>/ -p policies/opa/ --combine
 
 # Local — test a specific app
 mise exec conftest -- conftest test \

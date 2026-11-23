@@ -20,7 +20,7 @@ rules/      Rule documentation (rationale, references, exclusions)
 mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 
 # Check every manifest of a rendered directory, as the compliance workflows do
-mise exec conftest -- conftest test projects/<cluster>/dist/<app> -p policies/opa/ --combine
+mise exec conftest -- conftest test fleet/clusters/<family>.<name>/kubernetes/dist/apps/<app> -p policies/opa/ --combine
 
 # Run all unit tests
 mise exec opa -- opa test policies/opa/ -v

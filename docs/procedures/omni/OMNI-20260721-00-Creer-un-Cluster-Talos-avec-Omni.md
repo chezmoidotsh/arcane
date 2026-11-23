@@ -156,7 +156,7 @@ Choisir le prochain identifiant de cluster et le CIDR de Pod correspondant dans 
 [table d'allocation](#allocation-des-cidr-de-pod). Avec `rhodes` (1) et `lungmen` (2) déjà pris, le prochain cluster a
 l'identifiant 3 et le CIDR de Pod `172.30.64.0/19`.
 
-Choisir un nom de cluster (par exemple `rhodes-akn`) et un dossier de projet (`projects/<cluster>.akn/`).
+Choisir un nom de cluster (par exemple `rhodes-akn`) et un dossier de projet (`fleet/clusters/<famille>.<nom>/`).
 
 **Ne pas changer le CIDR de Services ni le clusterDNS.** `serviceSubnets` reste `172.31.0.0/19` et `clusterDNS` reste
 `172.31.0.10`. Ce recouvrement entre clusters est sans effet sur ClusterMesh : Cilium résout les ClusterIP par eBPF sur
@@ -184,8 +184,7 @@ Champs à modifier par rapport à la base :
 - `workers.machineClass.size:` : nombre de workers.
 - Vérifier que `serviceSubnets` reste `172.31.0.0/19` et `clusterDNS` reste `172.31.0.10`.
 
-Les templates de `rhodes.akn` et `lungmen.akn` (`fleet/clusters/*/omni/`) servent d'exemples de copie
-modifiée.
+Les templates de `rhodes.akn` et `lungmen.akn` (`fleet/clusters/*/omni/`) servent d'exemples de copie modifiée.
 
 > [!NOTE]\
 > Le CNI est défini ici et non par GitOps, car Talos est immuable et piloté par API : aucun `kubectl apply` n'est
@@ -235,7 +234,7 @@ mise run omni:clustertemplate:validate
 
 Ajouter cette tâche au `.mise.toml` du nouveau projet si elle manque, en s'inspirant de ces deux projets. Le script
 `omni:template:lint` vérifie en plus que `podSubnets`, `serviceSubnets` et `clusterDNS` de chaque template de cluster
-respectent la plage de l'ADR-014 ; rtunk l'exécute (linter `omni-template`), en local comme en CI.
+respectent la plage de l'ADR-014 ; la CI l'exécute à chaque changement sous `fleet/clusters/*/omni/`.
 
 ## Étape 6 — Appliquer le template de cluster
 
@@ -320,14 +319,14 @@ Si aucun Pod Cilium n'apparaît, le SHA épinglé était inaccessible : voir [Pr
 ## Étape 9 — Créer l'identité Proxmox du CCM/CSI et le Secret Kubernetes
 
 Le Proxmox CCM et le plugin Proxmox CSI (étape 10) partagent une identité Proxmox, créée par la stack Pulumi du cluster
-(et non par celle de `chezmoi.sh`) à partir de l'identifiant délégué `<cluster>-bootstrap@pve` (voir les prérequis). La
+(et non par celle de `pve-01.core`) à partir de l'identifiant délégué `<cluster>-bootstrap@pve` (voir les prérequis). La
 même stack écrit la configuration obtenue dans le cluster sous le Secret `proxmox-system/proxmox-cloud-provider` (clé
 `config.yaml`), que les deux charts référencent par `existingConfigSecret` :
 
-| Cluster       | Programme Pulumi                                            |
-| ------------- | ----------------------------------------------------------- |
-| `rhodes.akn`  | `fleet/clusters/akn.rhodes/pulumi/stack/system/proxmox.ts`  |
-| `lungmen.akn` | `fleet/clusters/akn.lungmen/pulumi/stack/system/proxmox.ts` |
+| Cluster       | Programme Pulumi                                     |
+| ------------- | ---------------------------------------------------- |
+| `rhodes.akn`  | `fleet/clusters/akn.rhodes/pulumi/stack/proxmox.ts`  |
+| `lungmen.akn` | `fleet/clusters/akn.lungmen/pulumi/stack/proxmox.ts` |
 
 Le composant sous-jacent est `catalog/pulumi/components/proxmox-cluster-identity` (voir son README). Le programme lit le
 Secret d'amorçage dans `kube-system` : le kubeconfig de l'étape 8 doit donc être utilisable par le provider Kubernetes
@@ -367,13 +366,14 @@ l'[ADR-011](../../decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Gi
 Le namespace `proxmox-system` a été créé à l'étape 9, avec le niveau Pod Security relâché que demande le CSI.
 
 `rhodes.akn` et `lungmen.akn` ont déjà la source du CCM et du CSI sous
-`projects/<cluster>/src/infrastructure/kubernetes/proxmox/` (valeurs Helm des deux charts) et leur rendu sous
-`projects/<cluster>/dist/infrastructure/kubernetes/proxmox/`. Pour un nouveau cluster, copier ce dossier depuis un
-cluster existant, l'adapter, puis le rendre avec `dist:render projects/<cluster>/src/infrastructure/kubernetes/proxmox`.
-Appliquer ensuite les manifests rendus (le Secret de l'étape 9 doit exister pour que les Pods démarrent) :
+`fleet/clusters/<famille>.<nom>/kubernetes/src/system/proxmox/` (valeurs Helm des deux charts) et leur rendu sous
+`fleet/clusters/<famille>.<nom>/kubernetes/dist/system/proxmox/`. Pour un nouveau cluster, copier ce dossier depuis un
+cluster existant, l'adapter, puis le rendre avec
+`dist:render fleet/clusters/<famille>.<nom>/kubernetes/src/system/proxmox`. Appliquer ensuite les manifests rendus (le
+Secret de l'étape 9 doit exister pour que les Pods démarrent) :
 
 ```sh
-kubectl apply --server-side -f projects/<cluster>/dist/infrastructure/kubernetes/proxmox/
+kubectl apply --server-side -f fleet/clusters/<famille>.<nom>/kubernetes/dist/system/proxmox/
 ```
 
 Vérifier que les contrôleurs et le driver CSI sont démarrés :
@@ -390,7 +390,8 @@ kubectl get storageclass
 Appliquer la branche décidée dans la [topologie GitOps hub et spoke](#topologie-gitops-hub-et-spoke) :
 
 - **Hub** : auto-hébergement. Appliquer les manifests ArgoCD du cluster lui-même, sur le modèle de `rhodes.akn`
-  (`fleet/clusters/akn.rhodes/kubernetes/src/argocd/` et `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml`).
+  (`fleet/clusters/akn.rhodes/kubernetes/src/argocd/` et
+  `fleet/clusters/akn.rhodes/kubernetes/bootstrap.applications.yaml`).
 - **Spoke** : enregistrement dans l'ArgoCD du hub.
 
   ```sh

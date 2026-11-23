@@ -174,11 +174,11 @@ spec:
 > récupéré, qui identifie un autre flux d'archive, déjà clos.
 
 Pour les appelants OpenBao et Pocket-Id de `rhodes.akn`,
-`fleet/clusters/akn.rhodes/.mise/tasks/dr/cnpg/patch-recovery-source` (tâche
-`dr:cnpg:patch-recovery-source`, encapsulée à son tour par `dr:openbao:patch-recovery` et `dr:pocket-id:patch-recovery`)
-automatise toute cette étape, y compris le décodage et la génération des ULID. Elle modifie le fichier uniquement et
-n'exécute aucun `kubectl apply`. Cette tâche est locale à ce dossier, contrairement à `cnpg:backup:latest` qui vaut pour
-tout le dépôt : il n'existe pas encore d'équivalent générique en dehors de `rhodes.akn`.
+`fleet/clusters/akn.rhodes/.mise/tasks/dr/cnpg/patch-recovery-source` (tâche `dr:cnpg:patch-recovery-source`, encapsulée
+à son tour par `dr:openbao:patch-recovery` et `dr:pocket-id:patch-recovery`) automatise toute cette étape, y compris le
+décodage et la génération des ULID. Elle modifie le fichier uniquement et n'exécute aucun `kubectl apply`. Cette tâche
+est locale à ce dossier, contrairement à `cnpg:backup:latest` qui vaut pour tout le dépôt : il n'existe pas encore
+d'équivalent générique en dehors de `rhodes.akn`.
 
 > [!WARNING]\
 > Le renommage de `metadata.name` ne se limite pas à ce fichier. Le `spec.cluster.name` du manifeste `ScheduledBackup`

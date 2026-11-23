@@ -100,10 +100,6 @@ const scopes = [
 		value: "catalog:crossplane",
 	},
 	{
-		name: "catalog:flakes        - Anything related to the Nix flakes catalog",
-		value: "catalog:flakes",
-	},
-	{
 		name: "catalog:nix           - Anything related to the Nix modules catalog",
 		value: "catalog:nix",
 	},
@@ -120,44 +116,8 @@ const scopes = [
 		value: "catalog:nix",
 	},
 	{
-		name: "catalog:talos         - Anything related to the Talos manifests catalog",
-		value: "catalog:talos",
-	},
-	{
-		name: "catalog:opa           - Anything related to the OPA policy catalog",
-		value: "catalog:opa",
-	},
-	{
 		name: "catalog:pulumi        - Anything related to the Pulumi component catalog",
 		value: "catalog:pulumi",
-	},
-	{
-		name: "project:amiya.akn     - Anything related to the amiya.akn project",
-		value: "project:amiya.akn",
-	},
-	{
-		name: "project:chezmoi.sh    - Anything related to things not related to a specific project",
-		value: "project:chezmoi.sh",
-	},
-	{
-		name: "project:kazimierz.akn - Anything related to the kazimierz.akn project",
-		value: "project:kazimierz.akn",
-	},
-	{
-		name: "project:lungmen.akn   - Anything related to the lungmen.akn project",
-		value: "project:lungmen.akn",
-	},
-	{
-		name: "project:rhodes.akn    - Anything related to the rhodes.akn project",
-		value: "project:rhodes.akn",
-	},
-	{
-		name: "project:rimbilliton.akn - Anything related to the rimbilliton.akn project",
-		value: "project:rimbilliton.akn",
-	},
-	{
-		name: "project:shodan.akn    - Anything related to the shodan project",
-		value: "project:shodan.akn",
 	},
 	{
 		name: "fleet:rhodes.akn      - Anything related to the rhodes.akn cluster",

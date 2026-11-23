@@ -251,13 +251,12 @@ Suites ouvertes depuis cette expérience :
 > [!NOTE]\
 > **État au 2026-10-11 : Crossplane a disparu du dépôt, la phase en cluster n'est pas engagée.** `catalog/crossplane/`
 > n'existe plus et aucun dossier `projects/*/src/infrastructure/crossplane/` n'existe. Chaque projet à infrastructure
-> cloud ou hôte porte une stack Pulumi sous `projects/<projet>/src/infrastructure/pulumi/` ; l'état est dans un backend
-> S3 Garage (`backend.url` de `projects/chezmoi.sh/src/infrastructure/pulumi/Pulumi.yaml`), et
-> `catalog/pulumi/components/` contient un composant `cluster-vault`. Les stacks s'exécutent en local ; aucune ressource
-> `Stack` n'apparaît dans `projects/`, comme le constate
-> l'[ADR-015](../decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md). Le répertoire `catalog/pulumi/sdks/` ne contient
-> pas de SDK Garage, Omni ni Pocket-Id ; le statut des issues #1092 à #1095 n'a pas été vérifié. `amiya.akn` n'existe
-> plus dans `projects/`.
+> cloud ou hôte porte une stack Pulumi sous `fleet/clusters/<famille>.<nom>/pulumi/` ; l'état est dans un backend S3
+> Garage (`backend.url` de `fleet/base/pulumi/Pulumi.yaml`), et `catalog/pulumi/components/` contient un composant
+> `cluster-vault`. Les stacks s'exécutent en local ; aucune ressource `Stack` n'apparaît dans `fleet/`, comme le
+> constate l'[ADR-015](../decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md). Le répertoire `catalog/pulumi/sdks/` ne
+> contient pas de SDK Garage, Omni ni Pocket-Id ; le statut des issues #1092 à #1095 n'a pas été vérifié. `amiya.akn`
+> n'existe plus dans `fleet/`.
 
 ## Pour aller plus loin
 

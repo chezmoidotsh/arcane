@@ -41,7 +41,7 @@ A `postgresql.cnpg.io/v1` `Cluster` with `spec.instances == 1` is denied unless 
 
 ```sh
 # CI (GitHub Actions)
-conftest test projects/*/dist --policy policies/opa/ --combine
+conftest test fleet/clusters/*/kubernetes/dist --policy policies/opa/ --combine
 
 # Local
 mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
@@ -50,4 +50,4 @@ mise exec conftest -- conftest test <manifest.yaml> -p policies/opa/
 mise exec opa -- opa test policies/opa/ -v
 ```
 
-CI enforcement is **blocking**. All manifests in `projects/*/dist/` must be compliant before merging.
+CI enforcement is **blocking**. All manifests in `fleet/clusters/*/kubernetes/dist/` must be compliant before merging.

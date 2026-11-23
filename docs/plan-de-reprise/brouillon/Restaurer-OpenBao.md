@@ -125,9 +125,9 @@ Revenir ici quand les vérifications rapides de la procédure passent (`Cluster 
 > Le renommage de `metadata.name` par l'étape 3 de la procédure se répercute au-delà de `cnpg.cluster.yaml`.
 > `database.externalsecret.yaml` construit l'`uri` de connexion d'OpenBao avec l'hôte `openbao-database-rw`, et son
 > commentaire précise qu'il suit `metadata.name` : l'aligner sur le nouveau nom, comme `spec.cluster.name` de
-> `cnpg.scheduledbackup.yaml`. Les manifestes de `fleet/clusters/akn.rhodes/kubernetes/dist/apps/vault/` sont rendus depuis `src/` :
-> lancer `dist:render` après ces modifications, sinon l'étape 3 réapplique l'ancien `Cluster` (`openbao-database`,
-> ancien `serverName`).
+> `cnpg.scheduledbackup.yaml`. Les manifestes de `fleet/clusters/akn.rhodes/kubernetes/dist/apps/vault/` sont rendus
+> depuis `src/` : lancer `dist:render` après ces modifications, sinon l'étape 3 réapplique l'ancien `Cluster`
+> (`openbao-database`, ancien `serverName`).
 
 ### 3. Appliquer le reste de l'application `vault`
 

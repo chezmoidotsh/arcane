@@ -90,9 +90,9 @@ kubectl --context $CLUSTER_CONTEXT get storageclass proxmox-lvmthin-ext4 -o json
 ```
 
 Les trois `StorageClass` `proxmox-lvmthin-*` de `lungmen.akn` et les deux de `rhodes.akn` déclarent
-`allowVolumeExpansion: true` (`fleet/clusters/*/kubernetes/dist/system/proxmox/`), et l'expérience Proxmox CSI a
-validé l'extension d'un volume (critère V-009 de `docs/experiments/20260617-proxmox-csi-ccm/README.md`,
-redimensionnement `kubectl patch` vers `2Gi`).
+`allowVolumeExpansion: true` (`fleet/clusters/*/kubernetes/dist/system/proxmox/`), et l'expérience Proxmox CSI a validé
+l'extension d'un volume (critère V-009 de `docs/experiments/20260617-proxmox-csi-ccm/README.md`, redimensionnement
+`kubectl patch` vers `2Gi`).
 
 > [!WARNING]\
 > Le dépôt ne dit pas si le redimensionnement se fait en ligne, sans redémarrage du Pod, ni quand le système de fichiers

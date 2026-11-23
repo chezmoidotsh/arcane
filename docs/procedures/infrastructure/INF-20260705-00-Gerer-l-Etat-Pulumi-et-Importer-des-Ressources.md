@@ -12,17 +12,23 @@ Elle s'applique à tous les projets Pulumi du dépôt, dont les `Pulumi.yaml` po
 
 ## Cadre technique et conventions
 
-Les six projets Pulumi du dépôt déclarent le même backend dans leur `Pulumi.yaml`
-(`projects/<projet>/src/infrastructure/pulumi/`, ou `fleet/hosts/<hôte>/pulumi/` pour les hôtes déjà déplacés) :
+Les douze projets Pulumi du dépôt déclarent le même backend dans leur `Pulumi.yaml`
+(`fleet/clusters/<famille>.<nom>/pulumi/`, `fleet/hosts/<famille>.<nom>/pulumi/` ou `fleet/base/pulumi/`) :
 
-| Projet        | Nom Pulumi    |
-| ------------- | ------------- |
-| `base`        | `base`        |
-| `closure.akn` | `closure-akn` |
-| `exusiai.akn` | `exusiai-akn` |
-| `horn.akn`    | `horn-akn`    |
-| `lungmen.akn` | `lungmen-akn` |
-| `rhodes.akn`  | `rhodes-akn`  |
+| Élément             | Nom Pulumi          |
+| ------------------- | ------------------- |
+| `fleet/base`        | `base`              |
+| `closure.akn`       | `closure-akn`       |
+| `exusiai.akn`       | `exusiai-akn`       |
+| `horn.akn`          | `horn-akn`          |
+| `lungmen.akn`       | `lungmen-akn`       |
+| `ptilopsis.akn`     | `ptilopsis-akn`     |
+| `rhodes.akn`        | `rhodes-akn`        |
+| `nas.core`          | `nas-core`          |
+| `oci-registry.core` | `oci-registry-core` |
+| `omni.core`         | `omni-core`         |
+| `pbs.core`          | `pbs-core`          |
+| `pve-01.core`       | `pve-01-core`       |
 
 ```yaml
 backend:
@@ -75,7 +81,7 @@ Exporter ces variables une fois ; toutes les commandes suivantes se copient ensu
 sortie de l'étape 2 ; `TYPE_TOKEN`, `NAME` et `ID` ne servent qu'à l'import (étape 3).
 
 ```sh
-export PROJECT_DIR=<répertoire Pulumi du projet>      # ex. fleet/base/pulumi
+export PROJECT_DIR=<répertoire Pulumi du projet>      # ex. fleet/hosts/core.pve-01/pulumi
 export KEY_YEAR=<année de la clé Garage>              # ex. 2026
 export URN=<URN de la ressource>                      # ex. urn:pulumi:<stack>::<projet>::<type>::<nom>
 export TYPE_TOKEN=<jeton de type Pulumi>              # ex. proxmox:index/virtualEnvironmentRole:VirtualEnvironmentRole

@@ -39,7 +39,7 @@ chaque élément ayant son README.
 | 8     | Les clusters (`akn.lungmen`, puis `akn.rhodes`)                     | `lungmen.akn` : PR 1, 2 et 4 code prêt, état Pulumi à déplacer ; `rhodes.akn` : PR 1 à 4 code prêt, état Pulumi à déplacer |
 | 9     | Scinder les piles lourdes de `chezmoi_sh`                           | code prêt (`core.pbs`, `core.nas`, `core.pve-01`, `base`), états Pulumi à déplacer                                         |
 | 10    | Séquencer `core.o11y-datastore` avec l'ADR-022                      | code prêt, bloqué par la bascule de l'observabilité (ne pas fusionner avant)                                               |
-| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | à faire                                                                                                                    |
+| 11    | Documentation, suppression des scopes `project:*` et de `projects/` | code prêt ; suppression du dossier local `projects/` et réétiquetage `project` → `fleet` à faire à la main                 |
 
 ## Avant de commencer
 
@@ -1119,6 +1119,35 @@ bascule de l'observabilité ; ensuite plus aucun fichier ne reste sous `projects
   `mise run lint` et `scripts/wiki:lint` passent.
 - **Retour arrière** : sans objet, c'est le point d'arrivée ; la fin de la migration est la disparition de `projects/`.
 
+### Détail de l'étape 11
+
+- **Constaté** : les 8 scopes `project:*` et `catalog:flakes`, `catalog:opa`, `catalog:talos`, `catalog:kustomize` sont
+  retirés de `.commitlintrc.js` (22 scopes restants) ; le label `project` est retiré de `.github/labels.yaml` (`fleet` y
+  est depuis l'étape 1). Les skills (`git-commit`, `create-pr`, `create-issue`, `triage-issues`, `host-readme`,
+  `bao-secret-audit`, `documentation-writer`), les modèles d'issue, `AGENTS.md`, le README,
+  `catalog/kubernetes/README.md`, `policies/opa/` et les pages vivantes de `docs/` (guides, références, procédures, plan
+  de reprise, expérimentations) décrivent la disposition `fleet/` et les noms de projets Pulumi `<nom>-<famille>`.
+  `scripts/oripathy:inventory` ne lit plus `projects/` ; `argocd:app:sync` trouve le serveur dans
+  `fleet/clusters/*/kubernetes/src/argocd/`. Plus aucun fichier suivi sous `projects/` (les 4 derniers fichiers du CT
+  103 sont supprimés ici). `.gitignore` ignore `/projects/` pour que le dossier local restant (dont des secrets Talos en
+  clair d'`amiya.akn`) ne soit pas ajouté par erreur. Les décisions, incidents, archives et sessions gardent les chemins
+  de leur époque (373 mentions de `projects/` restantes, toutes classées : enregistrements, pages de migration,
+  historiques, commentaires de provenance).
+- **Manuel, avant la fusion** : réétiqueter les issues et pull requests ouvertes `project` → `fleet` (le flux de
+  synchronisation des labels tourne avec `prune: true` et supprimera `project` à la fusion).
+- **Manuel, après la fusion** : sauvegarder le dossier local `projects/` (`amiya.akn` contient `secrets.yaml`,
+  `talosconfig`, `etcd.db`), puis `rm -rf projects/` ; retirer ensuite la ligne `/projects/` de `.gitignore` si on veut.
+- **À trancher** : `catalog:crossplane` et `catalog:kairos-bundle` nomment aussi des chemins disparus, `catalog:nix` est
+  en double, `policies/opa/` n'a pas de scope ; le type de page « Project overview » (`docs/projects/`,
+  `Projet-<nom>.md`) du skill `documentation-writer` ; le plan de reprise après sinistre cite encore `chezmoi-sh-infra`
+  7 fois : la pile est scindée (`base`, `pve-01-core`, `nas-core`, `pbs-core`), son graphe de dépendances est à
+  réécrire, pas seulement à renommer ; INF-20260605 garde le conteneur `observability` retiré comme exemple.
+- **Constaté, défauts trouvés en passant (hors périmètre)** : `ownerFromRepoRelativePath`
+  (`catalog/pulumi/lib/src/vault-secret-metadata.ts`) prend le segment 1 du chemin, qui vaut `clusters` ou `hosts` sous
+  `fleet/` : la métadonnée `owner` des secrets OpenBao est fausse ;
+  `fleet/clusters/akn.rhodes/pulumi/stack/cloudnative-pg.ts` lit encore `organization/amiya-akn-infra/amiya_akn.live`
+  (déjà noté « à supprimer »).
+
 ## Critère de fin
 
 ```sh
@@ -1128,7 +1157,9 @@ ls fleet/clusters fleet/hosts
 
 Une liste groupée par famille (`akn.*` puis `core.*`) et l'absence de `projects/` prouvent que la migration est
 terminée. `argocd app list` doit montrer les mêmes `Application` qu'avant l'étape 8. Le critère dépend de l'ADR-022 : le
-LXC `o11y-datastore` doit être retiré (étape 10). Une fois atteint, archiver la page.
+LXC `o11y-datastore` doit être retiré (étape 10). Côté code, le critère est atteint : `git ls-files projects` ne renvoie
+rien. Il reste la suppression à la main du dossier local et les déploiements des étapes 5 à 10. Une fois atteint,
+archiver la page.
 
 ## Pour aller plus loin
 

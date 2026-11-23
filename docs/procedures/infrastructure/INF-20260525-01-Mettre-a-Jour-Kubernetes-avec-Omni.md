@@ -5,8 +5,8 @@ modifiant `kubernetes.version` dans son cluster template, puis en synchronisant 
 avant la vérification préalable des feature gates et des flags retirés dans la version cible, à l'origine de l'incident
 Kubernetes 1.35, et la compatibilité avec la version de Talos.
 
-La version de Kubernetes est fixée dans le template (`fleet/clusters/*/omni/*.clustertemplate.yaml`) et
-Omni réalise la mise à jour.
+La version de Kubernetes est fixée dans le template (`fleet/clusters/*/omni/*.clustertemplate.yaml`) et Omni réalise la
+mise à jour.
 
 > [!WARNING]\
 > Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur Omni ni sur

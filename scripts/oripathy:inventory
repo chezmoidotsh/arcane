@@ -32,7 +32,7 @@
 #     drop it) or renders several tags of it. The images of a chart that follow its upstream at the same version are folded
 #     into the chart's component.
 #   - `tag:` under `repository:`, a line `image: registry/repo:tag`, or a release URL of a remote manifest.
-#   - NixOS (projects/**/*.nix, fleet/**/*.nix, catalog/**/*.nix): a pinned container image (`fooImage = "registry/repo:tag"`, type=oci), a
+#   - NixOS (fleet/**/*.nix, catalog/**/*.nix): a pinned container image (`fooImage = "registry/repo:tag"`, type=oci), a
 #     binary fetched from a release (`version = "v1.2"` or a pinned GitHub URL, type=release), an npm tarball (type=npm).
 #     A nixpkgs package (`pkgs.x`, `services.x.enable`) is `type=nixpkg pkg=x` anywhere in a file of the flake: it has no
 #     version line, its version is evaluated with `nix eval` against the flake.lock next to it, next to the one at the head of
@@ -45,7 +45,7 @@
 #     and its `value:` line. It adds the line to the component's locations and fails when it shows another version than the
 #     component (its own, its chart's, or an image tag). `regex` (quote it when it has spaces; first group or the group `version`)
 #     says how to read the version in the line, default the scalar after `key:`. A `Version` entry without annotation fails.
-# The annotated image lines of `catalog/kubernetes/` (reference values and bases that projects copy) are listed too, as `catalog/<name>`.
+# The annotated image lines of `catalog/kubernetes/` (reference values and bases that clusters copy) are listed too, as `catalog/<name>`.
 # `deployedAt` is the commit date that introduced the current version (git log -S), so the history must be present
 # (`fetch-depth: 0` in CI). Standard library only. Each cluster (and `catalog`) is scanned on its own thread, and the `nix eval` calls run in
 # parallel too (`--jobs`, default the CPU count up to 8); the output is the same whatever the number of jobs.
@@ -193,12 +193,10 @@ def deployed_at(root, path, needle):
 
 
 def cluster_of(rel):
-    """projects/<cluster>/...; fleet/{hosts,clusters}/<family>.<name>/... is the canonical `<name>.<family>`; the shared NixOS modules (catalog/nix)
+    """fleet/{hosts,clusters}/<family>.<name>/... is the canonical `<name>.<family>`; the shared NixOS modules (catalog/nix)
     run on the chezmoi.sh LXCs, the other flakes and the Kubernetes bases are `catalog`.
     This is also the unit of parallelism: everything of one cluster is scanned together."""
     parts = Path(rel).parts
-    if parts[:1] == ("projects",) and len(parts) > 1:
-        return parts[1]
     if parts[:1] == ("fleet",) and len(parts) > 2 and parts[1] in ("hosts", "clusters") and "." in parts[2]:
         family, name = parts[2].split(".", 1)
         return f"{name}.{family}"
@@ -521,7 +519,7 @@ def scan_nix(root, problems, unit):
     def bad(rel, i, what):
         problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": what})
 
-    files = [(path.relative_to(root).as_posix(), path) for path in sorted(list(root.glob("projects/**/*.nix")) + list(root.glob("fleet/**/*.nix")) + list(root.glob("catalog/**/*.nix"))) if "node_modules" not in path.parts]
+    files = [(path.relative_to(root).as_posix(), path) for path in sorted(list(root.glob("fleet/**/*.nix")) + list(root.glob("catalog/**/*.nix"))) if "node_modules" not in path.parts]
     files = [(rel, path) for rel, path in files if cluster_of(rel) == unit]
     annotated = {(cluster_of(rel), a["pkg"]) for rel, path in files for a in map(parse_ann, path.read_text(errors="replace").splitlines()) if a and a.get("pkg")}
     if shutil.which("nix"):  # start every evaluation now: they are independent, the loop below only waits for them
@@ -602,7 +600,7 @@ def scan_nix(root, problems, unit):
 
 
 def scan_catalog(root, problems, unit):
-    """The reference values and bases of `catalog/kubernetes/` are not deployed as they are, but projects copy their versions: the
+    """The reference values and bases of `catalog/kubernetes/` are not deployed as they are, but clusters copy their versions: the
     annotated image lines are listed (as `catalog/<name>`), without forcing an annotation on every line."""
     out = []
     for path in sorted(root.glob("catalog/kubernetes/**/*.y*ml")) if unit == "catalog" else []:
@@ -638,7 +636,7 @@ def scan_flakes(root, unit):
     """The `github:` inputs locked in every flake.lock (nixpkgs, disko, sops-nix...): they are pins too, and a host is updated by moving them
     all together with `nix flake update`. They are reported for the BOM only: no upstream is followed, so no release is watched."""
     out = []
-    for lock in sorted(list(root.glob("projects/**/flake.lock")) + list(root.glob("fleet/**/flake.lock")) + list(root.glob("catalog/**/flake.lock"))):
+    for lock in sorted(list(root.glob("fleet/**/flake.lock")) + list(root.glob("catalog/**/flake.lock"))):
         if "node_modules" in lock.parts:
             continue
         rel, nodes = lock.relative_to(root).as_posix(), json.loads(lock.read_text())["nodes"]
@@ -830,7 +828,7 @@ ALL_UNITS = ("scripts/oripathy:", ".github/workflows/pull_request,schedule,workf
 
 
 def changed_units(root, ref):
-    """The units a diff against `ref` touches (None = all of them): a file of `projects/<cluster>/`, of catalog/nix (the chezmoi.sh LXCs),
+    """The units a diff against `ref` touches (None = all of them): a file of `fleet/<kind>/<family>.<name>/`, of catalog/nix (the chezmoi.sh LXCs),
     of catalog/nix/images or catalog/kubernetes (`catalog`). The script and the workflow touch everything; other files touch nothing."""
     r = subprocess.run(["git", "-C", str(root), "diff", "--name-only", f"{ref}...HEAD"], capture_output=True, text=True)
     if r.returncode:
@@ -843,7 +841,7 @@ def changed_units(root, ref):
 
 
 def build(root, only=None):
-    units = sorted({p.name for p in root.glob("projects/*") if p.is_dir()} | {cluster_of(p.relative_to(root).as_posix()) for p in root.glob("fleet/*/*.*") if p.is_dir()} - {None} | {"catalog", "chezmoi.sh"})
+    units = sorted({cluster_of(p.relative_to(root).as_posix()) for p in root.glob("fleet/*/*.*") if p.is_dir()} - {None} | {"catalog", "chezmoi.sh"})
     if only is not None:
         units = [u for u in units if u in only]
         print(f"scanning {len(units)} unit(s): {', '.join(units) or 'none'}", file=sys.stderr)
@@ -926,7 +924,7 @@ def self_test():
     assert parse_ann("# oripathy: type=mirror of=cilium regex='value: \"([^\"]+)\"'") == {"type": "mirror", "of": "cilium", "regex": 'value: "([^"]+)"'}
     assert MIRROR_VALUE.search('      value: "1.20.0"').group(1) == "1.20.0" and MIRROR_VALUE.search("  - value: v2.7.0 # x").group(1) == "v2.7.0"
     assert versions_of(component("c", "x", "dist", "helm", "1.0", "f", chart={"version": "0.5", "appVersion": "v1.0"}, images=[{"tag": "v1.0"}])) == {"1.0", "0.5"}
-    assert cluster_of("projects/lungmen.akn/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
+    assert cluster_of("fleet/clusters/akn.lungmen/kubernetes/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
     assert product_dir("fleet/clusters/akn.lungmen/kubernetes/src/system/cilium/x.yaml") == ("system/cilium", "cilium")
     assert product_dir("fleet/clusters/akn.lungmen/kubernetes/dist/apps/n8n/x.yaml") == ("apps/n8n", "n8n") and product_dir("fleet/clusters/akn.rhodes/kubernetes/src/argocd/x.yaml") == ("argocd", "argocd")
     assert kube_root(Path("/nonexistent"), "lungmen.akn") == "fleet/clusters/akn.lungmen/kubernetes"
