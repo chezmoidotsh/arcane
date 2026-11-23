@@ -6,9 +6,9 @@ import { notificationsSlackWebhookUrl } from "../config";
 // Slack notifications (#notifications)
 // -----------------------------------------------------------------------------
 // Reuses the same Slack "#notifications" incoming webhook already configured
-// for observability's Alertmanager
-// (projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/
-// observability.sops.env) instead of standing up a second channel. That
+// for observability's Alertmanager (`slack-webhook-url` in
+// fleet/hosts/akn.ptilopsis/nix/secrets/o11y.sops.yaml) instead of standing up
+// a second channel. That
 // webhook URL lives in a SOPS-encrypted file outside this stack's reach --
 // this stack runs upstream of any Kubernetes cluster (see ../access/acme.ts) -- so
 // it's copied in by hand as a Pulumi secret; see ../README.md, "Première installation".

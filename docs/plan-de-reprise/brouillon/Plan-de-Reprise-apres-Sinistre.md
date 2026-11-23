@@ -75,7 +75,7 @@ flowchart TD
 | NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                                                 | [`TRUENAS.md`](../../../fleet/hosts/core.nas/TRUENAS.md)                                                                                                                                |
 | Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                                                 | [`core.nas/pulumi/stack/apps.ts`](../../../fleet/hosts/core.nas/pulumi/stack/apps.ts)                                                                                                   |
 | Stack `base`                  | Garage (backend `s3://pulumi-states`) ; passphrase partagée (Bitwarden, via fnox) ; mot de passe `root@pam` ; OpenBao, Pocket-Id et clusters joignables (voir plus bas) | [`Pulumi.yaml`](../../../fleet/base/pulumi/Pulumi.yaml), [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) |
-| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                                                        | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                        |
+| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                                                        | [`.mise.toml` de `akn.ptilopsis`](../../../fleet/hosts/akn.ptilopsis/.mise.toml)                                                                                                        |
 | Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                                                        | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                       |
 | VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`                                        | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)             |
 | Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `pve-01-core` ; Garage pour les sauvegardes                                             | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../fleet/hosts/core.pve-01/pulumi/stack/access/rhodes-akn-bootstrap.ts)     |
@@ -217,9 +217,8 @@ identifiants des fournisseurs vivent dans Bitwarden Secrets Manager (fnox, `flee
 
 ### 6. Restaurer les LXC de plateforme
 
-- **Exige** : `pve-01` ; les secrets de chaque LXC, déjà chiffrés avec SOPS dans `fleet/hosts/core.*/nix/secrets/` et
-  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/o11y-datastore/secrets/` (deux destinataires age) ; pour Omni, son
-  volume `/persistent` ou la clé `omni.asc`.
+- **Exige** : `pve-01` ; les secrets de chaque LXC, déjà chiffrés avec SOPS dans `fleet/hosts/core.*/nix/secrets/` ;
+  pour Omni, son volume `/persistent` ou la clé `omni.asc`.
 - **Ordre** : `talosnet-dns` (DNS de talosnet), `oci-registry` (Zot, source de toutes les images des clusters), `omni`
   puis `omni-infra-provider-proxmox`, et enfin `observability`, qui ne bloque rien.
 - **Référence** : restauration depuis PBS (« Restore a guest from backup » dans
@@ -316,7 +315,7 @@ L'issue #1109 en liste cinq. Chacune a été revérifiée contre le dépôt le 2
   `stack/observability.ts`, `fleet/hosts/core.oci-registry/pulumi/`) ont une copie chiffrée avec SOPS dans
   `secrets/caddy.sops.json` (hôtes `core.omni` et `core.oci-registry`, écrite par le `pulumi up` de leur pile) ou
   `secrets/caddy.sops.env` (observability, écrite par les tâches `pulumi:*` de
-  [`.mise.toml`](../../../projects/chezmoi.sh/.mise.toml)). Le jeton ACME de PBS
+  [`.mise.toml`](../../../fleet/hosts/akn.ptilopsis/.mise.toml)). Le jeton ACME de PBS
   (`core.pbs/pulumi/stack/access/acme.ts`) n'a aucune copie dans le dépôt : il est injecté à la main dans PBS.
 - **État** : atténuée pour les LXC (leur reconstruction n'a pas besoin de l'état Pulumi) ; ouverte pour les deux clés B2
   et le jeton ACME de PBS. Une nouvelle clé peut sans doute être créée depuis le compte Backblaze, mais le dépôt ne le

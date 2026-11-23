@@ -93,11 +93,6 @@ fnox exec -- bws project list
 │   └── reference                   # Network, IPAM and configuration reference
 ├── fleet                           # Machines of the fleet
 │   └── hosts                       # One directory per host (Home Assistant, observability, …)
-├── projects                        # Infrastructure projects
-│   ├── chezmoi.sh                  # Shared resources
-│   ├── lungmen.akn                 # Lungmen cluster configuration
-│   ├── rhodes.akn                  # Rhodes cluster configuration
-│   └── shodan.akn                  # Shodan cluster configuration
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration
 ├── CHANGELOG.md                    # Project history and evolution

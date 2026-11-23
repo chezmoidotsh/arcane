@@ -1,3 +1,5 @@
+# oripathy: type=nixpkg pkg=opentelemetry-collector-contrib upstream=github.com/open-telemetry/opentelemetry-collector-contrib tagPrefix=v
+# oripathy: ignore pkg=systemd
 { config, lib, pkgs, ... }:
 
 # ─────────────────────────────────────────────────────────────────────────────

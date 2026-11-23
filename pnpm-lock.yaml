@@ -350,21 +350,12 @@ importers:
       '@axnic/pulumi-pocket-id':
         specifier: 'catalog:'
         version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: workspace:*
-        version: link:../../../catalog/pulumi/components/cloudflare-dns01-token
-      '@pulumi/cloudflare':
-        specifier: 'catalog:'
-        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/oci':
         specifier: 'catalog:'
         version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/tailscale':
-        specifier: 'catalog:'
-        version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
