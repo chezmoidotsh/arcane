@@ -37,7 +37,7 @@ core.<name>/
 │   ├── build                   ← mise run lxc:build
 │   ├── push                    ← mise run lxc:push -- <pve-host>
 │   └── upgrade                 ← mise run lxc:upgrade -- <pve-host>
-├── .sops.yaml                  ← SOPS creation rules for nix/secrets/ (and pulumi/.mise/env.yaml)
+├── .sops.yaml                  ← SOPS creation rules for nix/secrets/
 ├── nix/
 │   ├── flake.nix               ← version declared here (imageVersion or version)
 │   ├── modules/                ← NixOS modules

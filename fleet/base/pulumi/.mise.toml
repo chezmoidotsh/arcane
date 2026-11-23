@@ -1,13 +1,15 @@
 # =============================================================================
-# chezmoi.sh Pulumi stack - Mise configuration
+# Fleet base Pulumi stack - Mise configuration
 # =============================================================================
-# Shared cloud infrastructure for chezmoi.sh, managed as a Pulumi stack (state
-# in the Garage S3 backend, see Pulumi.yaml). Proxmox VE moved to the
-# pve-01-core project (fleet/hosts/core.pve-01/pulumi/), with its docs
-# generator and its proxmox:acme:rotate task.
+# Resources tied to no machine (project `base`, stack `base.live`, state in
+# the Garage S3 backend, see Pulumi.yaml), formerly the chezmoi-sh-infra
+# project of projects/chezmoi.sh.
 #
-# `.mise/env.yaml` (SOPS-encrypted PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE,
-# loaded via `[env] _.file` below) lets these tasks run without prompting.
+# `pulumi <args>` runs through fnox (alias of fleet/.mise.toml): the state backend credentials come from
+# fleet/.fnox.toml, the passphrase included, and the provider credentials
+# (OCI TF_VAR_*, Cloudflare, Pocket-Id, Tailscale) from ../.fnox.toml. They are resolved from Bitwarden Secrets
+# Manager (token and project ID in the Keychain, see `mise run bws:setup`), created by hand under the names listed
+# there, and exist only inside that process.
 #
 # `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
 # exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
@@ -25,7 +27,7 @@
 node = "24"
 
 [env]
-_.file = "{{ config_root }}/.mise/env.yaml"
+PULUMI_STACK = "base.live"
 
 [tasks."pulumi:diff"]
 description = "Preview pending changes for the current Pulumi stack"

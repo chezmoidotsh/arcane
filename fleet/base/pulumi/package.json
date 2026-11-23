@@ -1,5 +1,5 @@
 {
-	"name": "chezmoi-sh-infra",
+	"name": "base",
 	"version": "0.1.0",
 	"private": true,
 	"main": "index.ts",

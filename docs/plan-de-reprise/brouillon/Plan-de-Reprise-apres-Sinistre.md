@@ -41,7 +41,7 @@ flowchart TD
   PVE --> NAS["VM nas.chezmoi.sh : TrueNAS SCALE"]
   NAS --> GARAGE["Garage : s3.chezmoi.sh"]
   NAS -->|"synchro quotidienne"| B2
-  GARAGE -->|"état Pulumi"| PULUMI["stack chezmoi-sh-infra"]
+  GARAGE -->|"état Pulumi"| PULUMI["stack base"]
   PULUMI -->|"SDN, identités, ACME, pools"| PVE
   PULUMI -->|"datastore, jetons"| PBS
   PULUMI -->|"datasets, partages, apps"| NAS
@@ -67,19 +67,19 @@ flowchart TD
   LUNGMEN -.->|"enregistré comme spoke"| ARGO
 ```
 
-| Couche                        | Exige des couches au-dessus                                                                                                                   | Source                                                                                                                                                                                                              |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                | [ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md), [IPAM](../../reference/IPAM-Reference.md)                                                                                 |
-| `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `pve-01-core`, donc Garage                                                     | [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md), [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md)                                                                            |
-| PBS                           | `pve-01` ; clé d'application B2 et datastore créés par Pulumi ; clé de chiffrement côté client conservée dans OpenBao                         | [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md), [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md)                                                               |
-| NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                       | [`TRUENAS.md`](../../../fleet/hosts/core.nas/TRUENAS.md)                                                                                                                                                            |
-| Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                       | [`core.nas/pulumi/stack/apps.ts`](../../../fleet/hosts/core.nas/pulumi/stack/apps.ts)                                                                                                                               |
-| Stack `chezmoi-sh-infra`      | Garage (backend `s3://pulumi-states`) ; passphrase SOPS ; mot de passe `root@pam` ; OpenBao, Pocket-Id et clusters joignables (voir plus bas) | [`Pulumi.yaml`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/Pulumi.yaml), [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) |
-| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                              | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                                                    |
-| Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                              | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                                                   |
-| VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`              | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)                                         |
-| Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `pve-01-core` ; Garage pour les sauvegardes                   | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../fleet/hosts/core.pve-01/pulumi/stack/access/rhodes-akn-bootstrap.ts)                                 |
-| ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                              | [`kubernetes/src/argocd/README.md`](../../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/README.md)                                                                                                             |
+| Couche                        | Exige des couches au-dessus                                                                                                                                             | Source                                                                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                                          | [ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md), [IPAM](../../reference/IPAM-Reference.md)                                                     |
+| `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `pve-01-core`, donc Garage                                                                               | [`PROXMOX-VE.md`](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md), [`core.pve-01/README.md`](../../../fleet/hosts/core.pve-01/README.md)                                                |
+| PBS                           | `pve-01` ; clé d'application B2 et datastore créés par Pulumi ; clé de chiffrement côté client conservée dans OpenBao                                                   | [`PROXMOX_BACKUP_SERVER.md`](../../../fleet/hosts/core.pbs/PROXMOX_BACKUP_SERVER.md), [`core.pbs/README.md`](../../../fleet/hosts/core.pbs/README.md)                                   |
+| NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                                                 | [`TRUENAS.md`](../../../fleet/hosts/core.nas/TRUENAS.md)                                                                                                                                |
+| Garage                        | Le dataset `zp1hs01/applications/truenas/fr.deuxfleurs.garage` ; secrets `garage_*` de la config Pulumi                                                                 | [`core.nas/pulumi/stack/apps.ts`](../../../fleet/hosts/core.nas/pulumi/stack/apps.ts)                                                                                                   |
+| Stack `base`                  | Garage (backend `s3://pulumi-states`) ; passphrase partagée (Bitwarden, via fnox) ; mot de passe `root@pam` ; OpenBao, Pocket-Id et clusters joignables (voir plus bas) | [`Pulumi.yaml`](../../../fleet/base/pulumi/Pulumi.yaml), [Procédure INF-20260705-00](../../procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) |
+| LXC de plateforme             | `pve-01` ; secrets chiffrés avec SOPS dans Git (jetons Cloudflare et Tailscale copiés depuis les sorties Pulumi)                                                        | [`.mise.toml` de `chezmoi.sh`](../../../projects/chezmoi.sh/.mise.toml), [`.sops.yaml`](../../../projects/chezmoi.sh/.sops.yaml)                                                        |
+| Omni                          | LXC `omni` et son volume `/persistent` (clé GPG `omni.asc`, CA Talos, `omni.db`)                                                                                        | [`core.omni/README.md`](../../../fleet/hosts/core.omni/README.md)                                                                                                                       |
+| VM Talos                      | Omni, `omni-infra-provider-proxmox`, machine classes, SDN `talosnet` et identité `omni@pve` créés par Pulumi, DNS `talosnet-dns`                                        | [Procédure OMNI-20260721-00](../../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md), [séparation DNS](../../reference/Passerelles-et-DNS-Reference.md)             |
+| Clusters Kubernetes           | Zot (toute image passe par `oci.chezmoi.sh`) ; Secret Proxmox CCM/CSI écrit par `pve-01-core` ; Garage pour les sauvegardes                                             | [`SEC001`](../../../policies/opa/rules/SEC001-enforce-local-registry.md), [`rhodes-akn-bootstrap.ts`](../../../fleet/hosts/core.pve-01/pulumi/stack/access/rhodes-akn-bootstrap.ts)     |
+| ArgoCD (hub sur `rhodes.akn`) | Clé age `argocd-sops-age-key` et identifiants GitHub chiffrés avec SOPS ; OpenBao pour son `ExternalSecret` OIDC                                                        | [`kubernetes/src/argocd/README.md`](../../../fleet/clusters/akn.rhodes/kubernetes/src/argocd/README.md)                                                                                 |
 
 ### Chaîne des projets
 
@@ -106,13 +106,13 @@ flowchart LR
 Les flèches pleines sont des dépendances de provisionnement (un `pulumi up` échoue sans elles), les pointillés des
 dépendances d'exécution (le service tourne, mais une fonction manque).
 
-| Projet                              | Exige des autres projets                                                                                                                                                                                | Source                                                                                                                                                                                                                                                                      |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `chezmoi.sh`                        | Garage pour son état ; et, depuis que la stack écrit dans OpenBao, dans Pocket-Id et dans les clusters : `rhodes.akn` (OpenBao, Pocket-Id) et les contextes Kubernetes de `rhodes.akn` et `lungmen.akn` | [`core.nas/pulumi/stack/access/users/`](../../../fleet/hosts/core.nas/pulumi/stack/access/users/README.md), [`stack/pocket-id.ts`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/pocket-id.ts), `fleet/hosts/core.pve-01/pulumi/stack/access/*-bootstrap.ts` |
-| `rhodes.akn`                        | `chezmoi.sh` (Secret `kube-system/rhodes-akn-bootstrap-pve`, groupes Pocket-Id) ; Garage ; Omni ; Zot                                                                                                   | [Restaurer Rhodes](Restaurer-Rhodes.md), étape 3                                                                                                                                                                                                                            |
-| `lungmen.akn`                       | `rhodes.akn` : OpenBao (ESO), Pocket-Id (OIDC), ArgoCD hub ; `chezmoi.sh` (Secret Proxmox, groupes Pocket-Id, mots de passe SMB dans OpenBao) ; Garage                                                  | [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md), [`stack/velero.ts`](../../../fleet/clusters/akn.lungmen/pulumi/stack/system/velero.ts)                                                                                                                          |
-| `horn.akn` (ancien `kazimierz.akn`) | Pocket-Id (fournisseur d'identité de Pangolin) ; groupes de `chezmoi.sh` ; Tailscale. Aucune dépendance à OpenBao dans le code                                                                          | [Initialiser Horn](../../guides/Initialiser-Horn.md), [`stack/access/`](../../../fleet/hosts/akn.horn/pulumi/stack/access/pocket-id.ts)                                                                                                                                     |
-| `exusiai.akn`                       | Stack `chezmoi.sh` (compartiment parent et groupes), Pocket-Id, Tailscale, B2. OpenBao seulement comme copie conseillée du mot de passe restic                                                          | [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)                                                                                                      |
+| Projet                              | Exige des autres projets                                                                                                                                                                                | Source                                                                                                                                                                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base`                              | Garage pour son état ; et, depuis que la stack écrit dans OpenBao, dans Pocket-Id et dans les clusters : `rhodes.akn` (OpenBao, Pocket-Id) et les contextes Kubernetes de `rhodes.akn` et `lungmen.akn` | [`core.nas/pulumi/stack/access/users/`](../../../fleet/hosts/core.nas/pulumi/stack/access/users/README.md), [`stack/identity/pocket-id.ts`](../../../fleet/base/pulumi/stack/identity/pocket-id.ts), `fleet/hosts/core.pve-01/pulumi/stack/access/*-bootstrap.ts` |
+| `rhodes.akn`                        | `chezmoi.sh` (Secret `kube-system/rhodes-akn-bootstrap-pve`, groupes Pocket-Id) ; Garage ; Omni ; Zot                                                                                                   | [Restaurer Rhodes](Restaurer-Rhodes.md), étape 3                                                                                                                                                                                                                  |
+| `lungmen.akn`                       | `rhodes.akn` : OpenBao (ESO), Pocket-Id (OIDC), ArgoCD hub ; `chezmoi.sh` (Secret Proxmox, groupes Pocket-Id, mots de passe SMB dans OpenBao) ; Garage                                                  | [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md), [`stack/velero.ts`](../../../fleet/clusters/akn.lungmen/pulumi/stack/system/velero.ts)                                                                                                                |
+| `horn.akn` (ancien `kazimierz.akn`) | Pocket-Id (fournisseur d'identité de Pangolin) ; groupes de `base` ; Tailscale. Aucune dépendance à OpenBao dans le code                                                                                | [Initialiser Horn](../../guides/Initialiser-Horn.md), [`stack/access/`](../../../fleet/hosts/akn.horn/pulumi/stack/access/pocket-id.ts)                                                                                                                           |
+| `exusiai.akn`                       | Stack `base` (compartiment parent et groupes), Pocket-Id, Tailscale, B2. OpenBao seulement comme copie conseillée du mot de passe restic                                                                | [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)                                                                                            |
 
 Le projet `hass` lit lui aussi les groupes Pocket-Id de `chezmoi.sh` ; ce plan ne le couvre pas.
 
@@ -130,7 +130,7 @@ partie de la reprise est impossible.
 | Clé de chiffrement PBS et sa paperkey                               | OpenBao ; une copie hors ligne de la paperkey est demandée, sans emplacement                                          | Toute restauration depuis PBS                                                     |
 | Clé GPG d'Omni (`/persistent/omni/omni.asc`)                        | Volume `mp0` du LXC ; une copie « dans un endroit sûr séparé » est demandée                                           | Relire l'état d'Omni                                                              |
 | Identifiants des fournisseurs B2, Cloudflare (certificats), TrueNAS | Non documenté                                                                                                         | `pulumi up` de `nas-core` (`fleet/hosts/core.nas/pulumi/`)                        |
-| Identifiants des fournisseurs Cloudflare, Tailscale, Pocket-Id      | Non documenté                                                                                                         | `pulumi up` de `chezmoi-sh-infra`                                                 |
+| Identifiants des fournisseurs Cloudflare, Tailscale, Pocket-Id      | Non documenté                                                                                                         | `pulumi up` de `base`                                                             |
 
 ## Ordre de reconstruction
 
@@ -141,8 +141,8 @@ qui la décrit.
 
 Avant toute commande, vérifier la présence de chaque élément du tableau
 [Ce qui vit hors du dépôt](#ce-qui-vit-hors-du-dépôt) sur le poste de reprise, avec un clone du dépôt et `mise install`.
-La clé age vient en premier : elle déchiffre les passphrases Pulumi
-(`projects/*/src/infrastructure/pulumi/.mise/env.yaml`) et tous les secrets des étapes suivantes.
+La clé age vient en premier : elle déchiffre les secrets SOPS des étapes suivantes. La passphrase Pulumi et les
+identifiants des fournisseurs vivent dans Bitwarden Secrets Manager (fnox, `fleet/.fnox.toml`).
 
 ### 1. Rétablir le réseau
 
@@ -196,7 +196,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
     documentée.
 - Les ACL NFS4 se réappliquent à la main dans l'interface TrueNAS (section « Permissions » de `TRUENAS.md`).
 
-### 5. Relancer Garage et la stack `chezmoi-sh-infra`
+### 5. Relancer Garage et la stack `base`
 
 - **Exige** : Garage joignable sur `s3.chezmoi.sh` ; une clé d'application Garage sur `pulumi-states` ; la passphrase de
   la stack (SOPS) ; le mot de passe `root@pam` ; les identifiants des fournisseurs.
@@ -208,10 +208,12 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   l'application Garage sans état Pulumi est non documenté (les valeurs sont dans `core.nas/pulumi/stack/apps.ts`).
 - Ce premier `pulumi up` intervient avant OpenBao, Pocket-Id et les clusters. Les ressources qui en dépendent
   (`vault.kv.SecretV2` de `core.nas/pulumi/stack/access/users/`, groupes de `stack/pocket-id.ts`, Secrets Kubernetes de
-  `fleet/hosts/core.pve-01/pulumi/stack/access/*-bootstrap.ts`) ne peuvent pas s'appliquer à ce moment. Le comportement exact de `pulumi up`
-  dans ce cas (échec partiel ou total, besoin de `--target`) n'est pas vérifié ; une seconde passe a lieu à l'étape 8.
-- Les identités Proxmox (`omni@pve`, bootstrap des clusters) de `fleet/hosts/core.pve-01/pulumi/stack/access/` font partie de cette passe ; les
-  Secrets `*-bootstrap-pve` ne peuvent être écrits qu'une fois les clusters créés (étapes 7 et 9).
+  `fleet/hosts/core.pve-01/pulumi/stack/access/*-bootstrap.ts`) ne peuvent pas s'appliquer à ce moment. Le comportement
+  exact de `pulumi up` dans ce cas (échec partiel ou total, besoin de `--target`) n'est pas vérifié ; une seconde passe
+  a lieu à l'étape 8.
+- Les identités Proxmox (`omni@pve`, bootstrap des clusters) de `fleet/hosts/core.pve-01/pulumi/stack/access/` font
+  partie de cette passe ; les Secrets `*-bootstrap-pve` ne peuvent être écrits qu'une fois les clusters créés (étapes 7
+  et 9).
 
 ### 6. Restaurer les LXC de plateforme
 
@@ -237,17 +239,17 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
   [Procédure DB-20260723-00](../../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)) et
   l'amorçage d'ArgoCD.
 
-### 8. Repasser la stack `chezmoi-sh-infra`
+### 8. Repasser la stack `base`
 
 - **Exige** : OpenBao descellé et Pocket-Id en service (étape 7).
-- Relancer `mise run pulumi:apply` dans `projects/chezmoi.sh/src/infrastructure/pulumi` pour écrire les mots de passe
-  SMB dans OpenBao et réconcilier les groupes Pocket-Id. Cette seconde passe n'est décrite dans aucun guide ; elle
-  découle des dépendances de l'étape 5.
+- Relancer `mise run pulumi:apply` dans `fleet/hosts/core.nas/pulumi` pour écrire les mots de passe SMB dans OpenBao,
+  puis dans `fleet/base/pulumi` pour réconcilier les groupes Pocket-Id. Cette seconde passe n'est décrite dans aucun
+  guide ; elle découle des dépendances de l'étape 5.
 
 ### 9. Reconstruire `lungmen.akn`
 
-- **Exige** : `rhodes.akn` complet (OpenBao, Pocket-Id, ArgoCD) ; le Secret Proxmox écrit par `pve-01-core` ; les
-  mots de passe SMB dans OpenBao (étape 8).
+- **Exige** : `rhodes.akn` complet (OpenBao, Pocket-Id, ArgoCD) ; le Secret Proxmox écrit par `pve-01-core` ; les mots
+  de passe SMB dans OpenBao (étape 8).
 - **Référence** : [Initialiser Lungmen](../../guides/Initialiser-Lungmen.md). L'enregistrement comme spoke dans ArgoCD
   est manuel (`argocd cluster add`, issue #1282).
 
@@ -266,9 +268,9 @@ Les clusters CNPG de `rhodes.akn` (OpenBao, Pocket-Id) sont restaurés à l'éta
 
 Les deux VPS ne dépendent pas de `pve-01` pour tourner ; ils ne se reconstruisent que s'ils sont perdus eux-mêmes.
 
-- **`horn.akn`** : exige Pocket-Id, Tailscale et la stack `chezmoi.sh` (groupes). Voir
+- **`horn.akn`** : exige Pocket-Id, Tailscale et la stack `base` (groupes). Voir
   [Initialiser Horn](../../guides/Initialiser-Horn.md), y compris la restauration de l'état de Pangolin.
-- **`exusiai.akn`** : exige la stack `chezmoi.sh` (compartiment parent), Pocket-Id, Tailscale et B2. Voir
+- **`exusiai.akn`** : exige la stack `base` (compartiment parent), Pocket-Id, Tailscale et B2. Voir
   [Initialiser Exusiai](../../guides/Initialiser-Exusiai.md), puis la
   [Procédure BKP-20261005-00](../../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md) pour les
   mondes.
@@ -378,8 +380,7 @@ Ce que ce plan ne peut pas affirmer depuis le dépôt :
   Garage) utilisés par `pulumi up` : non documenté.
 - Existence réelle des copies hors ligne demandées par les README (paperkey PBS, `omni.asc`, clé age) : invérifiable.
 - Fréquence des sauvegardes PBS des invités (jobs Proxmox VE manuels par décision) : invérifiable.
-- Comportement de `pulumi up` sur `chezmoi-sh-infra` quand OpenBao, Pocket-Id ou un cluster est injoignable : non
-  vérifié.
+- Comportement de `pulumi up` sur `base` quand OpenBao, Pocket-Id ou un cluster est injoignable : non vérifié.
 - La stack `rhodes.akn` lit encore une `StackReference` vers la stack du cluster qui a précédé `rhodes.akn`
   (`stack/cloudnative-pg.ts`, ligne 55), et les `cnpg.cluster.yaml` d'OpenBao et de Pocket-Id s'amorcent encore depuis
   l'`ObjectStore` `amiya-akn`. Si cette stack n'existe plus dans le backend, l'étape 3 de Restaurer Rhodes échoue ; ce
@@ -394,7 +395,7 @@ Aucune issue n'est ouverte à ce jour pour ces points :
 - Documenter la configuration de PBS sans l'état Pulumi (circularités 1 et 2).
 - Écrire la procédure de relance manuelle de Garage et de rapatriement depuis B2 (circularité 3).
 - Documenter la copie de secours de la clé age et de la paperkey PBS (circularité 4).
-- Sortir de `chezmoi-sh-infra` les ressources qui exigent OpenBao, Pocket-Id ou un cluster (circularité 5).
+- Sortir de `base` les ressources qui exigent OpenBao, Pocket-Id ou un cluster (circularité 5).
 - Corriger les commentaires de `projects/chezmoi.sh/` qui placent encore OpenBao sur `amiya.akn`, et la règle d'alerte
   `ClusterAbsent` sans équivalent pour `rhodes`.
 

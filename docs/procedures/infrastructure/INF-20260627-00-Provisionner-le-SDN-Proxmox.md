@@ -94,7 +94,7 @@ export ZONE=<nom de la zone SDN>                 # ex. pvenet
 export VNET=<nom du VNet>                        # ex. talosnet
 export SUBNET=<CIDR du sous-réseau>              # ex. 10.128.0.0/24
 export GATEWAY=<passerelle du sous-réseau>       # ex. 10.128.0.1
-export PULUMI_DIR=<répertoire de la stack Pulumi> # ex. projects/chezmoi.sh/src/infrastructure/pulumi
+export PULUMI_DIR=<répertoire de la stack Pulumi> # ex. fleet/hosts/core.pve-01/pulumi
 ```
 
 ## Étape 1 — Préparer l'hôte Proxmox (manuel)
@@ -236,7 +236,7 @@ export ZONE=pvenet
 export VNET=talosnet
 export SUBNET=10.128.0.0/24
 export GATEWAY=10.128.0.1
-export PULUMI_DIR=projects/chezmoi.sh/src/infrastructure/pulumi
+export PULUMI_DIR=fleet/hosts/core.pve-01/pulumi
 ```
 
 Après l'étape 1 (hôte) et l'étape 2 (`mise run pulumi:apply` depuis `$PULUMI_DIR`), les contrôles de l'étape 3 donnent :

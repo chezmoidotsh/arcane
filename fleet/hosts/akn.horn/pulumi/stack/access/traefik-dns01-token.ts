@@ -13,7 +13,7 @@ import { cloudflareAccountId, cloudflareZoneId } from "../config";
 // wildcard cert for chezmoi.sh fixes that, but Traefik runs as a container on
 // the NixOS host, not a Pulumi resource -- so the token only exists as a
 // Pulumi stack output here, same pattern as
-// projects/chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts.
+// fleet/base/pulumi/stack/observability/credentials.ts.
 // Not pushed to Vault: OpenBao lives inside rhodes.akn (the core-platform
 // cluster; amiya.akn filled this role until it was decommissioned in favor
 // of rhodes.akn in July 2026), and kazimierz.akn is the public gateway every

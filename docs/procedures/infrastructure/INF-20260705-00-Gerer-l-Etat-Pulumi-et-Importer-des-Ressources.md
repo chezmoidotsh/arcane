@@ -15,14 +15,14 @@ Elle s'applique à tous les projets Pulumi du dépôt, dont les `Pulumi.yaml` po
 Les six projets Pulumi du dépôt déclarent le même backend dans leur `Pulumi.yaml`
 (`projects/<projet>/src/infrastructure/pulumi/`, ou `fleet/hosts/<hôte>/pulumi/` pour les hôtes déjà déplacés) :
 
-| Projet        | Nom Pulumi         |
-| ------------- | ------------------ |
-| `chezmoi.sh`  | `chezmoi-sh-infra` |
-| `closure.akn` | `closure-akn`      |
-| `exusiai.akn` | `exusiai-akn`      |
-| `horn.akn`    | `horn-akn`         |
-| `lungmen.akn` | `lungmen-akn`      |
-| `rhodes.akn`  | `rhodes-akn`       |
+| Projet        | Nom Pulumi    |
+| ------------- | ------------- |
+| `base`        | `base`        |
+| `closure.akn` | `closure-akn` |
+| `exusiai.akn` | `exusiai-akn` |
+| `horn.akn`    | `horn-akn`    |
+| `lungmen.akn` | `lungmen-akn` |
+| `rhodes.akn`  | `rhodes-akn`  |
 
 ```yaml
 backend:
@@ -32,10 +32,10 @@ backend:
 - **Backend** : le bucket `pulumi-states` de [Garage](https://garagehq.deuxfleurs.fr/), le stockage objet compatible S3
   qui tourne sur `nas.chezmoi.sh` (voir [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md)). Pulumi Cloud n'intervient
   pas : l'état, l'historique et les secrets vivent tous dans ce bucket.
-- **Fournisseur de secrets** : le fournisseur par passphrase, par défaut. Chaque projet garde sa passphrase dans
-  `src/infrastructure/pulumi/.mise/env.yaml`, chiffré avec SOPS (`PULUMI_CONFIG_PASSPHRASE`, plus `PULUMI_STACK` pour
-  choisir la stack), déchiffré de façon transparente par `mise` quand les commandes s'exécutent depuis ce répertoire :
-  les tâches `pulumi:*` ne demandent jamais de saisie.
+- **Fournisseur de secrets** : le fournisseur par passphrase, par défaut. La passphrase est partagée par toute la flotte
+  (`PULUMI_CONFIG_PASSPHRASE` dans `fleet/.fnox.toml`, résolue depuis Bitwarden Secrets Manager par fnox) ; la stack est
+  choisie par `PULUMI_STACK` dans le `pulumi/.mise.toml` du dossier. Les tâches `pulumi:*` ne demandent jamais de saisie
+  ; `pulumi` lancé à la main passe par `fnox exec --` (l'alias des shells interactifs le fait).
 - **Identifiants S3** : la CLI Pulumi s'authentifie auprès de Garage avec les variables d'environnement AWS standard
   (`AWS_ACCESS_KEY_ID` et `AWS_SECRET_ACCESS_KEY`), qui portent une **clé d'application** Garage autorisée sur le bucket
   `pulumi-states`. Cet identifiant relève de la configuration de l'opérateur ; il n'est versionné nulle part dans le
@@ -75,7 +75,7 @@ Exporter ces variables une fois ; toutes les commandes suivantes se copient ensu
 sortie de l'étape 2 ; `TYPE_TOKEN`, `NAME` et `ID` ne servent qu'à l'import (étape 3).
 
 ```sh
-export PROJECT_DIR=<répertoire Pulumi du projet>      # ex. projects/chezmoi.sh/src/infrastructure/pulumi
+export PROJECT_DIR=<répertoire Pulumi du projet>      # ex. fleet/base/pulumi
 export KEY_YEAR=<année de la clé Garage>              # ex. 2026
 export URN=<URN de la ressource>                      # ex. urn:pulumi:<stack>::<projet>::<type>::<nom>
 export TYPE_TOKEN=<jeton de type Pulumi>              # ex. proxmox:index/virtualEnvironmentRole:VirtualEnvironmentRole
@@ -189,11 +189,11 @@ mise run pulumi:apply
 
 ## Exemple complet : importer le rôle `OmniProvider` de Proxmox VE
 
-Le rôle `OmniProvider` est déclaré dans `fleet/hosts/core.pve-01/pulumi/stack/access/omni.ts`
-sous le nom logique `pve-role-omni-provider`. Exemple de forme, non rejoué.
+Le rôle `OmniProvider` est déclaré dans `fleet/hosts/core.pve-01/pulumi/stack/access/omni.ts` sous le nom logique
+`pve-role-omni-provider`. Exemple de forme, non rejoué.
 
 ```sh
-export PROJECT_DIR=projects/chezmoi.sh/src/infrastructure/pulumi
+export PROJECT_DIR=fleet/hosts/core.pve-01/pulumi
 export TYPE_TOKEN=proxmox:index/virtualEnvironmentRole:VirtualEnvironmentRole
 export NAME=pve-role-omni-provider
 export ID=OmniProvider
@@ -244,11 +244,10 @@ pulumi state delete $URN
 
 ## Pour aller plus loin
 
-- [Pulumi du projet `chezmoi.sh`](../../../projects/chezmoi.sh/src/infrastructure/pulumi/README.md) : la stack
-  `chezmoi-sh-infra` et ses tâches `mise`.
+- [Pulumi de la base de la flotte](../../../fleet/base/README.md) : la stack `base` et ses tâches `mise`.
 - [Proxmox VE](../../../fleet/hosts/core.pve-01/PROXMOX-VE.md) : « Import an existing object » et « Rebuild the host ».
 - [TrueNAS](../../../fleet/hosts/core.nas/TRUENAS.md) : l'emplacement physique de Garage, et donc de l'état.
 - [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : autre procédure appliquée par la stack
-  `chezmoi-sh-infra`.
+  `pve-01-core`.
 - [Documentation Pulumi sur l'import de ressources](https://www.pulumi.com/docs/iac/adopting-pulumi/import/) : référence
   officielle.

@@ -1,4 +1,5 @@
 import * as oci from "@pulumi/oci";
+import { tenancyOcid } from "../config";
 
 // The parent OCI compartment of every chezmoi.sh project on Oracle Cloud: the
 // compartments `horn.akn` and `exusiai.akn` are its children (each
@@ -20,13 +21,12 @@ import * as oci from "@pulumi/oci";
 //
 // Default @pulumi/oci provider, authenticated by TF_VAR_tenancy_ocid,
 // TF_VAR_user_ocid, TF_VAR_fingerprint, TF_VAR_private_key and TF_VAR_region
-// from `.mise/env.yaml` (SOPS), like kazimierz.akn; the
-// region also comes from `oci:region` in Pulumi.chezmoi_sh.live.yaml. Never
+// from `../../../.fnox.toml` (fnox), like horn.akn and exusiai.akn; the
+// region also comes from `oci:region` in Pulumi.base.live.yaml. Never
 // pulumi config for the credentials, even `--secret`.
-const tenancyOcid = process.env.TF_VAR_tenancy_ocid;
 if (!tenancyOcid) {
 	throw new Error(
-		"TF_VAR_tenancy_ocid must be set (OCI credentials in .mise/env.yaml)",
+		"TF_VAR_tenancy_ocid must be set (OCI credentials in fleet/base/.fnox.toml)",
 	);
 }
 

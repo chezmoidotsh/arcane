@@ -1,6 +1,6 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
 
-// The `admin` group is managed by the chezmoi.sh stack (single source of truth): it is looked up by name.
+// The `admin` group is managed by the base stack (single source of truth): it is looked up by name.
 const adminGroupId = pocketid.getUserGroupOutput({ name: "admin" }).userGroupId;
 
 // Members of this group can sign in to the Pelican panel and run their own

@@ -345,6 +345,34 @@ importers:
         specifier: ^4.7.0
         version: 4.9.5
 
+  fleet/base/pulumi:
+    dependencies:
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@chezmoi.sh/pulumi-cloudflare-dns01-token':
+        specifier: workspace:*
+        version: link:../../../catalog/pulumi/components/cloudflare-dns01-token
+      '@pulumi/cloudflare':
+        specifier: 'catalog:'
+        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/oci':
+        specifier: 'catalog:'
+        version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi':
+        specifier: 'catalog:'
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/tailscale':
+        specifier: 'catalog:'
+        version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   fleet/clusters/akn.lungmen/pulumi:
     dependencies:
       '@axnic/pulumi-garage':
@@ -709,34 +737,6 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.20.0)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  projects/chezmoi.sh/src/infrastructure/pulumi:
-    dependencies:
-      '@axnic/pulumi-pocket-id':
-        specifier: 'catalog:'
-        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
-      '@pulumi/cloudflare':
-        specifier: 'catalog:'
-        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/oci':
-        specifier: 'catalog:'
-        version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pulumi':
-        specifier: 'catalog:'
-        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/tailscale':
-        specifier: 'catalog:'
-        version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.20.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

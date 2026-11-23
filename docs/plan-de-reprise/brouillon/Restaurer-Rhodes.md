@@ -181,7 +181,7 @@ Le `pulumi up` de `rhodes.akn` écrit aussi `cnpg-backup-credentials` dans trois
 `o11y`) et ne crée pas ces namespaces : il faut les créer avant.
 
 ```sh
-cd projects/chezmoi.sh/src/infrastructure/pulumi
+cd fleet/clusters/akn.rhodes/pulumi
 pulumi up --refresh --parallel 15
 
 kubectl --context ${CLUSTER_CONTEXT} create namespace vault --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -

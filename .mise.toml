@@ -12,6 +12,7 @@
 #
 # For project-specific configurations, see:
 #   fleet/{clusters,hosts}/<element>/.mise.toml   # Element-specific tasks
+#   fleet/base/pulumi/.mise.toml                  # Fleet base Pulumi stack
 #   projects/<project>/.mise.toml                 # Not migrated yet (chezmoi.sh, shodan.akn)
 # =============================================================================
 

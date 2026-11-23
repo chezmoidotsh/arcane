@@ -17,7 +17,7 @@ export const cloudflare = {
 // Group membership (admin/maison/famille) is managed in chezmoi.sh, not here: read across through a StackReference
 // rather than duplicated. Used by the Pocket-Id clients.
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
-	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
+	name: "organization/base/base.live",
 });
 
 export const adminGroupId = chezmoiSh.getOutput("adminGroupId") as pulumi.Output<string>;

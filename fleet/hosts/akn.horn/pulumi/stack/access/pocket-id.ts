@@ -1,7 +1,7 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 
-// Group membership (maison/famille) is managed by the chezmoi.sh stack, the single source of truth: the groups are
+// Group membership (maison/famille) is managed by the base stack, the single source of truth: the groups are
 // looked up by name instead of being read from that stack.
 const maisonGroupId = pocketid.getUserGroupOutput({ name: "maison" }).userGroupId;
 const familleGroupId = pocketid.getUserGroupOutput({ name: "famille" }).userGroupId;

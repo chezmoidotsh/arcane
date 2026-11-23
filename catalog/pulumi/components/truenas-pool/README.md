@@ -341,7 +341,7 @@ pnpm test      # inside the pnpm workspace
 
 ## References
 
-- Live consumer: [`chezmoi.sh`](../../../../projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas/zpools/)
+- Live consumer: [`core.nas`](../../../../fleet/hosts/core.nas/pulumi/zpools/)
 - [`catalog/pulumi/README.md`](../../README.md) — workspace / dependency-resolution rationale
 
 ## License
