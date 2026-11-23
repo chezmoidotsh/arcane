@@ -37,6 +37,7 @@
 - [Infrastructure manuelle](reference/Infrastructure-Manuelle-Reference.md)
 - [Architecture du dépôt](reference/Architecture-du-Depot-Reference.md)
 - [Nommage des machines](reference/Nommage-des-Machines-Reference.md)
+- [Structure Pulumi de la fleet](reference/Structure-Pulumi-Fleet-Reference.md)
 
 ### Post-mortems
 
